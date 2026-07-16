@@ -1,0 +1,1999 @@
+<style>
+/*__FONT_FACES__*/
+
+:root{
+  --stone-50:#F3EFE6;
+  --surface:#FBF8F1;
+  --surface-2:#EAE3D2;
+  --border:#DED2B8;
+  --ink:#1C231F;
+  --ink-soft:#4E5A4F;
+  --ink-faint:#8A8875;
+  --ember:#E2531F;
+  --ember-strong:#C23F14;
+  --ember-tint:#FBE4D7;
+  --spruce:#29473B;
+  --spruce-tint:#E1E9E1;
+  --granite:#A79C88;
+  --dawn:#D9A441;
+  --success:#3F8F5F;
+  --success-tint:#E1F0E5;
+  --warn:#B8791E;
+  --warn-tint:#F6E9D2;
+  --danger:#C13A2E;
+  --danger-tint:#F7E1DE;
+  --shadow: 0 1px 2px rgba(28,35,31,.06), 0 8px 24px -12px rgba(28,35,31,.18);
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --font-display: 'Unbounded', 'Arial Black', sans-serif;
+  --font-body: 'Golos Text', 'Segoe UI', sans-serif;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --stone-50:#12160F;
+    --surface:#1A2118;
+    --surface-2:#212B1E;
+    --border:#333F30;
+    --ink:#EFEADA;
+    --ink-soft:#B4BBA9;
+    --ink-faint:#78806E;
+    --ember:#FF7A45;
+    --ember-strong:#FF6B37;
+    --ember-tint:#3A2318;
+    --spruce:#7FBB9B;
+    --spruce-tint:#1E2E24;
+    --granite:#8B8570;
+    --dawn:#EFC169;
+    --success:#63B584;
+    --success-tint:#1B3527;
+    --warn:#E0AC57;
+    --warn-tint:#3A2E17;
+    --danger:#E27567;
+    --danger-tint:#3B211D;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --stone-50:#12160F; --surface:#1A2118; --surface-2:#212B1E; --border:#333F30;
+  --ink:#EFEADA; --ink-soft:#B4BBA9; --ink-faint:#78806E;
+  --ember:#FF7A45; --ember-strong:#FF6B37; --ember-tint:#3A2318;
+  --spruce:#7FBB9B; --spruce-tint:#1E2E24; --granite:#8B8570; --dawn:#EFC169;
+  --success:#63B584; --success-tint:#1B3527; --warn:#E0AC57; --warn-tint:#3A2E17;
+  --danger:#E27567; --danger-tint:#3B211D;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.55);
+}
+:root[data-theme="light"]{
+  --stone-50:#F3EFE6; --surface:#FBF8F1; --surface-2:#EAE3D2; --border:#DED2B8;
+  --ink:#1C231F; --ink-soft:#4E5A4F; --ink-faint:#8A8875;
+  --ember:#E2531F; --ember-strong:#C23F14; --ember-tint:#FBE4D7;
+  --spruce:#29473B; --spruce-tint:#E1E9E1; --granite:#A79C88; --dawn:#D9A441;
+  --success:#3F8F5F; --success-tint:#E1F0E5; --warn:#B8791E; --warn-tint:#F6E9D2;
+  --danger:#C13A2E; --danger-tint:#F7E1DE;
+  --shadow: 0 1px 2px rgba(28,35,31,.06), 0 8px 24px -12px rgba(28,35,31,.18);
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth; overflow-x:hidden;}
+html, body{max-width:100%;}
+img, svg, canvas, video, table{max-width:100%;}
+/* Grid/flex items default to min-width:auto, which refuses to shrink below
+   the content's natural size and silently breaks mobile layouts — every
+   multi-column layout on the site gets min-width:0 so it can actually shrink. */
+.hero-grid > *, .stats-strip > *, .event-grid > *, .foot-grid > *, .utmb-stats > *,
+.landmark-strip > *, .participants-filters > *, .field-row > *, .cab-grid > *,
+.team-grid > *, .group-grid > *, .camp-grid > *, .camp-pricing > *, .detail-grid > *,
+.camp-item, .about-teaser .content{ min-width:0; }
+body{
+  margin:0;
+  background:var(--stone-50);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto;}
+  *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+}
+h1,h2,h3,h4{
+  font-family:var(--font-display);
+  font-weight:800;
+  margin:0;
+  color:var(--ink);
+  text-wrap:balance;
+  letter-spacing:-0.01em;
+}
+p{margin:0;}
+a{color:inherit;}
+button{font-family:var(--font-body);}
+::selection{background:var(--ember-tint); color:var(--ember-strong);}
+:focus-visible{outline:2.5px solid var(--ember); outline-offset:2px; border-radius:4px;}
+
+.container{max-width:1160px; margin:0 auto; padding:0 24px;}
+@media (max-width:640px){.container{padding:0 18px;}}
+
+.eyebrow{
+  font-family:var(--font-body); font-weight:700; font-size:.72rem;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ember);
+  display:inline-flex; align-items:center; gap:8px;
+}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--ember);}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-weight:700; font-size:.95rem; font-family:var(--font-body);
+  padding:13px 22px; border-radius:999px; border:1.5px solid transparent;
+  cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--ember-strong); color:#FFF8EE; box-shadow:var(--shadow);}
+.btn-primary:hover{box-shadow:0 10px 26px -10px var(--ember-strong);}
+.btn-ghost{background:transparent; color:var(--ink); border-color:var(--border);}
+.btn-ghost:hover{border-color:var(--ink-faint);}
+.btn-spruce{background:var(--spruce); color:#F3EFE6;}
+.btn-block{width:100%;}
+.btn-sm{padding:9px 16px; font-size:.85rem;}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+.icon{width:1em; height:1em; stroke-width:1.7; display:inline-block; vertical-align:-.15em;}
+
+/* ---------- NAV ---------- */
+.nav{
+  position:sticky; top:0; z-index:60;
+  background:color-mix(in srgb, var(--stone-50) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+.nav-row{display:flex; align-items:center; justify-content:space-between; height:72px; gap:20px;}
+.brand{display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:800; font-size:1.05rem; letter-spacing:-.01em; cursor:pointer; background:none; border:none; color:var(--ink); padding:0;}
+.brand-mark{width:34px; height:41px; display:flex; align-items:center; justify-content:center; flex:none;}
+.brand-mark img{width:100%; height:100%; object-fit:contain;}
+.brand span.sub{display:block; font-family:var(--font-body); font-weight:600; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-top:1px;}
+.nav-links{display:flex; align-items:center; gap:4px; list-style:none; margin:0; padding:0;}
+.nav-links button{
+  background:none; border:none; font-family:var(--font-body); font-weight:600; font-size:.9rem;
+  color:var(--ink-soft); padding:9px 14px; border-radius:999px; cursor:pointer; transition:background .15s, color .15s;
+}
+.nav-links button:hover{color:var(--ink); background:var(--surface-2);}
+.nav-links button.active{color:var(--ink); background:var(--spruce-tint);}
+.nav-right{display:flex; align-items:center; gap:10px;}
+.nav-cabinet{display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:6px 14px 6px 6px; cursor:pointer; font-weight:600; font-size:.85rem;}
+.avatar{width:28px; height:28px; border-radius:50%; background:var(--dawn); color:#2A2005; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.72rem; flex:none;}
+.nav-burger{display:none;}
+@media (max-width:880px){
+  .nav-links{display:none;}
+  .nav-burger{display:flex; background:none; border:1px solid var(--border); border-radius:10px; width:40px; height:40px; align-items:center; justify-content:center; cursor:pointer; flex:none;}
+  .brand .sub{display:none;}
+}
+@media (max-width:560px){
+  .nav-cabinet, .nav-right .btn-primary{display:none;}
+}
+.mobile-menu{display:none; flex-direction:column; gap:2px; padding:10px 24px 18px; border-bottom:1px solid var(--border); background:var(--stone-50);}
+.mobile-menu.open{display:flex;}
+.mobile-menu button{text-align:left; background:none; border:none; font-weight:600; padding:11px 4px; color:var(--ink-soft); font-size:.95rem; border-bottom:1px solid var(--border);}
+.mobile-menu button.active{color:var(--ember);}
+
+/* ---------- VIEWS ---------- */
+.view{display:none;}
+.view.active{display:block;}
+section{padding:64px 0;}
+@media (max-width:640px){section{padding:44px 0;}}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative; padding:120px 0 76px; overflow:hidden;
+  border-bottom:1px solid var(--border);
+  min-height:560px; display:flex; align-items:flex-end;
+  color:#FBF8F1;
+}
+.hero-scene{position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:center 62%;}
+.hero-scrim{position:absolute; inset:0; background:linear-gradient(180deg, rgba(18,22,17,.15) 0%, rgba(18,22,17,.35) 55%, rgba(18,22,17,.82) 100%);}
+.hero-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:end; position:relative; z-index:2; width:100%;}
+@media (max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+.hero h1{font-size:clamp(2.5rem,6vw,4.6rem); line-height:.97; color:#FBF8F1;}
+.hero h1 em{font-style:normal; color:var(--dawn);}
+.hero p.lead{margin-top:20px; font-size:1.1rem; color:rgba(251,248,241,.82); max-width:46ch;}
+.hero-ctas{display:flex; gap:12px; margin-top:30px; flex-wrap:wrap;}
+.hero .btn-ghost{background:rgba(251,248,241,.08); color:#FBF8F1; border-color:rgba(251,248,241,.4); backdrop-filter:blur(6px);}
+.hero .btn-ghost:hover{border-color:#FBF8F1;}
+
+.next-card{
+  background:rgba(27,33,24,.5); backdrop-filter:blur(14px); border:1px solid rgba(251,248,241,.22); border-radius:var(--radius-l);
+  padding:26px; box-shadow:0 20px 44px -20px rgba(0,0,0,.6); position:relative; overflow:hidden; color:#FBF8F1;
+}
+.next-card::before{content:""; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg, var(--ember), var(--dawn));}
+.next-card .eyebrow{color:var(--dawn);}
+.next-card .eyebrow .dot{background:var(--dawn);}
+.next-card .race-name{font-family:var(--font-display); font-size:1.5rem; font-weight:800; margin-top:12px; color:#FBF8F1;}
+.countdown{display:flex; gap:10px; margin:18px 0 4px;}
+.count-cell{background:rgba(251,248,241,.1); border:1px solid rgba(251,248,241,.2); border-radius:10px; padding:10px 6px; text-align:center; flex:1;}
+.count-cell b{display:block; font-family:var(--font-display); font-size:1.5rem; font-variant-numeric:tabular-nums; color:#FBF8F1;}
+.count-cell span{font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:rgba(251,248,241,.6);}
+.meta-row{display:flex; flex-wrap:wrap; gap:14px; margin:16px 0 20px; font-size:.85rem; color:var(--ink-soft);}
+.meta-row .mi{display:flex; align-items:center; gap:6px;}
+.next-card .meta-row{color:rgba(251,248,241,.78);}
+
+/* ---------- SECTION HEADS ---------- */
+.section-head{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:34px; flex-wrap:wrap;}
+.section-head h2{font-size:clamp(1.7rem,3vw,2.3rem);}
+.section-head p{color:var(--ink-soft); margin-top:8px; max-width:52ch;}
+
+/* ---------- STATS ---------- */
+.stats-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius-m); overflow:hidden; margin:40px 0;}
+.stat-cell{background:var(--surface); padding:22px 18px; text-align:center;}
+.stat-cell b{display:block; font-family:var(--font-display); font-size:2rem; color:var(--spruce);}
+.stat-cell span{font-size:.78rem; color:var(--ink-soft);}
+@media (max-width:640px){.stats-strip{grid-template-columns:repeat(2,1fr);}}
+
+/* ---------- EVENT CARDS ---------- */
+.event-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px;}
+@media (max-width:980px){.event-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.event-grid{grid-template-columns:1fr;}}
+.event-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+  cursor:pointer; text-align:left; display:flex; flex-direction:column;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; position:relative;
+  font-family:var(--font-body); width:100%; overflow:hidden;
+}
+.event-card:hover{transform:translateY(-4px); box-shadow:var(--shadow); border-color:var(--granite);}
+.ev-thumb{position:relative; height:112px; width:100%; overflow:hidden;}
+.ev-thumb img{width:100%; height:100%; display:block; object-fit:cover; object-position:center;}
+.event-card .pill{position:absolute; top:12px; left:12px; z-index:2; background:rgba(20,24,17,.55); color:#fff; backdrop-filter:blur(3px);}
+.event-icon{width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; position:absolute; left:14px; bottom:-20px; box-shadow:0 6px 14px -6px rgba(0,0,0,.5); border:2px solid var(--surface);}
+.event-icon svg{width:20px; height:20px;}
+.event-card .ev-body{padding:32px 18px 18px; display:flex; flex-direction:column; gap:10px; flex:1;}
+.event-card h3{font-size:1.1rem; font-weight:800; margin-top:2px;}
+.event-card .ev-date{font-size:.82rem; color:var(--ink-soft); font-weight:600; font-variant-numeric:tabular-nums;}
+.event-card .ev-dist{font-size:.78rem; color:var(--ink-faint); margin-top:auto;}
+.pill{display:inline-flex; align-items:center; gap:6px; font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; padding:5px 10px; border-radius:999px; width:fit-content;}
+.pill.open{background:var(--success-tint); color:var(--success);}
+.pill.soon{background:var(--warn-tint); color:var(--warn);}
+.pill.done{background:var(--surface-2); color:var(--ink-faint);}
+.pill .pdot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* ---------- TABS (calendar/archive, event detail) ---------- */
+.tabbar, .seg{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:4px; gap:2px;}
+.tabbar button, .seg button{background:none; border:none; border-radius:999px; font-weight:700; color:var(--ink-soft); cursor:pointer;}
+.tabbar button.active, .seg button.active{background:var(--surface); color:var(--ink); box-shadow:var(--shadow);}
+.tabbar button{padding:9px 18px; font-size:.85rem;}
+
+/* ---------- ABOUT teaser ---------- */
+.about-teaser{position:relative; border-radius:var(--radius-l); padding:52px 48px; overflow:hidden; min-height:280px; display:flex; align-items:center;}
+@media (max-width:860px){.about-teaser{padding:32px;}}
+.about-teaser img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 65%;}
+.about-teaser .scrim{position:absolute; inset:0; background:linear-gradient(100deg, rgba(20,28,20,.92) 0%, rgba(20,28,20,.78) 42%, rgba(20,28,20,.28) 100%);}
+.about-teaser .content{position:relative; z-index:2; max-width:52ch;}
+.about-banner{border-radius:var(--radius-l); overflow:hidden; height:260px; margin-top:32px;}
+.about-banner img{width:100%; height:100%; object-fit:cover; object-position:center 45%;}
+@media (max-width:640px){.about-banner{height:180px;}}
+.about-teaser h2{color:#fff;}
+.about-teaser p{color:#CBD6CC; margin-top:14px; max-width:48ch;}
+
+/* ---------- FOOTER ---------- */
+footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;}
+.foot-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:32px;}
+@media (max-width:760px){.foot-grid{grid-template-columns:1fr 1fr;}}
+.eyebrow-label{font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint); font-family:var(--font-body); font-weight:700;}
+.foot-grid h4{margin-bottom:14px;}
+.foot-grid ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; font-size:.9rem; color:var(--ink-soft);}
+.foot-bottom{display:flex; justify-content:space-between; margin-top:38px; padding-top:20px; border-top:1px solid var(--border); font-size:.78rem; color:var(--ink-faint); flex-wrap:wrap; gap:10px;}
+
+/* ---------- EVENT DETAIL ---------- */
+.detail-hero{border-radius:var(--radius-l); padding:44px 40px 32px; color:#fff; position:relative; overflow:hidden; margin-bottom:36px; min-height:340px; display:flex; flex-direction:column; justify-content:flex-end;}
+.detail-hero-scene{position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:center 55%;}
+.detail-hero-scrim{position:absolute; inset:0; background:linear-gradient(180deg, rgba(15,18,13,.1) 0%, rgba(15,18,13,.45) 60%, rgba(15,18,13,.85) 100%);}
+.detail-hero > *:not(.detail-hero-scene):not(.detail-hero-scrim){position:relative; z-index:2;}
+.detail-hero .pill{background:rgba(255,255,255,.18); color:#fff; backdrop-filter:blur(4px);}
+.detail-hero h1{color:#fff; font-size:clamp(2rem,4.4vw,3.2rem); margin-top:14px;}
+.detail-hero .meta-row{color:#EFEEE2; margin-top:16px;}
+.detail-hero .meta-row svg{opacity:.85;}
+.utmb-stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.22); border-radius:var(--radius-m); overflow:hidden; margin-top:22px; backdrop-filter:blur(6px);}
+@media (max-width:700px){.utmb-stats{grid-template-columns:repeat(2,1fr);}}
+.utmb-stat{background:rgba(15,18,13,.32); padding:14px 16px;}
+.utmb-stat span{display:block; font-size:.66rem; text-transform:uppercase; letter-spacing:.08em; color:rgba(255,255,255,.65); margin-bottom:4px;}
+.utmb-stat b{font-family:var(--font-display); font-size:1.15rem; font-weight:700; font-variant-numeric:tabular-nums;}
+.detail-grid{
+  display:grid; align-items:start; gap:20px 32px;
+  grid-template-columns:1fr 340px;
+  grid-template-areas:
+    "chart distances"
+    "tabs  partners";
+}
+.panel-chart{grid-area:chart;}
+.panel-distances{grid-area:distances; position:sticky; top:96px;}
+.panel-tabs{grid-area:tabs;}
+.panel-partners{grid-area:partners;}
+@media (max-width:900px){
+  .detail-grid{
+    grid-template-columns:1fr;
+    grid-template-areas:"chart" "distances" "tabs" "partners";
+  }
+  .panel-distances{position:static;}
+}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); padding:26px;}
+.card h3{font-size:1.05rem; margin-bottom:14px;}
+.chart-wrap canvas{width:100%; display:block;}
+.chart-wrap{position:relative;}
+.map-canvas{width:100%; display:block; border-radius:10px;}
+.profile-head{display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:14px;}
+.profile-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.seg{padding:3px;}
+.seg button{padding:7px 15px; font-size:.8rem; display:flex; align-items:center; gap:6px;}
+.seg button svg{width:14px; height:14px;}
+
+/* ---------- ABOUT COURSE / STORY ---------- */
+.course-lead{font-size:1.02rem; line-height:1.8; color:var(--ink-soft);}
+.course-lead b{color:var(--ink); font-weight:700;}
+.landmark-strip{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-top:22px;}
+.landmark-card{border-radius:var(--radius-m); overflow:hidden; border:1px solid var(--border); background:var(--surface);}
+.landmark-scene-wrap{height:96px; position:relative;}
+.landmark-scene-wrap img{width:100%; height:100%; display:block; object-fit:cover; object-position:center;}
+.landmark-body{padding:13px 14px;}
+.landmark-body .lk-elev{font-size:.68rem; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px;}
+.landmark-body h4{font-family:var(--font-display); font-size:.92rem; font-weight:700; margin-bottom:6px;}
+.landmark-body p{font-size:.8rem; color:var(--ink-soft); line-height:1.55;}
+
+/* ---------- MANDATORY EQUIPMENT ---------- */
+.eq-legend{display:flex; gap:18px; font-size:.78rem; color:var(--ink-faint); margin-bottom:18px; flex-wrap:wrap;}
+.eq-legend .lg{display:flex; align-items:center; gap:6px;}
+.eq-tag{display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; font-size:.7rem; font-weight:800; flex:none;}
+.eq-tag.req{background:var(--ember-tint); color:var(--ember-strong);}
+.eq-tag.rec{background:var(--surface-2); color:var(--ink-faint); border:1px dashed var(--border);}
+.eq-group{margin-bottom:22px;}
+.eq-group:last-child{margin-bottom:0;}
+.eq-group h4{font-size:.78rem; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint); margin-bottom:10px;}
+.eq-row{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:.9rem;}
+.eq-row:last-child{border-bottom:none;}
+.profile-head h3{margin-bottom:0; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+.profile-dist-label{font-family:var(--font-body); font-weight:700; font-size:.82rem; color:var(--ink-faint);}
+.gpx-note{font-size:.76rem; color:var(--ink-faint); margin-top:12px;}
+.slots-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--ember-tint); border:1px solid var(--border); border-radius:var(--radius-s); padding:12px 16px; margin-bottom:16px; font-size:.86rem; flex-wrap:wrap;}
+.slots-banner b{font-family:var(--font-display); color:var(--ember-strong); font-variant-numeric:tabular-nums;}
+.participants-filters{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:10px; margin-bottom:16px;}
+@media (max-width:560px){.participants-filters{grid-template-columns:1fr 1fr;}}
+.p-search, .p-select{
+  padding:10px 12px; border-radius:9px; border:1.5px solid var(--border);
+  background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:.85rem;
+}
+.p-search:focus, .p-select:focus{border-color:var(--ember); outline:none;}
+.participants-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.participants-count{font-size:.82rem; font-weight:700; color:var(--ink-soft);}
+.table-scroll{overflow-x:auto;}
+@media print{
+  body > *{display:none !important;}
+  #printArea{display:block !important; position:static; max-width:680px; margin:0 auto; color:#111; font-family:Georgia,serif;}
+  #printArea h1{font-family:Georgia,serif; font-size:1.6rem; margin-bottom:4px;}
+  #printArea .pmeta{color:#555; font-size:.85rem; margin-bottom:20px;}
+  #printArea .pbody{font-size:.95rem; line-height:1.6;}
+}
+#printArea{display:none;}
+.dtabs{display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:18px; overflow-x:auto;}
+.dtabs button{background:none; border:none; padding:10px 4px; margin-right:22px; font-weight:700; font-size:.88rem; color:var(--ink-faint); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap;}
+.dtabs button.active{color:var(--ink); border-color:var(--ember);}
+.dpanel{display:none; font-size:.94rem; color:var(--ink-soft); line-height:1.75;}
+.dpanel.active{display:block;}
+.dpanel ul{padding-left:20px; margin:10px 0;}
+.transfer-panel{margin-top:14px; padding-top:14px; border-top:1px dashed var(--border);}
+.transfer-note{font-size:.8rem; color:var(--ink-soft); margin-bottom:10px;}
+.partners-row{display:flex; flex-wrap:wrap; gap:8px;}
+.partner-chip{
+  display:flex; align-items:center; padding:9px 14px; border:1px solid var(--border); border-radius:var(--radius-s);
+  background:var(--stone-50); font-family:var(--font-display); font-weight:700; font-size:.82rem; color:var(--ink-soft);
+  letter-spacing:.01em;
+}
+.dist-option{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1.5px solid var(--border); border-radius:var(--radius-s); padding:13px 14px; margin-bottom:10px; cursor:pointer; transition:border-color .15s, background .15s;}
+.dist-option:hover{border-color:var(--granite);}
+.dist-option.sel{border-color:var(--ember); background:var(--ember-tint);}
+.dist-option .dn{font-weight:800; font-family:var(--font-display); font-size:1.05rem;}
+.dist-option .dsub{font-size:.72rem; color:var(--ink-faint);}
+.dist-option .dp{font-weight:700; font-variant-numeric:tabular-nums; font-family:var(--font-body);}
+.results-table{width:100%; border-collapse:collapse; font-size:.88rem;}
+.results-table th{text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); padding:8px 10px; border-bottom:1px solid var(--border);}
+.results-table td{padding:10px 10px; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums;}
+.results-table tr:last-child td{border-bottom:none;}
+.medal{width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#fff;}
+
+/* ---------- REGISTRATION ---------- */
+.reg-wrap{max-width:640px; margin:0 auto;}
+.stepper{display:flex; align-items:center; gap:6px; margin-bottom:40px;}
+.step{display:flex; align-items:center; gap:10px; flex:1;}
+.step .sc{width:30px; height:30px; border-radius:50%; background:var(--surface-2); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.8rem; color:var(--ink-faint); flex:none; transition:all .2s;}
+.step.done .sc{background:var(--spruce); border-color:var(--spruce); color:#fff;}
+.step.now .sc{background:var(--ember-strong); border-color:var(--ember-strong); color:#fff;}
+.step .sl{font-size:.75rem; font-weight:700; color:var(--ink-faint); display:none;}
+.step.now .sl{color:var(--ink);}
+@media (min-width:700px){.step .sl{display:block;}}
+.step-line{height:1.5px; background:var(--border); flex:1;}
+.reg-panel{display:none;}
+.reg-panel.active{display:block; animation:fadein .25s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+.field{margin-bottom:18px;}
+.field label{display:block; font-size:.78rem; font-weight:700; color:var(--ink-soft); margin-bottom:7px;}
+.field input, .field select{
+  width:100%; padding:12px 14px; border-radius:10px; border:1.5px solid var(--border);
+  background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:.95rem;
+}
+.field input:focus, .field select:focus{border-color:var(--ember); outline:none;}
+.field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+@media (max-width:520px){.field-row{grid-template-columns:1fr;}}
+.pay-option{display:flex; align-items:center; gap:12px; border:1.5px solid var(--border); border-radius:var(--radius-s); padding:14px; margin-bottom:10px;}
+.pay-option.sel{border-color:var(--spruce); background:var(--spruce-tint);}
+.transfer-check{display:flex; align-items:flex-start; gap:12px; border:1.5px solid var(--border); border-radius:var(--radius-s); padding:14px; margin-top:14px; cursor:pointer;}
+.transfer-check input{margin-top:3px;}
+.transfer-check b{display:block; font-size:.92rem;}
+.transfer-check span{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:2px;}
+.slots-note{font-size:.78rem; color:var(--ink-faint); margin:6px 0 14px; font-variant-numeric:tabular-nums;}
+.summary-row{display:flex; justify-content:space-between; font-size:.9rem; padding:8px 0; color:var(--ink-soft);}
+.summary-row.total{font-weight:800; color:var(--ink); font-size:1.1rem; border-top:1px solid var(--border); margin-top:6px; padding-top:14px;}
+.reg-nav{display:flex; justify-content:space-between; margin-top:28px; gap:12px;}
+.success-box{text-align:center; padding:20px 0;}
+.success-badge{width:74px; height:74px; border-radius:50%; background:var(--success-tint); color:var(--success); display:flex; align-items:center; justify-content:center; margin:0 auto 20px;}
+.success-badge svg{width:36px; height:36px;}
+.bib{display:inline-flex; flex-direction:column; align-items:center; gap:2px; background:var(--ink); color:var(--stone-50); border-radius:14px; padding:20px 34px; margin:18px 0;}
+.bib b{font-family:var(--font-display); font-size:2.4rem; letter-spacing:.02em;}
+.bib span{font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; color:var(--granite);}
+.qr{width:104px; height:104px; margin:0 auto;}
+
+/* ---------- CABINET ---------- */
+.cab-grid{display:grid; grid-template-columns:280px 1fr; gap:28px; align-items:flex-start;}
+@media (max-width:820px){.cab-grid{grid-template-columns:1fr;}}
+.profile-card{text-align:center;}
+.profile-card .avatar{width:64px; height:64px; font-size:1.3rem; margin:0 auto 14px;}
+.profile-card h3{font-size:1.15rem;}
+.profile-card .role{font-size:.8rem; color:var(--ink-faint); margin-top:2px;}
+.profile-list{margin-top:18px; text-align:left; font-size:.85rem; display:flex; flex-direction:column; gap:10px; color:var(--ink-soft);}
+.profile-list .pi{display:flex; align-items:center; gap:9px;}
+.reg-card{display:flex; gap:16px; padding:18px; border:1px solid var(--border); border-radius:var(--radius-m); background:var(--surface); margin-bottom:14px; align-items:center;}
+.reg-card .ric{width:48px; height:48px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; flex:none;}
+.reg-card .rinfo{flex:1;}
+.reg-card .rinfo h4{font-size:1rem; font-family:var(--font-display); font-weight:700;}
+.reg-card .rinfo .rd{font-size:.8rem; color:var(--ink-faint); margin-top:3px;}
+.reg-card .ract{display:flex; flex-direction:column; align-items:flex-end; gap:8px;}
+@media (max-width:560px){.reg-card{flex-wrap:wrap;} .reg-card .ract{width:100%; flex-direction:row; justify-content:space-between; align-items:center;}}
+
+/* ---------- ABOUT view ---------- */
+.team-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:30px;}
+@media (max-width:820px){.team-grid{grid-template-columns:repeat(2,1fr);}}
+.team-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); padding:22px; text-align:center;}
+.team-card .avatar{width:56px; height:56px; margin:0 auto 12px; font-size:1.1rem;}
+.team-card h4{font-size:.98rem; font-family:var(--font-body); font-weight:800;}
+.team-card p{font-size:.78rem; color:var(--ink-faint); margin-top:3px;}
+
+/* ---------- TRAINING GROUPS / MEMBERSHIP ---------- */
+.group-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:22px;}
+@media (max-width:820px){.group-grid{grid-template-columns:1fr;}}
+.group-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); padding:20px;}
+.group-card h4{font-family:var(--font-display); font-size:1.02rem; margin-bottom:8px;}
+.group-card .group-sched{font-size:.78rem; font-weight:700; color:var(--ember); margin-bottom:8px;}
+.group-card p:not(.group-sched){font-size:.86rem; color:var(--ink-soft); line-height:1.55;}
+.membership-cta{
+  display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  background:var(--spruce-tint); border:1px solid var(--border); border-radius:var(--radius-m); padding:20px 24px; margin-top:16px;
+}
+.membership-cta b{font-family:var(--font-display); font-size:1.2rem;}
+.membership-cta span{display:block; font-size:.82rem; color:var(--ink-soft); margin-top:2px;}
+
+/* ---------- TRAINING CAMP ---------- */
+.camp-case{display:flex; gap:18px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-l); padding:24px; margin-top:28px;}
+.camp-case-badge{width:44px; height:44px; border-radius:11px; background:var(--spruce); color:#fff; display:flex; align-items:center; justify-content:center; flex:none;}
+.camp-case-badge svg{width:22px; height:22px;}
+.camp-case p{font-size:.95rem; color:var(--ink-soft); line-height:1.65; margin-top:8px;}
+.camp-case b{color:var(--ink);}
+@media (max-width:600px){.camp-case{flex-direction:column;}}
+
+.camp-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:20px;}
+@media (max-width:820px){.camp-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.camp-grid{grid-template-columns:1fr;}}
+.camp-item{display:flex; gap:12px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); padding:16px;}
+.camp-item svg{width:22px; height:22px; color:var(--ember); flex:none; margin-top:2px;}
+.camp-item b{display:block; font-size:.92rem;}
+.camp-item span{display:block; font-size:.78rem; color:var(--ink-faint); margin-top:2px;}
+
+.camp-program{display:flex; flex-direction:column; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius-m); overflow:hidden; margin-top:20px;}
+.camp-day{display:flex; gap:16px; align-items:flex-start; background:var(--surface); padding:16px 20px;}
+.camp-day b{font-family:var(--font-display); font-size:1.1rem; color:var(--ember); flex:none; width:22px;}
+.camp-day h4{font-size:.92rem; margin-bottom:3px;}
+.camp-day p{font-size:.84rem; color:var(--ink-soft);}
+
+.camp-pricing{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:20px;}
+@media (max-width:640px){.camp-pricing{grid-template-columns:1fr;}}
+.camp-plan{background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius-l); padding:26px;}
+.camp-plan.featured{border-color:var(--ember); box-shadow:var(--shadow);}
+.camp-price{font-family:var(--font-display); font-size:2rem; font-weight:800; margin:10px 0 6px;}
+.camp-plan p{font-size:.85rem; color:var(--ink-soft); margin-bottom:18px;}
+
+.camp-form-card{max-width:560px;}
+</style>
+
+<!-- ============ ICON SPRITE ============ -->
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="i-mountain" viewBox="0 0 24 24"><path d="M2 20 L9 7 L13 13 L16 8 L22 20 Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M16 8 L18.5 12 L14.5 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+<symbol id="i-ski" viewBox="0 0 24 24"><path d="M3 19 Q5 21 7 19 L15 6 Q16 4.3 18 5 Q20 5.7 19 7.6 L11 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="16.3" cy="8.7" r="1.6" fill="currentColor" stroke="none"/><path d="M9 13 L14 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3 C15 8 18 11.2 18 14.5 A6 6 0 0 1 6 14.5 C6 11.2 9 8 12 3 Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19 C5 9 12 4 20 4 C20 12 15 19 5 19 Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 18 C10 14 14 10 19 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21 C12 21 5 14 5 9.2 A7 7 0 0 1 19 9.2 C19 14 12 21 12 21 Z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="9.2" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5V12L15 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 9 a2 2 0 0 0 0 6 V17 a1 1 0 0 0 1 1 H20 a1 1 0 0 0 1-1 V7 a1 1 0 0 0-1-1 H4 a1 1 0 0 0-1 1 Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5v11" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2.4 2.4"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.3" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 20 C5.5 15.5 8.3 13.5 12 13.5 C15.7 13.5 18.5 15.5 19.5 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 L10 17.5 L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12H19M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 11.5 12 16l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 19.5h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="14.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.3 9.6 7 3.5h3l2 4.6 2-4.6h3l-2.3 6.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+<symbol id="i-route" viewBox="0 0 24 24"><path d="M4 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M20 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 15c3 0 4-9 7-9h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2.6 2.6"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="M4 16v-3.5L6 8h12l2 4.5V16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3.5 16h17v2.5a.9.9 0 0 1-.9.9h-1.2a.9.9 0 0 1-.9-.9V17H6.5v1.5a.9.9 0 0 1-.9.9H4.4a.9.9 0 0 1-.9-.9V16Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="7.5" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16.5" cy="16" r="1.3" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-tent" viewBox="0 0 24 24"><path d="M12 4 L21 19 H3 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 4 L12 19 M8.5 19 L12 11 L15.5 19" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+</defs>
+</svg>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="container nav-row">
+    <button class="brand" data-nav="home">
+      <span class="brand-mark"><img src="__IMG_LOGO__" alt="Peloton Ridder"></span>
+      <span>PELOTON RIDDER<span class="sub">Беговой клуб · Риддер</span></span>
+    </button>
+    <ul class="nav-links">
+      <li><button data-nav="home">Главная</button></li>
+      <li><button data-nav="events">Забеги</button></li>
+      <li><button data-nav="camp">Лагерь</button></li>
+      <li><button data-nav="about">О клубе</button></li>
+    </ul>
+    <div class="nav-right">
+      <button class="nav-cabinet" data-nav="cabinet"><span class="avatar" id="navAvatar">ИП</span> Кабинет</button>
+      <button class="btn btn-primary btn-sm" data-nav="signup">Регистрация</button>
+      <button class="nav-burger" id="burgerBtn" aria-label="Меню"><svg class="icon" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <button data-nav="home">Главная</button>
+    <button data-nav="events">Забеги</button>
+    <button data-nav="camp">Тренировочный лагерь</button>
+    <button data-nav="about">О клубе</button>
+    <button data-nav="cabinet">Личный кабинет</button>
+    <button data-nav="signup">Регистрация</button>
+  </div>
+</nav>
+
+<!-- ============ VIEW: HOME ============ -->
+<div class="view active" id="view-home">
+
+  <section class="hero" style="margin-bottom:0;">
+    <img class="hero-scene" alt="" src="__IMG_HERO__">
+    <div class="hero-scrim"></div>
+    <div class="container">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow"><span class="dot"></span>Сезон 2026 · 4 старта в горах Алтая</span>
+          <h1 style="margin-top:16px;">Беги там,<br>где начинаются <em>горы</em>.</h1>
+          <p class="lead">Peloton Ridder — не только четыре старта в год. Это клуб: регулярные тренировки для местных бегунов и тренировочный лагерь для тех, кто приезжает готовиться к своим горным стартам.</p>
+          <div class="hero-ctas">
+            <button class="btn btn-primary" onclick="showView('about')"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg>Вступить в клуб</button>
+            <button class="btn btn-ghost" data-nav="events">Все забеги <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          </div>
+        </div>
+        <div class="next-card">
+          <span class="eyebrow"><span class="dot"></span>Ближайший старт</span>
+          <div class="race-name" id="nextRaceName">—</div>
+          <div class="meta-row">
+            <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-clock"/></svg><span id="nextRaceDate"></span></span>
+            <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg><span id="nextRaceLoc"></span></span>
+          </div>
+          <div class="countdown" id="countdown">
+            <div class="count-cell"><b id="cd-days">--</b><span>дней</span></div>
+            <div class="count-cell"><b id="cd-hours">--</b><span>часов</span></div>
+            <div class="count-cell"><b id="cd-min">--</b><span>минут</span></div>
+            <div class="count-cell"><b id="cd-sec">--</b><span>секунд</span></div>
+          </div>
+          <button class="btn btn-primary btn-block" style="margin-top:14px;" id="nextRaceBtn">Смотреть забег</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="stats-strip">
+        <div class="stat-cell"><b>4</b><span>старта за сезон</span></div>
+        <div class="stat-cell"><b>7-й</b><span>год клуба (с 2019)</span></div>
+        <div class="stat-cell"><b>1 200+</b><span>участников в сезоне</span></div>
+        <div class="stat-cell"><b>3</b><span>дистанции на каждом старте</span></div>
+      </div>
+
+      <div class="section-head">
+        <div>
+          <span class="eyebrow"><span class="dot"></span>Календарь сезона</span>
+          <h2 style="margin-top:10px;">Четыре старта — один сезон</h2>
+        </div>
+        <button class="btn btn-ghost" data-nav="events">Все забеги и архив</button>
+      </div>
+      <div class="event-grid" id="homeEventGrid"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="about-teaser">
+        <img src="__IMG_ABOUT__" alt="">
+        <div class="scrim"></div>
+        <div class="content">
+          <span class="eyebrow" style="color:#EFC169;"><span class="dot" style="background:#EFC169;"></span>О клубе</span>
+          <h2 style="margin-top:12px;">Развиваем бег и лыжи в предгорьях Алтая</h2>
+          <p>С 2019 года мы проводим старты для тех, кто живёт рядом с горами и хочет использовать это по максимуму — от новичков на 5&nbsp;км до тех, кто идёт на полумарафон в гору.</p>
+          <button class="btn btn-spruce" style="margin-top:22px; background:#1F3A30;" data-nav="about">Узнать о команде <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: EVENTS (list) ============ -->
+<div class="view" id="view-events">
+  <section style="padding-top:44px;">
+    <div class="container">
+      <span class="eyebrow"><span class="dot"></span>Забеги Peloton Ridder</span>
+      <div class="section-head" style="margin-top:10px;">
+        <h2>Календарь и архив стартов</h2>
+        <div class="tabbar">
+          <button class="active" data-etab="calendar">Календарь 2026</button>
+          <button data-etab="archive">Архив</button>
+        </div>
+      </div>
+      <div class="event-grid" id="eventsCalendarGrid"></div>
+      <div class="event-grid" id="eventsArchiveGrid" style="display:none; margin-top:0;"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: EVENT DETAIL ============ -->
+<div class="view" id="view-detail">
+  <section style="padding-top:36px;">
+    <div class="container">
+      <button class="btn btn-ghost btn-sm" onclick="showView('events')" style="margin-bottom:22px;"><svg class="icon" viewBox="0 0 24 24" style="transform:rotate(180deg)"><use href="#i-arrow"/></svg> Все забеги</button>
+
+      <div class="detail-hero" id="detailHero">
+        <img class="detail-hero-scene" id="detailScene" alt="" src="">
+        <div class="detail-hero-scrim"></div>
+        <span class="pill" id="detailPill">Регистрация открыта</span>
+        <h1 id="detailTitle">—</h1>
+        <div class="meta-row" id="detailMeta"></div>
+        <div class="utmb-stats" id="utmbStats"></div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="card panel-chart">
+          <div class="profile-head">
+            <h3><svg class="icon" viewBox="0 0 24 24" style="color:var(--ember)"><use href="#i-route"/></svg>&nbsp; <span id="profileTitle">Профиль трассы</span> <span id="profileDistLabel" class="profile-dist-label"></span></h3>
+            <div class="profile-actions">
+              <div class="seg" id="profileSeg">
+                <button class="active" data-pview="profile"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg>Профиль</button>
+                <button data-pview="map"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg>Карта</button>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="gpxBtn" onclick="downloadGPX()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> GPX</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="elevChart" height="200"></canvas>
+            <canvas id="mapChart" class="map-canvas" height="200" style="display:none;"></canvas>
+          </div>
+          <p class="gpx-note" id="chartNote">Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.</p>
+        </div>
+
+        <div class="card panel-distances">
+          <h3>Дистанции и стоимость</h3>
+          <div id="distSlotsNote" class="slots-note"></div>
+          <div id="distanceList"></div>
+          <div id="regActions">
+            <button class="btn btn-primary btn-block" id="detailRegisterBtn" style="margin-top:6px;">Зарегистрироваться</button>
+            <p style="font-size:.76rem; color:var(--ink-faint); margin-top:12px; text-align:center;">Оплата Kaspi Pay · подтверждение сразу</p>
+            <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="toggleEventTransfer()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-car"/></svg> Заказать трансфер</button>
+            <div id="eventTransferPanel" class="transfer-panel" style="display:none;">
+              <p class="transfer-note">Риддер → место старта и обратно, от <span id="etTransferPrice">—</span> / человек</p>
+              <div class="field"><label>Количество мест</label><input type="number" id="etTransferSeats" min="1" value="1" oninput="updateEventTransferTotal()"></div>
+              <div class="summary-row total"><span>Итого</span><span id="etTransferTotal">—</span></div>
+              <p style="font-size:.74rem; color:var(--ink-faint); margin-top:8px;">Оплата Kaspi Pay · подтверждение сразу</p>
+              <button class="btn btn-spruce btn-block" style="background:var(--spruce); margin-top:6px;" onclick="submitEventTransfer()">Оплатить трансфер</button>
+            </div>
+            <div id="eventTransferSuccess" class="transfer-panel" style="display:none; text-align:center;">
+              <div class="success-badge" style="width:48px; height:48px; margin:0 auto 10px;"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+              <p style="font-size:.86rem; color:var(--ink-soft);">Трансфер оплачен — место забронировано.</p>
+            </div>
+          </div>
+          <div id="archiveActions" style="display:none;">
+            <p style="font-size:.86rem; color:var(--ink-soft); margin:14px 0;">Забег завершён — доступны протокол и фотографии.</p>
+            <button class="btn btn-ghost btn-block"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Скачать протокол (PDF)</button>
+            <button class="btn btn-ghost btn-block" style="margin-top:10px;"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> Фотогалерея старта</button>
+          </div>
+        </div>
+
+        <div class="card panel-tabs">
+          <div class="dtabs" id="detailTabs">
+            <button class="active" data-dtab="course">О трассе</button>
+            <button data-dtab="reglament">Регламент</button>
+            <button data-dtab="program">Программа дня</button>
+            <button data-dtab="getting">Как добраться</button>
+            <button data-dtab="equipment">Снаряжение</button>
+            <button data-dtab="participants">Список участников</button>
+            <button data-dtab="results">Результаты</button>
+          </div>
+          <div class="dpanel active" data-dpanel="course">
+            <p class="course-lead" id="panelCourse"></p>
+            <div class="landmark-strip" id="landmarkStrip"></div>
+          </div>
+          <div class="dpanel" data-dpanel="reglament">
+            <button class="btn btn-ghost btn-sm" onclick="downloadReglamentPdf()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Скачать полный регламент (PDF)</button>
+            <p class="gpx-note" style="margin:8px 0 18px;">Откроется диалог печати браузера — выберите «Сохранить как PDF». Ниже — краткая версия для сайта.</p>
+            <div id="panelReglament"></div>
+          </div>
+          <div class="dpanel" data-dpanel="program" id="panelProgram"></div>
+          <div class="dpanel" data-dpanel="getting" id="panelGetting"></div>
+          <div class="dpanel" data-dpanel="equipment">
+            <div class="eq-legend">
+              <span class="lg"><span class="eq-tag req">X</span> обязательное — берёте с собой на старт</span>
+              <span class="lg"><span class="eq-tag rec">O</span> рекомендуемое</span>
+            </div>
+            <div id="panelEquipment"></div>
+          </div>
+          <div class="dpanel" data-dpanel="participants">
+            <div class="slots-banner" id="slotsBanner"></div>
+            <div class="participants-filters">
+              <input type="text" id="pSearch" class="p-search" placeholder="Поиск по имени...">
+              <select id="pClub" class="p-select"><option value="">Все клубы</option></select>
+              <select id="pGender" class="p-select"><option value="">Пол: все</option><option value="М">Мужской</option><option value="Ж">Женский</option></select>
+              <select id="pCountry" class="p-select"><option value="">Страна: все</option></select>
+            </div>
+            <div class="participants-head">
+              <span id="participantsCount" class="participants-count"></span>
+            </div>
+            <div class="table-scroll"><table class="results-table" id="participantsTable"><thead><tr><th>Фамилия Имя</th><th>Клуб</th><th>Дистанция</th><th>Пол</th><th>Страна</th></tr></thead><tbody id="participantsBody"></tbody></table></div>
+          </div>
+          <div class="dpanel" data-dpanel="results" id="panelResults"></div>
+        </div>
+
+        <div class="card panel-partners">
+          <h3>Партнёры старта</h3>
+          <div class="partners-row" id="partnersRow"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: REGISTRATION ============ -->
+<div class="view" id="view-register">
+  <section style="padding-top:44px;">
+    <div class="container reg-wrap">
+      <div style="text-align:center; margin-bottom:30px;">
+        <span class="eyebrow"><span class="dot"></span>Регистрация участника</span>
+        <h2 style="margin-top:10px;" id="regEventName">Panorama Fall Run 2026</h2>
+      </div>
+
+      <div class="stepper" id="stepper">
+        <div class="step now" data-step="1"><span class="sc">1</span><span class="sl">Дистанция</span></div>
+        <div class="step-line"></div>
+        <div class="step" data-step="2"><span class="sc">2</span><span class="sl">Данные</span></div>
+        <div class="step-line"></div>
+        <div class="step" data-step="3"><span class="sc">3</span><span class="sl">Оплата</span></div>
+        <div class="step-line"></div>
+        <div class="step" data-step="4"><span class="sc">4</span><span class="sl">Готово</span></div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="reg-panel active card" data-panel="1">
+        <h3>Выберите дистанцию</h3>
+        <div id="regSlotsNote" class="slots-note"></div>
+        <div id="regDistanceList"></div>
+        <label class="transfer-check">
+          <input type="checkbox" id="regTransfer" onchange="updateSummary()">
+          <div><b>Добавить трансфер до старта</b><span>Риддер → место старта и обратно · <span id="regTransferPrice">—</span></span></div>
+        </label>
+        <div class="reg-nav"><span></span><button class="btn btn-primary" onclick="regNext(1)">Далее <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="reg-panel card" data-panel="2">
+        <h3>Данные участника</h3>
+        <div style="margin-top:16px;">
+          <div class="field-row">
+            <div class="field"><label>Имя</label><input type="text" placeholder="Иван"></div>
+            <div class="field"><label>Фамилия</label><input type="text" placeholder="Петров"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Дата рождения</label><input type="date"></div>
+            <div class="field"><label>Пол</label><select><option>Мужской</option><option>Женский</option></select></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Телефон</label><input type="tel" placeholder="+7 705 000 00 00"></div>
+            <div class="field"><label>Email</label><input type="email" placeholder="ivan@mail.kz"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Город</label><input type="text" placeholder="Риддер"></div>
+            <div class="field"><label>Размер футболки</label><select><option>S</option><option>M</option><option selected>L</option><option>XL</option></select></div>
+          </div>
+          <div class="field"><label>Экстренный контакт (ФИО и телефон)</label><input type="text" placeholder="Мария Петрова, +7 705 111 22 33"></div>
+        </div>
+        <div class="reg-nav"><button class="btn btn-ghost" onclick="regPrev(2)">Назад</button><button class="btn btn-primary" onclick="regNext(2)">К оплате <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="reg-panel card" data-panel="3">
+        <h3>Оплата стартового взноса</h3>
+        <div style="margin-top:16px;">
+          <div class="pay-option sel">
+            <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;color:var(--spruce)"><use href="#i-ticket"/></svg>
+            <div><b>Kaspi Pay</b><div style="font-size:.78rem;color:var(--ink-faint)">Оплата по QR или через приложение Kaspi.kz — единственный способ оплаты клуба</div></div>
+          </div>
+
+          <div style="margin-top:20px; padding-top:14px; border-top:1px dashed var(--border);">
+            <div class="summary-row"><span id="sumEventDist">Panorama Fall Run — 10 км</span><span id="sumPrice">6 000 ₸</span></div>
+            <div class="summary-row" id="sumTransferRow" style="display:none;"><span>Трансфер до старта</span><span id="sumTransferPrice">5 000 ₸</span></div>
+            <div class="summary-row"><span>Сервисный сбор</span><span>0 ₸</span></div>
+            <div class="summary-row total"><span>Итого</span><span id="sumTotal">6 000 ₸</span></div>
+          </div>
+        </div>
+        <div class="reg-nav"><button class="btn btn-ghost" onclick="regPrev(3)">Назад</button><button class="btn btn-primary" onclick="regNext(3)">Оплатить <svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg></button></div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="reg-panel card" data-panel="4">
+        <div class="success-box">
+          <div class="success-badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+          <h3 style="font-size:1.3rem;">Регистрация подтверждена!</h3>
+          <p style="color:var(--ink-soft); margin-top:8px;">Ваш стартовый номер закреплён. Чек и регламент отправлены на email.</p>
+          <div class="bib"><span>Стартовый номер</span><b id="bibNumber">#214</b></div>
+          <div>
+            <svg class="qr" viewBox="0 0 100 100">
+              <rect width="100" height="100" fill="none"/>
+              <g fill="currentColor" id="qrDots"></g>
+            </svg>
+          </div>
+          <div class="hero-ctas" style="justify-content:center; margin-top:22px;">
+            <button class="btn btn-primary" data-nav="cabinet">В личный кабинет</button>
+            <button class="btn btn-ghost"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Скачать чек</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: SIGNUP ============ -->
+<div class="view" id="view-signup">
+  <section style="padding-top:44px;">
+    <div class="container reg-wrap">
+      <div style="text-align:center; margin-bottom:30px;">
+        <span class="eyebrow"><span class="dot"></span>Аккаунт Peloton Ridder</span>
+        <h2 style="margin-top:10px;">Создайте профиль участника</h2>
+        <p style="color:var(--ink-soft); margin-top:10px;">Данные сохранятся в личном кабинете — не нужно вводить их заново при регистрации на каждый старт.</p>
+      </div>
+
+      <div class="card">
+        <div class="field-row">
+          <div class="field"><label>Имя</label><input type="text" id="suFirst" placeholder="Иван"></div>
+          <div class="field"><label>Фамилия</label><input type="text" id="suLast" placeholder="Петров"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Email</label><input type="email" id="suEmail" placeholder="ivan@mail.kz"></div>
+          <div class="field"><label>Телефон</label><input type="tel" id="suPhone" placeholder="+7 705 000 00 00"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Город</label><input type="text" id="suCity" placeholder="Риддер"></div>
+          <div class="field"><label>Дата рождения</label><input type="date" id="suBirth"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Пароль</label><input type="password" id="suPass" placeholder="Минимум 8 символов"></div>
+          <div class="field"><label>Повторите пароль</label><input type="password" id="suPass2" placeholder="Ещё раз"></div>
+        </div>
+        <label style="display:flex; align-items:flex-start; gap:10px; font-size:.82rem; color:var(--ink-soft); margin:6px 0 22px; cursor:pointer;">
+          <input type="checkbox" id="suAgree" style="margin-top:3px;">
+          Согласен на хранение и обработку персональных данных клубом Peloton Ridder
+        </label>
+        <button class="btn btn-primary btn-block" onclick="createProfile()">Создать профиль</button>
+        <p style="text-align:center; font-size:.85rem; color:var(--ink-faint); margin-top:16px;">
+          Уже есть аккаунт? <a href="#" onclick="event.preventDefault(); showView('cabinet')" style="color:var(--ember); font-weight:700;">Войти</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: CABINET ============ -->
+<div class="view" id="view-cabinet">
+  <section style="padding-top:44px;">
+    <div class="container">
+      <span class="eyebrow"><span class="dot"></span>Личный кабинет</span>
+      <h2 style="margin-top:10px; margin-bottom:30px;">Мои старты</h2>
+      <div class="cab-grid">
+        <div class="card profile-card">
+          <div class="avatar" id="cabAvatar">ИП</div>
+          <h3 id="cabName">Иван Петров</h3>
+          <div class="role" id="cabRole">Участник с 2023 года</div>
+          <div class="profile-list">
+            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg> <span id="cabEmail">ivan.petrov@mail.kz</span></div>
+            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> <span id="cabCity">Риддер, ВКО</span></div>
+            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg> 4 финиша, личник 21.1 км — 1:52:47</div>
+          </div>
+          <button class="btn btn-ghost btn-block" style="margin-top:20px;">Редактировать профиль</button>
+        </div>
+
+        <div>
+          <h4 class="eyebrow-label" style="margin-bottom:14px;">Предстоящие старты</h4>
+          <div class="reg-card">
+            <div class="ric" style="background:#E2531F;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-leaf"/></svg></div>
+            <div class="rinfo">
+              <h4>Panorama Fall Run — 10 км</h4>
+              <div class="rd">19 сентября 2026 · стартовый номер #214</div>
+            </div>
+            <div class="ract">
+              <span class="pill open"><span class="pdot"></span>Оплачено</span>
+              <button class="btn btn-ghost btn-sm">Билет / QR</button>
+            </div>
+          </div>
+
+          <h4 class="eyebrow-label" style="margin:26px 0 14px;">История стартов</h4>
+          <div class="reg-card">
+            <div class="ric" style="background:#29473B;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-drop"/></svg></div>
+            <div class="rinfo">
+              <h4>Radon Race — 21.1 км</h4>
+              <div class="rd">5 июля 2026 · результат 1:52:47 · 14 место в категории</div>
+            </div>
+            <div class="ract">
+              <span class="pill done">Завершён</span>
+              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Протокол</button>
+            </div>
+          </div>
+          <div class="reg-card">
+            <div class="ric" style="background:#7A8B6F;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-ski"/></svg></div>
+            <div class="rinfo">
+              <h4>Ski Summer Fest — 5 км</h4>
+              <div class="rd">13 июня 2026 · результат 0:24:12</div>
+            </div>
+            <div class="ract">
+              <span class="pill done">Завершён</span>
+              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Протокол</button>
+            </div>
+          </div>
+          <div class="reg-card">
+            <div class="ric" style="background:#8A6D3B;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-mountain"/></svg></div>
+            <div class="rinfo">
+              <h4>Ridder UpHill — 6 км</h4>
+              <div class="rd">14 марта 2026 · результат 0:41:03</div>
+            </div>
+            <div class="ract">
+              <span class="pill done">Завершён</span>
+              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Протокол</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: ABOUT ============ -->
+<div class="view" id="view-about">
+  <section style="padding-top:44px;">
+    <div class="container">
+      <span class="eyebrow"><span class="dot"></span>О клубе</span>
+      <h2 style="margin-top:10px; max-width:16ch;">Развитие циклических видов спорта в Риддере</h2>
+      <p style="color:var(--ink-soft); max-width:62ch; margin-top:16px; font-size:1.02rem;">Peloton Ridder — спортивный клуб, созданный в 2019 году для развития бега, лыж и массовой физической культуры среди молодёжи Риддера и Восточного Казахстана. Мы организуем четыре старта в год на разном рельефе — от городских дистанций до горных трейлов — и стараемся делать участие доступным для новичков и интересным для опытных спортсменов.</p>
+
+      <div class="about-banner"><img src="__IMG_ABOUT_BANNER__" alt=""></div>
+
+      <div class="stats-strip">
+        <div class="stat-cell"><b>2019</b><span>год основания</span></div>
+        <div class="stat-cell"><b>4</b><span>старта за сезон</span></div>
+        <div class="stat-cell"><b>25+</b><span>волонтёров на старте</span></div>
+        <div class="stat-cell"><b>1 200+</b><span>участников в сезоне</span></div>
+      </div>
+
+      <h3 style="margin:38px 0 4px;">Команда</h3>
+      <p style="color:var(--ink-soft);">Организаторы, тренеры и волонтёры, которые готовят каждый старт</p>
+      <div class="team-grid">
+        <div class="team-card"><div class="avatar" style="background:var(--ember);">АК</div><h4>Аскар Каримов</h4><p>Основатель, главный организатор</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--spruce); color:#fff;">ЕВ</div><h4>Елена Волкова</h4><p>Технический директор трассы</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--dawn); color:#2A2005;">ДТ</div><h4>Данияр Тлеуов</h4><p>Тренер, беговые группы</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--granite); color:#fff;">СМ</div><h4>Софья Морозова</h4><p>Координатор волонтёров</p></div>
+      </div>
+
+      <h3 style="margin:44px 0 4px;">Тренировочные группы</h3>
+      <p style="color:var(--ink-soft); max-width:62ch;">Peloton Ridder — это не только четыре старта в год: круглый год работают три группы, от первого выхода на пробежку до гор. Первое занятие бесплатно.</p>
+      <div class="group-grid">
+        <div class="group-card">
+          <h4>Начинающие</h4>
+          <p class="group-sched">Пн · Ср · Пт, 18:30 · городской парк</p>
+          <p>Лёгкий бег и постановка техники — для тех, кто готовится к первым 5 км.</p>
+        </div>
+        <div class="group-card">
+          <h4>Средний уровень</h4>
+          <p class="group-sched">Вт · Чт — интервалы, Вс — длительная</p>
+          <p>Темповые и интервальные тренировки для 10 км и полумарафона.</p>
+        </div>
+        <div class="group-card">
+          <h4>Горная группа</h4>
+          <p class="group-sched">Сб, длительная с набором высоты</p>
+          <p>Выезды в горы — подготовка к Ridder UpHill и трейлам с большим набором.</p>
+        </div>
+      </div>
+      <div class="membership-cta">
+        <div>
+          <b>20 000 ₸ / месяц</b>
+          <span>Абонемент на все группы · первое занятие бесплатно</span>
+        </div>
+        <button class="btn btn-primary" onclick="showView('signup')">Вступить в клуб</button>
+      </div>
+
+      <h3 style="margin:44px 0 4px;">Тренировочный лагерь</h3>
+      <p style="color:var(--ink-soft); max-width:62ch;">Готовитесь к своему старту — Kaçkar, UTMB или любой другой горной гонке? Приезжайте тренироваться в предгорья Алтая на реальном наборе высоты.</p>
+      <button class="btn btn-spruce" style="margin-top:16px; background:var(--spruce);" data-nav="camp">Узнать про лагерь <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VIEW: TRAINING CAMP ============ -->
+<div class="view" id="view-camp">
+  <section style="padding-top:44px; padding-bottom:0;">
+    <div class="container">
+      <span class="eyebrow"><span class="dot"></span>Тренировочный лагерь Peloton Ridder</span>
+      <h2 style="margin-top:10px; max-width:20ch;">Готовьтесь к своей вершине — в горах Алтая</h2>
+      <p style="color:var(--ink-soft); max-width:64ch; margin-top:16px; font-size:1.02rem;">Риддер стоит у подножья хребта с реальным набором высоты, техничными спусками и переменчивой погодой — то есть именно тем, с чем вы столкнётесь на старте. Мы принимаем спортсменов, которые готовятся к конкретной гонке, и строим программу под их профиль трассы.</p>
+
+      <div class="camp-case">
+        <div class="camp-case-badge"><svg class="icon" viewBox="0 0 24 24"><use href="#i-mountain"/></svg></div>
+        <div>
+          <div class="eyebrow" style="color:var(--dawn);"><span class="dot" style="background:var(--dawn);"></span>Пример подготовки</div>
+          <p><b>Kaçkar 100K, сентябрь</b> — 82 км, +5 600 м. Спортсмен приехал в Риддер за 10 дней до старта: тренировки на реальном затяжном наборе высоты трассы Ridder UpHill, адаптация к горному рельефу и погоде, разбор пейсинга под профиль своей гонки вместе с тренером клуба.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h3>Что входит</h3>
+      <div class="camp-grid">
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-tent"/></svg><div><b>Проживание</b><span>Гостевой дом рядом со стартовыми трассами</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg><div><b>Тренер на маршруте</b><span>Разбор техники подъёма/спуска и пейсинга</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg><div><b>Трассы под ваш старт</b><span>Профиль высоты подбирается под вашу гонку</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-car"/></svg><div><b>Трансфер</b><span>Встреча из Усть-Каменогорска и обратно</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg><div><b>Восстановление</b><span>Спортивный массаж после длительных тренировок</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-ticket"/></svg><div><b>Малая группа</b><span>До 6 человек на тренера</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h3>Программа (пример на 7 дней)</h3>
+      <div class="camp-program">
+        <div class="camp-day"><b>1</b><div><h4>Заезд</h4><p>Трансфер из Усть-Каменогорска, расселение, лёгкая адаptация к высоте.</p></div></div>
+        <div class="camp-day"><b>2</b><div><h4>Втягивание</h4><p>Лёгкий бег + разбор снаряжения и целей на лагерь с тренером.</p></div></div>
+        <div class="camp-day"><b>3</b><div><h4>Набор высоты</h4><p>Длительная по трассе Ridder UpHill — техника подъёма в гору.</p></div></div>
+        <div class="camp-day"><b>4</b><div><h4>Восстановление</h4><p>Лёгкое движение, массаж, разбор видео техники бега.</p></div></div>
+        <div class="camp-day"><b>5</b><div><h4>Интервалы</h4><p>Силовая работа на подъёмах, отработка ритма дыхания.</p></div></div>
+        <div class="camp-day"><b>6</b><div><h4>Генеральная</h4><p>Длинная тренировка, имитирующая профиль вашего старта.</p></div></div>
+        <div class="camp-day"><b>7</b><div><h4>Отъезд</h4><p>Лёгкая заминка, разбор лагеря, трансфер обратно.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h3>Стоимость</h3>
+      <div class="camp-pricing">
+        <div class="camp-plan">
+          <span class="eyebrow"><span class="dot"></span>7 дней</span>
+          <div class="camp-price">180 000 ₸</div>
+          <p>Проживание, тренер, трансфер, 1 массаж</p>
+          <button class="btn btn-ghost btn-block" onclick="document.getElementById('campFormCard').scrollIntoView({behavior:'smooth'})">Оставить заявку</button>
+        </div>
+        <div class="camp-plan featured">
+          <span class="eyebrow" style="color:var(--dawn);"><span class="dot" style="background:var(--dawn);"></span>14 дней</span>
+          <div class="camp-price">320 000 ₸</div>
+          <p>Проживание, тренер, трансфер, 3 массажа, разбор гонки</p>
+          <button class="btn btn-primary btn-block" onclick="document.getElementById('campFormCard').scrollIntoView({behavior:'smooth'})">Оставить заявку</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="card camp-form-card" id="campFormCard">
+        <h3>Заявка на лагерь</h3>
+        <div id="campFormPanel">
+          <div class="field-row">
+            <div class="field"><label>Имя</label><input type="text" id="campName" placeholder="Иван"></div>
+            <div class="field"><label>Телефон</label><input type="tel" id="campPhone" placeholder="+7 705 000 00 00"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Дата заезда</label><input type="date" id="campDate"></div>
+            <div class="field"><label>Программа</label><select id="campPlan"><option>7 дней</option><option>14 дней</option></select></div>
+          </div>
+          <div class="field"><label>Цель — к какому старту готовитесь</label><input type="text" id="campGoal" placeholder="Например, Kaçkar 100K, сентябрь"></div>
+          <button class="btn btn-primary btn-block" onclick="submitCampForm()">Отправить заявку</button>
+        </div>
+        <div id="campFormSuccess" style="display:none; text-align:center; padding:12px 0;">
+          <div class="success-badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+          <h4 style="font-family:var(--font-display); font-size:1.05rem;">Заявка отправлена</h4>
+          <p style="color:var(--ink-soft); margin-top:8px; font-size:.9rem;">Свяжемся в течение дня, чтобы подтвердить даты и трансфер.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <div class="brand" style="cursor:default; margin-bottom:14px;">
+          <span class="brand-mark"><img src="__IMG_LOGO__" alt="Peloton Ridder"></span>
+          <span>PELOTON RIDDER</span>
+        </div>
+        <p style="font-size:.85rem; color:var(--ink-soft); max-width:32ch;">Клуб циклических видов спорта. Риддер, Восточно-Казахстанская область.</p>
+      </div>
+      <div>
+        <h4 class="eyebrow-label">Забеги</h4>
+        <ul id="footerEventList"></ul>
+      </div>
+      <div>
+        <h4 class="eyebrow-label">Клуб</h4>
+        <ul>
+          <li><a href="#" data-nav="about" onclick="showView('about')">О клубе</a></li>
+          <li><a href="#" data-nav="cabinet" onclick="showView('cabinet')">Личный кабинет</a></li>
+          <li>Партнёрам</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="eyebrow-label">Контакты</h4>
+        <ul>
+          <li>г. Риддер, ВКО</li>
+          <li>info@peloton-ridder.kz</li>
+          <li>Instagram · WhatsApp</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Peloton Ridder</span>
+      <span>Дизайн-прототип редизайна сайта</span>
+    </div>
+  </div>
+</footer>
+
+<div id="printArea">
+  <h1 id="printTitle"></h1>
+  <div class="pmeta" id="printMeta"></div>
+  <div class="pbody" id="printBody"></div>
+</div>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const EVENTS = {
+  panorama: {
+    id:'panorama', name:'Panorama Fall Run', year:2026, dateISO:'2026-09-19T09:00:00+06:00',
+    dateLabel:'19 сентября 2026', location:'Риддер, набережная реки Ульба',
+    icon:'i-leaf', color:'#E2531F', imgKey:'ev_panorama', partners:['homerun','kazzinc','athletex'], transferPrice:5000, totalSlots:200,
+    status:'open',
+    startTime:'09:00',
+    distances:[
+      {km:5, name:'5 км', gain:'+80 м', price:4000, cutoff:'1 ч 15 мин', profile:[{km:0,elev:640},{km:1,elev:650},{km:2,elev:660},{km:3,elev:680},{km:4,elev:710},{km:5,elev:700}]},
+      {km:10, name:'10 км', gain:'+180 м', price:6000, cutoff:'2 ч', profile:[{km:0,elev:640},{km:2,elev:660},{km:4,elev:710},{km:6,elev:690},{km:8,elev:760},{km:10,elev:820}]},
+      {km:21.1, name:'21.1 км', gain:'+420 м', price:9000, cutoff:'3 ч 30 мин', profile:[{km:0,elev:640},{km:2,elev:660},{km:4,elev:710},{km:6,elev:690},{km:8,elev:760},{km:10,elev:820},{km:13,elev:790},{km:16,elev:860},{km:18,elev:900},{km:21.1,elev:830}]},
+    ],
+    courseIntro:'<b>Panorama Fall Run</b> начинается там же, где заканчивается город — на набережной Ульбы. Первые километры — асфальт и толпа провожающих, потом трасса ныряет в сосновый распадок и начинает набирать высоту. Ближе к середине дистанции открывается смотровая точка, ради которой всё и задумано: хребты Алтая в осенней раскраске, без единого дома в кадре. Финиш — там же, на набережной, круг замыкается.',
+    landmarks:[
+      {name:'Набережная Ульбы', elev:640, desc:'Старт вдоль реки — асфальт, толпа провожающих, шум города ещё рядом.', img:'lm_river'},
+      {name:'Сосновый распадок', elev:760, desc:'Трасса уходит в лес, тень и хвоя — начинается настоящий трейл.', img:'lm_forest'},
+      {name:'Смотровая «Панорама»', elev:900, desc:'Высшая точка маршрута — хребты Алтая целиком в кадре.', img:'lm_summit'},
+      {name:'Финиш на набережной', elev:830, desc:'Круг замыкается там же, где начался, под аплодисменты у городка финиша.', img:'lm_mist'},
+    ],
+    equipment:[
+      {group:'Одежда и обувь', items:[
+        {name:'Закрытые беговые кроссовки (трейл или шоссе)', req:true},
+        {name:'Ветрозащитная куртка', req:true},
+        {name:'Головной убор от солнца', req:false},
+      ]},
+      {group:'Снаряжение', items:[
+        {name:'Смартфон с заряженным аккумулятором', req:true},
+        {name:'Стартовый номер на груди', req:true},
+        {name:'Мягкая ёмкость для воды 0.5 л', req:false},
+      ]},
+      {group:'Аварийное', items:[
+        {name:'Свисток', req:false},
+        {name:'Пластырь / лейкопластырь', req:false},
+      ]},
+    ],
+    reglament:'<p>Забег проводится в соответствии с регламентом клуба Peloton Ridder и правилами ВФЛА. Участие с 16 лет (на 5&nbsp;км — с 12 лет в сопровождении взрослого).</p><ul><li>Обязательный медицинский допуск или расписка об ответственности</li><li>Электронный хронометраж по чипу в стартовом номере</li><li>Лимит прохождения дистанции 21.1&nbsp;км — 3 часа 30 минут</li><li>Пункты питания на 5-м, 10-м и 16-м км</li></ul>',
+    program:'<p><b>19 сентября, набережная реки Ульба</b></p><ul><li>07:30 — открытие стартового городка, выдача номеров</li><li>08:45 — разминка</li><li>09:00 — старт 21.1 км и 10 км</li><li>09:15 — старт 5 км</li><li>12:00 — награждение призёров</li><li>13:00 — закрытие</li></ul>',
+    getting:'<p>Старт и финиш — набережная реки Ульба, в 10 минутах пешком от центра Риддера. Парковка у ДК металлургов, бесплатная камера хранения в стартовом городке.</p>',
+    results:null,
+    participants:[
+      {name:'Иванов Пётр', club:'Peloton Ridder', dist:'21.1 км', gender:'М', country:'KAZ'},
+      {name:'Смирнова Анна', club:'Титан Усть-Каменогорск', dist:'10 км', gender:'Ж', country:'KAZ'},
+      {name:'Ким Виктория', club:'Независимый участник', dist:'5 км', gender:'Ж', country:'KAZ'},
+      {name:'Ахметов Данияр', club:'Peloton Ridder', dist:'21.1 км', gender:'М', country:'KAZ'},
+      {name:'Ли Сергей', club:'Altau Trail', dist:'10 км', gender:'М', country:'RUS'},
+      {name:'Морозова Софья', club:'Peloton Ridder', dist:'5 км', gender:'Ж', country:'KAZ'},
+      {name:'Ерболатов Ержан', club:'СШОР Риддер', dist:'21.1 км', gender:'М', country:'KAZ'},
+      {name:'Волкова Елена', club:'Peloton Ridder', dist:'10 км', gender:'Ж', country:'KAZ'},
+      {name:'Ныгыметов Арман', club:'Независимый участник', dist:'5 км', gender:'М', country:'KAZ'},
+      {name:'Петров Иван', club:'Peloton Ridder', dist:'10 км', gender:'М', country:'KAZ'},
+    ],
+  },
+  radon: {
+    id:'radon', name:'Radon Race', year:2026, dateISO:'2026-07-05T08:00:00+06:00',
+    dateLabel:'5 июля 2026', location:'Риддер, район санатория',
+    icon:'i-drop', color:'#29473B', imgKey:'ev_radon', partners:['emil','kazzinc'], transferPrice:5000, totalSlots:200,
+    status:'done',
+    startTime:'08:00',
+    distances:[
+      {km:5, name:'5 км', gain:'+40 м', price:4000, cutoff:'1 ч', profile:[{km:0,elev:610},{km:2,elev:620},{km:3,elev:625},{km:4,elev:618},{km:5,elev:615}]},
+      {km:10, name:'10 км', gain:'+70 м', price:6000, cutoff:'1 ч 40 мин', profile:[{km:0,elev:610},{km:3,elev:625},{km:6,elev:615},{km:9,elev:640},{km:10,elev:635}]},
+      {km:21.1, name:'21.1 км', gain:'+150 м', price:9000, cutoff:'3 ч', profile:[{km:0,elev:610},{km:3,elev:625},{km:6,elev:615},{km:9,elev:640},{km:12,elev:660},{km:15,elev:630},{km:18,elev:645},{km:21.1,elev:615}]},
+    ],
+    courseIntro:'<b>Radon Race</b> — самый быстрый старт сезона: ровный асфальт от санатория по долине и обратно. Никакого набора высоты, зато честная сертифицированная дистанция для личных рекордов. Трасса идёт через сосновый бор, мимо санаторской зоны с минеральными источниками, давшими название забегу.',
+    landmarks:[
+      {name:'Санаторий, старт', elev:610, desc:'Общий старт всех дистанций у центрального входа.', img:'lm_meadow'},
+      {name:'Сосновый бор', elev:640, desc:'Ровный асфальт в тени леса — самый быстрый участок трассы.', img:'lm_forest'},
+      {name:'Разворотный пункт', elev:660, desc:'Дальняя точка маршрута, далее — та же дорога обратно.', img:'ev_radon'},
+      {name:'Финиш у санатория', elev:615, desc:'Финишная прямая вдоль ограды санаторского парка.', img:'lm_mist'},
+    ],
+    equipment:[
+      {group:'Одежда и обувь', items:[
+        {name:'Беговые кроссовки', req:true},
+        {name:'Спортивная форма по погоде', req:false},
+      ]},
+      {group:'Снаряжение', items:[
+        {name:'Стартовый номер на груди', req:true},
+        {name:'Смартфон (рекомендуется)', req:false},
+      ]},
+    ],
+    reglament:'<p>Шоссейный забег в честь местных радоновых источников. Покрытие — асфальт, трасса сертифицирована по протяжённости.</p><ul><li>Участие с 16 лет</li><li>Хронометраж по чипу</li><li>Лимит на 21.1 км — 3 часа</li></ul>',
+    program:'<p><b>5 июля, район санатория</b></p><ul><li>07:00 — регистрация и выдача номеров</li><li>07:45 — разминка</li><li>08:00 — общий старт всех дистанций</li><li>11:00 — награждение</li></ul>',
+    getting:'<p>Старт у центрального входа санатория. Автобусы от центра Риддера каждые 20 минут с 06:30.</p>',
+    results:[
+      {place:1,name:'Д. Тлеуов',dist:'21.1 км',time:'1:11:04'},
+      {place:2,name:'А. Каримов',dist:'21.1 км',time:'1:14:32'},
+      {place:3,name:'И. Петров',dist:'21.1 км',time:'1:52:47'},
+    ],
+    participants:[
+      {name:'Тлеуов Данияр', club:'Peloton Ridder', dist:'21.1 км', gender:'М', country:'KAZ'},
+      {name:'Каримов Аскар', club:'Peloton Ridder', dist:'21.1 км', gender:'М', country:'KAZ'},
+      {name:'Петров Иван', club:'Peloton Ridder', dist:'21.1 км', gender:'М', country:'KAZ'},
+      {name:'Байжанова Гульнара', club:'Титан Усть-Каменогорск', dist:'10 км', gender:'Ж', country:'KAZ'},
+      {name:'Орлов Максим', club:'Независимый участник', dist:'10 км', gender:'М', country:'RUS'},
+      {name:'Садыкова Дана', club:'Altau Trail', dist:'5 км', gender:'Ж', country:'KAZ'},
+      {name:'Ахметова Жанна', club:'СШОР Риддер', dist:'5 км', gender:'Ж', country:'KAZ'},
+      {name:'Бекбосынов Ринат', club:'Независимый участник', dist:'10 км', gender:'М', country:'KGZ'},
+    ],
+  },
+  ski: {
+    id:'ski', name:'Ski Summer Fest', year:2026, dateISO:'2026-06-13T09:00:00+06:00',
+    dateLabel:'13 июня 2026', location:'Горнолыжный курорт «Ивановский хребет»',
+    icon:'i-ski', color:'#7A8B6F', imgKey:'ev_ski', partners:['athletex','homerun'], transferPrice:5000, totalSlots:200,
+    status:'done',
+    startTime:'09:40',
+    distances:[
+      {km:1, name:'1 км (дети)', gain:'+15 м', price:1000, cutoff:'без лимита', profile:[{km:0,elev:900},{km:0.5,elev:910},{km:1,elev:900}]},
+      {km:5, name:'5 км', gain:'+60 м', price:4000, cutoff:'45 мин', profile:[{km:0,elev:900},{km:1,elev:920},{km:2,elev:940},{km:3,elev:930},{km:4,elev:920},{km:5,elev:910}]},
+      {km:15, name:'15 км', gain:'+320 м', price:7000, cutoff:'2 ч', profile:[{km:0,elev:900},{km:2,elev:940},{km:4,elev:920},{km:6,elev:980},{km:9,elev:1040},{km:12,elev:1010},{km:15,elev:930}]},
+    ],
+    courseIntro:'<b>Ski Summer Fest</b> — фестиваль летних видов лыжного спорта на трассах горнолыжного курорта «Ивановский хребет». Роллеры вместо лыж, тот же рельеф и та же техника. Трасса петляет между просеками курорта с несколькими короткими подъёмами — идеальный полигон для тех, кто готовится к зимнему сезону.',
+    landmarks:[
+      {name:'Старт у канатки', elev:900, desc:'Старт и финиш у нижней станции подъёмника курорта.', img:'lm_lift'},
+      {name:'Просека №3', elev:940, desc:'Плавный подъём между соснами, самый техничный участок.', img:'lm_forest'},
+      {name:'Верхняя точка петли', elev:1040, desc:'Разворот маршрута, дальше — спуск к финишу.', img:'lm_summit'},
+      {name:'Финишная поляна', elev:930, desc:'Награждение и пикник прямо у трассы.', img:'lm_meadow'},
+    ],
+    equipment:[
+      {group:'Обязательная экипировка', items:[
+        {name:'Роллеры (свои или прокат на месте)', req:true},
+        {name:'Защитный шлем', req:true},
+        {name:'Перчатки', req:true},
+      ]},
+      {group:'Рекомендуется', items:[
+        {name:'Наколенники и налокотники', req:false},
+        {name:'Солнцезащитные очки', req:false},
+      ]},
+    ],
+    reglament:'<p>Фестиваль летних видов лыжного спорта: старты на роллерах на трассах горнолыжного курорта. Обязательна защитная экипировка (шлем).</p><ul><li>Свои роллеры и палки — либо прокат на месте</li><li>Хронометраж по чипу</li></ul>',
+    program:'<p><b>13 июня, курорт «Ивановский хребет»</b></p><ul><li>08:00 — сбор участников</li><li>09:00 — детский забег 1 км</li><li>09:40 — старт 5 км</li><li>10:15 — старт 15 км</li><li>13:00 — награждение и пикник</li></ul>',
+    getting:'<p>Курорт в 12 км от центра Риддера. Трансфер от Дворца спорта в 07:30 и 08:00.</p>',
+    results:[
+      {place:1,name:'Е. Волкова',dist:'15 км',time:'0:52:10'},
+      {place:2,name:'С. Морозова',dist:'15 км',time:'0:55:44'},
+      {place:3,name:'И. Петров',dist:'5 км',time:'0:24:12'},
+    ],
+    participants:[
+      {name:'Волкова Елена', club:'Peloton Ridder', dist:'15 км', gender:'Ж', country:'KAZ'},
+      {name:'Морозова Софья', club:'Peloton Ridder', dist:'15 км', gender:'Ж', country:'KAZ'},
+      {name:'Петров Иван', club:'Peloton Ridder', dist:'5 км', gender:'М', country:'KAZ'},
+      {name:'Тлеуов Данияр', club:'Peloton Ridder', dist:'15 км', gender:'М', country:'KAZ'},
+      {name:'Ким Виктория', club:'Независимый участник', dist:'5 км', gender:'Ж', country:'KAZ'},
+      {name:'Логинов Артём', club:'Altau Trail', dist:'15 км', gender:'М', country:'RUS'},
+      {name:'Ныгыметова Аружан', club:'СШОР Риддер', dist:'1 км', gender:'Ж', country:'KAZ'},
+    ],
+  },
+  uphill: {
+    id:'uphill', name:'Ridder UpHill', year:2026, dateISO:'2026-03-14T09:00:00+06:00',
+    dateLabel:'14 марта 2026', location:'Гора Ивановский хребет',
+    icon:'i-mountain', color:'#8A6D3B', imgKey:'ev_uphill', partners:['kazzinc','athletex','homerun','emil'], transferPrice:5000, totalSlots:200,
+    status:'done',
+    startTime:'09:00',
+    distances:[
+      {km:6, name:'6 км', gain:'+450 м', price:5000, cutoff:'1 ч 30 мин', profile:[{km:0,elev:620},{km:1.5,elev:780},{km:3,elev:1010},{km:4.5,elev:1180},{km:6,elev:1070}]},
+      {km:12, name:'12 км', gain:'+900 м', price:8000, cutoff:'2 ч 30 мин', profile:[{km:0,elev:620},{km:1.5,elev:780},{km:3,elev:1010},{km:4.5,elev:1180},{km:6,elev:1070},{km:8,elev:1230},{km:10,elev:1390},{km:12,elev:1480}]},
+    ],
+    courseIntro:'<b>Ridder UpHill</b> — самый суровый старт сезона: подъём по трассам горнолыжного курорта почти без спусков. Снежный и грунтовый рельеф в зависимости от погоды марта, резкий перепад температуры от подножия к вершине. Финиш на смотровой площадке — и спуск на подъёмнике для тех, кто добежал.',
+    landmarks:[
+      {name:'Дворец спорта, старт', elev:620, desc:'Общий старт от Дворца спорта, первые метры — разминочный асфальт.', img:'ev_uphill'},
+      {name:'Нижняя станция канатки', elev:1010, desc:'Трасса выходит на склон курорта, начинается настоящий набор высоты.', img:'lm_lift'},
+      {name:'Скальный кулуар', elev:1230, desc:'Самый крутой участок — здесь решается исход гонки.', img:'lm_summit'},
+      {name:'Смотровая площадка, финиш', elev:1480, desc:'Верхняя точка маршрута и финиш — вид на весь Риддер.', img:'lm_mist'},
+    ],
+    equipment:[
+      {group:'Одежда и обувь', items:[
+        {name:'Треккинговые кроссовки с протектором', req:true},
+        {name:'Термобельё', req:true},
+        {name:'Ветрозащитная куртка', req:true},
+        {name:'Перчатки', req:true},
+        {name:'Гейтры от снега', req:false},
+      ]},
+      {group:'Снаряжение', items:[
+        {name:'Трекинговые палки', req:false},
+        {name:'Смартфон с заряженным аккумулятором', req:true},
+        {name:'Ёмкость для воды 1 л', req:true},
+      ]},
+      {group:'Аварийное', items:[
+        {name:'Термоодеяло (min 1.4×2 м)', req:true},
+        {name:'Свисток', req:true},
+        {name:'Запас еды от 400 ккал', req:false},
+      ]},
+    ],
+    reglament:'<p>Горный забег в гору по трассам горнолыжного курорта, снежный/грунтовый рельеф. Обязательно термобельё и треккинговые кроссовки.</p><ul><li>Участие с 18 лет</li><li>Контрольные пункты каждые 3 км</li><li>Лимит на 12 км — 2 часа 30 минут</li></ul>',
+    program:'<p><b>14 марта, гора Ивановский хребет</b></p><ul><li>08:00 — сбор и выдача номеров</li><li>08:45 — разминка</li><li>09:00 — старт 12 км</li><li>09:20 — старт 6 км</li><li>12:30 — награждение на смотровой площадке</li></ul>',
+    getting:'<p>Старт от Дворца спорта, далее подъём по трассе курорта. Финиш — смотровая площадка, спуск на подъёмнике для участников.</p>',
+    results:[
+      {place:1,name:'Д. Тлеуов',dist:'12 км',time:'0:58:21'},
+      {place:2,name:'А. Каримов',dist:'12 км',time:'1:02:09'},
+      {place:3,name:'И. Петров',dist:'6 км',time:'0:41:03'},
+    ],
+    participants:[
+      {name:'Тлеуов Данияр', club:'Peloton Ridder', dist:'12 км', gender:'М', country:'KAZ'},
+      {name:'Каримов Аскар', club:'Peloton Ridder', dist:'12 км', gender:'М', country:'KAZ'},
+      {name:'Петров Иван', club:'Peloton Ridder', dist:'6 км', gender:'М', country:'KAZ'},
+      {name:'Волкова Елена', club:'Peloton Ridder', dist:'6 км', gender:'Ж', country:'KAZ'},
+      {name:'Орлов Максим', club:'Независимый участник', dist:'12 км', gender:'М', country:'RUS'},
+      {name:'Садыкова Дана', club:'Altau Trail', dist:'6 км', gender:'Ж', country:'KAZ'},
+    ],
+  },
+};
+const EVENT_ORDER = ['uphill','ski','radon','panorama'];
+
+const IMAGES = {
+  ev_panorama:"__IMG_EV_PANORAMA__",
+  ev_radon:"__IMG_EV_RADON__",
+  ev_ski:"__IMG_EV_SKI__",
+  ev_uphill:"__IMG_EV_UPHILL__",
+  lm_forest:"__IMG_LM_FOREST__",
+  lm_river:"__IMG_LM_RIVER__",
+  lm_summit:"__IMG_LM_SUMMIT__",
+  lm_lift:"__IMG_LM_LIFT__",
+  lm_meadow:"__IMG_LM_MEADOW__",
+  lm_mist:"__IMG_LM_MIST__",
+};
+const PARTNERS = {
+  homerun: 'Homerun',
+  emil: 'Эмиль',
+  kazzinc: 'Казцинк',
+  athletex: 'AthleteX',
+};
+function renderPartners(ev){
+  const keys = ev.partners || [];
+  document.getElementById('partnersRow').innerHTML = keys.map(k=>`<div class="partner-chip">${PARTNERS[k]||k}</div>`).join('')
+    || '<p style="font-size:.85rem;color:var(--ink-faint)">Партнёры уточняются.</p>';
+}
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seedFromString(s){
+  let h = 0;
+  for(let i=0;i<s.length;i++){ h = (h<<5)-h+s.charCodeAt(i); h |= 0; }
+  return h;
+}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-links button, .mobile-menu button').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-nav')===name);
+  });
+  document.getElementById('mobileMenu').classList.remove('open');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.querySelectorAll('[data-nav]').forEach(el=>{
+  el.addEventListener('click', (e)=>{
+    e.preventDefault();
+    showView(el.getAttribute('data-nav'));
+  });
+});
+document.getElementById('burgerBtn').addEventListener('click', ()=>{
+  document.getElementById('mobileMenu').classList.toggle('open');
+});
+
+/* ============================================================
+   EVENT CARDS
+   ============================================================ */
+function pillContent(status){
+  if(status==='open') return {cls:'pill open', html:'<span class="pdot"></span>Регистрация открыта'};
+  if(status==='soon') return {cls:'pill soon', html:'<span class="pdot"></span>Скоро'};
+  return {cls:'pill done', html:'<span class="pdot"></span>Завершён'};
+}
+function statusPill(status){
+  const pc = pillContent(status);
+  return `<span class="${pc.cls}">${pc.html}</span>`;
+}
+function formatPrice(n){ return n.toLocaleString('ru-RU')+' ₸'; }
+function getFreeSlots(ev){ return Math.max(0, ev.totalSlots - (ev.participants||[]).length); }
+function renderSlotsNote(elId, ev){
+  document.getElementById(elId).textContent = `Свободно ${getFreeSlots(ev)} из ${ev.totalSlots} мест на забег`;
+}
+function renderDistanceOptions(containerId, ev, selectedIdx, onPickFn){
+  document.getElementById(containerId).innerHTML = ev.distances.map((d,i)=>`
+    <div class="dist-option ${i===selectedIdx?'sel':''}" data-idx="${i}" onclick="${onPickFn}(${i})">
+      <div><div class="dn">${d.name}</div><div class="dsub">набор высоты ${d.gain}</div></div>
+      <div class="dp">${formatPrice(d.price)}</div>
+    </div>`).join('');
+}
+function selectDistOption(containerId, i){
+  document.querySelectorAll(`#${containerId} .dist-option`).forEach(el=>el.classList.toggle('sel', +el.getAttribute('data-idx')===i));
+}
+function eventCard(ev){
+  const distTxt = ev.distances.map(d=>d.name.split(' ')[0]).join(' / ') + ' км';
+  return `<button class="event-card" onclick="openEvent('${ev.id}')">
+    <div class="ev-thumb">
+      <img src="${IMAGES[ev.imgKey]}" alt="" loading="lazy">
+      ${statusPill(ev.status)}
+    </div>
+    <div class="ev-body">
+      <div class="event-icon" style="background:${ev.color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><use href="#${ev.icon}"/></svg></div>
+      <h3>${ev.name}</h3>
+      <div class="ev-date">${ev.dateLabel}</div>
+      <div class="ev-dist">${distTxt}</div>
+    </div>
+  </button>`;
+}
+function renderGrids(){
+  const home = EVENT_ORDER.map(id=>EVENTS[id]);
+  document.getElementById('homeEventGrid').innerHTML = home.map(eventCard).join('');
+  document.getElementById('eventsCalendarGrid').innerHTML = home.filter(e=>e.status!=='done').map(eventCard).join('') || '<p style="color:var(--ink-faint)">Новые старты появятся здесь после публикации календаря следующего сезона.</p>';
+  document.getElementById('eventsArchiveGrid').innerHTML = home.filter(e=>e.status==='done').map(eventCard).join('');
+  document.getElementById('footerEventList').innerHTML = EVENT_ORDER.map(id=>`<li>${EVENTS[id].name}</li>`).join('');
+}
+renderGrids();
+
+function getNextEvent(){
+  const now = Date.now();
+  const upcoming = EVENT_ORDER.map(id=>EVENTS[id]).find(e=>new Date(e.dateISO).getTime()>=now);
+  return upcoming || EVENTS[EVENT_ORDER[EVENT_ORDER.length-1]];
+}
+function renderNextRace(){
+  const ev = getNextEvent();
+  document.getElementById('nextRaceName').textContent = ev.name;
+  document.getElementById('nextRaceDate').textContent = ev.dateLabel;
+  document.getElementById('nextRaceLoc').textContent = ev.location;
+  document.getElementById('nextRaceBtn').onclick = ()=>openEvent(ev.id);
+}
+renderNextRace();
+
+function activateBtn(groupSelector, activeBtn){
+  document.querySelectorAll(groupSelector).forEach(b=>b.classList.toggle('active', b===activeBtn));
+}
+function selectEventsTab(tab){
+  activateBtn('[data-etab]', document.querySelector(`[data-etab="${tab}"]`));
+  document.getElementById('eventsCalendarGrid').style.display = tab==='calendar' ? 'grid' : 'none';
+  document.getElementById('eventsArchiveGrid').style.display = tab==='archive' ? 'grid' : 'none';
+}
+document.querySelectorAll('[data-etab]').forEach(btn=>{
+  btn.addEventListener('click', ()=>selectEventsTab(btn.getAttribute('data-etab')));
+});
+
+/* ============================================================
+   EVENT DETAIL
+   ============================================================ */
+let selectedDistIdx = 0;
+let currentPView = 'profile';
+let currentEvent = null;
+let currentDist = 0;
+let currentParticipants = [];
+function openEvent(id){
+  const ev = EVENTS[id];
+  currentEvent = ev;
+  selectedDistIdx = 0;
+  currentPView = 'profile';
+  document.getElementById('detailScene').src = IMAGES[ev.imgKey];
+  const pc = pillContent(ev.status);
+  const pillEl = document.getElementById('detailPill');
+  pillEl.className = pc.cls;
+  pillEl.innerHTML = pc.html;
+  document.getElementById('detailTitle').textContent = ev.name + ' ' + ev.year;
+  document.getElementById('detailMeta').innerHTML = `
+    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${ev.dateLabel}</span>
+    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg>${ev.location}</span>
+    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg>${ev.distances.map(d=>d.name.split(' ')[0]).join(' / ')} км</span>`;
+
+  document.getElementById('panelCourse').innerHTML = ev.courseIntro;
+  renderLandmarks(ev);
+  document.getElementById('panelReglament').innerHTML = ev.reglament;
+  document.getElementById('panelProgram').innerHTML = ev.program;
+  document.getElementById('panelGetting').innerHTML = ev.getting;
+  renderEquipment(ev);
+  document.getElementById('panelResults').innerHTML = ev.results
+    ? `<table class="results-table"><thead><tr><th>Место</th><th>Участник</th><th>Дистанция</th><th>Время</th></tr></thead><tbody>
+        ${ev.results.map(r=>`<tr><td>${medalCell(r.place)}</td><td>${r.name}</td><td>${r.dist}</td><td>${r.time}</td></tr>`).join('')}
+       </tbody></table><p style="margin-top:14px;font-size:.82rem;color:var(--ink-faint)">Полный протокол — в PDF ниже.</p>`
+    : '<p style="color:var(--ink-faint)">Результаты появятся сразу после финиша последнего участника.</p>';
+
+  renderParticipants(ev);
+
+  document.getElementById('regActions').style.display = ev.status==='done' ? 'none' : 'block';
+  document.getElementById('archiveActions').style.display = ev.status==='done' ? 'block' : 'none';
+  document.getElementById('eventTransferPanel').style.display = 'none';
+  document.getElementById('eventTransferSuccess').style.display = 'none';
+  document.getElementById('etTransferSeats').value = 1;
+  renderPartners(ev);
+
+  renderSlotsNote('distSlotsNote', ev);
+  renderDistanceOptions('distanceList', ev, selectedDistIdx, 'pickDist');
+  document.getElementById('detailRegisterBtn').onclick = ()=>openRegister(ev.id, selectedDistIdx);
+
+  showView('detail');
+  selectDetailTab('course');
+  selectProfileView('profile');
+}
+function updateProfileView(){
+  const ev = currentEvent, d = ev.distances[selectedDistIdx];
+  document.getElementById('profileDistLabel').textContent = `· ${d.name} · ${d.gain}`;
+  requestAnimationFrame(()=>{
+    if(currentPView==='map') drawMap('mapChart', d, ev);
+    else drawProfile('elevChart', d.profile, ev.color);
+  });
+  document.getElementById('utmbStats').innerHTML = `
+    <div class="utmb-stat"><span>Дистанция</span><b>${d.km} км</b></div>
+    <div class="utmb-stat"><span>Набор высоты</span><b>${d.gain}</b></div>
+    <div class="utmb-stat"><span>Старт</span><b>${ev.dateLabel.split(' ').slice(0,2).join(' ')} · ${ev.startTime}</b></div>
+    <div class="utmb-stat"><span>Контрольное время</span><b>${d.cutoff}</b></div>`;
+}
+function pickDist(i){
+  selectedDistIdx = i;
+  selectDistOption('distanceList', i);
+  updateProfileView();
+}
+function selectProfileView(view){
+  currentPView = view;
+  activateBtn('#profileSeg button', document.querySelector(`#profileSeg button[data-pview="${view}"]`));
+  document.getElementById('elevChart').style.display = view==='profile' ? 'block':'none';
+  document.getElementById('mapChart').style.display = view==='map' ? 'block':'none';
+  document.getElementById('profileTitle').textContent = view==='profile' ? 'Профиль трассы' : 'Карта маршрута';
+  document.getElementById('chartNote').textContent = view==='profile'
+    ? 'Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.'
+    : 'Схематичная карта по GPS-треку: старт, финиш и контрольные точки маршрута.';
+  updateProfileView();
+}
+document.querySelectorAll('#profileSeg button').forEach(btn=>{
+  btn.addEventListener('click', ()=>selectProfileView(btn.getAttribute('data-pview')));
+});
+function medalCell(place){
+  const colors = {1:'#D9A441',2:'#A79C88',3:'#B97A4B'};
+  if(colors[place]) return `<span class="medal" style="background:${colors[place]}">${place}</span>`;
+  return place;
+}
+function renderLandmarks(ev){
+  document.getElementById('landmarkStrip').innerHTML = (ev.landmarks||[]).map(lm=>`
+    <div class="landmark-card">
+      <div class="landmark-scene-wrap"><img src="${IMAGES[lm.img]}" alt="" loading="lazy"></div>
+      <div class="landmark-body">
+        <div class="lk-elev">${lm.elev} м над уровнем моря</div>
+        <h4>${lm.name}</h4>
+        <p>${lm.desc}</p>
+      </div>
+    </div>`).join('');
+}
+function renderEquipment(ev){
+  document.getElementById('panelEquipment').innerHTML = (ev.equipment||[]).map(g=>`
+    <div class="eq-group">
+      <h4>${g.group}</h4>
+      ${g.items.map(it=>`<div class="eq-row"><span class="eq-tag ${it.req?'req':'rec'}">${it.req?'X':'O'}</span>${it.name}</div>`).join('')}
+    </div>`).join('');
+}
+function renderParticipants(ev){
+  currentParticipants = ev.participants || [];
+  const free = getFreeSlots(ev);
+  document.getElementById('slotsBanner').innerHTML = `<span>Всего мест на забег: <b>${ev.totalSlots}</b></span><span>Свободно сейчас: <b>${free}</b></span>`;
+  const clubs = [...new Set(currentParticipants.map(p=>p.club))].sort();
+  const countries = [...new Set(currentParticipants.map(p=>p.country))].sort();
+  document.getElementById('pClub').innerHTML = '<option value="">Все клубы</option>' + clubs.map(c=>`<option value="${c}">${c}</option>`).join('');
+  document.getElementById('pCountry').innerHTML = '<option value="">Страна: все</option>' + countries.map(c=>`<option value="${c}">${c}</option>`).join('');
+  document.getElementById('pSearch').value = '';
+  document.getElementById('pGender').value = '';
+  filterParticipants();
+}
+function filterParticipants(){
+  const q = document.getElementById('pSearch').value.trim().toLowerCase();
+  const club = document.getElementById('pClub').value;
+  const gender = document.getElementById('pGender').value;
+  const country = document.getElementById('pCountry').value;
+  const filtered = (currentParticipants||[]).filter(p=>
+    (!q || p.name.toLowerCase().includes(q)) &&
+    (!club || p.club===club) &&
+    (!gender || p.gender===gender) &&
+    (!country || p.country===country)
+  );
+  document.getElementById('participantsCount').textContent = `${filtered.length} из ${currentParticipants.length}`;
+  document.getElementById('participantsBody').innerHTML = filtered.map(p=>`
+    <tr><td>${p.name}</td><td>${p.club}</td><td>${p.dist}</td><td>${p.gender}</td><td>${p.country}</td></tr>
+  `).join('') || '<tr><td colspan="5" style="color:var(--ink-faint)">Никого не найдено — попробуйте изменить фильтры.</td></tr>';
+}
+document.getElementById('pSearch').addEventListener('input', filterParticipants);
+['pClub','pGender','pCountry'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', filterParticipants);
+});
+function selectDetailTab(tab){
+  activateBtn('#detailTabs button', document.querySelector(`#detailTabs button[data-dtab="${tab}"]`));
+  document.querySelectorAll('.dpanel').forEach(p=>p.classList.toggle('active', p.getAttribute('data-dpanel')===tab));
+}
+document.querySelectorAll('#detailTabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>selectDetailTab(btn.getAttribute('data-dtab')));
+});
+
+/* ============================================================
+   ELEVATION CHART (canvas)
+   ============================================================ */
+function cv(name, cs){ return (cs || getComputedStyle(document.documentElement)).getPropertyValue(name).trim(); }
+function setupHiDPICanvas(canvasId, cssH){
+  const canvas = document.getElementById(canvasId);
+  const wrap = canvas.parentElement;
+  const cssW = wrap.clientWidth;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cssW,cssH);
+  return {ctx, cssW, cssH};
+}
+function drawProfile(canvasId, points, color){
+  const {ctx, cssW, cssH} = setupHiDPICanvas(canvasId, 200);
+  const cs = getComputedStyle(document.documentElement);
+  const cBorder = cv('--border',cs), cInkFaint = cv('--ink-faint',cs), cSurface = cv('--surface',cs), cInk = cv('--ink',cs);
+
+  const padL=44, padR=14, padT=16, padB=26;
+  const w = cssW-padL-padR, h = cssH-padT-padB;
+  const kms = points.map(p=>p.km), elevs = points.map(p=>p.elev);
+  const minK=0, maxK=Math.max(...kms);
+  const minE=Math.min(...elevs)-30, maxE=Math.max(...elevs)+30;
+  const X = km => padL + (km-minK)/(maxK-minK)*w;
+  const Y = e => padT + h - (e-minE)/(maxE-minE)*h;
+
+  ctx.strokeStyle = cBorder;
+  ctx.fillStyle = cInkFaint;
+  ctx.font = '11px Golos Text, sans-serif';
+  ctx.lineWidth = 1;
+  const gridLines = 4;
+  for(let i=0;i<=gridLines;i++){
+    const e = minE + (maxE-minE)*i/gridLines;
+    const y = Y(e);
+    ctx.globalAlpha = .5;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(cssW-padR,y); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(Math.round(e)+'м', padL-8, y);
+  }
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  [minK, maxK/2, maxK].forEach(km=>{
+    ctx.fillText(km.toFixed(km%1?1:0)+' км', X(km), cssH-padB+8);
+  });
+
+  ctx.beginPath();
+  points.forEach((p,i)=> i===0 ? ctx.moveTo(X(p.km),Y(p.elev)) : ctx.lineTo(X(p.km),Y(p.elev)));
+  ctx.lineTo(X(points[points.length-1].km), Y(minE));
+  ctx.lineTo(X(points[0].km), Y(minE));
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0,padT,0,padT+h);
+  grad.addColorStop(0, color+'55');
+  grad.addColorStop(1, color+'02');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  points.forEach((p,i)=> i===0 ? ctx.moveTo(X(p.km),Y(p.elev)) : ctx.lineTo(X(p.km),Y(p.elev)));
+  ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.stroke();
+
+  const peak = points.reduce((a,b)=> b.elev>a.elev?b:a);
+  [points[0], peak, points[points.length-1]].forEach(p=>{
+    ctx.beginPath(); ctx.arc(X(p.km),Y(p.elev),3.6,0,7); ctx.fillStyle=color; ctx.fill();
+    ctx.beginPath(); ctx.arc(X(p.km),Y(p.elev),3.6,0,7); ctx.strokeStyle=cSurface; ctx.lineWidth=1.6; ctx.stroke();
+  });
+  ctx.fillStyle = cInk;
+  ctx.font = '700 11px Golos Text, sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText(Math.round(peak.elev)+' м', X(peak.km), Y(peak.elev)-8);
+}
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    if(currentEvent && document.getElementById('view-detail').classList.contains('active')){
+      updateProfileView();
+    }
+  }, 120);
+});
+
+/* ============================================================
+   GPX EXPORT
+   ============================================================ */
+function projectPoint(baseLat, baseLon, km, bearingDeg){
+  const R = 6371;
+  const brng = bearingDeg*Math.PI/180;
+  const lat1 = baseLat*Math.PI/180, lon1 = baseLon*Math.PI/180;
+  const d = km/R;
+  const lat2 = Math.asin(Math.sin(lat1)*Math.cos(d) + Math.cos(lat1)*Math.sin(d)*Math.cos(brng));
+  const lon2 = lon1 + Math.atan2(Math.sin(brng)*Math.sin(d)*Math.cos(lat1), Math.cos(d)-Math.sin(lat1)*Math.sin(lat2));
+  return [lat2*180/Math.PI, lon2*180/Math.PI];
+}
+function routeLatLon(d){
+  const baseLat = 50.3403, baseLon = 83.5089, baseBearing = 35;
+  return d.profile.map(p=>{
+    const bearing = baseBearing + 20*Math.sin(p.km/1.6);
+    const [lat,lon] = projectPoint(baseLat, baseLon, p.km, bearing);
+    return {km:p.km, elev:p.elev, lat, lon};
+  });
+}
+function downloadGPX(){
+  const ev = currentEvent;
+  if(!ev) return;
+  const d = ev.distances[selectedDistIdx];
+  const trkpts = routeLatLon(d).map(p=>`<trkpt lat="${p.lat.toFixed(6)}" lon="${p.lon.toFixed(6)}"><ele>${p.elev}</ele></trkpt>`).join('');
+  const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Peloton Ridder" xmlns="http://www.topografix.com/GPX/1/1">
+<metadata><name>${ev.name} ${ev.year} — ${d.name}</name></metadata>
+<trk><name>${ev.name} — ${d.name}</name><trkseg>${trkpts}</trkseg></trk>
+</gpx>`;
+  const blob = new Blob([gpx], {type:'application/gpx+xml'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `peloton-ridder-${ev.id}-${d.km}km.gpx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function drawMap(canvasId, d, ev){
+  const {ctx, cssW, cssH} = setupHiDPICanvas(canvasId, 200);
+  const cs = getComputedStyle(document.documentElement);
+  const terrainBg = cv('--surface-2',cs), ink = cv('--spruce',cs), surface = cv('--surface',cs), faint = cv('--ink-faint',cs);
+  const rng = mulberry32(seedFromString(ev.id+'-map'));
+  ctx.fillStyle = terrainBg; ctx.fillRect(0,0,cssW,cssH);
+  ctx.strokeStyle = faint; ctx.globalAlpha = .3; ctx.lineWidth = 1;
+  for(let i=0;i<6;i++){
+    ctx.beginPath();
+    const yBase = (cssH/6)*i + rng()*10;
+    ctx.moveTo(0, yBase);
+    for(let x=0;x<=cssW;x+=cssW/8){
+      ctx.lineTo(x, yBase + Math.sin(x/40+i)*8 + rng()*6);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  const pts = routeLatLon(d);
+  const lats = pts.map(p=>p.lat), lons = pts.map(p=>p.lon);
+  const padding = 34;
+  const minLat=Math.min(...lats), maxLat=Math.max(...lats), minLon=Math.min(...lons), maxLon=Math.max(...lons);
+  const spanLat = Math.max(maxLat-minLat, 0.0005), spanLon = Math.max(maxLon-minLon, 0.0005);
+  const X = lon => padding + (lon-minLon)/spanLon*(cssW-padding*2);
+  const Y = lat => padding + (1-(lat-minLat)/spanLat)*(cssH-padding*2);
+
+  ctx.beginPath();
+  pts.forEach((p,i)=> i===0 ? ctx.moveTo(X(p.lon),Y(p.lat)) : ctx.lineTo(X(p.lon),Y(p.lat)));
+  ctx.strokeStyle = ink; ctx.globalAlpha = .18; ctx.lineWidth = 6; ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  pts.forEach((p,i)=> i===0 ? ctx.moveTo(X(p.lon),Y(p.lat)) : ctx.lineTo(X(p.lon),Y(p.lat)));
+  ctx.strokeStyle = ev.color; ctx.lineWidth = 3.2;
+  ctx.stroke();
+
+  pts.forEach((p,i)=>{
+    if(i===0 || i===pts.length-1) return;
+    ctx.beginPath(); ctx.arc(X(p.lon),Y(p.lat),3.2,0,7);
+    ctx.fillStyle = surface; ctx.fill();
+    ctx.lineWidth=1.6; ctx.strokeStyle=ev.color; ctx.stroke();
+  });
+  const start = pts[0], finish = pts[pts.length-1];
+  ctx.beginPath(); ctx.arc(X(start.lon),Y(start.lat),6,0,7); ctx.fillStyle=cv('--success',cs); ctx.fill();
+  ctx.lineWidth=2; ctx.strokeStyle=surface; ctx.stroke();
+  ctx.beginPath(); ctx.arc(X(finish.lon),Y(finish.lat),6,0,7); ctx.fillStyle=ev.color; ctx.fill();
+  ctx.lineWidth=2; ctx.strokeStyle=surface; ctx.stroke();
+  ctx.font='700 10px Golos Text, sans-serif'; ctx.fillStyle=ink; ctx.textAlign='left'; ctx.textBaseline='bottom';
+  ctx.fillText('СТАРТ', X(start.lon)+9, Y(start.lat)+4);
+  ctx.textAlign='right';
+  ctx.fillText('ФИНИШ', X(finish.lon)-9, Y(finish.lat)+4);
+
+  const cx = cssW-30, cy = 26;
+  ctx.strokeStyle=ink; ctx.globalAlpha=.5; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.arc(cx,cy,14,0,7); ctx.stroke();
+  ctx.globalAlpha=1;
+  ctx.beginPath(); ctx.moveTo(cx,cy+11); ctx.lineTo(cx,cy-11); ctx.lineTo(cx-4,cy-4); ctx.moveTo(cx,cy-11); ctx.lineTo(cx+4,cy-4);
+  ctx.strokeStyle=ink; ctx.stroke();
+  ctx.font='700 9px Golos Text, sans-serif'; ctx.textAlign='center'; ctx.fillStyle=ink; ctx.fillText('N', cx, cy-15);
+
+  const kmSpan = pts[pts.length-1].km;
+  const barKm = kmSpan>10 ? 5 : 1;
+  const bx = 28, by = cssH-18;
+  ctx.strokeStyle=ink; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+40,by); ctx.stroke();
+  ctx.font='9px Golos Text, sans-serif'; ctx.textAlign='left'; ctx.fillText(`~${barKm} км`, bx, by-6);
+}
+
+/* ============================================================
+   REGLAMENT PDF (browser print)
+   ============================================================ */
+function downloadReglamentPdf(){
+  const ev = currentEvent;
+  if(!ev) return;
+  document.getElementById('printTitle').textContent = `${ev.name} ${ev.year} — Регламент`;
+  document.getElementById('printMeta').textContent = `${ev.dateLabel} · ${ev.location}`;
+  document.getElementById('printBody').innerHTML = ev.reglament;
+  window.print();
+}
+
+/* ============================================================
+   SITE ACCOUNT (SIGN UP)
+   ============================================================ */
+function createProfile(){
+  const first = document.getElementById('suFirst').value.trim() || 'Иван';
+  const last = document.getElementById('suLast').value.trim() || 'Петров';
+  const email = document.getElementById('suEmail').value.trim() || 'ivan.petrov@mail.kz';
+  const city = document.getElementById('suCity').value.trim() || 'Риддер, ВКО';
+  const initials = (first[0]||'').toUpperCase() + (last[0]||'').toUpperCase();
+  const year = new Date().getFullYear();
+
+  document.getElementById('cabAvatar').textContent = initials;
+  document.getElementById('navAvatar').textContent = initials;
+  document.getElementById('cabName').textContent = `${first} ${last}`;
+  document.getElementById('cabRole').textContent = `Участник с ${year} года`;
+  document.getElementById('cabEmail').textContent = email;
+  document.getElementById('cabCity').textContent = city;
+
+  showView('cabinet');
+}
+
+/* ============================================================
+   TRAINING CAMP
+   ============================================================ */
+function submitCampForm(){
+  document.getElementById('campFormPanel').style.display = 'none';
+  document.getElementById('campFormSuccess').style.display = 'block';
+}
+
+/* ============================================================
+   PER-EVENT TRANSFER (Риддер → место старта)
+   ============================================================ */
+function toggleEventTransfer(){
+  const panel = document.getElementById('eventTransferPanel');
+  const open = panel.style.display !== 'block';
+  panel.style.display = open ? 'block' : 'none';
+  if(open) updateEventTransferTotal();
+}
+function updateEventTransferTotal(){
+  const ev = currentEvent;
+  const seats = Math.max(1, parseInt(document.getElementById('etTransferSeats').value) || 1);
+  document.getElementById('etTransferPrice').textContent = formatPrice(ev.transferPrice);
+  document.getElementById('etTransferTotal').textContent = formatPrice(ev.transferPrice * seats);
+}
+function submitEventTransfer(){
+  document.getElementById('eventTransferPanel').style.display = 'none';
+  document.getElementById('eventTransferSuccess').style.display = 'block';
+}
+
+/* ============================================================
+   REGISTRATION FLOW
+   ============================================================ */
+function openRegister(eventId, distIdx){
+  const ev = EVENTS[eventId] || getNextEvent();
+  currentEvent = ev;
+  currentDist = distIdx!=null ? distIdx : 0;
+  document.getElementById('regEventName').textContent = ev.name + ' ' + ev.year;
+  renderSlotsNote('regSlotsNote', ev);
+  renderDistanceOptions('regDistanceList', ev, currentDist, 'pickRegDist');
+  document.getElementById('regTransfer').checked = false;
+  document.getElementById('regTransferPrice').textContent = formatPrice(ev.transferPrice);
+  updateSummary();
+  goStep(1);
+  showView('register');
+}
+function pickRegDist(i){
+  currentDist = i;
+  selectDistOption('regDistanceList', i);
+  updateSummary();
+}
+function updateSummary(){
+  const ev = currentEvent, d = ev.distances[currentDist];
+  const wantsTransfer = document.getElementById('regTransfer').checked;
+  document.getElementById('sumEventDist').textContent = `${ev.name} — ${d.name}`;
+  document.getElementById('sumPrice').textContent = formatPrice(d.price);
+  document.getElementById('sumTransferRow').style.display = wantsTransfer ? 'flex' : 'none';
+  document.getElementById('sumTransferPrice').textContent = formatPrice(ev.transferPrice);
+  document.getElementById('sumTotal').textContent = formatPrice(d.price + (wantsTransfer ? ev.transferPrice : 0));
+}
+function goStep(n){
+  document.querySelectorAll('.step').forEach(s=>{
+    const sn = +s.getAttribute('data-step');
+    s.classList.toggle('now', sn===n);
+    s.classList.toggle('done', sn<n);
+  });
+  document.querySelectorAll('.reg-panel').forEach(p=>{
+    p.classList.toggle('active', +p.getAttribute('data-panel')===n);
+  });
+  document.querySelector('.reg-wrap').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function regNext(from){
+  if(from===3){ finalizeRegistration(); }
+  goStep(from+1);
+}
+function regPrev(from){ goStep(from-1); }
+function finalizeRegistration(){
+  const bib = 200 + Math.floor(Math.random()*90);
+  document.getElementById('bibNumber').textContent = '#'+bib;
+  const qr = document.getElementById('qrDots');
+  let cells = '';
+  for(let y=0;y<9;y++) for(let x=0;x<9;x++){
+    if(Math.random()>0.55 || (x<3&&y<3) || (x>5&&y<3) || (x<3&&y>5)){
+      cells += `<rect x="${x*11+2}" y="${y*11+2}" width="9" height="9"/>`;
+    }
+  }
+  qr.innerHTML = cells;
+}
+
+/* ============================================================
+   COUNTDOWN
+   ============================================================ */
+function tickCountdown(){
+  if(!document.getElementById('view-home').classList.contains('active')) return;
+  const target = new Date(getNextEvent().dateISO).getTime();
+  const now = Date.now();
+  let diff = Math.max(0, target-now);
+  const d = Math.floor(diff/86400000); diff-=d*86400000;
+  const h = Math.floor(diff/3600000); diff-=h*3600000;
+  const m = Math.floor(diff/60000); diff-=m*60000;
+  const s = Math.floor(diff/1000);
+  document.getElementById('cd-days').textContent = d;
+  document.getElementById('cd-hours').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-min').textContent = String(m).padStart(2,'0');
+  document.getElementById('cd-sec').textContent = String(s).padStart(2,'0');
+}
+tickCountdown();
+setInterval(tickCountdown, 1000);
+
+/* init default distance selection sync for detail view first paint */
+document.addEventListener('DOMContentLoaded', ()=>{});
+</script>
+
