@@ -26,8 +26,8 @@
   --radius-s: 6px;
   --radius-m: 12px;
   --radius-l: 20px;
-  --font-display: 'Unbounded', 'Arial Black', sans-serif;
-  --font-body: 'Golos Text', 'Segoe UI', sans-serif;
+  --font-display: 'Unbounded', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Arial Black', sans-serif;
+  --font-body: 'Golos Text', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Segoe UI', sans-serif;
 }
 
 @media (prefers-color-scheme: dark){
@@ -161,6 +161,13 @@ button{font-family:var(--font-body);}
 .nav-links button:hover{color:var(--ink); background:var(--surface-2);}
 .nav-links button.active{color:var(--ink); background:var(--spruce-tint);}
 .nav-right{display:flex; align-items:center; gap:10px;}
+.lang-switch{display:flex; align-items:center; gap:2px; background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:3px;}
+.lang-switch button{background:none; border:none; padding:6px 10px; border-radius:999px; font-weight:700; font-size:.72rem; letter-spacing:.02em; color:var(--ink-faint); cursor:pointer;}
+.lang-switch button.active{background:var(--surface); color:var(--ink); box-shadow:var(--shadow);}
+.mobile-lang-switch{display:flex; gap:6px; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);}
+.mobile-lang-switch button{flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px; font-weight:700; font-size:.78rem; color:var(--ink-soft); cursor:pointer;}
+.mobile-lang-switch button.active{border-color:var(--ember); color:var(--ember-strong);}
+@media (max-width:700px){.lang-switch{display:none;}}
 .nav-cabinet{display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:6px 14px 6px 6px; cursor:pointer; font-weight:600; font-size:.85rem;}
 .avatar{width:28px; height:28px; border-radius:50%; background:var(--dawn); color:#2A2005; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.72rem; flex:none;}
 .nav-burger{display:none;}
@@ -536,27 +543,29 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <div class="container nav-row">
     <button class="brand" data-nav="home">
       <span class="brand-mark"><img src="__IMG_LOGO__" alt="Peloton Ridder"></span>
-      <span>PELOTON RIDDER<span class="sub">Беговой клуб · Риддер</span></span>
+      <span>PELOTON RIDDER<span class="sub" data-i18n="brand.sub">Беговой клуб · Риддер</span></span>
     </button>
     <ul class="nav-links">
-      <li><button data-nav="home">Главная</button></li>
-      <li><button data-nav="events">Забеги</button></li>
-      <li><button data-nav="camp">Лагерь</button></li>
-      <li><button data-nav="about">О клубе</button></li>
+      <li><button data-nav="home" data-i18n="nav.home">Главная</button></li>
+      <li><button data-nav="events" data-i18n="nav.events">Забеги</button></li>
+      <li><button data-nav="camp" data-i18n="nav.camp">Лагерь</button></li>
+      <li><button data-nav="about" data-i18n="nav.about">О клубе</button></li>
     </ul>
     <div class="nav-right">
-      <button class="nav-cabinet" data-nav="cabinet"><span class="avatar" id="navAvatar">ИП</span> Кабинет</button>
-      <button class="btn btn-primary btn-sm" data-nav="signup">Регистрация</button>
+      <div class="lang-switch" id="langSwitch"></div>
+      <button class="nav-cabinet" data-nav="cabinet"><span class="avatar" id="navAvatar">ИП</span> <span data-i18n="nav.cabinet">Кабинет</span></button>
+      <button class="btn btn-primary btn-sm" data-nav="signup" data-i18n="nav.signup">Регистрация</button>
       <button class="nav-burger" id="burgerBtn" aria-label="Меню"><svg class="icon" viewBox="0 0 24 24"><use href="#i-menu"/></svg></button>
     </div>
   </div>
   <div class="mobile-menu" id="mobileMenu">
-    <button data-nav="home">Главная</button>
-    <button data-nav="events">Забеги</button>
-    <button data-nav="camp">Тренировочный лагерь</button>
-    <button data-nav="about">О клубе</button>
-    <button data-nav="cabinet">Личный кабинет</button>
-    <button data-nav="signup">Регистрация</button>
+    <button data-nav="home" data-i18n="nav.home">Главная</button>
+    <button data-nav="events" data-i18n="nav.events">Забеги</button>
+    <button data-nav="camp" data-i18n="nav.camp_full">Тренировочный лагерь</button>
+    <button data-nav="about" data-i18n="nav.about">О клубе</button>
+    <button data-nav="cabinet" data-i18n="nav.cabinet_full">Личный кабинет</button>
+    <button data-nav="signup" data-i18n="nav.signup">Регистрация</button>
+    <div class="mobile-lang-switch" id="mobileLangSwitch"></div>
   </div>
 </nav>
 
@@ -569,28 +578,28 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
     <div class="container">
       <div class="hero-grid">
         <div>
-          <span class="eyebrow"><span class="dot"></span>Сезон 2026 · 4 старта в горах Алтая</span>
-          <h1 style="margin-top:16px;">Беги там,<br>где начинаются <em>горы</em>.</h1>
-          <p class="lead">Peloton Ridder — не только четыре старта в год. Это клуб: регулярные тренировки для местных бегунов и тренировочный лагерь для тех, кто приезжает готовиться к своим горным стартам.</p>
+          <span class="eyebrow"><span class="dot"></span><span data-i18n="hero.eyebrow">Сезон 2026 · 4 старта в горах Алтая</span></span>
+          <h1 style="margin-top:16px;" data-i18n-html="hero.title">Беги там,<br>где начинаются <em>горы</em>.</h1>
+          <p class="lead" data-i18n="hero.lead">Peloton Ridder — не только четыре старта в год. Это клуб: регулярные тренировки для местных бегунов и тренировочный лагерь для тех, кто приезжает готовиться к своим горным стартам.</p>
           <div class="hero-ctas">
-            <button class="btn btn-primary" onclick="showView('about')"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg>Вступить в клуб</button>
-            <button class="btn btn-ghost" data-nav="events">Все забеги <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+            <button class="btn btn-primary" onclick="showView('about')"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg><span data-i18n="hero.join">Вступить в клуб</span></button>
+            <button class="btn btn-ghost" data-nav="events"><span data-i18n="hero.allEvents">Все забеги</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
           </div>
         </div>
         <div class="next-card">
-          <span class="eyebrow"><span class="dot"></span>Ближайший старт</span>
+          <span class="eyebrow"><span class="dot"></span><span data-i18n="next.eyebrow">Ближайший старт</span></span>
           <div class="race-name" id="nextRaceName">—</div>
           <div class="meta-row">
             <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-clock"/></svg><span id="nextRaceDate"></span></span>
             <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg><span id="nextRaceLoc"></span></span>
           </div>
           <div class="countdown" id="countdown">
-            <div class="count-cell"><b id="cd-days">--</b><span>дней</span></div>
-            <div class="count-cell"><b id="cd-hours">--</b><span>часов</span></div>
-            <div class="count-cell"><b id="cd-min">--</b><span>минут</span></div>
-            <div class="count-cell"><b id="cd-sec">--</b><span>секунд</span></div>
+            <div class="count-cell"><b id="cd-days">--</b><span data-i18n="countdown.days">дней</span></div>
+            <div class="count-cell"><b id="cd-hours">--</b><span data-i18n="countdown.hours">часов</span></div>
+            <div class="count-cell"><b id="cd-min">--</b><span data-i18n="countdown.min">минут</span></div>
+            <div class="count-cell"><b id="cd-sec">--</b><span data-i18n="countdown.sec">секунд</span></div>
           </div>
-          <button class="btn btn-primary btn-block" style="margin-top:14px;" id="nextRaceBtn">Смотреть забег</button>
+          <button class="btn btn-primary btn-block" style="margin-top:14px;" id="nextRaceBtn" data-i18n="next.viewRace">Смотреть забег</button>
         </div>
       </div>
     </div>
@@ -599,18 +608,18 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <section>
     <div class="container">
       <div class="stats-strip">
-        <div class="stat-cell"><b>4</b><span>старта за сезон</span></div>
-        <div class="stat-cell"><b>7-й</b><span>год клуба (с 2019)</span></div>
-        <div class="stat-cell"><b>1 200+</b><span>участников в сезоне</span></div>
-        <div class="stat-cell"><b>3</b><span>дистанции на каждом старте</span></div>
+        <div class="stat-cell"><b>4</b><span data-i18n="stats.count1">старта за сезон</span></div>
+        <div class="stat-cell"><b data-i18n="stats.year7">7-й</b><span data-i18n="stats.count2">год клуба (с 2019)</span></div>
+        <div class="stat-cell"><b>1 200+</b><span data-i18n="stats.count3">участников в сезоне</span></div>
+        <div class="stat-cell"><b>3</b><span data-i18n="stats.count4">дистанции на каждом старте</span></div>
       </div>
 
       <div class="section-head">
         <div>
-          <span class="eyebrow"><span class="dot"></span>Календарь сезона</span>
-          <h2 style="margin-top:10px;">Четыре старта — один сезон</h2>
+          <span class="eyebrow"><span class="dot"></span><span data-i18n="home.calendarEyebrow">Календарь сезона</span></span>
+          <h2 style="margin-top:10px;" data-i18n="home.calendarTitle">Четыре старта — один сезон</h2>
         </div>
-        <button class="btn btn-ghost" data-nav="events">Все забеги и архив</button>
+        <button class="btn btn-ghost" data-nav="events" data-i18n="home.allArchive">Все забеги и архив</button>
       </div>
       <div class="event-grid" id="homeEventGrid"></div>
     </div>
@@ -622,10 +631,10 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
         <img src="__IMG_ABOUT__" alt="">
         <div class="scrim"></div>
         <div class="content">
-          <span class="eyebrow" style="color:#EFC169;"><span class="dot" style="background:#EFC169;"></span>О клубе</span>
-          <h2 style="margin-top:12px;">Развиваем бег и лыжи в предгорьях Алтая</h2>
-          <p>С 2019 года мы проводим старты для тех, кто живёт рядом с горами и хочет использовать это по максимуму — от новичков на 5&nbsp;км до тех, кто идёт на полумарафон в гору.</p>
-          <button class="btn btn-spruce" style="margin-top:22px; background:#1F3A30;" data-nav="about">Узнать о команде <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+          <span class="eyebrow" style="color:#EFC169;"><span class="dot" style="background:#EFC169;"></span><span data-i18n="home.aboutEyebrow">О клубе</span></span>
+          <h2 style="margin-top:12px;" data-i18n="home.aboutTitle">Развиваем бег и лыжи в предгорьях Алтая</h2>
+          <p data-i18n="home.aboutText">С 2019 года мы проводим старты для тех, кто живёт рядом с горами и хочет использовать это по максимуму — от новичков на 5&nbsp;км до тех, кто идёт на полумарафон в гору.</p>
+          <button class="btn btn-spruce" style="margin-top:22px; background:#1F3A30;" data-nav="about"><span data-i18n="home.aboutCta">Узнать о команде</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
         </div>
       </div>
     </div>
@@ -636,12 +645,12 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 <div class="view" id="view-events">
   <section style="padding-top:44px;">
     <div class="container">
-      <span class="eyebrow"><span class="dot"></span>Забеги Peloton Ridder</span>
+      <span class="eyebrow"><span class="dot"></span><span data-i18n="events.eyebrow">Забеги Peloton Ridder</span></span>
       <div class="section-head" style="margin-top:10px;">
-        <h2>Календарь и архив стартов</h2>
+        <h2 data-i18n="events.title">Календарь и архив стартов</h2>
         <div class="tabbar">
-          <button class="active" data-etab="calendar">Календарь 2026</button>
-          <button data-etab="archive">Архив</button>
+          <button class="active" data-etab="calendar" data-i18n="events.calendarTab">Календарь 2026</button>
+          <button data-etab="archive" data-i18n="events.archiveTab">Архив</button>
         </div>
       </div>
       <div class="event-grid" id="eventsCalendarGrid"></div>
@@ -654,7 +663,7 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 <div class="view" id="view-detail">
   <section style="padding-top:36px;">
     <div class="container">
-      <button class="btn btn-ghost btn-sm" onclick="showView('events')" style="margin-bottom:22px;"><svg class="icon" viewBox="0 0 24 24" style="transform:rotate(180deg)"><use href="#i-arrow"/></svg> Все забеги</button>
+      <button class="btn btn-ghost btn-sm" onclick="showView('events')" style="margin-bottom:22px;"><svg class="icon" viewBox="0 0 24 24" style="transform:rotate(180deg)"><use href="#i-arrow"/></svg> <span data-i18n="hero.allEvents">Все забеги</span></button>
 
       <div class="detail-hero" id="detailHero">
         <img class="detail-hero-scene" id="detailScene" alt="" src="">
@@ -668,11 +677,11 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
       <div class="detail-grid">
         <div class="card panel-chart">
           <div class="profile-head">
-            <h3><svg class="icon" viewBox="0 0 24 24" style="color:var(--ember)"><use href="#i-route"/></svg>&nbsp; <span id="profileTitle">Профиль трассы</span> <span id="profileDistLabel" class="profile-dist-label"></span></h3>
+            <h3><svg class="icon" viewBox="0 0 24 24" style="color:var(--ember)"><use href="#i-route"/></svg>&nbsp; <span id="profileTitle" data-i18n="detail.profileTitle">Профиль трассы</span> <span id="profileDistLabel" class="profile-dist-label"></span></h3>
             <div class="profile-actions">
               <div class="seg" id="profileSeg">
-                <button class="active" data-pview="profile"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg>Профиль</button>
-                <button data-pview="map"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg>Карта</button>
+                <button class="active" data-pview="profile"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg><span data-i18n="detail.profile">Профиль</span></button>
+                <button data-pview="map"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg><span data-i18n="detail.map">Карта</span></button>
               </div>
               <button class="btn btn-ghost btn-sm" id="gpxBtn" onclick="downloadGPX()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> GPX</button>
             </div>
@@ -681,82 +690,82 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
             <canvas id="elevChart" height="200"></canvas>
             <canvas id="mapChart" class="map-canvas" height="200" style="display:none;"></canvas>
           </div>
-          <p class="gpx-note" id="chartNote">Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.</p>
+          <p class="gpx-note" id="chartNote" data-i18n="detail.chartNoteProfile">Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.</p>
         </div>
 
         <div class="card panel-distances">
-          <h3>Дистанции и стоимость</h3>
+          <h3 data-i18n="detail.distancesTitle">Дистанции и стоимость</h3>
           <div id="distSlotsNote" class="slots-note"></div>
           <div id="distanceList"></div>
           <div id="regActions">
-            <button class="btn btn-primary btn-block" id="detailRegisterBtn" style="margin-top:6px;">Зарегистрироваться</button>
-            <p style="font-size:.76rem; color:var(--ink-faint); margin-top:12px; text-align:center;">Оплата Kaspi Pay · подтверждение сразу</p>
-            <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="toggleEventTransfer()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-car"/></svg> Заказать трансфер</button>
+            <button class="btn btn-primary btn-block" id="detailRegisterBtn" style="margin-top:6px;" data-i18n="detail.register">Зарегистрироваться</button>
+            <p style="font-size:.76rem; color:var(--ink-faint); margin-top:12px; text-align:center;" data-i18n="detail.paymentHint">Оплата Kaspi Pay · подтверждение сразу</p>
+            <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="toggleEventTransfer()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-car"/></svg> <span data-i18n="detail.orderTransfer">Заказать трансфер</span></button>
             <div id="eventTransferPanel" class="transfer-panel" style="display:none;">
-              <p class="transfer-note">Риддер → место старта и обратно, от <span id="etTransferPrice">—</span> / человек</p>
-              <div class="field"><label>Количество мест</label><input type="number" id="etTransferSeats" min="1" value="1" oninput="updateEventTransferTotal()"></div>
-              <div class="summary-row total"><span>Итого</span><span id="etTransferTotal">—</span></div>
-              <p style="font-size:.74rem; color:var(--ink-faint); margin-top:8px;">Оплата Kaspi Pay · подтверждение сразу</p>
-              <button class="btn btn-spruce btn-block" style="background:var(--spruce); margin-top:6px;" onclick="submitEventTransfer()">Оплатить трансфер</button>
+              <p class="transfer-note"><span data-i18n="detail.transferRoute">Риддер → место старта и обратно, от</span> <span id="etTransferPrice">—</span> <span data-i18n="detail.perPerson">/ человек</span></p>
+              <div class="field"><label data-i18n="detail.seatsCount">Количество мест</label><input type="number" id="etTransferSeats" min="1" value="1" oninput="updateEventTransferTotal()"></div>
+              <div class="summary-row total"><span data-i18n="common.total">Итого</span><span id="etTransferTotal">—</span></div>
+              <p style="font-size:.74rem; color:var(--ink-faint); margin-top:8px;" data-i18n="detail.paymentHint">Оплата Kaspi Pay · подтверждение сразу</p>
+              <button class="btn btn-spruce btn-block" style="background:var(--spruce); margin-top:6px;" onclick="submitEventTransfer()" data-i18n="detail.payTransfer">Оплатить трансфер</button>
             </div>
             <div id="eventTransferSuccess" class="transfer-panel" style="display:none; text-align:center;">
               <div class="success-badge" style="width:48px; height:48px; margin:0 auto 10px;"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
-              <p style="font-size:.86rem; color:var(--ink-soft);">Трансфер оплачен — место забронировано.</p>
+              <p style="font-size:.86rem; color:var(--ink-soft);" data-i18n="detail.transferPaid">Трансфер оплачен — место забронировано.</p>
             </div>
           </div>
           <div id="archiveActions" style="display:none;">
-            <p style="font-size:.86rem; color:var(--ink-soft); margin:14px 0;">Забег завершён — доступны протокол и фотографии.</p>
-            <button class="btn btn-ghost btn-block"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Скачать протокол (PDF)</button>
-            <button class="btn btn-ghost btn-block" style="margin-top:10px;"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> Фотогалерея старта</button>
+            <p style="font-size:.86rem; color:var(--ink-soft); margin:14px 0;" data-i18n="detail.eventDone">Забег завершён — доступны протокол и фотографии.</p>
+            <button class="btn btn-ghost btn-block"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> <span data-i18n="detail.downloadProtocol">Скачать протокол (PDF)</span></button>
+            <button class="btn btn-ghost btn-block" style="margin-top:10px;"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> <span data-i18n="detail.gallery">Фотогалерея старта</span></button>
           </div>
         </div>
 
         <div class="card panel-tabs">
           <div class="dtabs" id="detailTabs">
-            <button class="active" data-dtab="course">О трассе</button>
-            <button data-dtab="reglament">Регламент</button>
-            <button data-dtab="program">Программа дня</button>
-            <button data-dtab="getting">Как добраться</button>
-            <button data-dtab="equipment">Снаряжение</button>
-            <button data-dtab="participants">Список участников</button>
-            <button data-dtab="results">Результаты</button>
+            <button class="active" data-dtab="course" data-i18n="detail.tabCourse">О трассе</button>
+            <button data-dtab="reglament" data-i18n="detail.tabReglament">Регламент</button>
+            <button data-dtab="program" data-i18n="detail.tabProgram">Программа дня</button>
+            <button data-dtab="getting" data-i18n="detail.tabGetting">Как добраться</button>
+            <button data-dtab="equipment" data-i18n="detail.tabEquipment">Снаряжение</button>
+            <button data-dtab="participants" data-i18n="detail.tabParticipants">Список участников</button>
+            <button data-dtab="results" data-i18n="detail.tabResults">Результаты</button>
           </div>
           <div class="dpanel active" data-dpanel="course">
             <p class="course-lead" id="panelCourse"></p>
             <div class="landmark-strip" id="landmarkStrip"></div>
           </div>
           <div class="dpanel" data-dpanel="reglament">
-            <button class="btn btn-ghost btn-sm" onclick="downloadReglamentPdf()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Скачать полный регламент (PDF)</button>
-            <p class="gpx-note" style="margin:8px 0 18px;">Откроется диалог печати браузера — выберите «Сохранить как PDF». Ниже — краткая версия для сайта.</p>
+            <button class="btn btn-ghost btn-sm" onclick="downloadReglamentPdf()"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> <span data-i18n="detail.downloadFullReglament">Скачать полный регламент (PDF)</span></button>
+            <p class="gpx-note" style="margin:8px 0 18px;" data-i18n="detail.printHint">Откроется диалог печати браузера — выберите «Сохранить как PDF». Ниже — краткая версия для сайта.</p>
             <div id="panelReglament"></div>
           </div>
           <div class="dpanel" data-dpanel="program" id="panelProgram"></div>
           <div class="dpanel" data-dpanel="getting" id="panelGetting"></div>
           <div class="dpanel" data-dpanel="equipment">
             <div class="eq-legend">
-              <span class="lg"><span class="eq-tag req">X</span> обязательное — берёте с собой на старт</span>
-              <span class="lg"><span class="eq-tag rec">O</span> рекомендуемое</span>
+              <span class="lg"><span class="eq-tag req">X</span> <span data-i18n="detail.eqRequired">обязательное — берёте с собой на старт</span></span>
+              <span class="lg"><span class="eq-tag rec">O</span> <span data-i18n="detail.eqRecommended">рекомендуемое</span></span>
             </div>
             <div id="panelEquipment"></div>
           </div>
           <div class="dpanel" data-dpanel="participants">
             <div class="slots-banner" id="slotsBanner"></div>
             <div class="participants-filters">
-              <input type="text" id="pSearch" class="p-search" placeholder="Поиск по имени...">
-              <select id="pClub" class="p-select"><option value="">Все клубы</option></select>
-              <select id="pGender" class="p-select"><option value="">Пол: все</option><option value="М">Мужской</option><option value="Ж">Женский</option></select>
-              <select id="pCountry" class="p-select"><option value="">Страна: все</option></select>
+              <input type="text" id="pSearch" class="p-search" data-i18n-placeholder="detail.searchByName" placeholder="Поиск по имени...">
+              <select id="pClub" class="p-select"><option value="" data-i18n="detail.allClubs">Все клубы</option></select>
+              <select id="pGender" class="p-select"><option value="" data-i18n="detail.allGenders">Пол: все</option><option value="М" data-i18n="detail.male">Мужской</option><option value="Ж" data-i18n="detail.female">Женский</option></select>
+              <select id="pCountry" class="p-select"><option value="" data-i18n="detail.allCountries">Страна: все</option></select>
             </div>
             <div class="participants-head">
               <span id="participantsCount" class="participants-count"></span>
             </div>
-            <div class="table-scroll"><table class="results-table" id="participantsTable"><thead><tr><th>Фамилия Имя</th><th>Клуб</th><th>Дистанция</th><th>Пол</th><th>Страна</th></tr></thead><tbody id="participantsBody"></tbody></table></div>
+            <div class="table-scroll"><table class="results-table" id="participantsTable"><thead><tr><th data-i18n="detail.thName">Фамилия Имя</th><th data-i18n="detail.thClub">Клуб</th><th data-i18n="detail.thDistance">Дистанция</th><th data-i18n="detail.thGender">Пол</th><th data-i18n="detail.thCountry">Страна</th></tr></thead><tbody id="participantsBody"></tbody></table></div>
           </div>
           <div class="dpanel" data-dpanel="results" id="panelResults"></div>
         </div>
 
         <div class="card panel-partners">
-          <h3>Партнёры старта</h3>
+          <h3 data-i18n="detail.partners">Партнёры старта</h3>
           <div class="partners-row" id="partnersRow"></div>
         </div>
       </div>
@@ -769,83 +778,83 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <section style="padding-top:44px;">
     <div class="container reg-wrap">
       <div style="text-align:center; margin-bottom:30px;">
-        <span class="eyebrow"><span class="dot"></span>Регистрация участника</span>
+        <span class="eyebrow"><span class="dot"></span><span data-i18n="reg.eyebrow">Регистрация участника</span></span>
         <h2 style="margin-top:10px;" id="regEventName">Panorama Fall Run 2026</h2>
       </div>
 
       <div class="stepper" id="stepper">
-        <div class="step now" data-step="1"><span class="sc">1</span><span class="sl">Дистанция</span></div>
+        <div class="step now" data-step="1"><span class="sc">1</span><span class="sl" data-i18n="reg.step1">Дистанция</span></div>
         <div class="step-line"></div>
-        <div class="step" data-step="2"><span class="sc">2</span><span class="sl">Данные</span></div>
+        <div class="step" data-step="2"><span class="sc">2</span><span class="sl" data-i18n="reg.step2">Данные</span></div>
         <div class="step-line"></div>
-        <div class="step" data-step="3"><span class="sc">3</span><span class="sl">Оплата</span></div>
+        <div class="step" data-step="3"><span class="sc">3</span><span class="sl" data-i18n="reg.step3">Оплата</span></div>
         <div class="step-line"></div>
-        <div class="step" data-step="4"><span class="sc">4</span><span class="sl">Готово</span></div>
+        <div class="step" data-step="4"><span class="sc">4</span><span class="sl" data-i18n="reg.step4">Готово</span></div>
       </div>
 
       <!-- STEP 1 -->
       <div class="reg-panel active card" data-panel="1">
-        <h3>Выберите дистанцию</h3>
+        <h3 data-i18n="reg.chooseDistance">Выберите дистанцию</h3>
         <div id="regSlotsNote" class="slots-note"></div>
         <div id="regDistanceList"></div>
         <label class="transfer-check">
           <input type="checkbox" id="regTransfer" onchange="updateSummary()">
-          <div><b>Добавить трансфер до старта</b><span>Риддер → место старта и обратно · <span id="regTransferPrice">—</span></span></div>
+          <div><b data-i18n="reg.addTransfer">Добавить трансфер до старта</b><span><span data-i18n="detail.transferRoute">Риддер → место старта и обратно</span> · <span id="regTransferPrice">—</span></span></div>
         </label>
-        <div class="reg-nav"><span></span><button class="btn btn-primary" onclick="regNext(1)">Далее <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
+        <div class="reg-nav"><span></span><button class="btn btn-primary" onclick="regNext(1)"><span data-i18n="common.next">Далее</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
       </div>
 
       <!-- STEP 2 -->
       <div class="reg-panel card" data-panel="2">
-        <h3>Данные участника</h3>
+        <h3 data-i18n="reg.participantData">Данные участника</h3>
         <div style="margin-top:16px;">
           <div class="field-row">
-            <div class="field"><label>Имя</label><input type="text" placeholder="Иван"></div>
-            <div class="field"><label>Фамилия</label><input type="text" placeholder="Петров"></div>
+            <div class="field"><label data-i18n="reg.firstName">Имя</label><input type="text" placeholder="Иван"></div>
+            <div class="field"><label data-i18n="reg.lastName">Фамилия</label><input type="text" placeholder="Петров"></div>
           </div>
           <div class="field-row">
-            <div class="field"><label>Дата рождения</label><input type="date"></div>
-            <div class="field"><label>Пол</label><select><option>Мужской</option><option>Женский</option></select></div>
+            <div class="field"><label data-i18n="reg.birthDate">Дата рождения</label><input type="date"></div>
+            <div class="field"><label data-i18n="reg.gender">Пол</label><select><option data-i18n="detail.male">Мужской</option><option data-i18n="detail.female">Женский</option></select></div>
           </div>
           <div class="field-row">
-            <div class="field"><label>Телефон</label><input type="tel" placeholder="+7 705 000 00 00"></div>
-            <div class="field"><label>Email</label><input type="email" placeholder="ivan@mail.kz"></div>
+            <div class="field"><label data-i18n="reg.phone">Телефон</label><input type="tel" placeholder="+7 705 000 00 00"></div>
+            <div class="field"><label data-i18n="reg.email">Email</label><input type="email" placeholder="ivan@mail.kz"></div>
           </div>
           <div class="field-row">
-            <div class="field"><label>Город</label><input type="text" placeholder="Риддер"></div>
-            <div class="field"><label>Размер футболки</label><select><option>S</option><option>M</option><option selected>L</option><option>XL</option></select></div>
+            <div class="field"><label data-i18n="reg.city">Город</label><input type="text" placeholder="Риддер"></div>
+            <div class="field"><label data-i18n="reg.tshirt">Размер футболки</label><select><option>S</option><option>M</option><option selected>L</option><option>XL</option></select></div>
           </div>
-          <div class="field"><label>Экстренный контакт (ФИО и телефон)</label><input type="text" placeholder="Мария Петрова, +7 705 111 22 33"></div>
+          <div class="field"><label data-i18n="reg.emergencyContact">Экстренный контакт (ФИО и телефон)</label><input type="text" placeholder="Мария Петрова, +7 705 111 22 33"></div>
         </div>
-        <div class="reg-nav"><button class="btn btn-ghost" onclick="regPrev(2)">Назад</button><button class="btn btn-primary" onclick="regNext(2)">К оплате <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
+        <div class="reg-nav"><button class="btn btn-ghost" onclick="regPrev(2)" data-i18n="common.back">Назад</button><button class="btn btn-primary" onclick="regNext(2)"><span data-i18n="reg.toPayment">К оплате</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
       </div>
 
       <!-- STEP 3 -->
       <div class="reg-panel card" data-panel="3">
-        <h3>Оплата стартового взноса</h3>
+        <h3 data-i18n="reg.payTitle">Оплата стартового взноса</h3>
         <div style="margin-top:16px;">
           <div class="pay-option sel">
             <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;color:var(--spruce)"><use href="#i-ticket"/></svg>
-            <div><b>Kaspi Pay</b><div style="font-size:.78rem;color:var(--ink-faint)">Оплата по QR или через приложение Kaspi.kz — единственный способ оплаты клуба</div></div>
+            <div><b>Kaspi Pay</b><div style="font-size:.78rem;color:var(--ink-faint)" data-i18n="reg.kaspiDesc">Оплата по QR или через приложение Kaspi.kz — единственный способ оплаты клуба</div></div>
           </div>
 
           <div style="margin-top:20px; padding-top:14px; border-top:1px dashed var(--border);">
             <div class="summary-row"><span id="sumEventDist">Panorama Fall Run — 10 км</span><span id="sumPrice">6 000 ₸</span></div>
-            <div class="summary-row" id="sumTransferRow" style="display:none;"><span>Трансфер до старта</span><span id="sumTransferPrice">5 000 ₸</span></div>
-            <div class="summary-row"><span>Сервисный сбор</span><span>0 ₸</span></div>
-            <div class="summary-row total"><span>Итого</span><span id="sumTotal">6 000 ₸</span></div>
+            <div class="summary-row" id="sumTransferRow" style="display:none;"><span data-i18n="detail.transferToStart">Трансфер до старта</span><span id="sumTransferPrice">5 000 ₸</span></div>
+            <div class="summary-row"><span data-i18n="reg.serviceFee">Сервисный сбор</span><span>0 ₸</span></div>
+            <div class="summary-row total"><span data-i18n="common.total">Итого</span><span id="sumTotal">6 000 ₸</span></div>
           </div>
         </div>
-        <div class="reg-nav"><button class="btn btn-ghost" onclick="regPrev(3)">Назад</button><button class="btn btn-primary" onclick="regNext(3)">Оплатить <svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg></button></div>
+        <div class="reg-nav"><button class="btn btn-ghost" onclick="regPrev(3)" data-i18n="common.back">Назад</button><button class="btn btn-primary" onclick="regNext(3)"><span data-i18n="reg.pay">Оплатить</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg></button></div>
       </div>
 
       <!-- STEP 4 -->
       <div class="reg-panel card" data-panel="4">
         <div class="success-box">
           <div class="success-badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
-          <h3 style="font-size:1.3rem;">Регистрация подтверждена!</h3>
-          <p style="color:var(--ink-soft); margin-top:8px;">Ваш стартовый номер закреплён. Чек и регламент отправлены на email.</p>
-          <div class="bib"><span>Стартовый номер</span><b id="bibNumber">#214</b></div>
+          <h3 style="font-size:1.3rem;" data-i18n="reg.confirmed">Регистрация подтверждена!</h3>
+          <p style="color:var(--ink-soft); margin-top:8px;" data-i18n="reg.confirmedDesc">Ваш стартовый номер закреплён. Чек и регламент отправлены на email.</p>
+          <div class="bib"><span data-i18n="reg.bibNumber">Стартовый номер</span><b id="bibNumber">#214</b></div>
           <div>
             <svg class="qr" viewBox="0 0 100 100">
               <rect width="100" height="100" fill="none"/>
@@ -853,8 +862,8 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
             </svg>
           </div>
           <div class="hero-ctas" style="justify-content:center; margin-top:22px;">
-            <button class="btn btn-primary" data-nav="cabinet">В личный кабинет</button>
-            <button class="btn btn-ghost"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Скачать чек</button>
+            <button class="btn btn-primary" data-nav="cabinet" data-i18n="reg.toCabinet">В личный кабинет</button>
+            <button class="btn btn-ghost"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> <span data-i18n="reg.downloadReceipt">Скачать чек</span></button>
           </div>
         </div>
       </div>
@@ -867,35 +876,35 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <section style="padding-top:44px;">
     <div class="container reg-wrap">
       <div style="text-align:center; margin-bottom:30px;">
-        <span class="eyebrow"><span class="dot"></span>Аккаунт Peloton Ridder</span>
-        <h2 style="margin-top:10px;">Создайте профиль участника</h2>
-        <p style="color:var(--ink-soft); margin-top:10px;">Данные сохранятся в личном кабинете — не нужно вводить их заново при регистрации на каждый старт.</p>
+        <span class="eyebrow"><span class="dot"></span><span data-i18n="signup.eyebrow">Аккаунт Peloton Ridder</span></span>
+        <h2 style="margin-top:10px;" data-i18n="signup.title">Создайте профиль участника</h2>
+        <p style="color:var(--ink-soft); margin-top:10px;" data-i18n="signup.subtitle">Данные сохранятся в личном кабинете — не нужно вводить их заново при регистрации на каждый старт.</p>
       </div>
 
       <div class="card">
         <div class="field-row">
-          <div class="field"><label>Имя</label><input type="text" id="suFirst" placeholder="Иван"></div>
-          <div class="field"><label>Фамилия</label><input type="text" id="suLast" placeholder="Петров"></div>
+          <div class="field"><label data-i18n="reg.firstName">Имя</label><input type="text" id="suFirst" placeholder="Иван"></div>
+          <div class="field"><label data-i18n="reg.lastName">Фамилия</label><input type="text" id="suLast" placeholder="Петров"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Email</label><input type="email" id="suEmail" placeholder="ivan@mail.kz"></div>
-          <div class="field"><label>Телефон</label><input type="tel" id="suPhone" placeholder="+7 705 000 00 00"></div>
+          <div class="field"><label data-i18n="reg.email">Email</label><input type="email" id="suEmail" placeholder="ivan@mail.kz"></div>
+          <div class="field"><label data-i18n="reg.phone">Телефон</label><input type="tel" id="suPhone" placeholder="+7 705 000 00 00"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Город</label><input type="text" id="suCity" placeholder="Риддер"></div>
-          <div class="field"><label>Дата рождения</label><input type="date" id="suBirth"></div>
+          <div class="field"><label data-i18n="reg.city">Город</label><input type="text" id="suCity" placeholder="Риддер"></div>
+          <div class="field"><label data-i18n="reg.birthDate">Дата рождения</label><input type="date" id="suBirth"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Пароль</label><input type="password" id="suPass" placeholder="Минимум 8 символов"></div>
-          <div class="field"><label>Повторите пароль</label><input type="password" id="suPass2" placeholder="Ещё раз"></div>
+          <div class="field"><label data-i18n="signup.password">Пароль</label><input type="password" id="suPass" placeholder="Минимум 8 символов"></div>
+          <div class="field"><label data-i18n="signup.password2">Повторите пароль</label><input type="password" id="suPass2" placeholder="Ещё раз"></div>
         </div>
         <label style="display:flex; align-items:flex-start; gap:10px; font-size:.82rem; color:var(--ink-soft); margin:6px 0 22px; cursor:pointer;">
           <input type="checkbox" id="suAgree" style="margin-top:3px;">
-          Согласен на хранение и обработку персональных данных клубом Peloton Ridder
+          <span data-i18n="signup.agree">Согласен на хранение и обработку персональных данных клубом Peloton Ridder</span>
         </label>
-        <button class="btn btn-primary btn-block" onclick="createProfile()">Создать профиль</button>
+        <button class="btn btn-primary btn-block" onclick="createProfile()" data-i18n="signup.create">Создать профиль</button>
         <p style="text-align:center; font-size:.85rem; color:var(--ink-faint); margin-top:16px;">
-          Уже есть аккаунт? <a href="#" onclick="event.preventDefault(); showView('cabinet')" style="color:var(--ember); font-weight:700;">Войти</a>
+          <span data-i18n="signup.hasAccount">Уже есть аккаунт?</span> <a href="#" onclick="event.preventDefault(); showView('cabinet')" style="color:var(--ember); font-weight:700;" data-i18n="signup.login">Войти</a>
         </p>
       </div>
     </div>
@@ -906,8 +915,8 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 <div class="view" id="view-cabinet">
   <section style="padding-top:44px;">
     <div class="container">
-      <span class="eyebrow"><span class="dot"></span>Личный кабинет</span>
-      <h2 style="margin-top:10px; margin-bottom:30px;">Мои старты</h2>
+      <span class="eyebrow"><span class="dot"></span><span data-i18n="cabinet.eyebrow">Личный кабинет</span></span>
+      <h2 style="margin-top:10px; margin-bottom:30px;" data-i18n="cabinet.title">Мои старты</h2>
       <div class="cab-grid">
         <div class="card profile-card">
           <div class="avatar" id="cabAvatar">ИП</div>
@@ -916,57 +925,57 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
           <div class="profile-list">
             <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg> <span id="cabEmail">ivan.petrov@mail.kz</span></div>
             <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> <span id="cabCity">Риддер, ВКО</span></div>
-            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg> 4 финиша, личник 21.1 км — 1:52:47</div>
+            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg> <span data-i18n="cabinet.finishes">4 финиша, личник 21.1 км — 1:52:47</span></div>
           </div>
-          <button class="btn btn-ghost btn-block" style="margin-top:20px;">Редактировать профиль</button>
+          <button class="btn btn-ghost btn-block" style="margin-top:20px;" data-i18n="cabinet.editProfile">Редактировать профиль</button>
         </div>
 
         <div>
-          <h4 class="eyebrow-label" style="margin-bottom:14px;">Предстоящие старты</h4>
+          <h4 class="eyebrow-label" style="margin-bottom:14px;" data-i18n="cabinet.upcoming">Предстоящие старты</h4>
           <div class="reg-card">
             <div class="ric" style="background:#E2531F;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-leaf"/></svg></div>
             <div class="rinfo">
               <h4>Panorama Fall Run — 10 км</h4>
-              <div class="rd">19 сентября 2026 · стартовый номер #214</div>
+              <div class="rd" data-i18n="cabinet.bibDate">19 сентября 2026 · стартовый номер #214</div>
             </div>
             <div class="ract">
-              <span class="pill open"><span class="pdot"></span>Оплачено</span>
-              <button class="btn btn-ghost btn-sm">Билет / QR</button>
+              <span class="pill open"><span class="pdot"></span><span data-i18n="cabinet.paid">Оплачено</span></span>
+              <button class="btn btn-ghost btn-sm" data-i18n="cabinet.ticketQr">Билет / QR</button>
             </div>
           </div>
 
-          <h4 class="eyebrow-label" style="margin:26px 0 14px;">История стартов</h4>
+          <h4 class="eyebrow-label" style="margin:26px 0 14px;" data-i18n="cabinet.history">История стартов</h4>
           <div class="reg-card">
             <div class="ric" style="background:#29473B;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-drop"/></svg></div>
             <div class="rinfo">
               <h4>Radon Race — 21.1 км</h4>
-              <div class="rd">5 июля 2026 · результат 1:52:47 · 14 место в категории</div>
+              <div class="rd" data-i18n="cabinet.radonResult">5 июля 2026 · результат 1:52:47 · 14 место в категории</div>
             </div>
             <div class="ract">
-              <span class="pill done">Завершён</span>
-              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Протокол</button>
+              <span class="pill done" data-i18n="cabinet.finished">Завершён</span>
+              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> <span data-i18n="cabinet.protocol">Протокол</span></button>
             </div>
           </div>
           <div class="reg-card">
             <div class="ric" style="background:#7A8B6F;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-ski"/></svg></div>
             <div class="rinfo">
               <h4>Ski Summer Fest — 5 км</h4>
-              <div class="rd">13 июня 2026 · результат 0:24:12</div>
+              <div class="rd" data-i18n="cabinet.skiResult">13 июня 2026 · результат 0:24:12</div>
             </div>
             <div class="ract">
-              <span class="pill done">Завершён</span>
-              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Протокол</button>
+              <span class="pill done" data-i18n="cabinet.finished">Завершён</span>
+              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> <span data-i18n="cabinet.protocol">Протокол</span></button>
             </div>
           </div>
           <div class="reg-card">
             <div class="ric" style="background:#8A6D3B;"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#i-mountain"/></svg></div>
             <div class="rinfo">
               <h4>Ridder UpHill — 6 км</h4>
-              <div class="rd">14 марта 2026 · результат 0:41:03</div>
+              <div class="rd" data-i18n="cabinet.uphillResult">14 марта 2026 · результат 0:41:03</div>
             </div>
             <div class="ract">
-              <span class="pill done">Завершён</span>
-              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> Протокол</button>
+              <span class="pill done" data-i18n="cabinet.finished">Завершён</span>
+              <button class="btn btn-ghost btn-sm"><svg class="icon" viewBox="0 0 24 24"><use href="#i-download"/></svg> <span data-i18n="cabinet.protocol">Протокол</span></button>
             </div>
           </div>
         </div>
@@ -979,58 +988,58 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 <div class="view" id="view-about">
   <section style="padding-top:44px;">
     <div class="container">
-      <span class="eyebrow"><span class="dot"></span>О клубе</span>
-      <h2 style="margin-top:10px; max-width:16ch;">Развитие циклических видов спорта в Риддере</h2>
-      <p style="color:var(--ink-soft); max-width:62ch; margin-top:16px; font-size:1.02rem;">Peloton Ridder — спортивный клуб, созданный в 2019 году для развития бега, лыж и массовой физической культуры среди молодёжи Риддера и Восточного Казахстана. Мы организуем четыре старта в год на разном рельефе — от городских дистанций до горных трейлов — и стараемся делать участие доступным для новичков и интересным для опытных спортсменов.</p>
+      <span class="eyebrow"><span class="dot"></span><span data-i18n="about.eyebrow">О клубе</span></span>
+      <h2 style="margin-top:10px; max-width:16ch;" data-i18n="about.title">Развитие циклических видов спорта в Риддере</h2>
+      <p style="color:var(--ink-soft); max-width:62ch; margin-top:16px; font-size:1.02rem;" data-i18n="about.intro">Peloton Ridder — спортивный клуб, созданный в 2019 году для развития бега, лыж и массовой физической культуры среди молодёжи Риддера и Восточного Казахстана. Мы организуем четыре старта в год на разном рельефе — от городских дистанций до горных трейлов — и стараемся делать участие доступным для новичков и интересным для опытных спортсменов.</p>
 
       <div class="about-banner"><img src="__IMG_ABOUT_BANNER__" alt=""></div>
 
       <div class="stats-strip">
-        <div class="stat-cell"><b>2019</b><span>год основания</span></div>
-        <div class="stat-cell"><b>4</b><span>старта за сезон</span></div>
-        <div class="stat-cell"><b>25+</b><span>волонтёров на старте</span></div>
-        <div class="stat-cell"><b>1 200+</b><span>участников в сезоне</span></div>
+        <div class="stat-cell"><b>2019</b><span data-i18n="about.statFounded">год основания</span></div>
+        <div class="stat-cell"><b>4</b><span data-i18n="stats.count1">старта за сезон</span></div>
+        <div class="stat-cell"><b>25+</b><span data-i18n="about.statVolunteers">волонтёров на старте</span></div>
+        <div class="stat-cell"><b>1 200+</b><span data-i18n="stats.count3">участников в сезоне</span></div>
       </div>
 
-      <h3 style="margin:38px 0 4px;">Команда</h3>
-      <p style="color:var(--ink-soft);">Организаторы, тренеры и волонтёры, которые готовят каждый старт</p>
+      <h3 style="margin:38px 0 4px;" data-i18n="about.team">Команда</h3>
+      <p style="color:var(--ink-soft);" data-i18n="about.teamDesc">Организаторы, тренеры и волонтёры, которые готовят каждый старт</p>
       <div class="team-grid">
-        <div class="team-card"><div class="avatar" style="background:var(--ember);">АК</div><h4>Аскар Каримов</h4><p>Основатель, главный организатор</p></div>
-        <div class="team-card"><div class="avatar" style="background:var(--spruce); color:#fff;">ЕВ</div><h4>Елена Волкова</h4><p>Технический директор трассы</p></div>
-        <div class="team-card"><div class="avatar" style="background:var(--dawn); color:#2A2005;">ДТ</div><h4>Данияр Тлеуов</h4><p>Тренер, беговые группы</p></div>
-        <div class="team-card"><div class="avatar" style="background:var(--granite); color:#fff;">СМ</div><h4>Софья Морозова</h4><p>Координатор волонтёров</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--ember);">АК</div><h4>Аскар Каримов</h4><p data-i18n="about.role1">Основатель, главный организатор</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--spruce); color:#fff;">ЕВ</div><h4>Елена Волкова</h4><p data-i18n="about.role2">Технический директор трассы</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--dawn); color:#2A2005;">ДТ</div><h4>Данияр Тлеуов</h4><p data-i18n="about.role3">Тренер, беговые группы</p></div>
+        <div class="team-card"><div class="avatar" style="background:var(--granite); color:#fff;">СМ</div><h4>Софья Морозова</h4><p data-i18n="about.role4">Координатор волонтёров</p></div>
       </div>
 
-      <h3 style="margin:44px 0 4px;">Тренировочные группы</h3>
-      <p style="color:var(--ink-soft); max-width:62ch;">Peloton Ridder — это не только четыре старта в год: круглый год работают три группы, от первого выхода на пробежку до гор. Первое занятие бесплатно.</p>
+      <h3 style="margin:44px 0 4px;" data-i18n="about.groupsTitle">Тренировочные группы</h3>
+      <p style="color:var(--ink-soft); max-width:62ch;" data-i18n="about.groupsDesc">Peloton Ridder — это не только четыре старта в год: круглый год работают три группы, от первого выхода на пробежку до гор. Первое занятие бесплатно.</p>
       <div class="group-grid">
         <div class="group-card">
-          <h4>Начинающие</h4>
-          <p class="group-sched">Пн · Ср · Пт, 18:30 · городской парк</p>
-          <p>Лёгкий бег и постановка техники — для тех, кто готовится к первым 5 км.</p>
+          <h4 data-i18n="about.group1Title">Начинающие</h4>
+          <p class="group-sched" data-i18n="about.group1Sched">Пн · Ср · Пт, 18:30 · городской парк</p>
+          <p data-i18n="about.group1Desc">Лёгкий бег и постановка техники — для тех, кто готовится к первым 5 км.</p>
         </div>
         <div class="group-card">
-          <h4>Средний уровень</h4>
-          <p class="group-sched">Вт · Чт — интервалы, Вс — длительная</p>
-          <p>Темповые и интервальные тренировки для 10 км и полумарафона.</p>
+          <h4 data-i18n="about.group2Title">Средний уровень</h4>
+          <p class="group-sched" data-i18n="about.group2Sched">Вт · Чт — интервалы, Вс — длительная</p>
+          <p data-i18n="about.group2Desc">Темповые и интервальные тренировки для 10 км и полумарафона.</p>
         </div>
         <div class="group-card">
-          <h4>Горная группа</h4>
-          <p class="group-sched">Сб, длительная с набором высоты</p>
-          <p>Выезды в горы — подготовка к Ridder UpHill и трейлам с большим набором.</p>
+          <h4 data-i18n="about.group3Title">Горная группа</h4>
+          <p class="group-sched" data-i18n="about.group3Sched">Сб, длительная с набором высоты</p>
+          <p data-i18n="about.group3Desc">Выезды в горы — подготовка к Ridder UpHill и трейлам с большим набором.</p>
         </div>
       </div>
       <div class="membership-cta">
         <div>
-          <b>20 000 ₸ / месяц</b>
-          <span>Абонемент на все группы · первое занятие бесплатно</span>
+          <b>20 000 ₸ / <span data-i18n="about.perMonth">месяц</span></b>
+          <span data-i18n="about.membershipDesc">Абонемент на все группы · первое занятие бесплатно</span>
         </div>
-        <button class="btn btn-primary" onclick="showView('signup')">Вступить в клуб</button>
+        <button class="btn btn-primary" onclick="showView('signup')" data-i18n="hero.join">Вступить в клуб</button>
       </div>
 
-      <h3 style="margin:44px 0 4px;">Тренировочный лагерь</h3>
-      <p style="color:var(--ink-soft); max-width:62ch;">Готовитесь к своему старту — Kaçkar, UTMB или любой другой горной гонке? Приезжайте тренироваться в предгорья Алтая на реальном наборе высоты.</p>
-      <button class="btn btn-spruce" style="margin-top:16px; background:var(--spruce);" data-nav="camp">Узнать про лагерь <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+      <h3 style="margin:44px 0 4px;" data-i18n="nav.camp_full">Тренировочный лагерь</h3>
+      <p style="color:var(--ink-soft); max-width:62ch;" data-i18n="about.campTeaser">Готовитесь к своему старту — Kaçkar, UTMB или любой другой горной гонке? Приезжайте тренироваться в предгорья Алтая на реальном наборе высоты.</p>
+      <button class="btn btn-spruce" style="margin-top:16px; background:var(--spruce);" data-nav="camp"><span data-i18n="about.learnCamp">Узнать про лагерь</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
     </div>
   </section>
 </div>
@@ -1039,15 +1048,15 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 <div class="view" id="view-camp">
   <section style="padding-top:44px; padding-bottom:0;">
     <div class="container">
-      <span class="eyebrow"><span class="dot"></span>Тренировочный лагерь Peloton Ridder</span>
-      <h2 style="margin-top:10px; max-width:20ch;">Готовьтесь к своей вершине — в горах Алтая</h2>
-      <p style="color:var(--ink-soft); max-width:64ch; margin-top:16px; font-size:1.02rem;">Риддер стоит у подножья хребта с реальным набором высоты, техничными спусками и переменчивой погодой — то есть именно тем, с чем вы столкнётесь на старте. Мы принимаем спортсменов, которые готовятся к конкретной гонке, и строим программу под их профиль трассы.</p>
+      <span class="eyebrow"><span class="dot"></span><span data-i18n="nav.camp_full">Тренировочный лагерь Peloton Ridder</span></span>
+      <h2 style="margin-top:10px; max-width:20ch;" data-i18n="camp.title">Готовьтесь к своей вершине — в горах Алтая</h2>
+      <p style="color:var(--ink-soft); max-width:64ch; margin-top:16px; font-size:1.02rem;" data-i18n="camp.intro">Риддер стоит у подножья хребта с реальным набором высоты, техничными спусками и переменчивой погодой — то есть именно тем, с чем вы столкнётесь на старте. Мы принимаем спортсменов, которые готовятся к конкретной гонке, и строим программу под их профиль трассы.</p>
 
       <div class="camp-case">
         <div class="camp-case-badge"><svg class="icon" viewBox="0 0 24 24"><use href="#i-mountain"/></svg></div>
         <div>
-          <div class="eyebrow" style="color:var(--dawn);"><span class="dot" style="background:var(--dawn);"></span>Пример подготовки</div>
-          <p><b>Kaçkar 100K, сентябрь</b> — 82 км, +5 600 м. Спортсмен приехал в Риддер за 10 дней до старта: тренировки на реальном затяжном наборе высоты трассы Ridder UpHill, адаптация к горному рельефу и погоде, разбор пейсинга под профиль своей гонки вместе с тренером клуба.</p>
+          <div class="eyebrow" style="color:var(--dawn);"><span class="dot" style="background:var(--dawn);"></span><span data-i18n="camp.caseLabel">Пример подготовки</span></div>
+          <p data-i18n-html="camp.caseText"><b>Kaçkar 100K, сентябрь</b> — 82 км, +5 600 м. Спортсмен приехал в Риддер за 10 дней до старта: тренировки на реальном затяжном наборе высоты трассы Ridder UpHill, адаптация к горному рельефу и погоде, разбор пейсинга под профиль своей гонки вместе с тренером клуба.</p>
         </div>
       </div>
     </div>
@@ -1055,48 +1064,48 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 
   <section>
     <div class="container">
-      <h3>Что входит</h3>
+      <h3 data-i18n="camp.included">Что входит</h3>
       <div class="camp-grid">
-        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-tent"/></svg><div><b>Проживание</b><span>Гостевой дом рядом со стартовыми трассами</span></div></div>
-        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg><div><b>Тренер на маршруте</b><span>Разбор техники подъёма/спуска и пейсинга</span></div></div>
-        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg><div><b>Трассы под ваш старт</b><span>Профиль высоты подбирается под вашу гонку</span></div></div>
-        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-car"/></svg><div><b>Трансфер</b><span>Встреча из Усть-Каменогорска и обратно</span></div></div>
-        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg><div><b>Восстановление</b><span>Спортивный массаж после длительных тренировок</span></div></div>
-        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-ticket"/></svg><div><b>Малая группа</b><span>До 6 человек на тренера</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-tent"/></svg><div><b data-i18n="camp.item1Title">Проживание</b><span data-i18n="camp.item1Desc">Гостевой дом рядом со стартовыми трассами</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg><div><b data-i18n="camp.item2Title">Тренер на маршруте</b><span data-i18n="camp.item2Desc">Разбор техники подъёма/спуска и пейсинга</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg><div><b data-i18n="camp.item3Title">Трассы под ваш старт</b><span data-i18n="camp.item3Desc">Профиль высоты подбирается под вашу гонку</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-car"/></svg><div><b data-i18n="camp.item4Title">Трансфер</b><span data-i18n="camp.item4Desc">Встреча из Усть-Каменогорска и обратно</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg><div><b data-i18n="camp.item5Title">Восстановление</b><span data-i18n="camp.item5Desc">Спортивный массаж после длительных тренировок</span></div></div>
+        <div class="camp-item"><svg class="icon" viewBox="0 0 24 24"><use href="#i-ticket"/></svg><div><b data-i18n="camp.item6Title">Малая группа</b><span data-i18n="camp.item6Desc">До 6 человек на тренера</span></div></div>
       </div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <h3>Программа (пример на 7 дней)</h3>
+      <h3 data-i18n="camp.programTitle">Программа (пример на 7 дней)</h3>
       <div class="camp-program">
-        <div class="camp-day"><b>1</b><div><h4>Заезд</h4><p>Трансфер из Усть-Каменогорска, расселение, лёгкая адаptация к высоте.</p></div></div>
-        <div class="camp-day"><b>2</b><div><h4>Втягивание</h4><p>Лёгкий бег + разбор снаряжения и целей на лагерь с тренером.</p></div></div>
-        <div class="camp-day"><b>3</b><div><h4>Набор высоты</h4><p>Длительная по трассе Ridder UpHill — техника подъёма в гору.</p></div></div>
-        <div class="camp-day"><b>4</b><div><h4>Восстановление</h4><p>Лёгкое движение, массаж, разбор видео техники бега.</p></div></div>
-        <div class="camp-day"><b>5</b><div><h4>Интервалы</h4><p>Силовая работа на подъёмах, отработка ритма дыхания.</p></div></div>
-        <div class="camp-day"><b>6</b><div><h4>Генеральная</h4><p>Длинная тренировка, имитирующая профиль вашего старта.</p></div></div>
-        <div class="camp-day"><b>7</b><div><h4>Отъезд</h4><p>Лёгкая заминка, разбор лагеря, трансфер обратно.</p></div></div>
+        <div class="camp-day"><b>1</b><div><h4 data-i18n="camp.day1Title">Заезд</h4><p data-i18n="camp.day1Desc">Трансфер из Усть-Каменогорска, расселение, лёгкая адаптация к высоте.</p></div></div>
+        <div class="camp-day"><b>2</b><div><h4 data-i18n="camp.day2Title">Втягивание</h4><p data-i18n="camp.day2Desc">Лёгкий бег + разбор снаряжения и целей на лагерь с тренером.</p></div></div>
+        <div class="camp-day"><b>3</b><div><h4 data-i18n="camp.day3Title">Набор высоты</h4><p data-i18n="camp.day3Desc">Длительная по трассе Ridder UpHill — техника подъёма в гору.</p></div></div>
+        <div class="camp-day"><b>4</b><div><h4 data-i18n="camp.day4Title">Восстановление</h4><p data-i18n="camp.day4Desc">Лёгкое движение, массаж, разбор видео техники бега.</p></div></div>
+        <div class="camp-day"><b>5</b><div><h4 data-i18n="camp.day5Title">Интервалы</h4><p data-i18n="camp.day5Desc">Силовая работа на подъёмах, отработка ритма дыхания.</p></div></div>
+        <div class="camp-day"><b>6</b><div><h4 data-i18n="camp.day6Title">Генеральная</h4><p data-i18n="camp.day6Desc">Длинная тренировка, имитирующая профиль вашего старта.</p></div></div>
+        <div class="camp-day"><b>7</b><div><h4 data-i18n="camp.day7Title">Отъезд</h4><p data-i18n="camp.day7Desc">Лёгкая заминка, разбор лагеря, трансфер обратно.</p></div></div>
       </div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <h3>Стоимость</h3>
+      <h3 data-i18n="camp.pricing">Стоимость</h3>
       <div class="camp-pricing">
         <div class="camp-plan">
-          <span class="eyebrow"><span class="dot"></span>7 дней</span>
+          <span class="eyebrow"><span class="dot"></span><span data-i18n="camp.plan1">7 дней</span></span>
           <div class="camp-price">180 000 ₸</div>
-          <p>Проживание, тренер, трансфер, 1 массаж</p>
-          <button class="btn btn-ghost btn-block" onclick="document.getElementById('campFormCard').scrollIntoView({behavior:'smooth'})">Оставить заявку</button>
+          <p data-i18n="camp.plan1Includes">Проживание, тренер, трансфер, 1 массаж</p>
+          <button class="btn btn-ghost btn-block" onclick="document.getElementById('campFormCard').scrollIntoView({behavior:'smooth'})" data-i18n="camp.leaveRequest">Оставить заявку</button>
         </div>
         <div class="camp-plan featured">
-          <span class="eyebrow" style="color:var(--dawn);"><span class="dot" style="background:var(--dawn);"></span>14 дней</span>
+          <span class="eyebrow" style="color:var(--dawn);"><span class="dot" style="background:var(--dawn);"></span><span data-i18n="camp.plan2">14 дней</span></span>
           <div class="camp-price">320 000 ₸</div>
-          <p>Проживание, тренер, трансфер, 3 массажа, разбор гонки</p>
-          <button class="btn btn-primary btn-block" onclick="document.getElementById('campFormCard').scrollIntoView({behavior:'smooth'})">Оставить заявку</button>
+          <p data-i18n="camp.plan2Includes">Проживание, тренер, трансфер, 3 массажа, разбор гонки</p>
+          <button class="btn btn-primary btn-block" onclick="document.getElementById('campFormCard').scrollIntoView({behavior:'smooth'})" data-i18n="camp.leaveRequest">Оставить заявку</button>
         </div>
       </div>
     </div>
@@ -1105,23 +1114,23 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <section>
     <div class="container">
       <div class="card camp-form-card" id="campFormCard">
-        <h3>Заявка на лагерь</h3>
+        <h3 data-i18n="camp.formTitle">Заявка на лагерь</h3>
         <div id="campFormPanel">
           <div class="field-row">
-            <div class="field"><label>Имя</label><input type="text" id="campName" placeholder="Иван"></div>
-            <div class="field"><label>Телефон</label><input type="tel" id="campPhone" placeholder="+7 705 000 00 00"></div>
+            <div class="field"><label data-i18n="reg.firstName">Имя</label><input type="text" id="campName" placeholder="Иван"></div>
+            <div class="field"><label data-i18n="reg.phone">Телефон</label><input type="tel" id="campPhone" placeholder="+7 705 000 00 00"></div>
           </div>
           <div class="field-row">
-            <div class="field"><label>Дата заезда</label><input type="date" id="campDate"></div>
-            <div class="field"><label>Программа</label><select id="campPlan"><option>7 дней</option><option>14 дней</option></select></div>
+            <div class="field"><label data-i18n="camp.arrivalDate">Дата заезда</label><input type="date" id="campDate"></div>
+            <div class="field"><label data-i18n="camp.program">Программа</label><select id="campPlan"><option data-i18n="camp.plan1">7 дней</option><option data-i18n="camp.plan2">14 дней</option></select></div>
           </div>
-          <div class="field"><label>Цель — к какому старту готовитесь</label><input type="text" id="campGoal" placeholder="Например, Kaçkar 100K, сентябрь"></div>
-          <button class="btn btn-primary btn-block" onclick="submitCampForm()">Отправить заявку</button>
+          <div class="field"><label data-i18n="camp.goal">Цель — к какому старту готовитесь</label><input type="text" id="campGoal" placeholder="Например, Kaçkar 100K, сентябрь"></div>
+          <button class="btn btn-primary btn-block" onclick="submitCampForm()" data-i18n="camp.sendRequest">Отправить заявку</button>
         </div>
         <div id="campFormSuccess" style="display:none; text-align:center; padding:12px 0;">
           <div class="success-badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
-          <h4 style="font-family:var(--font-display); font-size:1.05rem;">Заявка отправлена</h4>
-          <p style="color:var(--ink-soft); margin-top:8px; font-size:.9rem;">Свяжемся в течение дня, чтобы подтвердить даты и трансфер.</p>
+          <h4 style="font-family:var(--font-display); font-size:1.05rem;" data-i18n="camp.requestSent">Заявка отправлена</h4>
+          <p style="color:var(--ink-soft); margin-top:8px; font-size:.9rem;" data-i18n="camp.requestSentDesc">Свяжемся в течение дня, чтобы подтвердить даты и трансфер.</p>
         </div>
       </div>
     </div>
@@ -1137,24 +1146,24 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
           <span class="brand-mark"><img src="__IMG_LOGO__" alt="Peloton Ridder"></span>
           <span>PELOTON RIDDER</span>
         </div>
-        <p style="font-size:.85rem; color:var(--ink-soft); max-width:32ch;">Клуб циклических видов спорта. Риддер, Восточно-Казахстанская область.</p>
+        <p style="font-size:.85rem; color:var(--ink-soft); max-width:32ch;" data-i18n="footer.clubDesc">Клуб циклических видов спорта. Риддер, Восточно-Казахстанская область.</p>
       </div>
       <div>
-        <h4 class="eyebrow-label">Забеги</h4>
+        <h4 class="eyebrow-label" data-i18n="nav.events">Забеги</h4>
         <ul id="footerEventList"></ul>
       </div>
       <div>
-        <h4 class="eyebrow-label">Клуб</h4>
+        <h4 class="eyebrow-label" data-i18n="footer.club">Клуб</h4>
         <ul>
-          <li><a href="#" data-nav="about" onclick="showView('about')">О клубе</a></li>
-          <li><a href="#" data-nav="cabinet" onclick="showView('cabinet')">Личный кабинет</a></li>
-          <li>Партнёрам</li>
+          <li><a href="#" data-nav="about" onclick="showView('about')" data-i18n="nav.about">О клубе</a></li>
+          <li><a href="#" data-nav="cabinet" onclick="showView('cabinet')" data-i18n="nav.cabinet_full">Личный кабинет</a></li>
+          <li data-i18n="footer.partners">Партнёрам</li>
         </ul>
       </div>
       <div>
-        <h4 class="eyebrow-label">Контакты</h4>
+        <h4 class="eyebrow-label" data-i18n="footer.contacts">Контакты</h4>
         <ul>
-          <li>г. Риддер, ВКО</li>
+          <li data-i18n="footer.address">г. Риддер, ВКО</li>
           <li>info@peloton-ridder.kz</li>
           <li>Instagram · WhatsApp</li>
         </ul>
@@ -1162,7 +1171,7 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
     </div>
     <div class="foot-bottom">
       <span>© 2026 Peloton Ridder</span>
-      <span>Дизайн-прототип редизайна сайта</span>
+      <span data-i18n="footer.prototype">Дизайн-прототип редизайна сайта</span>
     </div>
   </div>
 </footer>
@@ -1174,6 +1183,525 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 </div>
 
 <script>
+/* ============================================================
+   I18N
+   ============================================================ */
+const SUPPORTED_LANGS = ['ru','kk','en','zh'];
+const LANG_LABEL = {ru:'РУС', kk:'ҚАЗ', en:'ENG', zh:'中文'};
+const LANG_LABEL_FULL = {ru:'Русский', kk:'Қазақша', en:'English', zh:'中文'};
+let currentLang = (function(){
+  const saved = localStorage.getItem('lang');
+  if(SUPPORTED_LANGS.includes(saved)) return saved;
+  const browser = (navigator.language||'ru').slice(0,2);
+  return SUPPORTED_LANGS.includes(browser) ? browser : 'ru';
+})();
+
+const MONTHS = {
+  ru:['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],
+  kk:['қаңтар','ақпан','наурыз','сәуір','мамыр','маусым','шілде','тамыз','қыркүйек','қазан','қараша','желтоқсан'],
+  en:['January','February','March','April','May','June','July','August','September','October','November','December'],
+  zh:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+};
+function formatDate(iso){
+  const d = new Date(iso);
+  const day = d.getDate(), month = MONTHS[currentLang][d.getMonth()], year = d.getFullYear();
+  if(currentLang==='zh') return `${year}年${month}${day}日`;
+  if(currentLang==='en') return `${month} ${day}, ${year}`;
+  return `${day} ${month} ${year}`;
+}
+function formatDateShort(iso){
+  const d = new Date(iso);
+  const day = d.getDate(), month = MONTHS[currentLang][d.getMonth()];
+  if(currentLang==='zh') return `${month}${day}日`;
+  if(currentLang==='en') return `${month} ${day}`;
+  return `${day} ${month}`;
+}
+const CANVAS_CJK_FALLBACK = '"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
+const CANVAS_FONT_9 = `9px Golos Text, ${CANVAS_CJK_FALLBACK}`;
+const CANVAS_FONT_10B = `700 10px Golos Text, ${CANVAS_CJK_FALLBACK}`;
+const CANVAS_FONT_11 = `11px Golos Text, ${CANVAS_CJK_FALLBACK}`;
+const CANVAS_FONT_11B = `700 11px Golos Text, ${CANVAS_CJK_FALLBACK}`;
+function ruPluralCategory(n){
+  const n10 = n%10, n100 = n%100;
+  if(n10===1 && n100!==11) return 'one';
+  if(n10>=2 && n10<=4 && !(n100>=12 && n100<=14)) return 'few';
+  return 'many';
+}
+function pluralWord(forms, n){
+  let cat = 'other';
+  if(currentLang==='ru') cat = ruPluralCategory(n);
+  else if(currentLang==='en') cat = n===1 ? 'one' : 'other';
+  return forms[cat] || forms.other || forms.many || Object.values(forms)[0];
+}
+const SLOT_WORD = {
+  ru:{one:'место', few:'места', many:'мест', other:'мест'},
+  kk:{other:'орын'},
+  en:{one:'slot', other:'slots'},
+  zh:{other:'个名额'},
+};
+function slotWord(n){ return pluralWord(SLOT_WORD[currentLang], n); }
+
+const UI = {
+  ru:{
+    'nav.home':'Главная','nav.events':'Забеги','nav.camp':'Лагерь','nav.camp_full':'Тренировочный лагерь','nav.about':'О клубе',
+    'nav.cabinet':'Кабинет','nav.cabinet_full':'Личный кабинет','nav.signup':'Регистрация',
+    'brand.sub':'Беговой клуб · Риддер',
+    'hero.eyebrow':'Сезон 2026 · 4 старта в горах Алтая',
+    'hero.title':'Беги там,<br>где начинаются <em>горы</em>.',
+    'hero.lead':'Peloton Ridder — не только четыре старта в год. Это клуб: регулярные тренировки для местных бегунов и тренировочный лагерь для тех, кто приезжает готовиться к своим горным стартам.',
+    'hero.join':'Вступить в клуб','hero.allEvents':'Все забеги',
+    'next.eyebrow':'Ближайший старт','next.viewRace':'Смотреть забег',
+    'countdown.days':'дней','countdown.hours':'часов','countdown.min':'минут','countdown.sec':'секунд',
+    'stats.count1':'старта за сезон','stats.count2':'год клуба (с 2019)','stats.count3':'участников в сезоне','stats.count4':'дистанции на каждом старте','stats.year7':'7-й',
+    'home.calendarEyebrow':'Календарь сезона','home.calendarTitle':'Четыре старта — один сезон','home.allArchive':'Все забеги и архив',
+    'home.aboutEyebrow':'О клубе','home.aboutTitle':'Развиваем бег и лыжи в предгорьях Алтая',
+    'home.aboutText':'С 2019 года мы проводим старты для тех, кто живёт рядом с горами и хочет использовать это по максимуму — от новичков на 5&nbsp;км до тех, кто идёт на полумарафон в гору.',
+    'home.aboutCta':'Узнать о команде',
+    'events.eyebrow':'Забеги Peloton Ridder','events.title':'Календарь и архив стартов','events.calendarTab':'Календарь 2026','events.archiveTab':'Архив',
+    'detail.profileTitle':'Профиль трассы','detail.profile':'Профиль','detail.map':'Карта',
+    'detail.chartNoteProfile':'Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.',
+    'detail.chartNoteMap':'Схематичная карта по GPS-треку: старт, финиш и контрольные точки маршрута.',
+    'detail.mapTitle':'Карта маршрута',
+    'detail.distancesTitle':'Дистанции и стоимость','detail.register':'Зарегистрироваться','detail.paymentHint':'Оплата Kaspi Pay · подтверждение сразу',
+    'detail.orderTransfer':'Заказать трансфер','detail.transferRoute':'Риддер → место старта и обратно, от','detail.perPerson':'/ человек',
+    'detail.seatsCount':'Количество мест','detail.payTransfer':'Оплатить трансфер','detail.transferPaid':'Трансфер оплачен — место забронировано.',
+    'detail.eventDone':'Забег завершён — доступны протокол и фотографии.','detail.downloadProtocol':'Скачать протокол (PDF)','detail.gallery':'Фотогалерея старта',
+    'detail.tabCourse':'О трассе','detail.tabReglament':'Регламент','detail.tabProgram':'Программа дня','detail.tabGetting':'Как добраться',
+    'detail.tabEquipment':'Снаряжение','detail.tabParticipants':'Список участников','detail.tabResults':'Результаты',
+    'detail.downloadFullReglament':'Скачать полный регламент (PDF)',
+    'detail.printHint':'Откроется диалог печати браузера — выберите «Сохранить как PDF». Ниже — краткая версия для сайта.',
+    'detail.eqRequired':'обязательное — берёте с собой на старт','detail.eqRecommended':'рекомендуемое',
+    'detail.searchByName':'Поиск по имени...','detail.allClubs':'Все клубы','detail.allGenders':'Пол: все','detail.male':'Мужской','detail.female':'Женский','detail.allCountries':'Страна: все',
+    'detail.thName':'Фамилия Имя','detail.thClub':'Клуб','detail.thDistance':'Дистанция','detail.thGender':'Пол','detail.thCountry':'Страна',
+    'detail.partners':'Партнёры старта','detail.partnersTbd':'Партнёры уточняются.',
+    'detail.transferToStart':'Трансфер до старта',
+    'detail.elevation':'м над уровнем моря',
+    'detail.gainLabel':'набор высоты',
+    'detail.slotsFree':'Свободно','detail.slotsOf':'из','detail.slotsTotal':'Всего мест на забег','detail.slotsFreeNow':'Свободно сейчас',
+    'detail.noOneFound':'Никого не найдено — попробуйте изменить фильтры.',
+    'detail.comingSoon':'Новые старты появятся здесь после публикации календаря следующего сезона.',
+    'detail.protocolPdfNote':'Полный протокол — в PDF ниже.','detail.resultsPending':'Результаты появятся сразу после финиша последнего участника.',
+    'detail.statDistance':'Дистанция','detail.statGain':'Набор высоты','detail.statStart':'Старт','detail.statCutoff':'Контрольное время',
+    'detail.mapStart':'СТАРТ','detail.mapFinish':'ФИНИШ','detail.reglamentTitle':'Регламент',
+    'common.back':'Назад','common.next':'Далее','common.total':'Итого','common.km':'км',
+    'status.open':'Регистрация открыта','status.soon':'Скоро','status.done':'Завершён',
+    'common.place':'Место','common.time':'Время','common.m':'м',
+    'reg.eyebrow':'Регистрация участника','reg.step1':'Дистанция','reg.step2':'Данные','reg.step3':'Оплата','reg.step4':'Готово',
+    'reg.chooseDistance':'Выберите дистанцию','reg.addTransfer':'Добавить трансфер до старта',
+    'reg.participantData':'Данные участника','reg.firstName':'Имя','reg.lastName':'Фамилия','reg.birthDate':'Дата рождения','reg.gender':'Пол',
+    'reg.phone':'Телефон','reg.email':'Email','reg.city':'Город','reg.tshirt':'Размер футболки','reg.emergencyContact':'Экстренный контакт (ФИО и телефон)',
+    'reg.toPayment':'К оплате','reg.payTitle':'Оплата стартового взноса',
+    'reg.kaspiDesc':'Оплата по QR или через приложение Kaspi.kz — единственный способ оплаты клуба',
+    'reg.serviceFee':'Сервисный сбор','reg.pay':'Оплатить',
+    'reg.confirmed':'Регистрация подтверждена!','reg.confirmedDesc':'Ваш стартовый номер закреплён. Чек и регламент отправлены на email.',
+    'reg.bibNumber':'Стартовый номер','reg.toCabinet':'В личный кабинет','reg.downloadReceipt':'Скачать чек',
+    'signup.eyebrow':'Аккаунт Peloton Ridder','signup.title':'Создайте профиль участника',
+    'signup.subtitle':'Данные сохранятся в личном кабинете — не нужно вводить их заново при регистрации на каждый старт.',
+    'signup.password':'Пароль','signup.password2':'Повторите пароль',
+    'signup.agree':'Согласен на хранение и обработку персональных данных клубом Peloton Ridder',
+    'signup.create':'Создать профиль','signup.hasAccount':'Уже есть аккаунт?','signup.login':'Войти',
+    'cabinet.eyebrow':'Личный кабинет','cabinet.title':'Мои старты','cabinet.finishes':'4 финиша, личник 21.1 км — 1:52:47',
+    'cabinet.editProfile':'Редактировать профиль','cabinet.upcoming':'Предстоящие старты','cabinet.history':'История стартов',
+    'cabinet.bibDate':'19 сентября 2026 · стартовый номер #214','cabinet.paid':'Оплачено','cabinet.ticketQr':'Билет / QR',
+    'cabinet.radonResult':'5 июля 2026 · результат 1:52:47 · 14 место в категории',
+    'cabinet.skiResult':'13 июня 2026 · результат 0:24:12','cabinet.uphillResult':'14 марта 2026 · результат 0:41:03',
+    'cabinet.finished':'Завершён','cabinet.protocol':'Протокол','cabinet.memberSince':'Участник с',
+    'about.eyebrow':'О клубе','about.title':'Развитие циклических видов спорта в Риддере',
+    'about.intro':'Peloton Ridder — спортивный клуб, созданный в 2019 году для развития бега, лыж и массовой физической культуры среди молодёжи Риддера и Восточного Казахстана. Мы организуем четыре старта в год на разном рельефе — от городских дистанций до горных трейлов — и стараемся делать участие доступным для новичков и интересным для опытных спортсменов.',
+    'about.statFounded':'год основания','about.statVolunteers':'волонтёров на старте',
+    'about.team':'Команда','about.teamDesc':'Организаторы, тренеры и волонтёры, которые готовят каждый старт',
+    'about.role1':'Основатель, главный организатор','about.role2':'Технический директор трассы','about.role3':'Тренер, беговые группы','about.role4':'Координатор волонтёров',
+    'about.groupsTitle':'Тренировочные группы',
+    'about.groupsDesc':'Peloton Ridder — это не только четыре старта в год: круглый год работают три группы, от первого выхода на пробежку до гор. Первое занятие бесплатно.',
+    'about.group1Title':'Начинающие','about.group1Sched':'Пн · Ср · Пт, 18:30 · городской парк','about.group1Desc':'Лёгкий бег и постановка техники — для тех, кто готовится к первым 5 км.',
+    'about.group2Title':'Средний уровень','about.group2Sched':'Вт · Чт — интервалы, Вс — длительная','about.group2Desc':'Темповые и интервальные тренировки для 10 км и полумарафона.',
+    'about.group3Title':'Горная группа','about.group3Sched':'Сб, длительная с набором высоты','about.group3Desc':'Выезды в горы — подготовка к Ridder UpHill и трейлам с большим набором.',
+    'about.perMonth':'месяц','about.membershipDesc':'Абонемент на все группы · первое занятие бесплатно',
+    'about.campTeaser':'Готовитесь к своему старту — Kaçkar, UTMB или любой другой горной гонке? Приезжайте тренироваться в предгорья Алтая на реальном наборе высоты.',
+    'about.learnCamp':'Узнать про лагерь',
+    'camp.title':'Готовьтесь к своей вершине — в горах Алтая',
+    'camp.intro':'Риддер стоит у подножья хребта с реальным набором высоты, техничными спусками и переменчивой погодой — то есть именно тем, с чем вы столкнётесь на старте. Мы принимаем спортсменов, которые готовятся к конкретной гонке, и строим программу под их профиль трассы.',
+    'camp.caseLabel':'Пример подготовки',
+    'camp.caseText':'<b>Kaçkar 100K, сентябрь</b> — 82 км, +5 600 м. Спортсмен приехал в Риддер за 10 дней до старта: тренировки на реальном затяжном наборе высоты трассы Ridder UpHill, адаптация к горному рельефу и погоде, разбор пейсинга под профиль своей гонки вместе с тренером клуба.',
+    'camp.included':'Что входит',
+    'camp.item1Title':'Проживание','camp.item1Desc':'Гостевой дом рядом со стартовыми трассами',
+    'camp.item2Title':'Тренер на маршруте','camp.item2Desc':'Разбор техники подъёма/спуска и пейсинга',
+    'camp.item3Title':'Трассы под ваш старт','camp.item3Desc':'Профиль высоты подбирается под вашу гонку',
+    'camp.item4Title':'Трансфер','camp.item4Desc':'Встреча из Усть-Каменогорска и обратно',
+    'camp.item5Title':'Восстановление','camp.item5Desc':'Спортивный массаж после длительных тренировок',
+    'camp.item6Title':'Малая группа','camp.item6Desc':'До 6 человек на тренера',
+    'camp.programTitle':'Программа (пример на 7 дней)',
+    'camp.day1Title':'Заезд','camp.day1Desc':'Трансфер из Усть-Каменогорска, расселение, лёгкая адаптация к высоте.',
+    'camp.day2Title':'Втягивание','camp.day2Desc':'Лёгкий бег + разбор снаряжения и целей на лагерь с тренером.',
+    'camp.day3Title':'Набор высоты','camp.day3Desc':'Длительная по трассе Ridder UpHill — техника подъёма в гору.',
+    'camp.day4Title':'Восстановление','camp.day4Desc':'Лёгкое движение, массаж, разбор видео техники бега.',
+    'camp.day5Title':'Интервалы','camp.day5Desc':'Силовая работа на подъёмах, отработка ритма дыхания.',
+    'camp.day6Title':'Генеральная','camp.day6Desc':'Длинная тренировка, имитирующая профиль вашего старта.',
+    'camp.day7Title':'Отъезд','camp.day7Desc':'Лёгкая заминка, разбор лагеря, трансфер обратно.',
+    'camp.pricing':'Стоимость','camp.plan1':'7 дней','camp.plan1Includes':'Проживание, тренер, трансфер, 1 массаж',
+    'camp.plan2':'14 дней','camp.plan2Includes':'Проживание, тренер, трансфер, 3 массажа, разбор гонки','camp.leaveRequest':'Оставить заявку',
+    'camp.formTitle':'Заявка на лагерь','camp.arrivalDate':'Дата заезда','camp.program':'Программа','camp.goal':'Цель — к какому старту готовитесь',
+    'camp.sendRequest':'Отправить заявку','camp.requestSent':'Заявка отправлена',
+    'camp.requestSentDesc':'Свяжемся в течение дня, чтобы подтвердить даты и трансфер.',
+    'footer.clubDesc':'Клуб циклических видов спорта. Риддер, Восточно-Казахстанская область.',
+    'footer.club':'Клуб','footer.partners':'Партнёрам','footer.contacts':'Контакты','footer.address':'г. Риддер, ВКО','footer.prototype':'Дизайн-прототип редизайна сайта',
+  },
+  kk:{
+    'nav.home':'Басты бет','nav.events':'Жарыстар','nav.camp':'Лагерь','nav.camp_full':'Жаттығу лагері','nav.about':'Клуб туралы',
+    'nav.cabinet':'Кабинет','nav.cabinet_full':'Жеке кабинет','nav.signup':'Тіркелу',
+    'brand.sub':'Жүгіру клубы · Риддер',
+    'hero.eyebrow':'2026 маусымы · Алтай тауларында 4 старт',
+    'hero.title':'Тау басталатын жерде<br><em>жүгір</em>.',
+    'hero.lead':'Peloton Ridder — жылына төрт старттан ғана тұрмайды. Бұл — клуб: жергілікті жүгірушілерге арналған тұрақты жаттығулар және өз таулы жарыстарына дайындалғысы келетіндерге арналған жаттығу лагері.',
+    'hero.join':'Клубқа кіру','hero.allEvents':'Барлық жарыстар',
+    'next.eyebrow':'Жақын арадағы старт','next.viewRace':'Жарысты көру',
+    'countdown.days':'күн','countdown.hours':'сағат','countdown.min':'мин','countdown.sec':'сек',
+    'stats.count1':'маусымдағы старт','stats.count2':'клуб жасы (2019 жылдан)','stats.count3':'маусымдағы қатысушы','stats.count4':'әр старттағы дистанция','stats.year7':'7-ші',
+    'home.calendarEyebrow':'Маусым күнтізбесі','home.calendarTitle':'Төрт старт — бір маусым','home.allArchive':'Барлық жарыстар және мұрағат',
+    'home.aboutEyebrow':'Клуб туралы','home.aboutTitle':'Алтай баурайында бег пен шаңғыны дамытамыз',
+    'home.aboutText':'2019 жылдан бері біз тау маңында тұратын және мұны толық пайдаланғысы келетін адамдар үшін старттар өткіземіз — алғашқы 5&nbsp;км жүгірушілерден бастап, тауға жарты марафонға шығатындарға дейін.',
+    'home.aboutCta':'Команда туралы білу',
+    'events.eyebrow':'Peloton Ridder жарыстары','events.title':'Старттар күнтізбесі мен мұрағаты','events.calendarTab':'2026 күнтізбесі','events.archiveTab':'Мұрағат',
+    'detail.profileTitle':'Трасса профилі','detail.profile':'Профиль','detail.map':'Карта',
+    'detail.chartNoteProfile':'Навигаторлар мен Strava/Garmin үшін трек — таңдалған дистанцияға сай жаңарады.',
+    'detail.chartNoteMap':'GPS-трек бойынша схемалық карта: старт, финиш және маршруттың бақылау нүктелері.',
+    'detail.mapTitle':'Маршрут картасы',
+    'detail.distancesTitle':'Дистанциялар мен құны','detail.register':'Тіркелу','detail.paymentHint':'Kaspi Pay арқылы төлем · бірден растау',
+    'detail.orderTransfer':'Трансфер тапсырыс беру','detail.transferRoute':'Риддер → старт орны және кері, бастап','detail.perPerson':'/ адам',
+    'detail.seatsCount':'Орын саны','detail.payTransfer':'Трансферді төлеу','detail.transferPaid':'Трансфер төленді — орын брондалды.',
+    'detail.eventDone':'Старт аяқталды — хаттама мен фотосуреттер қолжетімді.','detail.downloadProtocol':'Хаттаманы жүктеу (PDF)','detail.gallery':'Старт фотогалереясы',
+    'detail.tabCourse':'Трасса туралы','detail.tabReglament':'Регламент','detail.tabProgram':'Күн бағдарламасы','detail.tabGetting':'Қалай жетуге болады',
+    'detail.tabEquipment':'Жабдық','detail.tabParticipants':'Қатысушылар тізімі','detail.tabResults':'Нәтижелер',
+    'detail.downloadFullReglament':'Толық регламентті жүктеу (PDF)',
+    'detail.printHint':'Браузердің басып шығару терезесі ашылады — «PDF ретінде сақтау» таңдаңыз. Төменде — сайт үшін қысқа нұсқасы.',
+    'detail.eqRequired':'міндетті — старттан бірге алып жүресіз','detail.eqRecommended':'ұсынылады',
+    'detail.searchByName':'Аты бойынша іздеу...','detail.allClubs':'Барлық клубтар','detail.allGenders':'Жынысы: барлығы','detail.male':'Ер','detail.female':'Әйел','detail.allCountries':'Ел: барлығы',
+    'detail.thName':'Аты-жөні','detail.thClub':'Клуб','detail.thDistance':'Дистанция','detail.thGender':'Жынысы','detail.thCountry':'Ел',
+    'detail.partners':'Старт серіктестері','detail.partnersTbd':'Серіктестер нақтыланады.',
+    'detail.transferToStart':'Старт трансфері',
+    'detail.elevation':'м, теңіз деңгейінен',
+    'detail.gainLabel':'биіктік жиналымы',
+    'detail.slotsFree':'Бос','detail.slotsOf':'/','detail.slotsTotal':'Старттағы жалпы орын','detail.slotsFreeNow':'Қазір бос',
+    'detail.noOneFound':'Ешкім табылмады — сүзгілерді өзгертіп көріңіз.',
+    'detail.comingSoon':'Келесі маусым күнтізбесі жарияланғаннан кейін жаңа старттар осында пайда болады.',
+    'detail.protocolPdfNote':'Толық хаттама — төмендегі PDF-те.','detail.resultsPending':'Нәтижелер соңғы қатысушы финишке жеткен соң бірден шығады.',
+    'detail.statDistance':'Дистанция','detail.statGain':'Биіктік жиналымы','detail.statStart':'Старт','detail.statCutoff':'Бақылау уақыты',
+    'detail.mapStart':'СТАРТ','detail.mapFinish':'ФИНИШ','detail.reglamentTitle':'Регламент',
+    'common.back':'Артқа','common.next':'Келесі','common.total':'Барлығы','common.km':'км',
+    'status.open':'Тіркелу ашық','status.soon':'Жақында','status.done':'Аяқталды',
+    'common.place':'Орын','common.time':'Уақыт','common.m':'м',
+    'reg.eyebrow':'Қатысушыны тіркеу','reg.step1':'Дистанция','reg.step2':'Деректер','reg.step3':'Төлем','reg.step4':'Дайын',
+    'reg.chooseDistance':'Дистанцияны таңдаңыз','reg.addTransfer':'Старт трансферін қосу',
+    'reg.participantData':'Қатысушы деректері','reg.firstName':'Аты','reg.lastName':'Тегі','reg.birthDate':'Туған күні','reg.gender':'Жынысы',
+    'reg.phone':'Телефон','reg.email':'Email','reg.city':'Қала','reg.tshirt':'Футболка өлшемі','reg.emergencyContact':'Төтенше байланыс (аты-жөні және телефон)',
+    'reg.toPayment':'Төлемге өту','reg.payTitle':'Старт жарнасын төлеу',
+    'reg.kaspiDesc':'QR арқылы немесе Kaspi.kz қосымшасы арқылы төлем — клубтың жалғыз төлем тәсілі',
+    'reg.serviceFee':'Қызмет ақысы','reg.pay':'Төлеу',
+    'reg.confirmed':'Тіркелу расталды!','reg.confirmedDesc':'Сіздің старттық нөміріңіз бекітілді. Түбіртек пен регламент email-ге жіберілді.',
+    'reg.bibNumber':'Старттық нөмір','reg.toCabinet':'Жеке кабинетке','reg.downloadReceipt':'Түбіртекті жүктеу',
+    'signup.eyebrow':'Peloton Ridder аккаунты','signup.title':'Қатысушы профилін жасаңыз',
+    'signup.subtitle':'Деректер жеке кабинетте сақталады — әр старт кезінде қайта енгізудің қажеті жоқ.',
+    'signup.password':'Құпия сөз','signup.password2':'Құпия сөзді қайталаңыз',
+    'signup.agree':'Peloton Ridder клубының жеке деректерімді сақтауы мен өңдеуіне келісемін',
+    'signup.create':'Профиль жасау','signup.hasAccount':'Аккаунтыңыз бар ма?','signup.login':'Кіру',
+    'cabinet.eyebrow':'Жеке кабинет','cabinet.title':'Менің старттарым','cabinet.finishes':'4 финиш, жеке рекорд 21.1 км — 1:52:47',
+    'cabinet.editProfile':'Профильді өңдеу','cabinet.upcoming':'Алдағы старттар','cabinet.history':'Старттар тарихы',
+    'cabinet.bibDate':'2026 жылдың 19 қыркүйегі · старттық нөмір #214','cabinet.paid':'Төленген','cabinet.ticketQr':'Билет / QR',
+    'cabinet.radonResult':'2026 жылдың 5 шілдесі · нәтиже 1:52:47 · санатта 14-орын',
+    'cabinet.skiResult':'2026 жылдың 13 маусымы · нәтиже 0:24:12','cabinet.uphillResult':'2026 жылдың 14 наурызы · нәтиже 0:41:03',
+    'cabinet.finished':'Аяқталды','cabinet.protocol':'Хаттама','cabinet.memberSince':'Қатысушы',
+    'about.eyebrow':'Клуб туралы','about.title':'Риддерде циклдік спорт түрлерін дамыту',
+    'about.intro':'Peloton Ridder — Риддер мен Шығыс Қазақстан жастары арасында бег, шаңғы және жаппай дене шынықтыруды дамыту үшін 2019 жылы құрылған спорт клубы. Біз жылына әртүрлі рельефте төрт старт өткіземіз — қалалық дистанциялардан бастап таулы трейлдерге дейін — және жаңадан бастаушыларға қолжетімді, тәжірибелі спортшыларға қызықты етуге тырысамыз.',
+    'about.statFounded':'құрылған жыл','about.statVolunteers':'старттағы еріктілер',
+    'about.team':'Команда','about.teamDesc':'Әр стартты дайындайтын ұйымдастырушылар, жаттықтырушылар мен еріктілер',
+    'about.role1':'Негізін салушы, бас ұйымдастырушы','about.role2':'Трасса техникалық директоры','about.role3':'Жаттықтырушы, бег топтары','about.role4':'Еріктілер үйлестірушісі',
+    'about.groupsTitle':'Жаттығу топтары',
+    'about.groupsDesc':'Peloton Ridder — жылына тек төрт старт емес: жыл бойы алғашқы жүгірістен тауға дейін үш топ жұмыс істейді. Алғашқы сабақ тегін.',
+    'about.group1Title':'Жаңадан бастаушылар','about.group1Sched':'Дс · Ср · Жм, 18:30 · қала паркі','about.group1Desc':'Жеңіл жүгіру және техника қою — алғашқы 5 км-ге дайындалатындарға.',
+    'about.group2Title':'Орта деңгей','about.group2Sched':'Сс · Бс — интервалдар, Жс — ұзақ жүгіру','about.group2Desc':'10 км мен жарты марафонға арналған темп және интервалды жаттығулар.',
+    'about.group3Title':'Тау тобы','about.group3Sched':'Сб, биіктік жиналымымен ұзақ жүгіру','about.group3Desc':'Тауға шығулар — Ridder UpHill және үлкен биіктік жиналымды трейлдерге дайындық.',
+    'about.perMonth':'ай','about.membershipDesc':'Барлық топтарға абонемент · алғашқы сабақ тегін',
+    'about.campTeaser':'Kaçkar, UTMB немесе басқа таулы жарысқа дайындалып жатырсыз ба? Алтай баурайына нақты биіктік жиналымымен жаттығуға келіңіз.',
+    'about.learnCamp':'Лагерь туралы білу',
+    'camp.title':'Өз шыңыңызға дайындалыңыз — Алтай тауларында',
+    'camp.intro':'Риддер нақты биіктік жиналымы, техникалық түсулері және құбылмалы ауа райы бар тау бөктерінде орналасқан — яғни старт кезінде тап болатын нәрсенің дәл өзі. Біз белгілі бір жарысқа дайындалатын спортшыларды қабылдаймыз және бағдарламаны олардың трасса профиліне бейімдейміз.',
+    'camp.caseLabel':'Дайындық мысалы',
+    'camp.caseText':'<b>Kaçkar 100K, қыркүйек</b> — 82 км, +5 600 м. Спортшы старттан 10 күн бұрын Риддерге келді: Ridder UpHill трассасының нақты ұзақ биіктік жиналымында жаттығулар, тау рельефі мен ауа райына бейімделу, клуб жаттықтырушысымен бірге өз жарысының профиліне пейсинг талдауы.',
+    'camp.included':'Не кіреді',
+    'camp.item1Title':'Тұру','camp.item1Desc':'Старт трассаларына жақын қонақ үй',
+    'camp.item2Title':'Маршруттағы жаттықтырушы','camp.item2Desc':'Көтерілу/түсу техникасы және пейсинг талдауы',
+    'camp.item3Title':'Сіздің стартыңызға сай трассалар','camp.item3Desc':'Биіктік профилі сіздің жарысыңызға сай таңдалады',
+    'camp.item4Title':'Трансфер','camp.item4Desc':'Өскемеңнен қарсы алу және кері апару',
+    'camp.item5Title':'Қалпына келтіру','camp.item5Desc':'Ұзақ жаттығулардан кейінгі спорттық массаж',
+    'camp.item6Title':'Шағын топ','camp.item6Desc':'Бір жаттықтырушыға 6 адамға дейін',
+    'camp.programTitle':'Бағдарлама (7 күндік мысал)',
+    'camp.day1Title':'Келу','camp.day1Desc':'Өскемеңнен трансфер, орналасу, биіктікке жеңіл бейімделу.',
+    'camp.day2Title':'Дайындық','camp.day2Desc':'Жеңіл жүгіру + жаттықтырушымен жабдық пен лагерь мақсаттарын талдау.',
+    'camp.day3Title':'Биіктік жиналымы','camp.day3Desc':'Ridder UpHill трассасы бойынша ұзақ жүгіру — тауға көтерілу техникасы.',
+    'camp.day4Title':'Қалпына келтіру','camp.day4Desc':'Жеңіл қозғалыс, массаж, жүгіру техникасы бейнесін талдау.',
+    'camp.day5Title':'Интервалдар','camp.day5Desc':'Көтерілулерде күш жұмысы, тыныс алу ырғағын жаттықтыру.',
+    'camp.day6Title':'Бас жаттығу','camp.day6Desc':'Сіздің старт профиліңізді қайталайтын ұзақ жаттығу.',
+    'camp.day7Title':'Кету','camp.day7Desc':'Жеңіл созылу, лагерьді қорытындылау, кері трансфер.',
+    'camp.pricing':'Құны','camp.plan1':'7 күн','camp.plan1Includes':'Тұру, жаттықтырушы, трансфер, 1 массаж',
+    'camp.plan2':'14 күн','camp.plan2Includes':'Тұру, жаттықтырушы, трансфер, 3 массаж, жарысты талдау','camp.leaveRequest':'Өтінім қалдыру',
+    'camp.formTitle':'Лагерьге өтінім','camp.arrivalDate':'Келу күні','camp.program':'Бағдарлама','camp.goal':'Мақсат — қандай стартқа дайындалып жатырсыз',
+    'camp.sendRequest':'Өтінімді жіберу','camp.requestSent':'Өтінім жіберілді',
+    'camp.requestSentDesc':'Күндер мен трансферді растау үшін бір күн ішінде хабарласамыз.',
+    'footer.clubDesc':'Циклдік спорт түрлері клубы. Риддер, Шығыс Қазақстан облысы.',
+    'footer.club':'Клуб','footer.partners':'Серіктестерге','footer.contacts':'Байланыс','footer.address':'Риддер қ., ШҚО','footer.prototype':'Сайт дизайнының прототипі',
+  },
+  en:{
+    'nav.home':'Home','nav.events':'Races','nav.camp':'Camp','nav.camp_full':'Training Camp','nav.about':'About',
+    'nav.cabinet':'Profile','nav.cabinet_full':'My Profile','nav.signup':'Sign Up',
+    'brand.sub':'Running Club · Ridder',
+    'hero.eyebrow':'Season 2026 · 4 races in the Altai mountains',
+    'hero.title':'Run where<br>the <em>mountains</em> begin.',
+    'hero.lead':"Peloton Ridder isn't just four races a year. It's a club: regular training for local runners and a training camp for those coming to prepare for their own mountain races.",
+    'hero.join':'Join the club','hero.allEvents':'All races',
+    'next.eyebrow':'Next race','next.viewRace':'View race',
+    'countdown.days':'days','countdown.hours':'hours','countdown.min':'min','countdown.sec':'sec',
+    'stats.count1':'races a season','stats.count2':'years as a club (since 2019)','stats.count3':'participants a season','stats.count4':'distances at every race','stats.year7':'7th',
+    'home.calendarEyebrow':'Season calendar','home.calendarTitle':'Four races — one season','home.allArchive':'All races & archive',
+    'home.aboutEyebrow':'About the club','home.aboutTitle':'Growing running and skiing in the Altai foothills',
+    'home.aboutText':"Since 2019 we've been running races for people who live near the mountains and want to make the most of it — from first-timers on a 5&nbsp;km to those tackling a half marathon uphill.",
+    'home.aboutCta':'Meet the team',
+    'events.eyebrow':'Peloton Ridder races','events.title':'Race calendar and archive','events.calendarTab':'2026 Calendar','events.archiveTab':'Archive',
+    'detail.profileTitle':'Elevation Profile','detail.profile':'Profile','detail.map':'Map',
+    'detail.chartNoteProfile':'Track for GPS devices and Strava/Garmin — updates for the selected distance.',
+    'detail.chartNoteMap':'Schematic map from the GPS track: start, finish and checkpoints along the route.',
+    'detail.mapTitle':'Route Map',
+    'detail.distancesTitle':'Distances & Pricing','detail.register':'Register','detail.paymentHint':'Kaspi Pay only · instant confirmation',
+    'detail.orderTransfer':'Order a Transfer','detail.transferRoute':'Ridder → start line and back, from','detail.perPerson':'/ person',
+    'detail.seatsCount':'Number of seats','detail.payTransfer':'Pay for Transfer','detail.transferPaid':'Transfer paid — your seat is booked.',
+    'detail.eventDone':'This race is over — results and photos are available.','detail.downloadProtocol':'Download Results (PDF)','detail.gallery':'Race Photo Gallery',
+    'detail.tabCourse':'About the Course','detail.tabReglament':'Rules','detail.tabProgram':'Race-Day Schedule','detail.tabGetting':'Getting There',
+    'detail.tabEquipment':'Mandatory Gear','detail.tabParticipants':'Entry List','detail.tabResults':'Results',
+    'detail.downloadFullReglament':'Download Full Rules (PDF)',
+    'detail.printHint':'This opens your browser’s print dialog — choose "Save as PDF". A short version is below for the site.',
+    'detail.eqRequired':'mandatory — must be carried at the race','detail.eqRecommended':'recommended',
+    'detail.searchByName':'Search by name...','detail.allClubs':'All clubs','detail.allGenders':'Gender: all','detail.male':'Male','detail.female':'Female','detail.allCountries':'Country: all',
+    'detail.thName':'Name','detail.thClub':'Club','detail.thDistance':'Distance','detail.thGender':'Gender','detail.thCountry':'Country',
+    'detail.partners':'Race Partners','detail.partnersTbd':'Partners to be announced.',
+    'detail.transferToStart':'Transfer to start',
+    'detail.elevation':'m above sea level',
+    'detail.gainLabel':'elevation gain',
+    'detail.slotsFree':'Free','detail.slotsOf':'of','detail.slotsTotal':'Total race slots','detail.slotsFreeNow':'Free right now',
+    'detail.noOneFound':'No one found — try different filters.',
+    'detail.comingSoon':'New races will appear here once next season’s calendar is published.',
+    'detail.protocolPdfNote':'Full results are in the PDF below.','detail.resultsPending':'Results will appear as soon as the last finisher crosses the line.',
+    'detail.statDistance':'Distance','detail.statGain':'Elevation Gain','detail.statStart':'Start','detail.statCutoff':'Cutoff Time',
+    'detail.mapStart':'START','detail.mapFinish':'FINISH','detail.reglamentTitle':'Rules',
+    'common.back':'Back','common.next':'Next','common.total':'Total','common.km':'km',
+    'status.open':'Registration Open','status.soon':'Coming Soon','status.done':'Finished',
+    'common.place':'Place','common.time':'Time','common.m':'m',
+    'reg.eyebrow':'Race Registration','reg.step1':'Distance','reg.step2':'Details','reg.step3':'Payment','reg.step4':'Done',
+    'reg.chooseDistance':'Choose your distance','reg.addTransfer':'Add a transfer to the start',
+    'reg.participantData':'Participant Details','reg.firstName':'First Name','reg.lastName':'Last Name','reg.birthDate':'Date of Birth','reg.gender':'Gender',
+    'reg.phone':'Phone','reg.email':'Email','reg.city':'City','reg.tshirt':'T-Shirt Size','reg.emergencyContact':'Emergency Contact (name and phone)',
+    'reg.toPayment':'To Payment','reg.payTitle':'Pay Your Entry Fee',
+    'reg.kaspiDesc':'Pay by QR or through the Kaspi.kz app — the club’s only payment method',
+    'reg.serviceFee':'Service Fee','reg.pay':'Pay',
+    'reg.confirmed':'Registration confirmed!','reg.confirmedDesc':'Your bib number is reserved. A receipt and the rules have been emailed to you.',
+    'reg.bibNumber':'Bib Number','reg.toCabinet':'Go to My Profile','reg.downloadReceipt':'Download Receipt',
+    'signup.eyebrow':'Peloton Ridder Account','signup.title':'Create Your Runner Profile',
+    'signup.subtitle':'Your details are saved to your profile — no need to enter them again for every race.',
+    'signup.password':'Password','signup.password2':'Confirm Password',
+    'signup.agree':'I agree to Peloton Ridder storing and processing my personal data',
+    'signup.create':'Create Profile','signup.hasAccount':'Already have an account?','signup.login':'Log In',
+    'cabinet.eyebrow':'My Profile','cabinet.title':'My Races','cabinet.finishes':'4 finishes, PB 21.1 km — 1:52:47',
+    'cabinet.editProfile':'Edit Profile','cabinet.upcoming':'Upcoming Races','cabinet.history':'Race History',
+    'cabinet.bibDate':'September 19, 2026 · Bib #214','cabinet.paid':'Paid','cabinet.ticketQr':'Ticket / QR',
+    'cabinet.radonResult':'July 5, 2026 · finished 1:52:47 · 14th in category',
+    'cabinet.skiResult':'June 13, 2026 · finished 0:24:12','cabinet.uphillResult':'March 14, 2026 · finished 0:41:03',
+    'cabinet.finished':'Finished','cabinet.protocol':'Results','cabinet.memberSince':'Member since',
+    'about.eyebrow':'About the Club','about.title':'Growing Endurance Sports in Ridder',
+    'about.intro':'Peloton Ridder is a sports club founded in 2019 to develop running, skiing and mass participation sport among young people in Ridder and East Kazakhstan. We hold four races a year on varied terrain — from city-distance races to mountain trails — and try to keep entry accessible for beginners while staying interesting for experienced athletes.',
+    'about.statFounded':'founded','about.statVolunteers':'volunteers per race',
+    'about.team':'Team','about.teamDesc':'The organizers, coaches and volunteers who put on every race',
+    'about.role1':'Founder, Race Director','about.role2':'Course Technical Director','about.role3':'Coach, Running Groups','about.role4':'Volunteer Coordinator',
+    'about.groupsTitle':'Training Groups',
+    'about.groupsDesc':"Peloton Ridder isn't just four races a year: three groups train year-round, from a first-ever run to the mountains. Your first session is free.",
+    'about.group1Title':'Beginners','about.group1Sched':'Mon · Wed · Fri, 6:30pm · city park','about.group1Desc':'Easy running and technique work — for those training for their first 5 km.',
+    'about.group2Title':'Intermediate','about.group2Sched':'Tue · Thu — intervals, Sun — long run','about.group2Desc':'Tempo and interval training for 10 km and half marathon.',
+    'about.group3Title':'Mountain Group','about.group3Sched':'Sat, long run with elevation gain','about.group3Desc':'Trips into the mountains — training for Ridder UpHill and high-gain trails.',
+    'about.perMonth':'month','about.membershipDesc':'One membership, all groups · first session free',
+    'about.campTeaser':'Preparing for your own race — Kaçkar, UTMB or any other mountain event? Come train in the Altai foothills on real elevation gain.',
+    'about.learnCamp':'Learn about the camp',
+    'camp.title':'Train for your summit — in the Altai mountains',
+    'camp.intro':"Ridder sits at the foot of a range with real elevation gain, technical descents and changeable weather — exactly what you'll face on race day. We host athletes preparing for a specific race and build the program around their course profile.",
+    'camp.caseLabel':'A sample build-up',
+    'camp.caseText':'<b>Kaçkar 100K, September</b> — 82 km, +5,600 m. An athlete arrived in Ridder 10 days before the race: training on the Ridder UpHill course’s real, sustained elevation gain, adapting to mountain terrain and weather, and working through race pacing with a club coach.',
+    'camp.included':"What's Included",
+    'camp.item1Title':'Accommodation','camp.item1Desc':'Guesthouse near the start courses',
+    'camp.item2Title':'Coach on the Route','camp.item2Desc':'Uphill/downhill technique and pacing work',
+    'camp.item3Title':'Courses Matched to Your Race','camp.item3Desc':'Elevation profile chosen to match your target race',
+    'camp.item4Title':'Transfer','camp.item4Desc':'Pickup and drop-off from Ust-Kamenogorsk',
+    'camp.item5Title':'Recovery','camp.item5Desc':'Sports massage after long training sessions',
+    'camp.item6Title':'Small Groups','camp.item6Desc':'Up to 6 athletes per coach',
+    'camp.programTitle':'Sample 7-Day Program',
+    'camp.day1Title':'Arrival','camp.day1Desc':'Transfer from Ust-Kamenogorsk, check-in, easy altitude adjustment.',
+    'camp.day2Title':'Easing In','camp.day2Desc':'Easy run + gear check and goal-setting with your coach.',
+    'camp.day3Title':'Elevation Gain','camp.day3Desc':'Long run on the Ridder UpHill course — uphill technique.',
+    'camp.day4Title':'Recovery','camp.day4Desc':'Easy movement, massage, running-form video review.',
+    'camp.day5Title':'Intervals','camp.day5Desc':'Strength work on climbs, breathing rhythm practice.',
+    'camp.day6Title':'Dress Rehearsal','camp.day6Desc':'A long session simulating your race’s profile.',
+    'camp.day7Title':'Departure','camp.day7Desc':'Easy cool-down, camp debrief, return transfer.',
+    'camp.pricing':'Pricing','camp.plan1':'7 days','camp.plan1Includes':'Accommodation, coach, transfer, 1 massage',
+    'camp.plan2':'14 days','camp.plan2Includes':'Accommodation, coach, transfer, 3 massages, race breakdown','camp.leaveRequest':'Request a Spot',
+    'camp.formTitle':'Camp Application','camp.arrivalDate':'Arrival Date','camp.program':'Program','camp.goal':"Goal — which race you're training for",
+    'camp.sendRequest':'Send Request','camp.requestSent':'Request Sent',
+    'camp.requestSentDesc':"We'll be in touch within a day to confirm dates and transfer.",
+    'footer.clubDesc':'Endurance sports club. Ridder, East Kazakhstan Region.',
+    'footer.club':'Club','footer.partners':'Partners','footer.contacts':'Contact','footer.address':'Ridder, East Kazakhstan','footer.prototype':'Website redesign — design prototype',
+  },
+  zh:{
+    'nav.home':'首页','nav.events':'赛事','nav.camp':'训练营','nav.camp_full':'训练营','nav.about':'关于俱乐部',
+    'nav.cabinet':'我的主页','nav.cabinet_full':'个人主页','nav.signup':'注册',
+    'brand.sub':'跑步俱乐部 · 里德尔',
+    'hero.eyebrow':'2026赛季 · 阿尔泰山4场赛事',
+    'hero.title':'在群山<br>开始的地方<em>奔跑</em>。',
+    'hero.lead':'Peloton Ridder不仅仅是一年四场比赛。这是一个俱乐部：为本地跑者提供常规训练，也为前来备战自己目标赛事的运动员提供训练营。',
+    'hero.join':'加入俱乐部','hero.allEvents':'所有赛事',
+    'next.eyebrow':'下一场比赛','next.viewRace':'查看赛事',
+    'countdown.days':'天','countdown.hours':'时','countdown.min':'分','countdown.sec':'秒',
+    'stats.count1':'每季赛事','stats.count2':'俱乐部成立年数（2019年起）','stats.count3':'每季参赛人数','stats.count4':'每场赛事距离选项','stats.year7':'第7',
+    'home.calendarEyebrow':'赛季日历','home.calendarTitle':'四场比赛 — 一个赛季','home.allArchive':'所有赛事与历史记录',
+    'home.aboutEyebrow':'关于俱乐部','home.aboutTitle':'在阿尔泰山麓发展跑步与滑雪运动',
+    'home.aboutText':'自2019年起，我们为住在群山附近、想要充分利用这一优势的人举办比赛——从初次挑战5公里的新手，到向半程马拉松爬坡冲刺的老将。',
+    'home.aboutCta':'认识我们的团队',
+    'events.eyebrow':'Peloton Ridder 赛事','events.title':'赛事日历与历史记录','events.calendarTab':'2026年日历','events.archiveTab':'历史记录',
+    'detail.profileTitle':'赛道高度剖面','detail.profile':'剖面图','detail.map':'地图',
+    'detail.chartNoteProfile':'适用于导航设备和Strava/Garmin的轨迹——会随所选距离更新。',
+    'detail.chartNoteMap':'根据GPS轨迹生成的示意地图：起点、终点及沿途检查点。',
+    'detail.mapTitle':'赛道地图',
+    'detail.distancesTitle':'距离与价格','detail.register':'报名','detail.paymentHint':'仅支持Kaspi Pay · 即时确认',
+    'detail.orderTransfer':'预订接驳车','detail.transferRoute':'里德尔 → 起点往返，起价','detail.perPerson':'/ 人',
+    'detail.seatsCount':'座位数','detail.payTransfer':'支付接驳车费用','detail.transferPaid':'接驳车已支付 — 座位已预订。',
+    'detail.eventDone':'本场赛事已结束 — 成绩与照片已开放。','detail.downloadProtocol':'下载成绩单（PDF）','detail.gallery':'赛事照片集',
+    'detail.tabCourse':'关于赛道','detail.tabReglament':'赛事规则','detail.tabProgram':'当日日程','detail.tabGetting':'交通指南',
+    'detail.tabEquipment':'必备装备','detail.tabParticipants':'参赛名单','detail.tabResults':'成绩',
+    'detail.downloadFullReglament':'下载完整规则（PDF）',
+    'detail.printHint':'将打开浏览器打印对话框——请选择"另存为PDF"。下方是网站简要版本。',
+    'detail.eqRequired':'必备 — 比赛全程须随身携带','detail.eqRecommended':'建议携带',
+    'detail.searchByName':'按姓名搜索...','detail.allClubs':'所有俱乐部','detail.allGenders':'性别：全部','detail.male':'男','detail.female':'女','detail.allCountries':'国家：全部',
+    'detail.thName':'姓名','detail.thClub':'俱乐部','detail.thDistance':'距离','detail.thGender':'性别','detail.thCountry':'国家',
+    'detail.partners':'赛事合作伙伴','detail.partnersTbd':'合作伙伴待公布。',
+    'detail.transferToStart':'起点接驳车',
+    'detail.elevation':'米（海拔）',
+    'detail.gainLabel':'爬升',
+    'detail.slotsFree':'剩余','detail.slotsOf':'/','detail.slotsTotal':'赛事总名额','detail.slotsFreeNow':'当前剩余',
+    'detail.noOneFound':'未找到结果 — 请尝试调整筛选条件。',
+    'detail.comingSoon':'下个赛季日历发布后，新赛事将在此显示。',
+    'detail.protocolPdfNote':'完整成绩见下方PDF文件。','detail.resultsPending':'最后一名选手完赛后成绩将立即显示。',
+    'detail.statDistance':'距离','detail.statGain':'爬升','detail.statStart':'起点','detail.statCutoff':'关门时间',
+    'detail.mapStart':'起点','detail.mapFinish':'终点','detail.reglamentTitle':'赛事规则',
+    'common.back':'返回','common.next':'下一步','common.total':'总计','common.km':'km',
+    'status.open':'报名开放中','status.soon':'即将开始','status.done':'已结束',
+    'common.place':'名次','common.time':'时间','common.m':'米',
+    'reg.eyebrow':'参赛报名','reg.step1':'距离','reg.step2':'信息','reg.step3':'支付','reg.step4':'完成',
+    'reg.chooseDistance':'选择您的距离','reg.addTransfer':'添加起点接驳车',
+    'reg.participantData':'参赛者信息','reg.firstName':'名','reg.lastName':'姓','reg.birthDate':'出生日期','reg.gender':'性别',
+    'reg.phone':'电话','reg.email':'邮箱','reg.city':'城市','reg.tshirt':'T恤尺码','reg.emergencyContact':'紧急联系人（姓名和电话）',
+    'reg.toPayment':'前往支付','reg.payTitle':'支付报名费',
+    'reg.kaspiDesc':'通过二维码或Kaspi.kz应用支付 — 俱乐部唯一的支付方式',
+    'reg.serviceFee':'服务费','reg.pay':'支付',
+    'reg.confirmed':'报名已确认！','reg.confirmedDesc':'您的参赛号码已保留。收据和规则已发送至您的邮箱。',
+    'reg.bibNumber':'参赛号码','reg.toCabinet':'前往个人主页','reg.downloadReceipt':'下载收据',
+    'signup.eyebrow':'Peloton Ridder 账户','signup.title':'创建您的参赛者资料',
+    'signup.subtitle':'您的信息将保存在个人主页中 — 每次报名无需重复填写。',
+    'signup.password':'密码','signup.password2':'确认密码',
+    'signup.agree':'我同意Peloton Ridder俱乐部存储和处理我的个人数据',
+    'signup.create':'创建资料','signup.hasAccount':'已有账户？','signup.login':'登录',
+    'cabinet.eyebrow':'个人主页','cabinet.title':'我的赛事','cabinet.finishes':'4次完赛，21.1公里个人最佳成绩 — 1:52:47',
+    'cabinet.editProfile':'编辑资料','cabinet.upcoming':'即将参加的赛事','cabinet.history':'历史赛事',
+    'cabinet.bibDate':'2026年9月19日 · 参赛号 #214','cabinet.paid':'已支付','cabinet.ticketQr':'门票 / 二维码',
+    'cabinet.radonResult':'2026年7月5日 · 成绩 1:52:47 · 组别第14名',
+    'cabinet.skiResult':'2026年6月13日 · 成绩 0:24:12','cabinet.uphillResult':'2026年3月14日 · 成绩 0:41:03',
+    'cabinet.finished':'已完赛','cabinet.protocol':'成绩单','cabinet.memberSince':'加入俱乐部于',
+    'about.eyebrow':'关于俱乐部','about.title':'在里德尔发展耐力运动',
+    'about.intro':'Peloton Ridder是一家成立于2019年的体育俱乐部，致力于在里德尔和东哈萨克斯坦地区的年轻人中推广跑步、滑雪及大众体育文化。我们每年在不同地形上举办四场比赛——从城市赛道到高山越野——努力让新手容易参与，也让资深运动员保持兴趣。',
+    'about.statFounded':'成立年份','about.statVolunteers':'每场赛事志愿者',
+    'about.team':'团队','about.teamDesc':'筹备每一场赛事的组织者、教练与志愿者',
+    'about.role1':'创始人，赛事总监','about.role2':'赛道技术总监','about.role3':'教练，跑步训练组','about.role4':'志愿者协调员',
+    'about.groupsTitle':'训练小组',
+    'about.groupsDesc':'Peloton Ridder不只是一年四场比赛：三个训练小组全年开放，从第一次跑步到征服高山。首次课程免费。',
+    'about.group1Title':'新手组','about.group1Sched':'周一·周三·周五 18:30 · 市立公园','about.group1Desc':'轻松跑步与技术指导 — 适合备战首个5公里的跑者。',
+    'about.group2Title':'中级组','about.group2Sched':'周二·周四 — 间歇跑，周日 — 长距离跑','about.group2Desc':'适合10公里及半程马拉松的节奏跑与间歇训练。',
+    'about.group3Title':'山地组','about.group3Sched':'周六，带爬升的长距离跑','about.group3Desc':'前往山区训练 — 备战Ridder UpHill及大爬升越野赛。',
+    'about.perMonth':'每月','about.membershipDesc':'一次会员资格，畅享所有训练组 · 首次课程免费',
+    'about.campTeaser':'正在备战自己的赛事——Kaçkar、UTMB或其他高山赛事？欢迎来阿尔泰山麓，在真实爬升地形上训练。',
+    'about.learnCamp':'了解训练营',
+    'camp.title':'为您的巅峰之战训练 — 就在阿尔泰山',
+    'camp.intro':'里德尔坐落于山脉脚下，拥有真实的爬升、技术性下坡和多变的天气——正是您在比赛日将面对的一切。我们接待备战特定赛事的运动员，并根据他们的赛道剖面制定训练计划。',
+    'camp.caseLabel':'训练案例',
+    'camp.caseText':'<b>Kaçkar 100K，九月</b> — 82公里，+5,600米爬升。一位运动员在赛前10天抵达里德尔：在Ridder UpHill赛道真实的持续爬升地形上训练，适应高山地形与天气，并与俱乐部教练一起制定比赛配速方案。',
+    'camp.included':'训练营包含',
+    'camp.item1Title':'住宿','camp.item1Desc':'紧邻起点赛道的民宿',
+    'camp.item2Title':'路线教练随行','camp.item2Desc':'上坡/下坡技术与配速指导',
+    'camp.item3Title':'匹配您赛事的赛道','camp.item3Desc':'根据您的目标赛事选择爬升剖面',
+    'camp.item4Title':'接驳车','camp.item4Desc':'往返乌斯季卡缅诺戈尔斯克接送',
+    'camp.item5Title':'恢复放松','camp.item5Desc':'长时间训练后的运动按摩',
+    'camp.item6Title':'小班训练','camp.item6Desc':'每位教练最多带6人',
+    'camp.programTitle':'7天示例训练计划',
+    'camp.day1Title':'抵达','camp.day1Desc':'从乌斯季卡缅诺戈尔斯克接驳，入住，轻松适应海拔。',
+    'camp.day2Title':'热身适应','camp.day2Desc':'轻松跑步 + 与教练检查装备并设定训练营目标。',
+    'camp.day3Title':'爬升训练','camp.day3Desc':'在Ridder UpHill赛道进行长距离跑 — 上坡技术训练。',
+    'camp.day4Title':'恢复日','camp.day4Desc':'轻松活动、按摩、跑步技术视频回顾。',
+    'camp.day5Title':'间歇训练','camp.day5Desc':'爬坡力量训练，呼吸节奏练习。',
+    'camp.day6Title':'模拟演练','camp.day6Desc':'模拟您赛事剖面的长距离训练。',
+    'camp.day7Title':'离营','camp.day7Desc':'轻松放松整理，训练营总结，返程接驳。',
+    'camp.pricing':'费用','camp.plan1':'7天','camp.plan1Includes':'住宿、教练、接驳车、1次按摩',
+    'camp.plan2':'14天','camp.plan2Includes':'住宿、教练、接驳车、3次按摩、赛事分析','camp.leaveRequest':'提交申请',
+    'camp.formTitle':'训练营申请','camp.arrivalDate':'抵达日期','camp.program':'训练计划','camp.goal':'目标 — 您正在备战哪场赛事',
+    'camp.sendRequest':'发送申请','camp.requestSent':'申请已发送',
+    'camp.requestSentDesc':'我们将在一天内与您联系，确认日期和接驳安排。',
+    'footer.clubDesc':'耐力运动俱乐部。里德尔，东哈萨克斯坦州。',
+    'footer.club':'俱乐部','footer.partners':'合作伙伴','footer.contacts':'联系方式','footer.address':'里德尔市，东哈萨克斯坦州','footer.prototype':'网站改版设计原型',
+  },
+};
+function t(key){
+  const dict = UI[currentLang] || UI.ru;
+  if(dict[key]!==undefined) return dict[key];
+  return UI.ru[key]!==undefined ? UI.ru[key] : key;
+}
+function applyStaticTranslations(){
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder'))); });
+  renderLangSwitch();
+}
+function renderLangSwitch(){
+  const bar = SUPPORTED_LANGS.map(l=>`<button class="${l===currentLang?'active':''}" onclick="setLang('${l}')">${LANG_LABEL[l]}</button>`).join('');
+  document.getElementById('langSwitch').innerHTML = bar;
+  const barFull = SUPPORTED_LANGS.map(l=>`<button class="${l===currentLang?'active':''}" onclick="setLang('${l}')">${LANG_LABEL_FULL[l]}</button>`).join('');
+  document.getElementById('mobileLangSwitch').innerHTML = barFull;
+}
+function setLang(lang){
+  if(!SUPPORTED_LANGS.includes(lang)) return;
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  applyStaticTranslations();
+  renderGrids();
+  renderNextRace();
+  if(currentEvent && document.getElementById('view-detail').classList.contains('active')){
+    const savedDistIdx = selectedDistIdx, savedPView = currentPView;
+    const activeTabBtn = document.querySelector('#detailTabs button.active');
+    const savedTab = activeTabBtn ? activeTabBtn.getAttribute('data-dtab') : 'course';
+    openEvent(currentEvent.id);
+    selectedDistIdx = savedDistIdx;
+    renderDistanceOptions('distanceList', currentEvent, selectedDistIdx, 'pickDist');
+    selectDetailTab(savedTab);
+    selectProfileView(savedPView);
+  }
+  if(document.getElementById('view-register').classList.contains('active') && currentEvent){
+    renderSlotsNote('regSlotsNote', currentEvent);
+    renderDistanceOptions('regDistanceList', currentEvent, currentDist, 'pickRegDist');
+    document.getElementById('regTransferPrice').textContent = formatPrice(currentEvent.transferPrice);
+    updateSummary();
+  }
+}
+
 /* ============================================================
    DATA
    ============================================================ */
@@ -1215,6 +1743,65 @@ const EVENTS = {
     reglament:'<p>Забег проводится в соответствии с регламентом клуба Peloton Ridder и правилами ВФЛА. Участие с 16 лет (на 5&nbsp;км — с 12 лет в сопровождении взрослого).</p><ul><li>Обязательный медицинский допуск или расписка об ответственности</li><li>Электронный хронометраж по чипу в стартовом номере</li><li>Лимит прохождения дистанции 21.1&nbsp;км — 3 часа 30 минут</li><li>Пункты питания на 5-м, 10-м и 16-м км</li></ul>',
     program:'<p><b>19 сентября, набережная реки Ульба</b></p><ul><li>07:30 — открытие стартового городка, выдача номеров</li><li>08:45 — разминка</li><li>09:00 — старт 21.1 км и 10 км</li><li>09:15 — старт 5 км</li><li>12:00 — награждение призёров</li><li>13:00 — закрытие</li></ul>',
     getting:'<p>Старт и финиш — набережная реки Ульба, в 10 минутах пешком от центра Риддера. Парковка у ДК металлургов, бесплатная камера хранения в стартовом городке.</p>',
+    i18n:{
+      kk:{
+        location:'Риддер, Үлбі өзенінің жағалауы',
+        courseIntro:'<b>Panorama Fall Run</b> қала аяқталатын жерден — Үлбі жағалауынан басталады. Алғашқы километрлер асфальт пен шығарып салушылар тобы, содан кейін трасса қылқан ормандар аңғарына түсіп, биіктік жинай бастайды. Дистанцияның ортасына жақын жерде бәрі осы үшін ойластырылған шолу нүктесі ашылады: Алтай жоталары күзгі бояуда, кадрда бірде-бір үй жоқ. Финиш — сол жерде, жағалауда, шеңбер тұйықталады.',
+        landmarks:[
+          {name:'Үлбі жағалауы', desc:'Өзен бойымен старт — асфальт, шығарып салушылар тобы, қала шуы әлі жақын.'},
+          {name:'Қарағай аңғары', desc:'Трасса орманға кіреді, көлеңке мен қылқан — нағыз трейл басталады.'},
+          {name:'«Панорама» шолу алаңы', desc:'Маршруттың ең биік нүктесі — Алтай жоталары толығымен көрінеді.'},
+          {name:'Жағалаудағы финиш', desc:'Шеңбер басталған жерінде тұйықталады, финиш қалашығында қол шапалақтаумен.'},
+        ],
+        equipment:[
+          {group:'Киім мен аяқ киім', items:['Жабық жүгіру аяқ киімі (трейл немесе шоссе)','Желден қорғайтын күртеше','Күннен қорғайтын бас киім']},
+          {group:'Жабдық', items:['Толық зарядталған смартфон','Кеудедегі старттық нөмір','0.5 л су үшін жұмсақ ыдыс']},
+          {group:'Төтенше жағдай', items:['Ысқырық','Лейкопластырь']},
+        ],
+        reglament:'<p>Жарыс Peloton Ridder клубының регламентіне және ҚРЖФА ережелеріне сәйкес өткізіледі. Қатысу жасы — 16 жастан (5&nbsp;км дистанциясына — ересек адаммен бірге 12 жастан).</p><ul><li>Міндетті медициналық рұқсат немесе жауапкершілік туралы қолхат</li><li>Старттық нөмірдегі чип бойынша электронды хронометраж</li><li>21.1&nbsp;км дистанциясын өту лимиті — 3 сағат 30 минут</li><li>5-ші, 10-шы және 16-шы км-де тамақтану пункттері</li></ul>',
+        program:'<p><b>19 қыркүйек, Үлбі өзенінің жағалауы</b></p><ul><li>07:30 — старттық қалашықтың ашылуы, нөмірлерді беру</li><li>08:45 — жаттығу</li><li>09:00 — 21.1 км және 10 км старты</li><li>09:15 — 5 км старты</li><li>12:00 — жеңімпаздарды марапаттау</li><li>13:00 — жабылуы</li></ul>',
+        getting:'<p>Старт пен финиш — Үлбі жағалауы, Риддер орталығынан жаяу 10 минут қашықтықта. Металлургтар мәдениет үйінің жанында автотұрақ, старттық қалашықта тегін заттарды сақтау бөлмесі бар.</p>',
+        cutoffs:['1 сағ 15 мин','2 сағ','3 сағ 30 мин'],
+      },
+      en:{
+        location:'Ridder, Ulba River embankment',
+        courseIntro:'<b>Panorama Fall Run</b> starts right where the town ends — on the Ulba River embankment. The first kilometers are asphalt and a crowd of well-wishers, then the course dips into a pine ravine and starts climbing. Near the midpoint a viewpoint opens up, the whole reason for the race: the Altai ridges in autumn color, without a single building in frame. The finish is back on the embankment, closing the loop.',
+        landmarks:[
+          {name:'Ulba Embankment', desc:'Start along the river — asphalt, a crowd of well-wishers, the city still close by.'},
+          {name:'Pine Ravine', desc:'The course heads into the forest, shade and pine needles — real trail running begins.'},
+          {name:'"Panorama" Viewpoint', desc:'The high point of the route — the Altai ridges fill the whole frame.'},
+          {name:'Embankment Finish', desc:'The loop closes where it started, to applause at the finish village.'},
+        ],
+        equipment:[
+          {group:'Clothing & Footwear', items:['Closed running shoes (trail or road)','Windproof jacket','Sun hat']},
+          {group:'Gear', items:['Fully charged smartphone','Bib number on the chest','Soft flask, 0.5 L']},
+          {group:'Emergency', items:['Whistle','Adhesive bandage']},
+        ],
+        reglament:'<p>The race is held under the Peloton Ridder club rules and Kazakhstan Athletics Federation regulations. Minimum age is 16 (12 for the 5&nbsp;km, accompanied by an adult).</p><ul><li>A medical clearance or liability waiver is mandatory</li><li>Electronic timing via chip in the bib number</li><li>Cutoff for the 21.1&nbsp;km distance — 3 hours 30 minutes</li><li>Aid stations at km 5, 10 and 16</li></ul>',
+        program:'<p><b>September 19, Ulba River embankment</b></p><ul><li>07:30 — race village opens, bib pickup</li><li>08:45 — warm-up</li><li>09:00 — 21.1 km and 10 km start</li><li>09:15 — 5 km start</li><li>12:00 — awards ceremony</li><li>13:00 — closing</li></ul>',
+        getting:'<p>Start and finish are on the Ulba River embankment, a 10-minute walk from central Ridder. Parking is at the Metallurgists\' Palace of Culture, with free bag storage at the race village.</p>',
+        cutoffs:['1h 15m','2h','3h 30m'],
+      },
+      zh:{
+        location:'里德尔，乌尔巴河堤岸',
+        courseIntro:'<b>Panorama Fall Run</b>从城市尽头开始——就在乌尔巴河堤岸。最初几公里是柏油路，两旁是送行的人群，随后赛道钻入松林峡谷，开始爬升。临近赛程中段，一处观景点豁然展开——这正是整场赛事的意义所在：阿尔泰山脉披上秋色，画面中不见一栋房屋。终点回到堤岸，环线闭合。',
+        landmarks:[
+          {name:'乌尔巴河堤岸', desc:'沿河起跑——柏油路面，送行人群，城市的喧嚣仍在身旁。'},
+          {name:'松林峡谷', desc:'赛道进入森林，树荫与松针——真正的越野赛段开始了。'},
+          {name:'"全景"观景台', desc:'全程最高点——阿尔泰山脉尽收眼底。'},
+          {name:'堤岸终点', desc:'环线在起点处闭合，终点区掌声雷动。'},
+        ],
+        equipment:[
+          {group:'服装与鞋履', items:['包头跑鞋（越野或公路款）','防风夹克','遮阳帽']},
+          {group:'装备', items:['电量充足的智能手机','胸前佩戴参赛号码布','0.5升软水壶']},
+          {group:'应急物品', items:['哨子','创可贴/胶布']},
+        ],
+        reglament:'<p>本赛事按照Peloton Ridder俱乐部规则及哈萨克斯坦田径联合会规定举行。参赛年龄须满16周岁（5公里组可12周岁起，需成人陪同）。</p><ul><li>须提供体检合格证明或责任免除书</li><li>通过号码布芯片电子计时</li><li>21.1公里组关门时间为3小时30分钟</li><li>补给站设于5公里、10公里及16公里处</li></ul>',
+        program:'<p><b>9月19日，乌尔巴河堤岸</b></p><ul><li>07:30 — 赛事村开放，领取号码布</li><li>08:45 — 热身</li><li>09:00 — 21.1公里及10公里组起跑</li><li>09:15 — 5公里组起跑</li><li>12:00 — 颁奖典礼</li><li>13:00 — 活动结束</li></ul>',
+        getting:'<p>起点和终点位于乌尔巴河堤岸，距里德尔市中心步行约10分钟。可在冶金工人文化宫附近停车，赛事村提供免费寄存服务。</p>',
+        cutoffs:['1小时15分','2小时','3小时30分'],
+      },
+    },
     results:null,
     participants:[
       {name:'Иванов Пётр', club:'Peloton Ridder', dist:'21.1 км', gender:'М', country:'KAZ'},
@@ -1260,6 +1847,62 @@ const EVENTS = {
     reglament:'<p>Шоссейный забег в честь местных радоновых источников. Покрытие — асфальт, трасса сертифицирована по протяжённости.</p><ul><li>Участие с 16 лет</li><li>Хронометраж по чипу</li><li>Лимит на 21.1 км — 3 часа</li></ul>',
     program:'<p><b>5 июля, район санатория</b></p><ul><li>07:00 — регистрация и выдача номеров</li><li>07:45 — разминка</li><li>08:00 — общий старт всех дистанций</li><li>11:00 — награждение</li></ul>',
     getting:'<p>Старт у центрального входа санатория. Автобусы от центра Риддера каждые 20 минут с 06:30.</p>',
+    i18n:{
+      kk:{
+        location:'Риддер, санаторий ауданы',
+        courseIntro:'<b>Radon Race</b> — маусымның ең жылдам старты: санаторийден бастап аңғар бойымен түзу асфальт және кері қайту. Биіктік жиналымы жоқ, орнына жеке рекордтарға арналған адал сертификатталған дистанция бар. Трасса қылқан орманы арқылы, забегке атын берген минералды бұлақтары бар санаторий аймағының жанынан өтеді.',
+        landmarks:[
+          {name:'Санаторий, старт', desc:'Барлық дистанциялардың жалпы старты орталық кіреберісте.'},
+          {name:'Қарағай орманы', desc:'Орман көлеңкесіндегі түзу асфальт — трассаның ең жылдам бөлігі.'},
+          {name:'Бұрылыс пункті', desc:'Маршруттың ең алыс нүктесі, әрі қарай — сол жол бойымен кері.'},
+          {name:'Санаторий жанындағы финиш', desc:'Санаторий паркінің қоршауы бойындағы финиш түзуі.'},
+        ],
+        equipment:[
+          {group:'Киім мен аяқ киім', items:['Жүгіру аяқ киімі','Ауа-райына сай спорттық киім']},
+          {group:'Жабдық', items:['Кеудедегі старттық нөмір','Смартфон (ұсынылады)']},
+        ],
+        reglament:'<p>Жергілікті радон бұлақтарының құрметіне арналған шоссе забегі. Жабыны — асфальт, трасса ұзындығы бойынша сертификатталған.</p><ul><li>Қатысу жасы — 16 жастан</li><li>Чип бойынша хронометраж</li><li>21.1 км-ге лимит — 3 сағат</li></ul>',
+        program:'<p><b>5 шілде, санаторий ауданы</b></p><ul><li>07:00 — тіркеу және нөмірлерді беру</li><li>07:45 — жаттығу</li><li>08:00 — барлық дистанциялардың жалпы старты</li><li>11:00 — марапаттау</li></ul>',
+        getting:'<p>Старт санаторийдің орталық кіреберісінде. Риддер орталығынан автобустар 06:30-дан бастап әр 20 минут сайын жүреді.</p>',
+        cutoffs:['1 сағ','1 сағ 40 мин','3 сағ'],
+      },
+      en:{
+        location:'Ridder, sanatorium district',
+        courseIntro:'<b>Radon Race</b> is the fastest race of the season: flat asphalt from the sanatorium down the valley and back. No elevation gain at all, but an honest, certified distance for personal bests. The course runs through a pine forest, past the sanatorium grounds with the mineral springs that gave the race its name.',
+        landmarks:[
+          {name:'Sanatorium, Start', desc:'A mass start for all distances at the main entrance.'},
+          {name:'Pine Forest', desc:'Flat asphalt in the shade of the forest — the fastest stretch of the course.'},
+          {name:'Turnaround Point', desc:'The furthest point on the route — from here it\'s the same road back.'},
+          {name:'Sanatorium Finish', desc:'The finishing straight runs alongside the sanatorium park fence.'},
+        ],
+        equipment:[
+          {group:'Clothing & Footwear', items:['Running shoes','Weather-appropriate sportswear']},
+          {group:'Gear', items:['Bib number on the chest','Smartphone (recommended)']},
+        ],
+        reglament:'<p>A road race in honor of the local radon springs. Surface: asphalt, distance-certified course.</p><ul><li>Minimum age 16</li><li>Chip timing</li><li>Cutoff for 21.1 km — 3 hours</li></ul>',
+        program:'<p><b>July 5, sanatorium district</b></p><ul><li>07:00 — check-in and bib pickup</li><li>07:45 — warm-up</li><li>08:00 — mass start, all distances</li><li>11:00 — awards ceremony</li></ul>',
+        getting:'<p>The start is at the sanatorium\'s main entrance. Buses run from central Ridder every 20 minutes from 06:30.</p>',
+        cutoffs:['1h','1h 40m','3h'],
+      },
+      zh:{
+        location:'里德尔，疗养院区',
+        courseIntro:'<b>Radon Race</b>是本赛季速度最快的赛事：从疗养院出发沿山谷平坦柏油路往返。全程零爬升，但距离经过严格认证，是刷新个人最佳成绩的理想之选。赛道穿过松林，途经拥有矿泉水源的疗养院区——赛事因此得名。',
+        landmarks:[
+          {name:'疗养院，起点', desc:'所有组别在正门统一起跑。'},
+          {name:'松林', desc:'林荫下的平坦柏油路——全程速度最快的路段。'},
+          {name:'折返点', desc:'赛道最远端——原路返回起点。'},
+          {name:'疗养院终点', desc:'终点直道沿疗养院公园围栏延伸。'},
+        ],
+        equipment:[
+          {group:'服装与鞋履', items:['跑鞋','适合天气的运动服']},
+          {group:'装备', items:['胸前佩戴参赛号码布','智能手机（建议携带）']},
+        ],
+        reglament:'<p>为纪念当地氡温泉而设的公路赛。路面为柏油路，赛道距离已获认证。</p><ul><li>参赛年龄须满16周岁</li><li>芯片计时</li><li>21.1公里组关门时间为3小时</li></ul>',
+        program:'<p><b>7月5日，疗养院区</b></p><ul><li>07:00 — 签到及领取号码布</li><li>07:45 — 热身</li><li>08:00 — 全组别统一起跑</li><li>11:00 — 颁奖典礼</li></ul>',
+        getting:'<p>起点位于疗养院正门。里德尔市中心发车的班车自06:30起每20分钟一班。</p>',
+        cutoffs:['1小时','1小时40分','3小时'],
+      },
+    },
     results:[
       {place:1,name:'Д. Тлеуов',dist:'21.1 км',time:'1:11:04'},
       {place:2,name:'А. Каримов',dist:'21.1 км',time:'1:14:32'},
@@ -1308,6 +1951,62 @@ const EVENTS = {
     reglament:'<p>Фестиваль летних видов лыжного спорта: старты на роллерах на трассах горнолыжного курорта. Обязательна защитная экипировка (шлем).</p><ul><li>Свои роллеры и палки — либо прокат на месте</li><li>Хронометраж по чипу</li></ul>',
     program:'<p><b>13 июня, курорт «Ивановский хребет»</b></p><ul><li>08:00 — сбор участников</li><li>09:00 — детский забег 1 км</li><li>09:40 — старт 5 км</li><li>10:15 — старт 15 км</li><li>13:00 — награждение и пикник</li></ul>',
     getting:'<p>Курорт в 12 км от центра Риддера. Трансфер от Дворца спорта в 07:30 и 08:00.</p>',
+    i18n:{
+      kk:{
+        location:'«Ивановский хребет» тау шаңғысы курорты',
+        courseIntro:'<b>Ski Summer Fest</b> — «Ивановский хребет» тау шаңғысы курортының трассаларында өтетін жазғы шаңғы түрлері фестивалі. Шаңғының орнына роллерлер, сол рельеф және сол техника. Трасса курорттың кесінділері арасында бірнеше қысқа көтерілулермен ирелеңдейді — қысқы маусымға дайындалатындар үшін тамаша алаң.',
+        landmarks:[
+          {name:'Арқанды жол жанындағы старт', desc:'Курорттың төменгі көтергіш станциясындағы старт пен финиш.'},
+          {name:'№3 кесінді', desc:'Қарағайлар арасындағы жайлы көтерілу, ең техникалық бөлігі.'},
+          {name:'Ілмектің жоғарғы нүктесі', desc:'Маршруттың бұрылысы, әрі қарай — финишке түсу.'},
+          {name:'Финиш алаңы', desc:'Марапаттау мен пикник трасса жанында.'},
+        ],
+        equipment:[
+          {group:'Міндетті жабдық', items:['Роллерлер (өзіндік немесе жалға алу)','Қорғаныш дулыға','Қолғап']},
+          {group:'Ұсынылады', items:['Тізе және шынтақ қорғаныштары','Күннен қорғайтын көзілдірік']},
+        ],
+        reglament:'<p>Жазғы шаңғы түрлерінің фестивалі: тау шаңғысы курортының трассаларында роллермен старт. Қорғаныш жабдығы (дулыға) міндетті.</p><ul><li>Өз роллерлері мен таяқшалары — немесе жергілікті жалға алу</li><li>Чип бойынша хронометраж</li></ul>',
+        program:'<p><b>13 маусым, «Ивановский хребет» курорты</b></p><ul><li>08:00 — қатысушылардың жиналуы</li><li>09:00 — балалар забегі 1 км</li><li>09:40 — 5 км старты</li><li>10:15 — 15 км старты</li><li>13:00 — марапаттау және пикник</li></ul>',
+        getting:'<p>Курорт Риддер орталығынан 12 км қашықтықта. Спорт сарайынан трансфер 07:30 және 08:00-де.</p>',
+        cutoffs:['лимитсіз','45 мин','2 сағ'],
+      },
+      en:{
+        location:'Ivanovsky Khrebet Ski Resort',
+        courseIntro:'Ski Summer Fest is a summer skiing sports festival on the trails of the Ivanovsky Khrebet ski resort. Roller skis instead of snow skis, the same terrain and the same technique. The course winds between the resort\'s clearings with a few short climbs — an ideal proving ground for those training for the winter season.',
+        landmarks:[
+          {name:'Start by the Chairlift', desc:'Start and finish at the resort\'s lower lift station.'},
+          {name:'Clearing No. 3', desc:'A gentle climb through the pines, the most technical stretch.'},
+          {name:'Top of the Loop', desc:'The turnaround point — from here it\'s downhill to the finish.'},
+          {name:'Finish Meadow', desc:'Awards and a picnic right by the course.'},
+        ],
+        equipment:[
+          {group:'Mandatory Gear', items:['Roller skis (own or rented on-site)','Protective helmet','Gloves']},
+          {group:'Recommended', items:['Knee and elbow pads','Sunglasses']},
+        ],
+        reglament:'<p>A summer skiing sports festival: roller-ski races on the ski resort\'s trails. Protective gear (helmet) is mandatory.</p><ul><li>Bring your own roller skis and poles, or rent on-site</li><li>Chip timing</li></ul>',
+        program:'<p><b>June 13, Ivanovsky Khrebet Resort</b></p><ul><li>08:00 — participants gather</li><li>09:00 — kids\' 1 km race</li><li>09:40 — 5 km start</li><li>10:15 — 15 km start</li><li>13:00 — awards and picnic</li></ul>',
+        getting:'<p>The resort is 12 km from central Ridder. Transfer from the Sports Palace at 07:30 and 08:00.</p>',
+        cutoffs:['no limit','45 min','2h'],
+      },
+      zh:{
+        location:'"伊万诺夫斯基山脊"滑雪度假村',
+        courseIntro:'Ski Summer Fest是在"伊万诺夫斯基山脊"滑雪度假村赛道举行的夏季滑雪运动节。用旱地雪橇代替雪橇，地形与技术要求完全相同。赛道在度假村的林间小径中蜿蜒，穿插几段短爬升——是备战冬季赛季的理想训练场。',
+        landmarks:[
+          {name:'缆车站起点', desc:'起点与终点均设在度假村缆车下站。'},
+          {name:'3号林道', desc:'穿行松林间的平缓爬升，全程技术性最强的路段。'},
+          {name:'环线最高点', desc:'折返点——此后一路下坡直达终点。'},
+          {name:'终点草坪', desc:'颁奖与野餐就在赛道旁进行。'},
+        ],
+        equipment:[
+          {group:'必备装备', items:['旱地雪橇（自备或现场租赁）','防护头盔','手套']},
+          {group:'建议携带', items:['护膝护肘','太阳镜']},
+        ],
+        reglament:'<p>夏季滑雪运动节：在滑雪度假村赛道上进行旱地雪橇比赛。必须佩戴防护装备（头盔）。</p><ul><li>可自带旱地雪橇及雪杖，或现场租赁</li><li>芯片计时</li></ul>',
+        program:'<p><b>6月13日，"伊万诺夫斯基山脊"度假村</b></p><ul><li>08:00 — 参赛者集合</li><li>09:00 — 儿童1公里赛</li><li>09:40 — 5公里组起跑</li><li>10:15 — 15公里组起跑</li><li>13:00 — 颁奖及野餐</li></ul>',
+        getting:'<p>度假村距里德尔市中心12公里。班车07:30和08:00从体育宫发车。</p>',
+        cutoffs:['不限时','45分钟','2小时'],
+      },
+    },
     results:[
       {place:1,name:'Е. Волкова',dist:'15 км',time:'0:52:10'},
       {place:2,name:'С. Морозова',dist:'15 км',time:'0:55:44'},
@@ -1362,6 +2061,65 @@ const EVENTS = {
     reglament:'<p>Горный забег в гору по трассам горнолыжного курорта, снежный/грунтовый рельеф. Обязательно термобельё и треккинговые кроссовки.</p><ul><li>Участие с 18 лет</li><li>Контрольные пункты каждые 3 км</li><li>Лимит на 12 км — 2 часа 30 минут</li></ul>',
     program:'<p><b>14 марта, гора Ивановский хребет</b></p><ul><li>08:00 — сбор и выдача номеров</li><li>08:45 — разминка</li><li>09:00 — старт 12 км</li><li>09:20 — старт 6 км</li><li>12:30 — награждение на смотровой площадке</li></ul>',
     getting:'<p>Старт от Дворца спорта, далее подъём по трассе курорта. Финиш — смотровая площадка, спуск на подъёмнике для участников.</p>',
+    i18n:{
+      kk:{
+        location:'Ивановский хребет тауы',
+        courseIntro:'<b>Ridder UpHill</b> — маусымның ең қатал старты: тау шаңғысы курортының трассалары бойымен түсусіз дерлік көтерілу. Наурыз айының ауа-райына байланысты қар немесе топырақты рельеф, етек пен шыңның арасындағы күрт температура айырмашылығы. Финиш шолу алаңында — және жеткендер үшін көтергішпен төмен түсу.',
+        landmarks:[
+          {name:'Спорт сарайы, старт', desc:'Спорт сарайынан жалпы старт, алғашқы метрлер — жаттығу асфальты.'},
+          {name:'Арқанды жолдың төменгі станциясы', desc:'Трасса курорттың беткейіне шығады, нағыз биіктік жиналымы басталады.'},
+          {name:'Жартасты кулуар', desc:'Ең тік бөлігі — гонканың нәтижесі осында шешіледі.'},
+          {name:'Шолу алаңы, финиш', desc:'Маршруттың ең биік нүктесі және финиш — Риддердің толық көрінісі.'},
+        ],
+        equipment:[
+          {group:'Киім мен аяқ киім', items:['Протекторлы трекинг аяқ киімі','Термобелье','Желден қорғайтын күртеше','Қолғап','Қардан қорғайтын гетр']},
+          {group:'Жабдық', items:['Трекинг таяқшалары','Толық зарядталған смартфон','1 л су ыдысы']},
+          {group:'Төтенше жағдай', items:['Термоодеяло (кемінде 1.4×2 м)','Ысқырық','400 ккалдан кем емес азық қоры']},
+        ],
+        reglament:'<p>Тау шаңғысы курортының трассалары бойымен тауға өрлеу забегі, қар/топырақты рельеф. Термобелье мен трекинг аяқ киімі міндетті.</p><ul><li>Қатысу жасы — 18 жастан</li><li>Әр 3 км сайын бақылау пункттері</li><li>12 км-ге лимит — 2 сағат 30 минут</li></ul>',
+        program:'<p><b>14 наурыз, Ивановский хребет тауы</b></p><ul><li>08:00 — жиналу және нөмірлерді беру</li><li>08:45 — жаттығу</li><li>09:00 — 12 км старты</li><li>09:20 — 6 км старты</li><li>12:30 — шолу алаңында марапаттау</li></ul>',
+        getting:'<p>Старт Спорт сарайынан, әрі қарай курорт трассасы бойымен өрлеу. Финиш — шолу алаңы, қатысушылар үшін көтергішпен түсу.</p>',
+        cutoffs:['1 сағ 30 мин','2 сағ 30 мин'],
+      },
+      en:{
+        location:'Mount Ivanovsky Khrebet',
+        courseIntro:'<b>Ridder UpHill</b> is the toughest race of the season: a climb up the ski resort\'s trails with almost no descents. Snow or dirt terrain depending on March weather, and a sharp temperature swing from the base to the summit. The finish is at the viewpoint — with a lift ride down for those who make it.',
+        landmarks:[
+          {name:'Sports Palace, Start', desc:'A mass start from the Sports Palace, the first meters on warm-up asphalt.'},
+          {name:'Lower Cable Car Station', desc:'The course reaches the resort slope, where real elevation gain begins.'},
+          {name:'Rocky Couloir', desc:'The steepest stretch — this is where the race is decided.'},
+          {name:'Viewpoint, Finish', desc:'The high point of the route and the finish — a view over all of Ridder.'},
+        ],
+        equipment:[
+          {group:'Clothing & Footwear', items:['Trekking shoes with deep tread','Thermal base layer','Windproof jacket','Gloves','Snow gaiters']},
+          {group:'Gear', items:['Trekking poles','Fully charged smartphone','1 L water container']},
+          {group:'Emergency', items:['Thermal blanket (min 1.4×2 m)','Whistle','Food reserve, 400+ kcal']},
+        ],
+        reglament:'<p>An uphill mountain race on the ski resort\'s trails, snow/dirt terrain. Thermal base layer and trekking shoes are mandatory.</p><ul><li>Minimum age 18</li><li>Checkpoints every 3 km</li><li>Cutoff for 12 km — 2 hours 30 minutes</li></ul>',
+        program:'<p><b>March 14, Mount Ivanovsky Khrebet</b></p><ul><li>08:00 — check-in and bib pickup</li><li>08:45 — warm-up</li><li>09:00 — 12 km start</li><li>09:20 — 6 km start</li><li>12:30 — awards at the viewpoint</li></ul>',
+        getting:'<p>The start is at the Sports Palace, followed by a climb up the resort\'s trail. The finish is at the viewpoint, with a lift ride down for participants.</p>',
+        cutoffs:['1h 30m','2h 30m'],
+      },
+      zh:{
+        location:'伊万诺夫斯基山脊山',
+        courseIntro:'<b>Ridder UpHill</b>是本赛季最艰苦的赛事：沿滑雪度假村赛道几乎持续爬升、几乎没有下坡。地形随三月天气变化，或为积雪或为泥地，从山脚到山顶温差剧烈。终点设在观景台——完赛者可乘缆车下山。',
+        landmarks:[
+          {name:'体育宫，起点', desc:'从体育宫统一起跑，最初几米是热身柏油路。'},
+          {name:'缆车下站', desc:'赛道进入度假村坡道，真正的爬升由此开始。'},
+          {name:'岩石沟槽', desc:'全程最陡路段——比赛胜负在此见分晓。'},
+          {name:'观景台，终点', desc:'全程最高点及终点——俯瞰整个里德尔。'},
+        ],
+        equipment:[
+          {group:'服装与鞋履', items:['带防滑纹路的徒步鞋','保暖内衣','防风夹克','手套','防雪绑腿']},
+          {group:'装备', items:['登山杖','电量充足的智能手机','1升水壶']},
+          {group:'应急物品', items:['保温毯（至少1.4×2米）','哨子','应急食物储备（不少于400千卡）']},
+        ],
+        reglament:'<p>沿滑雪度假村赛道进行的高山爬升赛，地形为积雪/泥地。必须穿着保暖内衣及徒步鞋。</p><ul><li>参赛年龄须满18周岁</li><li>每3公里设检查点</li><li>12公里组关门时间为2小时30分钟</li></ul>',
+        program:'<p><b>3月14日，伊万诺夫斯基山脊山</b></p><ul><li>08:00 — 签到及领取号码布</li><li>08:45 — 热身</li><li>09:00 — 12公里组起跑</li><li>09:20 — 6公里组起跑</li><li>12:30 — 观景台颁奖</li></ul>',
+        getting:'<p>从体育宫出发，沿度假村赛道爬升。终点设在观景台，参赛者可乘缆车下山。</p>',
+        cutoffs:['1小时30分','2小时30分'],
+      },
+    },
     results:[
       {place:1,name:'Д. Тлеуов',dist:'12 км',time:'0:58:21'},
       {place:2,name:'А. Каримов',dist:'12 км',time:'1:02:09'},
@@ -1378,6 +2136,25 @@ const EVENTS = {
   },
 };
 const EVENT_ORDER = ['uphill','ski','radon','panorama'];
+function evLoc(ev){ const tr = ev.i18n && ev.i18n[currentLang]; return (tr && tr.location) || ev.location; }
+function evText(ev, field){ const tr = ev.i18n && ev.i18n[currentLang]; return (tr && tr[field]!==undefined) ? tr[field] : ev[field]; }
+function evCutoff(ev, idx){ const tr = ev.i18n && ev.i18n[currentLang]; return (tr && tr.cutoffs && tr.cutoffs[idx]!==undefined) ? tr.cutoffs[idx] : ev.distances[idx].cutoff; }
+function evLandmarks(ev){
+  const base = ev.landmarks||[];
+  const tr = ev.i18n && ev.i18n[currentLang] && ev.i18n[currentLang].landmarks;
+  if(!tr) return base;
+  return base.map((lm,i)=> tr[i] ? {...lm, name:tr[i].name, desc:tr[i].desc} : lm);
+}
+function evEquipment(ev){
+  const base = ev.equipment||[];
+  const tr = ev.i18n && ev.i18n[currentLang] && ev.i18n[currentLang].equipment;
+  if(!tr) return base;
+  return base.map((g,i)=> tr[i] ? {group:tr[i].group, items:g.items.map((it,j)=>({...it, name:(tr[i].items&&tr[i].items[j])||it.name}))} : g);
+}
+function formatGain(gain){
+  const num = gain.replace(/\s*м\s*$/,'').trim();
+  return `${num} ${t('common.m')}`;
+}
 
 const IMAGES = {
   ev_panorama:"__IMG_EV_PANORAMA__",
@@ -1400,7 +2177,7 @@ const PARTNERS = {
 function renderPartners(ev){
   const keys = ev.partners || [];
   document.getElementById('partnersRow').innerHTML = keys.map(k=>`<div class="partner-chip">${PARTNERS[k]||k}</div>`).join('')
-    || '<p style="font-size:.85rem;color:var(--ink-faint)">Партнёры уточняются.</p>';
+    || `<p style="font-size:.85rem;color:var(--ink-faint)">${t('detail.partnersTbd')}</p>`;
 }
 function mulberry32(seed){
   return function(){
@@ -1442,9 +2219,9 @@ document.getElementById('burgerBtn').addEventListener('click', ()=>{
    EVENT CARDS
    ============================================================ */
 function pillContent(status){
-  if(status==='open') return {cls:'pill open', html:'<span class="pdot"></span>Регистрация открыта'};
-  if(status==='soon') return {cls:'pill soon', html:'<span class="pdot"></span>Скоро'};
-  return {cls:'pill done', html:'<span class="pdot"></span>Завершён'};
+  if(status==='open') return {cls:'pill open', html:'<span class="pdot"></span>'+t('status.open')};
+  if(status==='soon') return {cls:'pill soon', html:'<span class="pdot"></span>'+t('status.soon')};
+  return {cls:'pill done', html:'<span class="pdot"></span>'+t('status.done')};
 }
 function statusPill(status){
   const pc = pillContent(status);
@@ -1453,12 +2230,12 @@ function statusPill(status){
 function formatPrice(n){ return n.toLocaleString('ru-RU')+' ₸'; }
 function getFreeSlots(ev){ return Math.max(0, ev.totalSlots - (ev.participants||[]).length); }
 function renderSlotsNote(elId, ev){
-  document.getElementById(elId).textContent = `Свободно ${getFreeSlots(ev)} из ${ev.totalSlots} мест на забег`;
+  document.getElementById(elId).textContent = `${t('detail.slotsFree')} ${getFreeSlots(ev)} ${t('detail.slotsOf')} ${ev.totalSlots} ${slotWord(ev.totalSlots)}`;
 }
 function renderDistanceOptions(containerId, ev, selectedIdx, onPickFn){
   document.getElementById(containerId).innerHTML = ev.distances.map((d,i)=>`
     <div class="dist-option ${i===selectedIdx?'sel':''}" data-idx="${i}" onclick="${onPickFn}(${i})">
-      <div><div class="dn">${d.name}</div><div class="dsub">набор высоты ${d.gain}</div></div>
+      <div><div class="dn">${d.name}</div><div class="dsub">${t('detail.gainLabel')} ${formatGain(d.gain)}</div></div>
       <div class="dp">${formatPrice(d.price)}</div>
     </div>`).join('');
 }
@@ -1466,7 +2243,7 @@ function selectDistOption(containerId, i){
   document.querySelectorAll(`#${containerId} .dist-option`).forEach(el=>el.classList.toggle('sel', +el.getAttribute('data-idx')===i));
 }
 function eventCard(ev){
-  const distTxt = ev.distances.map(d=>d.name.split(' ')[0]).join(' / ') + ' км';
+  const distTxt = ev.distances.map(d=>d.name.split(' ')[0]).join(' / ') + ' ' + t('common.km');
   return `<button class="event-card" onclick="openEvent('${ev.id}')">
     <div class="ev-thumb">
       <img src="${IMAGES[ev.imgKey]}" alt="" loading="lazy">
@@ -1475,7 +2252,7 @@ function eventCard(ev){
     <div class="ev-body">
       <div class="event-icon" style="background:${ev.color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><use href="#${ev.icon}"/></svg></div>
       <h3>${ev.name}</h3>
-      <div class="ev-date">${ev.dateLabel}</div>
+      <div class="ev-date">${formatDate(ev.dateISO)}</div>
       <div class="ev-dist">${distTxt}</div>
     </div>
   </button>`;
@@ -1483,10 +2260,11 @@ function eventCard(ev){
 function renderGrids(){
   const home = EVENT_ORDER.map(id=>EVENTS[id]);
   document.getElementById('homeEventGrid').innerHTML = home.map(eventCard).join('');
-  document.getElementById('eventsCalendarGrid').innerHTML = home.filter(e=>e.status!=='done').map(eventCard).join('') || '<p style="color:var(--ink-faint)">Новые старты появятся здесь после публикации календаря следующего сезона.</p>';
+  document.getElementById('eventsCalendarGrid').innerHTML = home.filter(e=>e.status!=='done').map(eventCard).join('') || `<p style="color:var(--ink-faint)">${t('detail.comingSoon')}</p>`;
   document.getElementById('eventsArchiveGrid').innerHTML = home.filter(e=>e.status==='done').map(eventCard).join('');
   document.getElementById('footerEventList').innerHTML = EVENT_ORDER.map(id=>`<li>${EVENTS[id].name}</li>`).join('');
 }
+applyStaticTranslations();
 renderGrids();
 
 function getNextEvent(){
@@ -1497,8 +2275,8 @@ function getNextEvent(){
 function renderNextRace(){
   const ev = getNextEvent();
   document.getElementById('nextRaceName').textContent = ev.name;
-  document.getElementById('nextRaceDate').textContent = ev.dateLabel;
-  document.getElementById('nextRaceLoc').textContent = ev.location;
+  document.getElementById('nextRaceDate').textContent = formatDate(ev.dateISO);
+  document.getElementById('nextRaceLoc').textContent = evLoc(ev);
   document.getElementById('nextRaceBtn').onclick = ()=>openEvent(ev.id);
 }
 renderNextRace();
@@ -1535,21 +2313,21 @@ function openEvent(id){
   pillEl.innerHTML = pc.html;
   document.getElementById('detailTitle').textContent = ev.name + ' ' + ev.year;
   document.getElementById('detailMeta').innerHTML = `
-    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${ev.dateLabel}</span>
-    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg>${ev.location}</span>
-    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg>${ev.distances.map(d=>d.name.split(' ')[0]).join(' / ')} км</span>`;
+    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${formatDate(ev.dateISO)}</span>
+    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg>${evLoc(ev)}</span>
+    <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-route"/></svg>${ev.distances.map(d=>d.name.split(' ')[0]).join(' / ')} ${t('common.km')}</span>`;
 
-  document.getElementById('panelCourse').innerHTML = ev.courseIntro;
+  document.getElementById('panelCourse').innerHTML = evText(ev, 'courseIntro');
   renderLandmarks(ev);
-  document.getElementById('panelReglament').innerHTML = ev.reglament;
-  document.getElementById('panelProgram').innerHTML = ev.program;
-  document.getElementById('panelGetting').innerHTML = ev.getting;
+  document.getElementById('panelReglament').innerHTML = evText(ev, 'reglament');
+  document.getElementById('panelProgram').innerHTML = evText(ev, 'program');
+  document.getElementById('panelGetting').innerHTML = evText(ev, 'getting');
   renderEquipment(ev);
   document.getElementById('panelResults').innerHTML = ev.results
-    ? `<table class="results-table"><thead><tr><th>Место</th><th>Участник</th><th>Дистанция</th><th>Время</th></tr></thead><tbody>
+    ? `<table class="results-table"><thead><tr><th>${t('common.place')}</th><th>${t('detail.thName')}</th><th>${t('detail.thDistance')}</th><th>${t('common.time')}</th></tr></thead><tbody>
         ${ev.results.map(r=>`<tr><td>${medalCell(r.place)}</td><td>${r.name}</td><td>${r.dist}</td><td>${r.time}</td></tr>`).join('')}
-       </tbody></table><p style="margin-top:14px;font-size:.82rem;color:var(--ink-faint)">Полный протокол — в PDF ниже.</p>`
-    : '<p style="color:var(--ink-faint)">Результаты появятся сразу после финиша последнего участника.</p>';
+       </tbody></table><p style="margin-top:14px;font-size:.82rem;color:var(--ink-faint)">${t('detail.protocolPdfNote')}</p>`
+    : `<p style="color:var(--ink-faint)">${t('detail.resultsPending')}</p>`;
 
   renderParticipants(ev);
 
@@ -1570,16 +2348,16 @@ function openEvent(id){
 }
 function updateProfileView(){
   const ev = currentEvent, d = ev.distances[selectedDistIdx];
-  document.getElementById('profileDistLabel').textContent = `· ${d.name} · ${d.gain}`;
+  document.getElementById('profileDistLabel').textContent = `· ${d.name} · ${formatGain(d.gain)}`;
   requestAnimationFrame(()=>{
     if(currentPView==='map') drawMap('mapChart', d, ev);
     else drawProfile('elevChart', d.profile, ev.color);
   });
   document.getElementById('utmbStats').innerHTML = `
-    <div class="utmb-stat"><span>Дистанция</span><b>${d.km} км</b></div>
-    <div class="utmb-stat"><span>Набор высоты</span><b>${d.gain}</b></div>
-    <div class="utmb-stat"><span>Старт</span><b>${ev.dateLabel.split(' ').slice(0,2).join(' ')} · ${ev.startTime}</b></div>
-    <div class="utmb-stat"><span>Контрольное время</span><b>${d.cutoff}</b></div>`;
+    <div class="utmb-stat"><span>${t('detail.statDistance')}</span><b>${d.km} ${t('common.km')}</b></div>
+    <div class="utmb-stat"><span>${t('detail.statGain')}</span><b>${formatGain(d.gain)}</b></div>
+    <div class="utmb-stat"><span>${t('detail.statStart')}</span><b>${formatDateShort(ev.dateISO)} · ${ev.startTime}</b></div>
+    <div class="utmb-stat"><span>${t('detail.statCutoff')}</span><b>${evCutoff(ev, selectedDistIdx)}</b></div>`;
 }
 function pickDist(i){
   selectedDistIdx = i;
@@ -1591,10 +2369,8 @@ function selectProfileView(view){
   activateBtn('#profileSeg button', document.querySelector(`#profileSeg button[data-pview="${view}"]`));
   document.getElementById('elevChart').style.display = view==='profile' ? 'block':'none';
   document.getElementById('mapChart').style.display = view==='map' ? 'block':'none';
-  document.getElementById('profileTitle').textContent = view==='profile' ? 'Профиль трассы' : 'Карта маршрута';
-  document.getElementById('chartNote').textContent = view==='profile'
-    ? 'Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.'
-    : 'Схематичная карта по GPS-треку: старт, финиш и контрольные точки маршрута.';
+  document.getElementById('profileTitle').textContent = view==='profile' ? t('detail.profileTitle') : t('detail.mapTitle');
+  document.getElementById('chartNote').textContent = view==='profile' ? t('detail.chartNoteProfile') : t('detail.chartNoteMap');
   updateProfileView();
 }
 document.querySelectorAll('#profileSeg button').forEach(btn=>{
@@ -1606,31 +2382,36 @@ function medalCell(place){
   return place;
 }
 function renderLandmarks(ev){
-  document.getElementById('landmarkStrip').innerHTML = (ev.landmarks||[]).map(lm=>`
+  document.getElementById('landmarkStrip').innerHTML = evLandmarks(ev).map(lm=>`
     <div class="landmark-card">
       <div class="landmark-scene-wrap"><img src="${IMAGES[lm.img]}" alt="" loading="lazy"></div>
       <div class="landmark-body">
-        <div class="lk-elev">${lm.elev} м над уровнем моря</div>
+        <div class="lk-elev">${lm.elev} ${t('detail.elevation')}</div>
         <h4>${lm.name}</h4>
         <p>${lm.desc}</p>
       </div>
     </div>`).join('');
 }
 function renderEquipment(ev){
-  document.getElementById('panelEquipment').innerHTML = (ev.equipment||[]).map(g=>`
+  document.getElementById('panelEquipment').innerHTML = evEquipment(ev).map(g=>`
     <div class="eq-group">
       <h4>${g.group}</h4>
       ${g.items.map(it=>`<div class="eq-row"><span class="eq-tag ${it.req?'req':'rec'}">${it.req?'X':'O'}</span>${it.name}</div>`).join('')}
     </div>`).join('');
 }
+function genderShort(g){
+  if(g==='М') return t('detail.male')[0];
+  if(g==='Ж') return t('detail.female')[0];
+  return g;
+}
 function renderParticipants(ev){
   currentParticipants = ev.participants || [];
   const free = getFreeSlots(ev);
-  document.getElementById('slotsBanner').innerHTML = `<span>Всего мест на забег: <b>${ev.totalSlots}</b></span><span>Свободно сейчас: <b>${free}</b></span>`;
+  document.getElementById('slotsBanner').innerHTML = `<span>${t('detail.slotsTotal')}: <b>${ev.totalSlots}</b></span><span>${t('detail.slotsFreeNow')}: <b>${free}</b></span>`;
   const clubs = [...new Set(currentParticipants.map(p=>p.club))].sort();
   const countries = [...new Set(currentParticipants.map(p=>p.country))].sort();
-  document.getElementById('pClub').innerHTML = '<option value="">Все клубы</option>' + clubs.map(c=>`<option value="${c}">${c}</option>`).join('');
-  document.getElementById('pCountry').innerHTML = '<option value="">Страна: все</option>' + countries.map(c=>`<option value="${c}">${c}</option>`).join('');
+  document.getElementById('pClub').innerHTML = `<option value="">${t('detail.allClubs')}</option>` + clubs.map(c=>`<option value="${c}">${c}</option>`).join('');
+  document.getElementById('pCountry').innerHTML = `<option value="">${t('detail.allCountries')}</option>` + countries.map(c=>`<option value="${c}">${c}</option>`).join('');
   document.getElementById('pSearch').value = '';
   document.getElementById('pGender').value = '';
   filterParticipants();
@@ -1646,10 +2427,10 @@ function filterParticipants(){
     (!gender || p.gender===gender) &&
     (!country || p.country===country)
   );
-  document.getElementById('participantsCount').textContent = `${filtered.length} из ${currentParticipants.length}`;
+  document.getElementById('participantsCount').textContent = `${filtered.length} ${t('detail.slotsOf')} ${currentParticipants.length}`;
   document.getElementById('participantsBody').innerHTML = filtered.map(p=>`
-    <tr><td>${p.name}</td><td>${p.club}</td><td>${p.dist}</td><td>${p.gender}</td><td>${p.country}</td></tr>
-  `).join('') || '<tr><td colspan="5" style="color:var(--ink-faint)">Никого не найдено — попробуйте изменить фильтры.</td></tr>';
+    <tr><td>${p.name}</td><td>${p.club}</td><td>${p.dist}</td><td>${genderShort(p.gender)}</td><td>${p.country}</td></tr>
+  `).join('') || `<tr><td colspan="5" style="color:var(--ink-faint)">${t('detail.noOneFound')}</td></tr>`;
 }
 document.getElementById('pSearch').addEventListener('input', filterParticipants);
 ['pClub','pGender','pCountry'].forEach(id=>{
@@ -1694,7 +2475,7 @@ function drawProfile(canvasId, points, color){
 
   ctx.strokeStyle = cBorder;
   ctx.fillStyle = cInkFaint;
-  ctx.font = '11px Golos Text, sans-serif';
+  ctx.font = CANVAS_FONT_11;
   ctx.lineWidth = 1;
   const gridLines = 4;
   for(let i=0;i<=gridLines;i++){
@@ -1704,11 +2485,11 @@ function drawProfile(canvasId, points, color){
     ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(cssW-padR,y); ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.textAlign='right'; ctx.textBaseline='middle';
-    ctx.fillText(Math.round(e)+'м', padL-8, y);
+    ctx.fillText(Math.round(e)+t('common.m'), padL-8, y);
   }
   ctx.textAlign='center'; ctx.textBaseline='top';
   [minK, maxK/2, maxK].forEach(km=>{
-    ctx.fillText(km.toFixed(km%1?1:0)+' км', X(km), cssH-padB+8);
+    ctx.fillText(km.toFixed(km%1?1:0)+' '+t('common.km'), X(km), cssH-padB+8);
   });
 
   ctx.beginPath();
@@ -1733,9 +2514,9 @@ function drawProfile(canvasId, points, color){
     ctx.beginPath(); ctx.arc(X(p.km),Y(p.elev),3.6,0,7); ctx.strokeStyle=cSurface; ctx.lineWidth=1.6; ctx.stroke();
   });
   ctx.fillStyle = cInk;
-  ctx.font = '700 11px Golos Text, sans-serif';
+  ctx.font = CANVAS_FONT_11B;
   ctx.textAlign='center'; ctx.textBaseline='bottom';
-  ctx.fillText(Math.round(peak.elev)+' м', X(peak.km), Y(peak.elev)-8);
+  ctx.fillText(Math.round(peak.elev)+' '+t('common.m'), X(peak.km), Y(peak.elev)-8);
 }
 let resizeTimer = null;
 window.addEventListener('resize', ()=>{
@@ -1832,10 +2613,10 @@ function drawMap(canvasId, d, ev){
   ctx.lineWidth=2; ctx.strokeStyle=surface; ctx.stroke();
   ctx.beginPath(); ctx.arc(X(finish.lon),Y(finish.lat),6,0,7); ctx.fillStyle=ev.color; ctx.fill();
   ctx.lineWidth=2; ctx.strokeStyle=surface; ctx.stroke();
-  ctx.font='700 10px Golos Text, sans-serif'; ctx.fillStyle=ink; ctx.textAlign='left'; ctx.textBaseline='bottom';
-  ctx.fillText('СТАРТ', X(start.lon)+9, Y(start.lat)+4);
+  ctx.font=CANVAS_FONT_10B; ctx.fillStyle=ink; ctx.textAlign='left'; ctx.textBaseline='bottom';
+  ctx.fillText(t('detail.mapStart'), X(start.lon)+9, Y(start.lat)+4);
   ctx.textAlign='right';
-  ctx.fillText('ФИНИШ', X(finish.lon)-9, Y(finish.lat)+4);
+  ctx.fillText(t('detail.mapFinish'), X(finish.lon)-9, Y(finish.lat)+4);
 
   const cx = cssW-30, cy = 26;
   ctx.strokeStyle=ink; ctx.globalAlpha=.5; ctx.lineWidth=1.2;
@@ -1843,14 +2624,14 @@ function drawMap(canvasId, d, ev){
   ctx.globalAlpha=1;
   ctx.beginPath(); ctx.moveTo(cx,cy+11); ctx.lineTo(cx,cy-11); ctx.lineTo(cx-4,cy-4); ctx.moveTo(cx,cy-11); ctx.lineTo(cx+4,cy-4);
   ctx.strokeStyle=ink; ctx.stroke();
-  ctx.font='700 9px Golos Text, sans-serif'; ctx.textAlign='center'; ctx.fillStyle=ink; ctx.fillText('N', cx, cy-15);
+  ctx.font=`700 9px Golos Text, ${CANVAS_CJK_FALLBACK}`; ctx.textAlign='center'; ctx.fillStyle=ink; ctx.fillText('N', cx, cy-15);
 
   const kmSpan = pts[pts.length-1].km;
   const barKm = kmSpan>10 ? 5 : 1;
   const bx = 28, by = cssH-18;
   ctx.strokeStyle=ink; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx+40,by); ctx.stroke();
-  ctx.font='9px Golos Text, sans-serif'; ctx.textAlign='left'; ctx.fillText(`~${barKm} км`, bx, by-6);
+  ctx.font=CANVAS_FONT_9; ctx.textAlign='left'; ctx.fillText(`~${barKm} ${t('common.km')}`, bx, by-6);
 }
 
 /* ============================================================
@@ -1859,9 +2640,9 @@ function drawMap(canvasId, d, ev){
 function downloadReglamentPdf(){
   const ev = currentEvent;
   if(!ev) return;
-  document.getElementById('printTitle').textContent = `${ev.name} ${ev.year} — Регламент`;
-  document.getElementById('printMeta').textContent = `${ev.dateLabel} · ${ev.location}`;
-  document.getElementById('printBody').innerHTML = ev.reglament;
+  document.getElementById('printTitle').textContent = `${ev.name} ${ev.year} — ${t('detail.reglamentTitle')}`;
+  document.getElementById('printMeta').textContent = `${formatDate(ev.dateISO)} · ${evLoc(ev)}`;
+  document.getElementById('printBody').innerHTML = evText(ev, 'reglament');
   window.print();
 }
 
@@ -1879,7 +2660,7 @@ function createProfile(){
   document.getElementById('cabAvatar').textContent = initials;
   document.getElementById('navAvatar').textContent = initials;
   document.getElementById('cabName').textContent = `${first} ${last}`;
-  document.getElementById('cabRole').textContent = `Участник с ${year} года`;
+  document.getElementById('cabRole').textContent = `${t('cabinet.memberSince')} ${year}`;
   document.getElementById('cabEmail').textContent = email;
   document.getElementById('cabCity').textContent = city;
 
