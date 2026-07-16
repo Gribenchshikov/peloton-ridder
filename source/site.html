@@ -258,6 +258,8 @@ section{padding:64px 0;}
 .event-icon{width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; position:absolute; left:14px; bottom:-20px; box-shadow:0 6px 14px -6px rgba(0,0,0,.5); border:2px solid var(--surface);}
 .event-icon svg{width:20px; height:20px;}
 .event-card .ev-body{padding:32px 18px 18px; display:flex; flex-direction:column; gap:10px; flex:1;}
+.ev-series{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#E2531F; display:flex; align-items:center; gap:5px; margin-bottom:-2px;}
+.ev-series svg{width:12px; height:12px;}
 .event-card h3{font-size:1.1rem; font-weight:800; margin-top:2px;}
 .event-card .ev-date{font-size:.82rem; color:var(--ink-soft); font-weight:600; font-variant-numeric:tabular-nums;}
 .event-card .ev-dist{font-size:.78rem; color:var(--ink-faint); margin-top:auto;}
@@ -300,6 +302,8 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 .detail-hero-scrim{position:absolute; inset:0; background:linear-gradient(180deg, rgba(15,18,13,.1) 0%, rgba(15,18,13,.45) 60%, rgba(15,18,13,.85) 100%);}
 .detail-hero > *:not(.detail-hero-scene):not(.detail-hero-scrim){position:relative; z-index:2;}
 .detail-hero .pill{background:rgba(255,255,255,.18); color:#fff; backdrop-filter:blur(4px);}
+.detail-hero .series-pill{background:#E2531F; margin-left:8px; border:none; cursor:pointer; font-family:var(--font-body);}
+.detail-hero .series-pill:hover{background:#c94517;}
 .detail-hero h1{color:#fff; font-size:clamp(2rem,4.4vw,3.2rem); margin-top:14px;}
 .detail-hero .meta-row{color:#EFEEE2; margin-top:16px;}
 .detail-hero .meta-row svg{opacity:.85;}
@@ -451,14 +455,31 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
 .qr{width:104px; height:104px; margin:0 auto;}
 
 /* ---------- CABINET ---------- */
-.cab-grid{display:grid; grid-template-columns:280px 1fr; gap:28px; align-items:flex-start;}
+.cab-grid{display:grid; grid-template-columns:300px 1fr; gap:28px; align-items:flex-start;}
 @media (max-width:820px){.cab-grid{grid-template-columns:1fr;}}
+.cab-side{display:flex; flex-direction:column; gap:20px; min-width:0;}
 .profile-card{text-align:center;}
 .profile-card .avatar{width:64px; height:64px; font-size:1.3rem; margin:0 auto 14px;}
 .profile-card h3{font-size:1.15rem;}
 .profile-card .role{font-size:.8rem; color:var(--ink-faint); margin-top:2px;}
 .profile-list{margin-top:18px; text-align:left; font-size:.85rem; display:flex; flex-direction:column; gap:10px; color:var(--ink-soft);}
 .profile-list .pi{display:flex; align-items:center; gap:9px;}
+.badge-row{display:flex; gap:14px; margin-top:14px;}
+.badge-item{display:flex; flex-direction:column; align-items:center; gap:7px; width:76px;}
+.badge-plate{width:76px; height:76px; display:flex; align-items:center; justify-content:center; position:relative;}
+.peak-badge{width:72px; height:auto; display:block; filter:drop-shadow(0 3px 6px rgba(20,24,17,.24));}
+.pk-ringseg{fill:none; stroke:var(--surface-2); stroke-width:4; stroke-linecap:round;}
+.pk-ringseg.active{stroke:#E2531F;}
+.pk-bezel{fill:none; stroke:var(--surface); stroke-width:3;}
+.pk-disc-rim{fill:none; stroke:rgba(20,24,17,.1); stroke-width:1;}
+.pk-sun{fill:#F4C97A;}
+.badge-item.full .pk-sun{fill:#FFDC93;}
+.pk-snow{fill:#fff; opacity:.92;}
+.badge-check{position:absolute; bottom:-2px; right:-2px; width:22px; height:22px; border-radius:50%; background:var(--success); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px var(--surface);}
+.badge-check svg{width:13px; height:13px; color:#fff;}
+.badge-year{font-size:.8rem; font-weight:800; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+.badge-stat{font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint);}
+.badge-item.full .badge-stat{color:#c94517;}
 .reg-card{display:flex; gap:16px; padding:18px; border:1px solid var(--border); border-radius:var(--radius-m); background:var(--surface); margin-bottom:14px; align-items:center;}
 .reg-card .ric{width:48px; height:48px; border-radius:11px; display:flex; align-items:center; justify-content:center; color:#fff; flex:none;}
 .reg-card .rinfo{flex:1;}
@@ -554,6 +575,7 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
     <ul class="nav-links">
       <li><button data-nav="home" data-i18n="nav.home">Главная</button></li>
       <li><button data-nav="events" data-i18n="nav.events">Забеги</button></li>
+      <li><button data-nav="series" data-i18n="nav.series">Серия</button></li>
       <li><button data-nav="camp" data-i18n="nav.camp">Лагерь</button></li>
       <li><button data-nav="about" data-i18n="nav.about">О клубе</button></li>
     </ul>
@@ -573,6 +595,7 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <div class="mobile-menu" id="mobileMenu">
     <button data-nav="home" data-i18n="nav.home">Главная</button>
     <button data-nav="events" data-i18n="nav.events">Забеги</button>
+    <button data-nav="series" data-i18n="nav.series_full">Ridder Race Series</button>
     <button data-nav="camp" data-i18n="nav.camp_full">Тренировочный лагерь</button>
     <button data-nav="about" data-i18n="nav.about">О клубе</button>
     <button data-nav="cabinet" data-i18n="nav.cabinet_full">Личный кабинет</button>
@@ -640,6 +663,21 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   <section>
     <div class="container">
       <div class="about-teaser">
+        <img src="__IMG_SERIES__" alt="">
+        <div class="scrim"></div>
+        <div class="content">
+          <span class="eyebrow" style="color:#E2531F;"><span class="dot" style="background:#E2531F;"></span><span data-i18n="home.seriesEyebrow">Ridder Race Series</span></span>
+          <h2 style="margin-top:12px;" data-i18n="home.seriesTitle">Три старта — одна серия, один зачёт</h2>
+          <p data-i18n="home.seriesText">Ridder UpHill, Radon Race и Panorama Fall Run объединены в общую серию сезона. Ski Summer Fest в неё не входит — это отдельный летний праздник на лыжероллерах, без привязки к общему счёту.</p>
+          <button class="btn btn-spruce" style="margin-top:22px; background:#E2531F;" data-nav="series"><span data-i18n="home.seriesCta">Узнать про серию</span> <svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="about-teaser">
         <img src="__IMG_ABOUT__" alt="">
         <div class="scrim"></div>
         <div class="content">
@@ -671,6 +709,42 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
   </section>
 </div>
 
+<!-- ============ VIEW: SERIES ============ -->
+<div class="view" id="view-series">
+  <section style="padding-top:44px;">
+    <div class="container">
+      <div class="section-head" style="margin-bottom:0;">
+        <div>
+          <span class="eyebrow"><span class="dot" style="background:#E2531F;"></span><span data-i18n="series.eyebrow">Серия сезона</span></span>
+          <h2 style="margin-top:10px;" id="seriesPageTitle">Ridder Race Series</h2>
+        </div>
+        <div class="tabbar" id="seriesSeasonTabs"></div>
+      </div>
+      <p class="lead" style="max-width:62ch; margin-top:14px;" id="seriesPageIntro" data-i18n="series.intro">Три старта года — Ridder UpHill, Radon Race и Panorama Fall Run — объединены в общую серию. Пройдите все три этапа в течение сезона и станьте финишером Ridder Race Series.</p>
+
+      <div id="seriesCurrentBlock">
+        <div class="event-grid" id="seriesStagesGrid" style="margin-top:30px;"></div>
+      </div>
+
+      <div id="seriesArchiveBlock" style="display:none; margin-top:30px;">
+        <h4 class="eyebrow-label" style="margin-bottom:14px;" data-i18n="series.archiveStages">Забеги сезона</h4>
+        <div id="seriesArchiveStages"></div>
+      </div>
+
+      <div class="card" style="margin-top:24px; padding:32px;">
+        <h3><span data-i18n="series.boardTitle">Зачёт серии</span> <span id="seriesBoardYear" style="color:var(--ink-faint); font-weight:600;"></span></h3>
+        <p style="color:var(--ink-soft); margin-top:8px;" data-i18n="series.boardDesc">Участники, прошедшие два и более этапа серии.</p>
+        <div class="table-scroll" style="margin-top:16px;">
+          <table class="results-table">
+            <thead><tr><th data-i18n="common.place">Место</th><th data-i18n="detail.thName">Фамилия Имя</th><th data-i18n="detail.thClub">Клуб</th><th data-i18n="series.stagesCol">Этапов пройдено</th></tr></thead>
+            <tbody id="seriesBoardBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
 <!-- ============ VIEW: EVENT DETAIL ============ -->
 <div class="view" id="view-detail">
   <section style="padding-top:36px;">
@@ -681,6 +755,7 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
         <img class="detail-hero-scene" id="detailScene" alt="" src="">
         <div class="detail-hero-scrim"></div>
         <span class="pill" id="detailPill">Регистрация открыта</span>
+        <button class="pill series-pill" id="detailSeriesBadge" style="display:none;" onclick="showView('series')"></button>
         <h1 id="detailTitle">—</h1>
         <div class="meta-row" id="detailMeta"></div>
         <div class="utmb-stats" id="utmbStats"></div>
@@ -930,16 +1005,25 @@ footer{border-top:1px solid var(--border); padding:48px 0 30px; margin-top:20px;
       <span class="eyebrow"><span class="dot"></span><span data-i18n="cabinet.eyebrow">Личный кабинет</span></span>
       <h2 style="margin-top:10px; margin-bottom:30px;" data-i18n="cabinet.title">Мои старты</h2>
       <div class="cab-grid">
-        <div class="card profile-card">
-          <div class="avatar" id="cabAvatar">ИП</div>
-          <h3 id="cabName">Иван Петров</h3>
-          <div class="role" id="cabRole">Участник с 2023 года</div>
-          <div class="profile-list">
-            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg> <span id="cabEmail">ivan.petrov@mail.kz</span></div>
-            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> <span id="cabCity">Риддер, ВКО</span></div>
-            <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg> <span data-i18n="cabinet.finishes">4 финиша, личник 21.1 км — 1:52:47</span></div>
+        <div class="cab-side">
+          <div class="card profile-card">
+            <div class="avatar" id="cabAvatar">ИП</div>
+            <h3 id="cabName">Иван Петров</h3>
+            <div class="role" id="cabRole">Участник с 2023 года</div>
+            <div class="profile-list">
+              <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-user"/></svg> <span id="cabEmail">ivan.petrov@mail.kz</span></div>
+              <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg> <span id="cabCity">Риддер, ВКО</span></div>
+              <div class="pi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg> <span data-i18n="cabinet.finishes">4 финиша, личник 21.1 км — 1:52:47</span></div>
+            </div>
+            <button class="btn btn-ghost btn-block" style="margin-top:20px;" data-i18n="cabinet.editProfile">Редактировать профиль</button>
           </div>
-          <button class="btn btn-ghost btn-block" style="margin-top:20px;" data-i18n="cabinet.editProfile">Редактировать профиль</button>
+
+          <div class="card" style="padding:22px;">
+            <h4 class="eyebrow-label" data-i18n="series.badgesTitle">Значки серии</h4>
+            <div class="badge-row" id="seriesBadgeRow"></div>
+            <p style="font-size:.86rem; color:var(--ink-soft); margin-top:14px;" data-i18n="series.progressText">2 из 3 этапов пройдено — Radon Race и Ridder UpHill. До финишёра серии остался Panorama Fall Run.</p>
+            <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="showView('series')" data-i18n="series.progressCta">Смотреть серию</button>
+          </div>
         </div>
 
         <div>
@@ -1255,7 +1339,7 @@ function slotWord(n){ return pluralWord(SLOT_WORD[currentLang], n); }
 
 const UI = {
   ru:{
-    'nav.home':'Главная','nav.events':'Забеги','nav.camp':'Лагерь','nav.camp_full':'Тренировочный лагерь','nav.about':'О клубе',
+    'nav.home':'Главная','nav.events':'Забеги','nav.series':'Серия','nav.series_full':'Ridder Race Series','nav.camp':'Лагерь','nav.camp_full':'Тренировочный лагерь','nav.about':'О клубе',
     'nav.cabinet':'Кабинет','nav.cabinet_full':'Личный кабинет','nav.signup':'Регистрация',
     'brand.sub':'Беговой клуб · Риддер',
     'hero.eyebrow':'Сезон 2026 · 4 старта в горах Алтая',
@@ -1269,6 +1353,9 @@ const UI = {
     'home.aboutEyebrow':'О клубе','home.aboutTitle':'Развиваем бег и лыжи в предгорьях Алтая',
     'home.aboutText':'С 2019 года мы проводим старты для тех, кто живёт рядом с горами и хочет использовать это по максимуму — от новичков на 5&nbsp;км до тех, кто идёт на полумарафон в гору.',
     'home.aboutCta':'Узнать о команде',
+    'home.seriesEyebrow':'Ridder Race Series','home.seriesTitle':'Три старта — одна серия, один зачёт',
+    'home.seriesText':'Ridder UpHill, Radon Race и Panorama Fall Run объединены в общую серию сезона. Ski Summer Fest в неё не входит — это отдельный летний праздник на лыжероллерах, без привязки к общему счёту.',
+    'home.seriesCta':'Узнать про серию',
     'events.eyebrow':'Забеги Peloton Ridder','events.title':'Календарь и архив стартов','events.calendarTab':'Календарь 2026','events.archiveTab':'Архив',
     'detail.profileTitle':'Профиль трассы','detail.profile':'Профиль','detail.map':'Карта',
     'detail.chartNoteProfile':'Трек для навигаторов и Strava/Garmin — обновляется под выбранную дистанцию.',
@@ -1314,6 +1401,14 @@ const UI = {
     'signup.create':'Создать профиль','signup.hasAccount':'Уже есть аккаунт?','signup.login':'Войти',
     'cabinet.eyebrow':'Личный кабинет','cabinet.title':'Мои старты','cabinet.finishes':'4 финиша, личник 21.1 км — 1:52:47',
     'cabinet.editProfile':'Редактировать профиль','cabinet.upcoming':'Предстоящие старты','cabinet.history':'История стартов',
+    'series.badgeShort':'Ridder Race Series','series.stage':'Этап','series.eyebrow':'Серия сезона','series.title':'Ridder Race Series',
+    'series.intro':'Три старта года — Ridder UpHill, Radon Race и Panorama Fall Run — объединены в общую серию. Пройдите все три этапа в течение сезона и станьте финишером Ridder Race Series.',
+    'series.boardTitle':'Зачёт серии','series.boardDesc':'Участники, прошедшие два и более этапа серии.',
+    'series.stagesCol':'Этапов пройдено','series.boardEmpty':'Пока никто не прошёл два этапа серии.',
+    'series.progressTitle':'Ridder Race Series','series.badgesTitle':'Значки серии',
+    'series.progressText':'2 из 3 этапов пройдено — Radon Race и Ridder UpHill. До финишёра серии остался Panorama Fall Run.',
+    'series.progressCta':'Смотреть серию',
+    'series.badgeFinisher':'Финишер','series.winner':'Победитель','series.archiveStages':'Забеги сезона',
     'cabinet.bibDate':'19 сентября 2026 · стартовый номер #214','cabinet.paid':'Оплачено','cabinet.ticketQr':'Билет / QR',
     'cabinet.radonResult':'5 июля 2026 · результат 1:52:47 · 14 место в категории',
     'cabinet.skiResult':'13 июня 2026 · результат 0:24:12','cabinet.uphillResult':'14 марта 2026 · результат 0:41:03',
@@ -1359,7 +1454,7 @@ const UI = {
     'footer.club':'Клуб','footer.partners':'Партнёрам','footer.contacts':'Контакты','footer.address':'г. Риддер, ВКО','footer.prototype':'Дизайн-прототип редизайна сайта',
   },
   kk:{
-    'nav.home':'Басты бет','nav.events':'Жарыстар','nav.camp':'Лагерь','nav.camp_full':'Жаттығу лагері','nav.about':'Клуб туралы',
+    'nav.home':'Басты бет','nav.events':'Жарыстар','nav.series':'Серия','nav.series_full':'Ridder Race Series','nav.camp':'Лагерь','nav.camp_full':'Жаттығу лагері','nav.about':'Клуб туралы',
     'nav.cabinet':'Кабинет','nav.cabinet_full':'Жеке кабинет','nav.signup':'Тіркелу',
     'brand.sub':'Жүгіру клубы · Риддер',
     'hero.eyebrow':'2026 маусымы · Алтай тауларында 4 старт',
@@ -1373,6 +1468,9 @@ const UI = {
     'home.aboutEyebrow':'Клуб туралы','home.aboutTitle':'Алтай баурайында бег пен шаңғыны дамытамыз',
     'home.aboutText':'2019 жылдан бері біз тау маңында тұратын және мұны толық пайдаланғысы келетін адамдар үшін старттар өткіземіз — алғашқы 5&nbsp;км жүгірушілерден бастап, тауға жарты марафонға шығатындарға дейін.',
     'home.aboutCta':'Команда туралы білу',
+    'home.seriesEyebrow':'Ridder Race Series','home.seriesTitle':'Үш старт — бір серия, бір есеп',
+    'home.seriesText':'Ridder UpHill, Radon Race және Panorama Fall Run маусымның ортақ сериясына біріктірілген. Ski Summer Fest серияға кірмейді — бұл жалпы есепке қатысы жоқ, дербес жазғы мереке.',
+    'home.seriesCta':'Серия туралы білу',
     'events.eyebrow':'Peloton Ridder жарыстары','events.title':'Старттар күнтізбесі мен мұрағаты','events.calendarTab':'2026 күнтізбесі','events.archiveTab':'Мұрағат',
     'detail.profileTitle':'Трасса профилі','detail.profile':'Профиль','detail.map':'Карта',
     'detail.chartNoteProfile':'Навигаторлар мен Strava/Garmin үшін трек — таңдалған дистанцияға сай жаңарады.',
@@ -1418,6 +1516,14 @@ const UI = {
     'signup.create':'Профиль жасау','signup.hasAccount':'Аккаунтыңыз бар ма?','signup.login':'Кіру',
     'cabinet.eyebrow':'Жеке кабинет','cabinet.title':'Менің старттарым','cabinet.finishes':'4 финиш, жеке рекорд 21.1 км — 1:52:47',
     'cabinet.editProfile':'Профильді өңдеу','cabinet.upcoming':'Алдағы старттар','cabinet.history':'Старттар тарихы',
+    'series.badgeShort':'Ridder Race Series','series.stage':'Кезең','series.eyebrow':'Маусым сериясы','series.title':'Ridder Race Series',
+    'series.intro':'Жылдың үш старты — Ridder UpHill, Radon Race және Panorama Fall Run — ортақ серияға біріктірілген. Маусым бойы үш кезеңнің барлығын өтіп, Ridder Race Series финишері болыңыз.',
+    'series.boardTitle':'Серия есебі','series.boardDesc':'Серияның екі және одан да көп кезеңінен өткен қатысушылар.',
+    'series.stagesCol':'Өтілген кезеңдер','series.boardEmpty':'Әзірге серияның екі кезеңінен өткен ешкім жоқ.',
+    'series.progressTitle':'Ridder Race Series','series.badgesTitle':'Серия белгілері',
+    'series.progressText':'3 кезеңнің 2-і өтілді — Radon Race және Ridder UpHill. Серия финишері болу үшін Panorama Fall Run қалды.',
+    'series.progressCta':'Серияны қарау',
+    'series.badgeFinisher':'Финишер','series.winner':'Жеңімпаз','series.archiveStages':'Маусым жарыстары',
     'cabinet.bibDate':'2026 жылдың 19 қыркүйегі · старттық нөмір #214','cabinet.paid':'Төленген','cabinet.ticketQr':'Билет / QR',
     'cabinet.radonResult':'2026 жылдың 5 шілдесі · нәтиже 1:52:47 · санатта 14-орын',
     'cabinet.skiResult':'2026 жылдың 13 маусымы · нәтиже 0:24:12','cabinet.uphillResult':'2026 жылдың 14 наурызы · нәтиже 0:41:03',
@@ -1463,7 +1569,7 @@ const UI = {
     'footer.club':'Клуб','footer.partners':'Серіктестерге','footer.contacts':'Байланыс','footer.address':'Риддер қ., ШҚО','footer.prototype':'Сайт дизайнының прототипі',
   },
   en:{
-    'nav.home':'Home','nav.events':'Races','nav.camp':'Camp','nav.camp_full':'Training Camp','nav.about':'About',
+    'nav.home':'Home','nav.events':'Races','nav.series':'Series','nav.series_full':'Ridder Race Series','nav.camp':'Camp','nav.camp_full':'Training Camp','nav.about':'About',
     'nav.cabinet':'Profile','nav.cabinet_full':'My Profile','nav.signup':'Sign Up',
     'brand.sub':'Running Club · Ridder',
     'hero.eyebrow':'Season 2026 · 4 races in the Altai mountains',
@@ -1477,6 +1583,9 @@ const UI = {
     'home.aboutEyebrow':'About the club','home.aboutTitle':'Growing running and skiing in the Altai foothills',
     'home.aboutText':"Since 2019 we've been running races for people who live near the mountains and want to make the most of it — from first-timers on a 5&nbsp;km to those tackling a half marathon uphill.",
     'home.aboutCta':'Meet the team',
+    'home.seriesEyebrow':'Ridder Race Series','home.seriesTitle':'Three races — one series, one standing',
+    'home.seriesText':'Ridder UpHill, Radon Race and Panorama Fall Run are combined into the season\'s official series. Ski Summer Fest is not part of it — a standalone summer roller-ski event with no bearing on the series standing.',
+    'home.seriesCta':'About the series',
     'events.eyebrow':'Peloton Ridder races','events.title':'Race calendar and archive','events.calendarTab':'2026 Calendar','events.archiveTab':'Archive',
     'detail.profileTitle':'Elevation Profile','detail.profile':'Profile','detail.map':'Map',
     'detail.chartNoteProfile':'Track for GPS devices and Strava/Garmin — updates for the selected distance.',
@@ -1522,6 +1631,14 @@ const UI = {
     'signup.create':'Create Profile','signup.hasAccount':'Already have an account?','signup.login':'Log In',
     'cabinet.eyebrow':'My Profile','cabinet.title':'My Races','cabinet.finishes':'4 finishes, PB 21.1 km — 1:52:47',
     'cabinet.editProfile':'Edit Profile','cabinet.upcoming':'Upcoming Races','cabinet.history':'Race History',
+    'series.badgeShort':'Ridder Race Series','series.stage':'Stage','series.eyebrow':'Season series','series.title':'Ridder Race Series',
+    'series.intro':'Three races of the season — Ridder UpHill, Radon Race and Panorama Fall Run — form a single series. Finish all three stages within the season and become a Ridder Race Series finisher.',
+    'series.boardTitle':'Series standing','series.boardDesc':'Participants who have completed two or more stages of the series.',
+    'series.stagesCol':'Stages completed','series.boardEmpty':'No one has completed two stages of the series yet.',
+    'series.progressTitle':'Ridder Race Series','series.badgesTitle':'Series badges',
+    'series.progressText':'2 of 3 stages complete — Radon Race and Ridder UpHill. Panorama Fall Run is left to become a series finisher.',
+    'series.progressCta':'View the series',
+    'series.badgeFinisher':'Finisher','series.winner':'Winner','series.archiveStages':'Season races',
     'cabinet.bibDate':'September 19, 2026 · Bib #214','cabinet.paid':'Paid','cabinet.ticketQr':'Ticket / QR',
     'cabinet.radonResult':'July 5, 2026 · finished 1:52:47 · 14th in category',
     'cabinet.skiResult':'June 13, 2026 · finished 0:24:12','cabinet.uphillResult':'March 14, 2026 · finished 0:41:03',
@@ -1567,7 +1684,7 @@ const UI = {
     'footer.club':'Club','footer.partners':'Partners','footer.contacts':'Contact','footer.address':'Ridder, East Kazakhstan','footer.prototype':'Website redesign — design prototype',
   },
   zh:{
-    'nav.home':'首页','nav.events':'赛事','nav.camp':'训练营','nav.camp_full':'训练营','nav.about':'关于俱乐部',
+    'nav.home':'首页','nav.events':'赛事','nav.series':'系列赛','nav.series_full':'Ridder Race Series','nav.camp':'训练营','nav.camp_full':'训练营','nav.about':'关于俱乐部',
     'nav.cabinet':'我的主页','nav.cabinet_full':'个人主页','nav.signup':'注册',
     'brand.sub':'跑步俱乐部 · 里德尔',
     'hero.eyebrow':'2026赛季 · 阿尔泰山4场赛事',
@@ -1581,6 +1698,9 @@ const UI = {
     'home.aboutEyebrow':'关于俱乐部','home.aboutTitle':'在阿尔泰山麓发展跑步与滑雪运动',
     'home.aboutText':'自2019年起，我们为住在群山附近、想要充分利用这一优势的人举办比赛——从初次挑战5公里的新手，到向半程马拉松爬坡冲刺的老将。',
     'home.aboutCta':'认识我们的团队',
+    'home.seriesEyebrow':'Ridder Race Series','home.seriesTitle':'三场比赛，一个系列，一个总成绩',
+    'home.seriesText':'Ridder UpHill、Radon Race 与 Panorama Fall Run 组成本赛季官方系列赛。Ski Summer Fest 不在其中——它是一场独立的夏季旱地雪橇活动，不计入系列总成绩。',
+    'home.seriesCta':'了解系列赛',
     'events.eyebrow':'Peloton Ridder 赛事','events.title':'赛事日历与历史记录','events.calendarTab':'2026年日历','events.archiveTab':'历史记录',
     'detail.profileTitle':'赛道高度剖面','detail.profile':'剖面图','detail.map':'地图',
     'detail.chartNoteProfile':'适用于导航设备和Strava/Garmin的轨迹——会随所选距离更新。',
@@ -1626,6 +1746,14 @@ const UI = {
     'signup.create':'创建资料','signup.hasAccount':'已有账户？','signup.login':'登录',
     'cabinet.eyebrow':'个人主页','cabinet.title':'我的赛事','cabinet.finishes':'4次完赛，21.1公里个人最佳成绩 — 1:52:47',
     'cabinet.editProfile':'编辑资料','cabinet.upcoming':'即将参加的赛事','cabinet.history':'历史赛事',
+    'series.badgeShort':'Ridder Race Series','series.stage':'阶段','series.eyebrow':'赛季系列赛','series.title':'Ridder Race Series',
+    'series.intro':'本赛季三场比赛——Ridder UpHill、Radon Race 与 Panorama Fall Run——组成统一系列赛。在本赛季内完成全部三个阶段，即可成为 Ridder Race Series 完赛者。',
+    'series.boardTitle':'系列赛积分榜','series.boardDesc':'已完成两个或以上阶段的参赛者。',
+    'series.stagesCol':'已完成阶段','series.boardEmpty':'目前还没有人完成系列赛的两个阶段。',
+    'series.progressTitle':'Ridder Race Series','series.badgesTitle':'系列赛徽章',
+    'series.progressText':'已完成3个阶段中的2个——Radon Race 与 Ridder UpHill。还差 Panorama Fall Run 即可成为系列赛完赛者。',
+    'series.progressCta':'查看系列赛',
+    'series.badgeFinisher':'完赛者','series.winner':'冠军','series.archiveStages':'赛季赛事',
     'cabinet.bibDate':'2026年9月19日 · 参赛号 #214','cabinet.paid':'已支付','cabinet.ticketQr':'门票 / 二维码',
     'cabinet.radonResult':'2026年7月5日 · 成绩 1:52:47 · 组别第14名',
     'cabinet.skiResult':'2026年6月13日 · 成绩 0:24:12','cabinet.uphillResult':'2026年3月14日 · 成绩 0:41:03',
@@ -1711,6 +1839,11 @@ function setLang(lang){
   applyStaticTranslations();
   renderGrids();
   renderNextRace();
+  renderSeriesSeasonTabs();
+  renderSeriesBoard();
+  renderSeriesBadges();
+  document.getElementById('seriesPageTitle').textContent = currentSeriesYear===CURRENT_SERIES_YEAR ? t('series.title') : `${t('series.title')} ${currentSeriesYear}`;
+  if(currentSeriesYear!==CURRENT_SERIES_YEAR) renderSeriesArchiveStages(currentSeriesYear);
   if(currentEvent && document.getElementById('view-detail').classList.contains('active')){
     const savedDistIdx = selectedDistIdx, savedPView = currentPView;
     const activeTabBtn = document.querySelector('#detailTabs button.active');
@@ -2163,6 +2296,24 @@ const EVENTS = {
   },
 };
 const EVENT_ORDER = ['uphill','ski','radon','panorama'];
+/* Ridder Race Series — chronological legs of the season's official series.
+   Ski Summer Fest is deliberately excluded: it's a standalone event. */
+const SERIES_IDS = ['uphill','radon','panorama'];
+function isSeriesEvent(id){ return SERIES_IDS.includes(id); }
+function seriesStage(id){ return SERIES_IDS.indexOf(id)+1; }
+function seriesLeaderboard(){
+  const byName = {};
+  SERIES_IDS.forEach(id=>{
+    (EVENTS[id].participants||[]).forEach(p=>{
+      if(!byName[p.name]) byName[p.name] = {name:p.name, club:p.club, stages:new Set()};
+      byName[p.name].stages.add(id);
+    });
+  });
+  return Object.values(byName)
+    .map(p=>({name:p.name, club:p.club, n:p.stages.size}))
+    .filter(p=>p.n>=2)
+    .sort((a,b)=>b.n-a.n || a.name.localeCompare(b.name,'ru'));
+}
 function evLoc(ev){ const tr = ev.i18n && ev.i18n[currentLang]; return (tr && tr.location) || ev.location; }
 function evText(ev, field){ const tr = ev.i18n && ev.i18n[currentLang]; return (tr && tr[field]!==undefined) ? tr[field] : ev[field]; }
 function evCutoff(ev, idx){ const tr = ev.i18n && ev.i18n[currentLang]; return (tr && tr.cutoffs && tr.cutoffs[idx]!==undefined) ? tr.cutoffs[idx] : ev.distances[idx].cutoff; }
@@ -2271,6 +2422,9 @@ function selectDistOption(containerId, i){
 }
 function eventCard(ev){
   const distTxt = ev.distances.map(d=>d.name.split(' ')[0]).join(' / ') + ' ' + t('common.km');
+  const seriesTag = isSeriesEvent(ev.id)
+    ? `<div class="ev-series"><svg class="icon" viewBox="0 0 24 24"><use href="#i-medal"/></svg>${t('series.badgeShort')} · ${t('series.stage')} ${seriesStage(ev.id)}/${SERIES_IDS.length}</div>`
+    : '';
   return `<button class="event-card" onclick="openEvent('${ev.id}')">
     <div class="ev-thumb">
       <img src="${IMAGES[ev.imgKey]}" alt="" loading="lazy">
@@ -2278,6 +2432,7 @@ function eventCard(ev){
     </div>
     <div class="ev-body">
       <div class="event-icon" style="background:${ev.color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><use href="#${ev.icon}"/></svg></div>
+      ${seriesTag}
       <h3>${ev.name}</h3>
       <div class="ev-date">${formatDate(ev.dateISO)}</div>
       <div class="ev-dist">${distTxt}</div>
@@ -2290,9 +2445,134 @@ function renderGrids(){
   document.getElementById('eventsCalendarGrid').innerHTML = home.filter(e=>e.status!=='done').map(eventCard).join('') || `<p style="color:var(--ink-faint)">${t('detail.comingSoon')}</p>`;
   document.getElementById('eventsArchiveGrid').innerHTML = home.filter(e=>e.status==='done').map(eventCard).join('');
   document.getElementById('footerEventList').innerHTML = EVENT_ORDER.map(id=>`<li>${EVENTS[id].name}</li>`).join('');
+  document.getElementById('seriesStagesGrid').innerHTML = SERIES_IDS.map(id=>eventCard(EVENTS[id])).join('');
+}
+/* Season-by-season Ridder Race Series completion for the mock cabinet user.
+   2024/2025 finished all three stages; 2026 (this season) is in progress. */
+const SEASON_BADGES = [
+  {year:2024, done:3},
+  {year:2025, done:3},
+  {year:2026, done:2},
+];
+function peakBadgeSVG(done, total, uid){
+  const mntId = 'pk-mnt-'+uid, skyId = 'pk-sky-'+uid;
+  const R = 57, C = 2*Math.PI*R, gapDeg = 10, segDeg = 360/total - gapDeg;
+  const segLen = (segDeg/360)*C;
+  let rings = '';
+  for(let i=0;i<total;i++){
+    const rotate = -90 + i*(360/total);
+    rings += `<circle class="pk-ringseg ${i<done?'active':''}" cx="60" cy="60" r="${R}" stroke-dasharray="${segLen.toFixed(1)} ${(C-segLen).toFixed(1)}" transform="rotate(${rotate} 60 60)"/>`;
+  }
+  return `<svg viewBox="0 0 120 120" class="peak-badge">
+    <defs>
+      <linearGradient id="${mntId}" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#b8431a"/><stop offset="100%" stop-color="#f0824a"/>
+      </linearGradient>
+      <linearGradient id="${skyId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fde7d3"/><stop offset="100%" stop-color="#f6c79b"/>
+      </linearGradient>
+    </defs>
+    ${rings}
+    <circle class="pk-bezel" cx="60" cy="60" r="52"/>
+    <circle class="pk-disc" cx="60" cy="60" r="48" fill="url(#${skyId})"/>
+    <circle class="pk-sun" cx="60" cy="42" r="8"/>
+    <path class="pk-mnt" fill="url(#${mntId})" d="M25,92 L42,58 L53,71 L66,50 L78,67 L95,92 Z"/>
+    <path class="pk-snow" d="M36,64 L42,58 L48,64 Z M60,56 L66,50 L72,56 Z"/>
+    <circle class="pk-disc-rim" cx="60" cy="60" r="48"/>
+  </svg>`;
+}
+function renderSeriesBadges(){
+  const el = document.getElementById('seriesBadgeRow');
+  if(!el) return;
+  el.innerHTML = SEASON_BADGES.map((b,i)=>{
+    const total = SERIES_IDS.length;
+    const full = b.done>=total;
+    return `<div class="badge-item ${full?'full':''}" title="${b.year} · ${b.done}/${total}">
+      <div class="badge-plate">
+        ${peakBadgeSVG(b.done, total, 'sb'+i)}
+        ${full ? `<span class="badge-check"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>` : ''}
+      </div>
+      <span class="badge-year">${b.year}</span>
+      <span class="badge-stat">${full ? t('series.badgeFinisher') : `${b.done}/${total}`}</span>
+    </div>`;
+  }).join('');
+}
+/* Ridder Race Series — past seasons. Course/equipment data on the event pages
+   is evergreen, so archive cards link straight to openEvent(); only the
+   season-specific date/winner/standings are stored per year. */
+const CURRENT_SERIES_YEAR = 2026;
+const SERIES_SEASONS = {
+  2025:{
+    stages:[
+      {id:'uphill', dateLabel:'15 марта 2025', winner:'А. Каримов', winnerTime:'1:02:40'},
+      {id:'radon', dateLabel:'6 июля 2025', winner:'Д. Тлеуов', winnerTime:'1:12:18'},
+      {id:'panorama', dateLabel:'20 сентября 2025', winner:'Д. Тлеуов', winnerTime:'1:15:52'},
+    ],
+    board:[
+      {name:'Петров Иван', club:'Peloton Ridder', n:3},
+      {name:'Тлеуов Данияр', club:'Peloton Ridder', n:3},
+      {name:'Каримов Аскар', club:'Peloton Ridder', n:2},
+      {name:'Волкова Елена', club:'Peloton Ridder', n:2},
+    ],
+  },
+  2024:{
+    stages:[
+      {id:'uphill', dateLabel:'16 марта 2024', winner:'Е. Волкова', winnerTime:'1:08:21'},
+      {id:'radon', dateLabel:'7 июля 2024', winner:'А. Каримов', winnerTime:'1:19:04'},
+      {id:'panorama', dateLabel:'22 сентября 2024', winner:'И. Петров', winnerTime:'1:22:37'},
+    ],
+    board:[
+      {name:'Петров Иван', club:'Peloton Ridder', n:3},
+      {name:'Волкова Елена', club:'Peloton Ridder', n:3},
+      {name:'Тлеуов Данияр', club:'Peloton Ridder', n:2},
+    ],
+  },
+};
+const SERIES_SEASON_YEARS = [CURRENT_SERIES_YEAR, ...Object.keys(SERIES_SEASONS).map(Number).sort((a,b)=>b-a)];
+let currentSeriesYear = CURRENT_SERIES_YEAR;
+function renderSeriesSeasonTabs(){
+  document.getElementById('seriesSeasonTabs').innerHTML = SERIES_SEASON_YEARS.map(y=>
+    `<button class="${y===currentSeriesYear?'active':''}" onclick="selectSeriesSeason(${y})">${y}</button>`
+  ).join('');
+}
+function renderSeriesArchiveStages(year){
+  const season = SERIES_SEASONS[year];
+  document.getElementById('seriesArchiveStages').innerHTML = season.stages.map(s=>{
+    const ev = EVENTS[s.id];
+    return `<div class="reg-card" style="cursor:pointer;" onclick="openEvent('${s.id}')">
+      <div class="ric" style="background:${ev.color};"><svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;"><use href="#${ev.icon}"/></svg></div>
+      <div class="rinfo">
+        <h4>${ev.name}</h4>
+        <div class="rd">${s.dateLabel} · ${t('series.winner')}: ${s.winner} — ${s.winnerTime}</div>
+      </div>
+      <div class="ract"><span class="pill done">${t('cabinet.finished')}</span></div>
+    </div>`;
+  }).join('');
+}
+function selectSeriesSeason(year){
+  currentSeriesYear = year;
+  renderSeriesSeasonTabs();
+  const isCurrent = year===CURRENT_SERIES_YEAR;
+  document.getElementById('seriesCurrentBlock').style.display = isCurrent ? 'block' : 'none';
+  document.getElementById('seriesArchiveBlock').style.display = isCurrent ? 'none' : 'block';
+  document.getElementById('seriesPageTitle').textContent = isCurrent ? t('series.title') : `${t('series.title')} ${year}`;
+  if(!isCurrent) renderSeriesArchiveStages(year);
+  renderSeriesBoard();
+}
+function renderSeriesBoard(){
+  const isCurrent = currentSeriesYear===CURRENT_SERIES_YEAR;
+  const rows = isCurrent ? seriesLeaderboard() : SERIES_SEASONS[currentSeriesYear].board;
+  document.getElementById('seriesBoardYear').textContent = isCurrent ? '' : currentSeriesYear;
+  document.getElementById('seriesBoardBody').innerHTML = rows.map((p,i)=>`
+    <tr><td>${medalCell(i+1)}</td><td>${p.name}</td><td>${p.club}</td><td>${p.n}/${SERIES_IDS.length}</td></tr>
+  `).join('') || `<tr><td colspan="4" style="color:var(--ink-faint)">${t('series.boardEmpty')}</td></tr>`;
 }
 applyStaticTranslations();
 renderGrids();
+renderSeriesSeasonTabs();
+document.getElementById('seriesPageTitle').textContent = t('series.title');
+renderSeriesBoard();
+renderSeriesBadges();
 
 function getNextEvent(){
   const now = Date.now();
@@ -2338,6 +2618,13 @@ function openEvent(id){
   const pillEl = document.getElementById('detailPill');
   pillEl.className = pc.cls;
   pillEl.innerHTML = pc.html;
+  const seriesBadgeEl = document.getElementById('detailSeriesBadge');
+  if(isSeriesEvent(ev.id)){
+    seriesBadgeEl.style.display = 'inline-flex';
+    seriesBadgeEl.textContent = `${t('series.badgeShort')} · ${t('series.stage')} ${seriesStage(ev.id)}/${SERIES_IDS.length}`;
+  } else {
+    seriesBadgeEl.style.display = 'none';
+  }
   document.getElementById('detailTitle').textContent = ev.name + ' ' + ev.year;
   document.getElementById('detailMeta').innerHTML = `
     <span class="mi"><svg class="icon" viewBox="0 0 24 24"><use href="#i-clock"/></svg>${formatDate(ev.dateISO)}</span>

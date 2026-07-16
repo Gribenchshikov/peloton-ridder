@@ -36,6 +36,7 @@ IMAGE_TOKENS = {
     "__IMG_LM_MIST__": PHOTOS / "lm_mist.jpg",
     "__IMG_ABOUT__": PHOTOS / "lm_meadow.jpg",
     "__IMG_ABOUT_BANNER__": PHOTOS / "lm_forest.jpg",
+    "__IMG_SERIES__": PHOTOS / "ev_uphill.jpg",
     "__IMG_LOGO__": PHOTOS / "logo.png",
 }
 
