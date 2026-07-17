@@ -136,6 +136,11 @@ export async function deleteDistanceAction(
   _prevState: ActionState,
   _formData: FormData,
 ): Promise<ActionState> {
+  // Сигнатура нужна useActionState, хотя сами предыдущий state и FormData для
+  // удаления дистанции не используются.
+  void _prevState;
+  void _formData;
+
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
 

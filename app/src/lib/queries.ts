@@ -54,13 +54,22 @@ export function getUserProfile(userId: string) {
 export function getUserContactInfo(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { firstName: true, lastName: true, email: true, city: true, phone: true },
+    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true },
   });
 }
 
 export function getActiveRegistration(userId: string, eventId: string) {
   return prisma.registration.findFirst({
-    where: { userId, eventId, status: { in: ["RESERVED", "PAID"] } },
+    // RESERVED — лишь временная бронь. Просроченная запись остаётся в истории со
+    // статусом CANCELLED, но на экран оплаты и повторную регистрацию не влияет.
+    where: {
+      userId,
+      eventId,
+      OR: [
+        { status: "PAID" },
+        { status: "RESERVED", reservedUntil: { gt: new Date() } },
+      ],
+    },
   });
 }
 

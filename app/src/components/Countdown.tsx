@@ -20,9 +20,15 @@ export function Countdown({ targetISO }: { targetISO: string }) {
   const [parts, setParts] = useState<ReturnType<typeof split> | null>(null);
 
   useEffect(() => {
-    setParts(split(target - Date.now()));
-    const id = setInterval(() => setParts(split(target - Date.now())), 1000);
-    return () => clearInterval(id);
+    // Запускаем первый расчёт уже после монтирования, чтобы не смешивать время
+    // серверного и клиентского рендера и не вызывать setState синхронно в effect.
+    const update = () => setParts(split(target - Date.now()));
+    const initialId = window.setTimeout(update, 0);
+    const intervalId = window.setInterval(update, 1000);
+    return () => {
+      window.clearTimeout(initialId);
+      window.clearInterval(intervalId);
+    };
   }, [target]);
 
   const cells: [number, string][] = [

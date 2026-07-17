@@ -63,6 +63,7 @@ export function DistanceSelect({
       {state.error === "full" && <p className="text-sm text-danger">{t("errorFull")}</p>}
       {state.error === "closed" && <p className="text-sm text-danger">{t("errorClosed")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+      {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
 
       <button
         type="submit"
