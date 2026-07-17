@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { AuthSuccessCard } from "@/components/AuthSuccessCard";
 import { registerAction, type RegisterState } from "./actions";
 
 const initialState: RegisterState = {};
@@ -19,12 +20,7 @@ export function RegisterForm() {
   const [state, formAction, pending] = useActionState(registerAction, initialState);
 
   if (state.success) {
-    return (
-      <div className="rounded-[var(--radius-l)] border border-border bg-surface p-6 text-center">
-        <h2 className="font-display text-xl font-bold text-ink">{t("checkEmailTitle")}</h2>
-        <p className="mt-2 text-sm text-ink-soft">{t("checkEmailText")}</p>
-      </div>
-    );
+    return <AuthSuccessCard title={t("checkEmailTitle")} text={t("checkEmailText")} />;
   }
 
   return (

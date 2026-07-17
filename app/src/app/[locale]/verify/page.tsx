@@ -9,7 +9,7 @@ export default async function VerifyPage({
   searchParams: Promise<{ token?: string }>;
 }) {
   const { token } = await searchParams;
-  const email = token ? await consumeVerificationToken(token) : null;
+  const email = token ? await consumeVerificationToken(token, "EMAIL_VERIFY") : null;
 
   if (email) {
     await prisma.user.update({ where: { email }, data: { emailVerified: new Date() } });

@@ -37,6 +37,10 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   passwordHash  String
+  // Ставится при сбросе/смене пароля — auth.ts сверяет с iat уже выданных JWT
+  // и обнуляет сессии, выпущенные ДО этого момента (см. T44: иначе угнанная
+  // сессия остаётся рабочей сколько угодно после того, как владелец сбросил пароль).
+  passwordChangedAt DateTime?
   emailVerified DateTime?
   phone         String?
   firstName     String
@@ -56,12 +60,20 @@ model User {
 
 // Логин — email + пароль. Токен нужен только чтобы подтвердить, что email реальный
 // (регистрация активируется по ссылке из письма), это не механизм входа.
+enum TokenPurpose {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+// purpose нужен, чтобы ссылку подтверждения email нельзя было случайно (или намеренно)
+// использовать для сброса пароля того же адреса — иначе оба флоу читали бы один токен без разбора.
 model VerificationToken {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   email     String
-  token     String   @unique
+  token     String       @unique
+  purpose   TokenPurpose @default(EMAIL_VERIFY)
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
 }
 
 // Заявка на волонтёрство подаётся на конкретное событие (не «стать волонтёром вообще»).

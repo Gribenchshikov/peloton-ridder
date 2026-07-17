@@ -39,7 +39,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        return token;
+      }
+      // Не первый вход — на каждый следующий запрос сверяем, не сброшен ли пароль
+      // ПОСЛЕ выдачи этого токена (T44: /reset-password ставит passwordChangedAt).
+      // Без этой проверки угнанная сессия остаётся рабочей до истечения JWT (30 дней
+      // по умолчанию) даже после того, как владелец аккаунта сменил пароль.
+      if (token.id && token.iat) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { passwordChangedAt: true },
+        });
+        if (dbUser?.passwordChangedAt && Math.floor(dbUser.passwordChangedAt.getTime() / 1000) > token.iat) {
+          return null;
+        }
+      }
       return token;
     },
     async session({ session, token }) {

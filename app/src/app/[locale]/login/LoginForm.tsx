@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { FormField } from "@/components/FormField";
 import { loginAction, type LoginState } from "./actions";
 
@@ -16,6 +17,9 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
       <FormField label={t("email")} name="email" type="email" required />
       <FormField label={t("password")} name="password" type="password" required />
+      <Link href="/forgot-password" className="-mt-2 self-end text-sm font-semibold text-ember hover:underline">
+        {t("forgotPasswordCta")}
+      </Link>
 
       {state.error && <p className="text-sm text-danger">{t("errorInvalidCredentials")}</p>}
 

@@ -2,17 +2,17 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, passwordFieldSchema } from "@/lib/password";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendVerificationEmail } from "@/lib/mailer";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { buildAppUrl } from "@/lib/url";
 
 const RegisterSchema = z.object({
   firstName: z.string().trim().min(2).max(100),
   lastName: z.string().trim().min(2).max(100),
   email: z.string().trim().toLowerCase().email(),
-  // bcrypt игнорирует всё после 72 байт — длиннее не имеет смысла разрешать.
-  password: z.string().min(8).max(72),
+  password: passwordFieldSchema,
   city: z.string().trim().max(100).optional(),
 });
 
@@ -53,8 +53,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   });
 
   const token = await createVerificationToken(email);
-  const verifyUrl = `${process.env.APP_URL ?? "http://localhost:3000"}/verify?token=${token}`;
-  await sendVerificationEmail(email, verifyUrl);
+  await sendVerificationEmail(email, buildAppUrl(`/verify?token=${token}`));
 
   return { success: true };
 }
