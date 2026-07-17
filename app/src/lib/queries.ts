@@ -27,7 +27,8 @@ export function getUserProfile(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
     select: {
-      name: true,
+      firstName: true,
+      lastName: true,
       email: true,
       city: true,
       phone: true,
@@ -44,6 +45,15 @@ export function getUserProfile(userId: string) {
         take: REGISTRATION_HISTORY_LIMIT,
       },
     },
+  });
+}
+
+// Лёгкая версия getUserProfile для карточки «данные участника» на странице регистрации —
+// без registrations (там до 20 записей с вложенными event/race/distance), которые эта карточка не показывает.
+export function getUserContactInfo(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: { firstName: true, lastName: true, email: true, city: true, phone: true },
   });
 }
 

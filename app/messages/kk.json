@@ -67,7 +67,8 @@
     "registerSubtitle": "Деректер жеке кабинетте сақталады — әр старттың алдында қайта енгізудің қажеті жоқ.",
     "loginEyebrow": "Жеке кабинет",
     "loginTitle": "Аккаунтқа кіру",
-    "name": "Аты-жөні",
+    "name": "Аты",
+    "surname": "Тегі",
     "email": "Email",
     "city": "Қала",
     "password": "Құпия сөз",
@@ -110,7 +111,14 @@
     "submitting": "Бір сәт…",
     "errorFull": "Бұл дистанцияда бос орын қалмады.",
     "errorClosed": "Бұл старттка тіркелу жабылған.",
-    "errorInvalid": "Тізімнен дистанцияны таңдаңыз."
+    "errorInvalid": "Тізімнен дистанцияны таңдаңыз.",
+    "participantTitle": "Қатысушы деректері",
+    "participantHint": "Бұл деректер старт хаттамасына түседі. Дұрыс екенін тексеріңіз — жеке кабинетте өзгертуге болады.",
+    "editCta": "Өзгерту",
+    "participantName": "Аты-жөні",
+    "participantEmail": "Email",
+    "participantCity": "Қала",
+    "participantPhone": "Телефон"
   },
   "Payment": {
     "eyebrow": "Төлем",

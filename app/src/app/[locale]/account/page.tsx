@@ -6,8 +6,15 @@ import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
 import { logoutAction } from "./actions";
 
-export default async function AccountPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function AccountPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
   const { locale } = await params;
+  const { callbackUrl } = await searchParams;
   const session = await auth();
   if (!session?.user?.id) {
     return redirect({ href: "/login", locale });
@@ -20,8 +27,18 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
-      <AccountHeader name={profile.name} />
-      <ProfileForm user={{ name: profile.name, email: profile.email, city: profile.city ?? "", phone: profile.phone ?? "" }} />
+      <AccountHeader name={profile.firstName} />
+      <ProfileForm
+        user={{
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          email: profile.email,
+          city: profile.city ?? "",
+          phone: profile.phone ?? "",
+        }}
+        locale={locale}
+        callbackUrl={callbackUrl}
+      />
       <RegistrationHistory registrations={profile.registrations} />
     </main>
   );

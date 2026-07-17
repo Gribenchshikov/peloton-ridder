@@ -67,7 +67,8 @@
     "registerSubtitle": "Your details are saved to your account — no need to re-enter them for every race.",
     "loginEyebrow": "Personal account",
     "loginTitle": "Sign in",
-    "name": "Name",
+    "name": "First name",
+    "surname": "Last name",
     "email": "Email",
     "city": "City",
     "password": "Password",
@@ -110,7 +111,14 @@
     "submitting": "One second…",
     "errorFull": "No spots left for this distance.",
     "errorClosed": "Registration for this race is closed.",
-    "errorInvalid": "Pick a distance from the list."
+    "errorInvalid": "Pick a distance from the list.",
+    "participantTitle": "Participant details",
+    "participantHint": "This goes on the race protocol. Check it's correct — you can edit it in your account.",
+    "editCta": "Edit",
+    "participantName": "Full name",
+    "participantEmail": "Email",
+    "participantCity": "City",
+    "participantPhone": "Phone"
   },
   "Payment": {
     "eyebrow": "Payment",

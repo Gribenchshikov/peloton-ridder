@@ -1,10 +1,23 @@
 import { useTranslations } from "next-intl";
-import type { getEventForRegistration } from "@/lib/queries";
+import { Link } from "@/i18n/navigation";
+import type { getEventForRegistration, getUserContactInfo } from "@/lib/queries";
+import { fullName } from "@/lib/user";
 import { DistanceSelect } from "./DistanceSelect";
 
 type EventWithDistances = NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
+type UserContactInfo = NonNullable<Awaited<ReturnType<typeof getUserContactInfo>>>;
 
-export function RegisterView({ event, locale }: { event: EventWithDistances; locale: string }) {
+export function RegisterView({
+  event,
+  profile,
+  locale,
+  callbackPath,
+}: {
+  event: EventWithDistances;
+  profile: UserContactInfo;
+  locale: string;
+  callbackPath: string;
+}) {
   const t = useTranslations("Registration");
 
   return (
@@ -15,7 +28,42 @@ export function RegisterView({ event, locale }: { event: EventWithDistances; loc
           {t("title", { race: `${event.race.name} ${event.year}` })}
         </h1>
       </div>
+      <ParticipantCard profile={profile} callbackPath={callbackPath} />
       <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} />
     </main>
+  );
+}
+
+function ParticipantCard({ profile, callbackPath }: { profile: UserContactInfo; callbackPath: string }) {
+  const t = useTranslations("Registration");
+
+  return (
+    <section className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-base font-bold text-ink">{t("participantTitle")}</h2>
+        <Link
+          href={{ pathname: "/account", query: { callbackUrl: callbackPath } }}
+          className="text-sm font-semibold text-ember hover:underline"
+        >
+          {t("editCta")}
+        </Link>
+      </div>
+      <p className="mt-2 text-sm text-ink-soft">{t("participantHint")}</p>
+      <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+        <Field label={t("participantName")} value={fullName(profile)} />
+        <Field label={t("participantEmail")} value={profile.email} />
+        {profile.city && <Field label={t("participantCity")} value={profile.city} />}
+        {profile.phone && <Field label={t("participantPhone")} value={profile.phone} />}
+      </dl>
+    </section>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-ink-faint">{label}</dt>
+      <dd className="font-semibold text-ink">{value}</dd>
+    </div>
   );
 }

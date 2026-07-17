@@ -39,7 +39,8 @@ model User {
   passwordHash  String
   emailVerified DateTime?
   phone         String?
-  name          String
+  firstName     String
+  lastName      String
   city          String?
   isAdmin       Boolean   @default(false)
   isVolunteer   Boolean   @default(false)

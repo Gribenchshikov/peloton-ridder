@@ -6,6 +6,7 @@ import { getEventDetail } from "@/lib/queries";
 import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
+import { fullName } from "@/lib/user";
 import type { Distance } from "@/generated/prisma/client";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -112,7 +113,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
                   <tbody>
                     {event.registrations.map((r) => (
                       <tr key={r.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-2.5 font-semibold text-ink">{r.user.name}</td>
+                        <td className="px-4 py-2.5 font-semibold text-ink">{fullName(r.user)}</td>
                         <td className="px-4 py-2.5 text-ink-soft">{r.distance.name}</td>
                         <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">#{r.bibNumber ?? "—"}</td>
                       </tr>

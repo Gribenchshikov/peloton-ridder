@@ -8,7 +8,8 @@ import { sendVerificationEmail } from "@/lib/mailer";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const RegisterSchema = z.object({
-  name: z.string().trim().min(2).max(100),
+  firstName: z.string().trim().min(2).max(100),
+  lastName: z.string().trim().min(2).max(100),
   email: z.string().trim().toLowerCase().email(),
   // bcrypt игнорирует всё после 72 байт — длиннее не имеет смысла разрешать.
   password: z.string().min(8).max(72),
@@ -22,7 +23,8 @@ export type RegisterState = {
 
 export async function registerAction(_prevState: RegisterState, formData: FormData): Promise<RegisterState> {
   const parsed = RegisterSchema.safeParse({
-    name: formData.get("name"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     email: formData.get("email"),
     password: formData.get("password"),
     city: formData.get("city") || undefined,
@@ -32,7 +34,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
     return { error: "invalid" };
   }
 
-  const { name, email, password, city } = parsed.data;
+  const { firstName, lastName, email, password, city } = parsed.data;
 
   const [turnstileOk, existing] = await Promise.all([
     verifyTurnstileToken(formData.get("cf-turnstile-response") as string | null),
@@ -47,7 +49,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
 
   const passwordHash = await hashPassword(password);
   await prisma.user.create({
-    data: { name, email, passwordHash, city },
+    data: { firstName, lastName, email, passwordHash, city },
   });
 
   const token = await createVerificationToken(email);

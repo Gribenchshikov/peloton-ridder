@@ -68,6 +68,7 @@
     "loginEyebrow": "Личный кабинет",
     "loginTitle": "Вход в аккаунт",
     "name": "Имя",
+    "surname": "Фамилия",
     "email": "Email",
     "city": "Город",
     "password": "Пароль",
@@ -110,7 +111,14 @@
     "submitting": "Секунду…",
     "errorFull": "Мест по этой дистанции больше нет.",
     "errorClosed": "Регистрация на этот старт уже закрыта.",
-    "errorInvalid": "Выберите дистанцию из списка."
+    "errorInvalid": "Выберите дистанцию из списка.",
+    "participantTitle": "Данные участника",
+    "participantHint": "Эти данные попадут в протокол забега. Проверьте, что всё верно — изменить можно в личном кабинете.",
+    "editCta": "Изменить",
+    "participantName": "Имя Фамилия",
+    "participantEmail": "Email",
+    "participantCity": "Город",
+    "participantPhone": "Телефон"
   },
   "Payment": {
     "eyebrow": "Оплата",

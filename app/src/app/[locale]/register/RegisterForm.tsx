@@ -29,7 +29,8 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <FormField label={t("name")} name="name" type="text" required />
+      <FormField label={t("name")} name="firstName" type="text" required />
+      <FormField label={t("surname")} name="lastName" type="text" required />
       <FormField label={t("email")} name="email" type="email" required />
       <FormField label={t("city")} name="city" type="text" />
       <FormField label={t("password")} name="password" type="password" required minLength={8} />
