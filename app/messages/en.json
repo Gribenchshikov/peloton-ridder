@@ -40,5 +40,25 @@
     "archiveTab": "Archive",
     "emptyCalendar": "New races will appear here once next season's calendar is published.",
     "emptyArchive": "The archive is empty — no race has finished yet."
+  },
+  "EventDetail": {
+    "backToEvents": "All races",
+    "distancesTitle": "Distances and pricing",
+    "ageFrom": "{min}+ years",
+    "ageRange": "{min}–{max} years",
+    "courseTitle": "About the course",
+    "equipmentTitle": "Mandatory equipment",
+    "keyDatesTitle": "Key dates",
+    "registrationDeadline": "Registration open until",
+    "cancellationDeadline": "Refundable cancellation until",
+    "medicalDeadline": "Medical cancellation until",
+    "transferTitle": "Transfer",
+    "transferText": "Ridder → start line and back, from {price}",
+    "resultsTitle": "Results",
+    "resultsCta": "View results",
+    "participantsTitle": "Participants",
+    "participantsEmpty": "No one has registered yet — be the first.",
+    "participantsCount": "{count, plural, one {# participant} other {# participants}}",
+    "registerCta": "Register"
   }
 }

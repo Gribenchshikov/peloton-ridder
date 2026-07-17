@@ -40,5 +40,25 @@
     "archiveTab": "Архив",
     "emptyCalendar": "Новые старты появятся здесь после публикации календаря следующего сезона.",
     "emptyArchive": "Архив пока пуст — ни один забег ещё не завершился."
+  },
+  "EventDetail": {
+    "backToEvents": "Все забеги",
+    "distancesTitle": "Дистанции и стоимость",
+    "ageFrom": "от {min} лет",
+    "ageRange": "{min}–{max} лет",
+    "courseTitle": "О трассе",
+    "equipmentTitle": "Обязательное снаряжение",
+    "keyDatesTitle": "Важные даты",
+    "registrationDeadline": "Регистрация открыта до",
+    "cancellationDeadline": "Отмена с возвратом до",
+    "medicalDeadline": "Отмена по медсправке до",
+    "transferTitle": "Трансфер",
+    "transferText": "Риддер → место старта и обратно, от {price}",
+    "resultsTitle": "Результаты",
+    "resultsCta": "Смотреть результаты",
+    "participantsTitle": "Участники",
+    "participantsEmpty": "Пока никто не зарегистрирован — будьте первым.",
+    "participantsCount": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}",
+    "registerCta": "Зарегистрироваться"
   }
 }

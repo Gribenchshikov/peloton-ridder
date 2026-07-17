@@ -20,3 +20,19 @@ export function getSeriesWithRaces() {
     include: { seriesRaces: { include: { race: true }, orderBy: { stageOrder: "asc" } } },
   });
 }
+
+export function getEventDetail(slug: string, year: number) {
+  return prisma.event.findFirst({
+    where: { year, race: { slug } },
+    include: {
+      race: true,
+      distances: { orderBy: { km: "asc" } },
+      eventPartners: { include: { partner: true } },
+      registrations: {
+        where: { status: "PAID" },
+        include: { user: true, distance: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+}
