@@ -41,6 +41,9 @@ erDiagram
 - **Пулы стартовых номеров** (`bibRangeStart`/`bibRangeEnd`) задаются на `Distance` при создании `Event`. В форме создания — дефолтные значения (1-100/101-200/201-300/301-400/401-500), admin может переопределить произвольно. Это поведение формы, не часть схемы.
 - **Роли — плоские булевы флаги** (`isAdmin`, `isVolunteer`), без RBAC-матрицы: 3-4 админа с одинаковыми правами.
 - **Волонтёрство — заявка поверх аккаунта бегуна**, не отдельная регистрация. `VolunteerApplication.status` управляет `User.isVolunteer`.
+- **Вход — email + пароль, а не passwordless magic-link.** `User.passwordHash` хранит хэш (bcrypt/argon2, задача разработчика — не хранить сырой пароль). `VerificationToken` — только для подтверждения, что email реальный, при регистрации (ссылка в письме → `User.emailVerified` проставляется, токен становится недействителен). Он не участвует в последующих входах, потому и не привязан к `User` через FK — только по `email`, т.к. может быть создан до появления самого пользователя в системе.
+- **`User.bannedUntil`** — точка в будущем, до которой аккаунт заблокирован (null = не заблокирован). Простое поле вместо отдельной таблицы банов — этого достаточно для сценария «заблокировать на год-два».
+- **`Event.coverImageUrl`** — просто строка-ссылка на файл во внешнем хранилище (тип провайдера — S3-совместимое, например Cloudflare R2 — выбирается на этапе деплоя, схему это не касается). Загрузка обложки — при создании/редактировании события в админке.
 
 ## Сущности
 
@@ -48,13 +51,23 @@ erDiagram
 User {
   id            String   @id
   email         String   @unique
+  passwordHash  String
   emailVerified DateTime?
   phone         String?
   name          String
   city          String?
   isAdmin       Boolean  @default(false)
   isVolunteer   Boolean  @default(false)
+  bannedUntil   DateTime?
   createdAt     DateTime @default(now())
+}
+
+VerificationToken {
+  id        String   @id
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 VolunteerApplication {
@@ -104,6 +117,7 @@ Event {
   cancellationDeadline      DateTime
   medicalCancellationDeadline DateTime
   resultsUrl                String?  // live.myrace.info или Instagram, произвольная ссылка
+  coverImageUrl              String?  // обложка забега, загружается в админке
   createdAt                 DateTime @default(now())
 }
 
@@ -203,3 +217,4 @@ Notification {
 - Оплата сейчас на реквизиты (банк) или уже Kaspi Pay — подтвердить у организаторов (T14/T15)
 - Физический номер на груди = номер из нашей системы, гарантированно? (нужно для матчинга Result → Registration, T20/T21)
 - Лимит участников Ski Summer Fest не указан в положении
+- Провайдер объектного хранилища под `Event.coverImageUrl` (Cloudflare R2 / S3 / другое) — не влияет на схему, но нужен для T38

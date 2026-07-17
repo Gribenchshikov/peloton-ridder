@@ -36,12 +36,14 @@ enum ResultSource {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
+  passwordHash  String
   emailVerified DateTime?
   phone         String?
   name          String
   city          String?
   isAdmin       Boolean   @default(false)
   isVolunteer   Boolean   @default(false)
+  bannedUntil   DateTime?
   createdAt     DateTime  @default(now())
 
   registrations          Registration[]
@@ -49,6 +51,16 @@ model User {
   volunteerApplications  VolunteerApplication[] @relation("Applicant")
   reviewedApplications   VolunteerApplication[] @relation("Reviewer")
   notificationsSent      Notification[]
+}
+
+// Логин — email + пароль. Токен нужен только чтобы подтвердить, что email реальный
+// (регистрация активируется по ссылке из письма), это не механизм входа.
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model VolunteerApplication {
@@ -113,6 +125,7 @@ model Event {
   cancellationDeadline         DateTime
   medicalCancellationDeadline  DateTime
   resultsUrl                   String?
+  coverImageUrl                String?
   createdAt                    DateTime    @default(now())
 
   distances     Distance[]
