@@ -11,9 +11,11 @@ export const metadata: Metadata = {
   description: "Беговой клуб · Риддер",
 };
 
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
+// Публичные страницы читают БД напрямую (события, серия, забеги) — рендерим
+// на каждый запрос, а не печём статику при сборке. Трафик у клуба небольшой,
+// цена SELECT в Postgres ничтожна, а взамен админ не ждёт редеплой, чтобы
+// увидеть свои же правки на сайте.
+export const dynamic = "force-dynamic";
 
 export default async function RootLayout({
   children,
