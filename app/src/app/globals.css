@@ -28,8 +28,8 @@
   --radius-s: 6px;
   --radius-m: 12px;
   --radius-l: 20px;
-  --font-display: 'Unbounded', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Arial Black', sans-serif;
-  --font-body: 'Golos Text', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Segoe UI', sans-serif;
+  --font-display: 'Unbounded', 'Arial Black', sans-serif;
+  --font-body: 'Golos Text', 'Segoe UI', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
