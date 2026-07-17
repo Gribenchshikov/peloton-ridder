@@ -47,6 +47,35 @@ export function getUserProfile(userId: string) {
   });
 }
 
+export function getActiveRegistration(userId: string, eventId: string) {
+  return prisma.registration.findFirst({
+    where: { userId, eventId, status: { in: ["RESERVED", "PAID"] } },
+  });
+}
+
+export function getRegistrationForPayment(id: string) {
+  return prisma.registration.findUnique({
+    where: { id },
+    include: { distance: true, event: { include: { race: true } } },
+  });
+}
+
+// Облегчённая версия getEventDetail для страницы регистрации — без eventPartners
+// и без registrations (там полный User на каждую запись), которые эта страница не показывает.
+export function getEventForRegistration(slug: string, year: number) {
+  return prisma.event.findFirst({
+    where: { year, race: { slug } },
+    select: {
+      id: true,
+      year: true,
+      status: true,
+      registrationDeadline: true,
+      race: { select: { name: true, slug: true } },
+      distances: { orderBy: { km: "asc" } },
+    },
+  });
+}
+
 export function getEventDetail(slug: string, year: number) {
   return prisma.event.findFirst({
     where: { year, race: { slug } },

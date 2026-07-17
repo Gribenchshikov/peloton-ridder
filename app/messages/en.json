@@ -101,5 +101,27 @@
     "RESERVED": "Reserved",
     "PAID": "Paid",
     "CANCELLED": "Cancelled"
+  },
+  "Registration": {
+    "eyebrow": "Registration",
+    "title": "{race}",
+    "submitCta": "Reserve a spot",
+    "submitting": "One second…",
+    "errorFull": "No spots left for this distance.",
+    "errorClosed": "Registration for this race is closed.",
+    "errorInvalid": "Pick a distance from the list."
+  },
+  "Payment": {
+    "eyebrow": "Payment",
+    "optionApp": "Pay via the Kaspi.kz app — coming once connected",
+    "optionQr": "QR code to pay — coming once connected",
+    "optionManual": "Manually enter the order number in the Kaspi app — coming once connected",
+    "testModeTitle": "Test mode",
+    "testModeText": "Kaspi Pay isn't connected yet. The button below is for testing only — it marks the reservation as paid directly and won't exist in production.",
+    "simulateCta": "Simulate payment (test)",
+    "paidTitle": "Payment confirmed",
+    "paidText": "Your bib number: {bib}",
+    "cancelledTitle": "Registration cancelled",
+    "toAccountCta": "Go to account"
   }
 }

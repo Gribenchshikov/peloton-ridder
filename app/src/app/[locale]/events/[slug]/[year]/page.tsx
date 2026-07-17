@@ -3,6 +3,9 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { getEventDetail } from "@/lib/queries";
+import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
+import { formatKzt } from "@/lib/currency";
+import { DistanceInfo } from "@/components/DistanceInfo";
 import type { Distance } from "@/generated/prisma/client";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -30,8 +33,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
   const format = useFormatter();
 
   const equipment = (event.race.equipment as string[] | null) ?? [];
-  const disciplines = [...new Set(event.distances.map((d) => d.discipline).filter(Boolean))] as string[];
-  const noDisciplineDistances = event.distances.filter((d) => !d.discipline);
+  const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
 
   return (
     <main className="flex-1">
@@ -146,9 +148,21 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
                 </div>
               )}
             </div>
-            <button className="mt-5 w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong">
-              {t("registerCta")}
-            </button>
+            {event.status === "OPEN" ? (
+              <Link
+                href={`/events/${event.race.slug}/${event.year}/register`}
+                className="mt-5 flex w-full items-center justify-center rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+              >
+                {t("registerCta")}
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="mt-5 w-full cursor-not-allowed rounded-[var(--radius-s)] bg-surface-2 px-5 py-3 text-sm font-bold text-ink-faint"
+              >
+                {t("registerCta")}
+              </button>
+            )}
           </div>
 
           <div className="rounded-[var(--radius-l)] border border-border bg-surface p-5">
@@ -179,9 +193,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
             <div className="rounded-[var(--radius-l)] border border-border bg-surface p-5">
               <h3 className="font-display text-lg font-bold text-ink">{t("transferTitle")}</h3>
               <p className="mt-2 text-sm text-ink-soft">
-                {t("transferText", {
-                  price: format.number(event.transferPrice, { style: "currency", currency: "KZT", maximumFractionDigits: 0 }),
-                })}
+                {t("transferText", { price: formatKzt(format, event.transferPrice) })}
               </p>
             </div>
           )}
@@ -207,28 +219,15 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 }
 
 function DistanceRow({ distance }: { distance: Distance }) {
-  const t = useTranslations("EventDetail");
-  const tCommon = useTranslations("Common");
-  const format = useFormatter();
-
-  const ageLabel =
-    distance.minAge && distance.maxAge
-      ? t("ageRange", { min: distance.minAge, max: distance.maxAge })
-      : distance.minAge
-        ? t("ageFrom", { min: distance.minAge })
-        : null;
-
   return (
-    <div className="flex items-center justify-between gap-3 rounded-[var(--radius-s)] bg-surface-2 px-3 py-2.5">
-      <div>
-        <div className="text-sm font-semibold text-ink">
-          {distance.name} · {distance.km} {tCommon("km")}
-        </div>
-        {ageLabel && <div className="text-xs text-ink-faint">{ageLabel}</div>}
-      </div>
-      <div className="shrink-0 text-sm font-bold text-ink">
-        {format.number(distance.price, { style: "currency", currency: "KZT", maximumFractionDigits: 0 })}
-      </div>
+    <div className="flex items-center gap-3 rounded-[var(--radius-s)] bg-surface-2 px-3 py-2.5">
+      <DistanceInfo
+        name={distance.name}
+        km={distance.km}
+        price={distance.price}
+        minAge={distance.minAge}
+        maxAge={distance.maxAge}
+      />
     </div>
   );
 }

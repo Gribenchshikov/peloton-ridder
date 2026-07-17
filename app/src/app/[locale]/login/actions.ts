@@ -7,12 +7,21 @@ export type LoginState = {
   error?: string;
 };
 
+// Только относительные пути внутри приложения — "/foo", не "//evil.com" или абсолютный URL.
+// (Auth.js сам по умолчанию тоже ограничивает redirect тем же origin, это доп. явная проверка.)
+function safeCallbackUrl(value: FormDataEntryValue | null): string {
+  if (typeof value === "string" && value.startsWith("/") && !value.startsWith("//")) {
+    return value;
+  }
+  return "/account";
+}
+
 export async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
   try {
     await signIn("credentials", {
       email: formData.get("email"),
       password: formData.get("password"),
-      redirectTo: "/account",
+      redirectTo: safeCallbackUrl(formData.get("callbackUrl")),
     });
     return {};
   } catch (error) {
