@@ -1,26 +1,116 @@
 @import "tailwindcss";
+@import "./fonts.css";
 
+/* Design tokens — перенесено из прототипа (source/site.html :root).
+   Light — дефолт, тёмная тема через prefers-color-scheme и ручной override [data-theme]. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --stone-50: #F3EFE6;
+  --surface: #FBF8F1;
+  --surface-2: #EAE3D2;
+  --border: #DED2B8;
+  --ink: #1C231F;
+  --ink-soft: #4E5A4F;
+  --ink-faint: #8A8875;
+  --ember: #E2531F;
+  --ember-strong: #C23F14;
+  --ember-tint: #FBE4D7;
+  --spruce: #29473B;
+  --spruce-tint: #E1E9E1;
+  --granite: #A79C88;
+  --dawn: #D9A441;
+  --success: #3F8F5F;
+  --success-tint: #E1F0E5;
+  --warn: #B8791E;
+  --warn-tint: #F6E9D2;
+  --danger: #C13A2E;
+  --danger-tint: #F7E1DE;
+  --shadow: 0 1px 2px rgba(28, 35, 31, .06), 0 8px 24px -12px rgba(28, 35, 31, .18);
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --font-display: 'Unbounded', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Arial Black', sans-serif;
+  --font-body: 'Golos Text', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', 'Segoe UI', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --stone-50: #12160F;
+    --surface: #1A2118;
+    --surface-2: #212B1E;
+    --border: #333F30;
+    --ink: #EFEADA;
+    --ink-soft: #B4BBA9;
+    --ink-faint: #78806E;
+    --ember: #FF7A45;
+    --ember-strong: #FF6B37;
+    --ember-tint: #3A2318;
+    --spruce: #7FBB9B;
+    --spruce-tint: #1E2E24;
+    --granite: #8B8570;
+    --dawn: #EFC169;
+    --success: #63B584;
+    --success-tint: #1B3527;
+    --warn: #E0AC57;
+    --warn-tint: #3A2E17;
+    --danger: #E27567;
+    --danger-tint: #3B211D;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 28px -14px rgba(0, 0, 0, .55);
   }
+}
+:root[data-theme="dark"] {
+  --stone-50: #12160F; --surface: #1A2118; --surface-2: #212B1E; --border: #333F30;
+  --ink: #EFEADA; --ink-soft: #B4BBA9; --ink-faint: #78806E;
+  --ember: #FF7A45; --ember-strong: #FF6B37; --ember-tint: #3A2318;
+  --spruce: #7FBB9B; --spruce-tint: #1E2E24; --granite: #8B8570; --dawn: #EFC169;
+  --success: #63B584; --success-tint: #1B3527; --warn: #E0AC57; --warn-tint: #3A2E17;
+  --danger: #E27567; --danger-tint: #3B211D;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 28px -14px rgba(0, 0, 0, .55);
+}
+:root[data-theme="light"] {
+  --stone-50: #F3EFE6; --surface: #FBF8F1; --surface-2: #EAE3D2; --border: #DED2B8;
+  --ink: #1C231F; --ink-soft: #4E5A4F; --ink-faint: #8A8875;
+  --ember: #E2531F; --ember-strong: #C23F14; --ember-tint: #FBE4D7;
+  --spruce: #29473B; --spruce-tint: #E1E9E1; --granite: #A79C88; --dawn: #D9A441;
+  --success: #3F8F5F; --success-tint: #E1F0E5; --warn: #B8791E; --warn-tint: #F6E9D2;
+  --danger: #C13A2E; --danger-tint: #F7E1DE;
+  --shadow: 0 1px 2px rgba(28, 35, 31, .06), 0 8px 24px -12px rgba(28, 35, 31, .18);
+}
+
+/* Мостик токенов в Tailwind v4 (@theme) — доступны как bg-stone-50, text-ink, border-ember и т.п. */
+@theme inline {
+  --color-stone-50: var(--stone-50);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-ember: var(--ember);
+  --color-ember-strong: var(--ember-strong);
+  --color-ember-tint: var(--ember-tint);
+  --color-spruce: var(--spruce);
+  --color-spruce-tint: var(--spruce-tint);
+  --color-granite: var(--granite);
+  --color-dawn: var(--dawn);
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --radius-s: var(--radius-s);
+  --radius-m: var(--radius-m);
+  --radius-l: var(--radius-l);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--stone-50);
+  color: var(--ink);
+  font-family: var(--font-body);
 }
