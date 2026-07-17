@@ -85,5 +85,21 @@
     "verifySuccessText": "Аккаунт белсендірілді — енді кіре аласыз.",
     "verifyFailTitle": "Сілтеме жарамсыз",
     "verifyFailText": "Растау сілтемесінің мерзімі өтіп кетті немесе бұрын қолданылған."
+  },
+  "Account": {
+    "eyebrow": "Жеке кабинет",
+    "title": "Сәлем, {name}",
+    "logoutCta": "Шығу",
+    "profileTitle": "Профиль",
+    "phone": "Телефон",
+    "saveCta": "Сақтау",
+    "profileSaved": "Өзгерістер сақталды.",
+    "historyTitle": "Тіркелулер тарихы",
+    "historyEmpty": "Әзірге ешбір стартқа тіркелген жоқсыз — тіркелген соң осында пайда болады."
+  },
+  "RegistrationStatus": {
+    "RESERVED": "Брондалды",
+    "PAID": "Төленді",
+    "CANCELLED": "Бас тартылды"
   }
 }

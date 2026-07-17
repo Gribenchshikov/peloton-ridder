@@ -85,5 +85,21 @@
     "verifySuccessText": "Your account is active — you can sign in now.",
     "verifyFailTitle": "Link is invalid",
     "verifyFailText": "This confirmation link has expired or was already used."
+  },
+  "Account": {
+    "eyebrow": "Personal account",
+    "title": "Hi, {name}",
+    "logoutCta": "Sign out",
+    "profileTitle": "Profile",
+    "phone": "Phone",
+    "saveCta": "Save",
+    "profileSaved": "Changes saved.",
+    "historyTitle": "Registration history",
+    "historyEmpty": "No race registrations yet — once you sign up, they'll show up here."
+  },
+  "RegistrationStatus": {
+    "RESERVED": "Reserved",
+    "PAID": "Paid",
+    "CANCELLED": "Cancelled"
   }
 }

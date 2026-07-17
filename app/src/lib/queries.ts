@@ -21,6 +21,32 @@ export function getSeriesWithRaces() {
   });
 }
 
+const REGISTRATION_HISTORY_LIMIT = 20;
+
+export function getUserProfile(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      name: true,
+      email: true,
+      city: true,
+      phone: true,
+      registrations: {
+        select: {
+          id: true,
+          status: true,
+          bibNumber: true,
+          createdAt: true,
+          event: { select: { year: true, race: { select: { name: true, slug: true } } } },
+          distance: { select: { name: true, km: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: REGISTRATION_HISTORY_LIMIT,
+      },
+    },
+  });
+}
+
 export function getEventDetail(slug: string, year: number) {
   return prisma.event.findFirst({
     where: { year, race: { slug } },
