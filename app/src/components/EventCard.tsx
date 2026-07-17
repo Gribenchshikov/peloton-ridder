@@ -1,4 +1,5 @@
 import { useTranslations, useFormatter } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Icon } from "./IconSprite";
 import type { Event, Race, Distance } from "@/generated/prisma/client";
 
@@ -19,8 +20,8 @@ export function EventCard({ event }: { event: EventWithRelations }) {
   const distLabel = [...new Set(dist)].join(" / ") + " " + tc("km");
 
   return (
-    <a
-      href="#"
+    <Link
+      href={`/events/${event.race.slug}/${event.year}`}
       className="group flex flex-col overflow-hidden rounded-[var(--radius-m)] border border-border bg-surface transition-transform hover:-translate-y-1"
     >
       <div
@@ -46,6 +47,6 @@ export function EventCard({ event }: { event: EventWithRelations }) {
         </div>
         <div className="mt-auto text-sm text-ink-faint">{distLabel}</div>
       </div>
-    </a>
+    </Link>
   );
 }

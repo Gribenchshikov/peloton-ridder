@@ -32,5 +32,13 @@
   },
   "Common": {
     "km": "km"
+  },
+  "Events": {
+    "eyebrow": "Peloton Ridder races",
+    "title": "Race calendar and archive",
+    "calendarTab": "2026 calendar",
+    "archiveTab": "Archive",
+    "emptyCalendar": "New races will appear here once next season's calendar is published.",
+    "emptyArchive": "The archive is empty — no race has finished yet."
   }
 }

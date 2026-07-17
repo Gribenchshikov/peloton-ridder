@@ -1,4 +1,5 @@
 import { useTranslations, useFormatter } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { Countdown } from "@/components/Countdown";
 import { EventCard } from "@/components/EventCard";
@@ -40,13 +41,13 @@ function Hero({ nextEvent }: { nextEvent: Awaited<ReturnType<typeof getNextEvent
             <button className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong">
               {t("joinCta")}
             </button>
-            <a
-              href="#events"
+            <Link
+              href="/events"
               className="flex items-center gap-2 rounded-[var(--radius-s)] border border-border px-5 py-3 text-sm font-bold text-ink transition-colors hover:bg-surface-2"
             >
               {t("allEventsCta")}
               <Icon name="i-arrow" className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -70,6 +71,12 @@ function Hero({ nextEvent }: { nextEvent: Awaited<ReturnType<typeof getNextEvent
             <div className="mt-5">
               <Countdown targetISO={nextEvent.dateISO.toISOString()} />
             </div>
+            <Link
+              href={`/events/${nextEvent.race.slug}/${nextEvent.year}`}
+              className="mt-5 block rounded-[var(--radius-s)] bg-spruce px-5 py-3 text-center text-sm font-bold text-white transition-opacity hover:opacity-90"
+            >
+              {t("viewRaceCta")}
+            </Link>
           </div>
         )}
       </div>
