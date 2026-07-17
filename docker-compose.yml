@@ -3,3 +3,18 @@ services:
     build: .
     ports:
       - "8080:80"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ridder
+      POSTGRES_PASSWORD: ridder
+      POSTGRES_DB: ridder
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

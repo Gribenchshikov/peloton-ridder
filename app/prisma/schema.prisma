@@ -1,0 +1,249 @@
+// Peloton Ridder — схема БД. См. docs/schema.md для обоснования решений.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum VolunteerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  COMPLETED
+}
+
+enum RegistrationStatus {
+  RESERVED
+  PAID
+  CANCELLED
+}
+
+enum ResultSource {
+  MYRACE
+  EXCEL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  phone         String?
+  name          String
+  city          String?
+  isAdmin       Boolean   @default(false)
+  isVolunteer   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  registrations          Registration[]
+  waitlistEntries        Waitlist[]
+  volunteerApplications  VolunteerApplication[] @relation("Applicant")
+  reviewedApplications   VolunteerApplication[] @relation("Reviewer")
+  notificationsSent      Notification[]
+}
+
+model VolunteerApplication {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation("Applicant", fields: [userId], references: [id])
+  status       VolunteerStatus @default(PENDING)
+  motivation   String
+  availability String
+  createdAt    DateTime        @default(now())
+  reviewedById String?
+  reviewedBy   User?           @relation("Reviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+}
+
+// "Ridder Race Series" — реальный бренд клуба (@ridderraceseries), не наша выдумка.
+model Series {
+  id          String @id @default(cuid())
+  name        String
+  description String?
+
+  seriesRaces SeriesRace[]
+}
+
+// Вечнозелёный шаблон забега: Radon Race / Ridder UpHill / Panorama Fall Run / Ski Summer Fest.
+model Race {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  courseIntro String
+  equipment   Json
+  landmarks   Json
+  icon        String
+  color       String
+
+  events      Event[]
+  seriesRaces SeriesRace[]
+}
+
+model SeriesRace {
+  id         String @id @default(cuid())
+  seriesId   String
+  series     Series @relation(fields: [seriesId], references: [id])
+  raceId     String
+  race       Race   @relation(fields: [raceId], references: [id])
+  stageOrder Int
+
+  @@unique([seriesId, raceId])
+}
+
+// Годовое издание Race — у одного Race может быть сколько угодно Event (2026, 2027...).
+model Event {
+  id                           String      @id @default(cuid())
+  raceId                       String
+  race                         Race        @relation(fields: [raceId], references: [id])
+  year                         Int
+  dateISO                      DateTime
+  status                       EventStatus @default(DRAFT)
+  location                     String
+  transferPrice                Int?
+  registrationDeadline         DateTime
+  cancellationDeadline         DateTime
+  medicalCancellationDeadline  DateTime
+  resultsUrl                   String?
+  createdAt                    DateTime    @default(now())
+
+  distances     Distance[]
+  registrations Registration[]
+  waitlist      Waitlist[]
+  results       Result[]
+  eventPartners EventPartner[]
+  notifications Notification[]
+
+  @@unique([raceId, year])
+}
+
+// discipline используется только у Ridder UpHill (Лыжная гонка / Ski tour / Скиальпинизм / Скайраннинг).
+// Возрастные тарифы внутри одной трассы — отдельные строки Distance (тот же km, разные price/minAge/maxAge).
+model Distance {
+  id            String   @id @default(cuid())
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id])
+  discipline    String?
+  name          String
+  km            Float
+  gain          Int?
+  price         Int
+  minAge        Int?
+  maxAge        Int?
+  cutoffMinutes Int?
+  profileData   Json?
+  bibRangeStart Int
+  bibRangeEnd   Int
+  createdAt     DateTime @default(now())
+
+  registrations Registration[]
+  waitlist      Waitlist[]
+}
+
+model Registration {
+  id              String             @id @default(cuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id])
+  eventId         String
+  event           Event              @relation(fields: [eventId], references: [id])
+  distanceId      String
+  distance        Distance           @relation(fields: [distanceId], references: [id])
+  status          RegistrationStatus @default(RESERVED)
+  bibNumber       Int?
+  reservedUntil   DateTime?
+  disqualified    Boolean            @default(false)
+  kaspiOrderId    String?
+  kaspiPaymentUrl String?
+  createdAt       DateTime           @default(now())
+
+  result Result?
+
+  @@index([eventId])
+  @@index([distanceId])
+}
+
+model Waitlist {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  distanceId  String
+  distance    Distance @relation(fields: [distanceId], references: [id])
+  contactNote String
+  createdAt   DateTime @default(now())
+
+  @@index([eventId])
+}
+
+// Источник — автопарсинг live.myrace.info ИЛИ ручная Excel-загрузка в админке (T20).
+// registrationId матчится по bibNumber внутри Event; null, если не удалось сопоставить.
+model Result {
+  id             String        @id @default(cuid())
+  eventId        String
+  event          Event         @relation(fields: [eventId], references: [id])
+  bibNumber      Int
+  name           String
+  place          Int?
+  time           String?
+  category       String?
+  source         ResultSource
+  registrationId String?       @unique
+  registration   Registration? @relation(fields: [registrationId], references: [id])
+  importedAt     DateTime      @default(now())
+
+  @@index([eventId])
+}
+
+model Partner {
+  id         String  @id @default(cuid())
+  name       String
+  logoUrl    String
+  websiteUrl String?
+
+  eventPartners EventPartner[]
+}
+
+model EventPartner {
+  id        String  @id @default(cuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id])
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id])
+
+  @@unique([eventId, partnerId])
+}
+
+model TeamMember {
+  id    String @id @default(cuid())
+  name  String
+  role  String
+  order Int
+}
+
+model TrainingGroup {
+  id          String @id @default(cuid())
+  title       String
+  schedule    String
+  description String
+  order       Int
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  eventId  String
+  event    Event    @relation(fields: [eventId], references: [id])
+  subject  String
+  body     String
+  sentAt   DateTime @default(now())
+  sentById String
+  sentBy   User     @relation(fields: [sentById], references: [id])
+}
