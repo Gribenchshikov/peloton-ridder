@@ -3,9 +3,16 @@
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { registerAction, type RegisterState } from "./actions";
 
 const initialState: RegisterState = {};
+
+const ERROR_KEYS: Record<string, string> = {
+  email_taken: "errorEmailTaken",
+  invalid: "errorInvalid",
+  bot_check: "errorBotCheck",
+};
 
 export function RegisterForm() {
   const t = useTranslations("Auth");
@@ -27,8 +34,11 @@ export function RegisterForm() {
       <FormField label={t("city")} name="city" type="text" />
       <FormField label={t("password")} name="password" type="password" required minLength={8} />
 
-      {state.error === "email_taken" && <p className="text-sm text-danger">{t("errorEmailTaken")}</p>}
-      {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+      <TurnstileWidget error={state.error} />
+
+      {state.error && ERROR_KEYS[state.error] && (
+        <p className="text-sm text-danger">{t(ERROR_KEYS[state.error])}</p>
+      )}
 
       <button
         type="submit"

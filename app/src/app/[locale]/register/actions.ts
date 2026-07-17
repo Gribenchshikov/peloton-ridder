@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendVerificationEmail } from "@/lib/mailer";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -33,7 +34,13 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
 
   const { name, email, password, city } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const [turnstileOk, existing] = await Promise.all([
+    verifyTurnstileToken(formData.get("cf-turnstile-response") as string | null),
+    prisma.user.findUnique({ where: { email } }),
+  ]);
+  if (!turnstileOk) {
+    return { error: "bot_check" };
+  }
   if (existing) {
     return { error: "email_taken" };
   }

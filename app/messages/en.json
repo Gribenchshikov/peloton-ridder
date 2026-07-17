@@ -79,6 +79,7 @@
     "errorEmailTaken": "This email is already registered — try signing in instead.",
     "errorInvalid": "Please check the fields — something isn't filled in correctly.",
     "errorInvalidCredentials": "Invalid email or password.",
+    "errorBotCheck": "Bot check failed. Refresh the page and try again.",
     "checkEmailTitle": "Check your email",
     "checkEmailText": "We've sent a confirmation link. Follow it to activate your account.",
     "verifySuccessTitle": "Email confirmed",
