@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Назначение первого администратора
+
+Публичного способа получить роль организатора нет. Сначала зарегистрируйте аккаунт и подтвердите email по ссылке из письма, затем из папки `app/` выполните:
+
+```bash
+npm run admin:grant -- organizer@example.com
+```
+
+Команда берёт `DATABASE_URL` из `.env`, отказывается повышать неподтверждённый или несуществующий аккаунт и безопасна при повторном запуске. Новые роли организаторов будут управляться через админку отдельным тикетом T39.1.
+
 ## Getting Started
 
 First, run the development server:
