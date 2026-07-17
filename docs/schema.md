@@ -44,6 +44,8 @@ erDiagram
 - **Вход — email + пароль, а не passwordless magic-link.** `User.passwordHash` хранит хэш (bcrypt/argon2, задача разработчика — не хранить сырой пароль). `VerificationToken` — только для подтверждения, что email реальный, при регистрации (ссылка в письме → `User.emailVerified` проставляется, токен становится недействителен). Он не участвует в последующих входах, потому и не привязан к `User` через FK — только по `email`, т.к. может быть создан до появления самого пользователя в системе.
 - **`User.bannedUntil`** — точка в будущем, до которой аккаунт заблокирован (null = не заблокирован). Простое поле вместо отдельной таблицы банов — этого достаточно для сценария «заблокировать на год-два».
 - **`Event.coverImageUrl`** — просто строка-ссылка на файл во внешнем хранилище (тип провайдера — S3-совместимое, например Cloudflare R2 — выбирается на этапе деплоя, схему это не касается). Загрузка обложки — при создании/редактировании события в админке.
+- **Волонтёрство привязано к конкретному `Event`**, не к клубу вообще — заявка подаётся «стать волонтёром на этот забег». `Event.volunteerChatUrl` — админ один раз указывает ссылку на Telegram-чат при создании события, все одобренные волонтёры этого события видят её в кабинете.
+- **Подтверждение регистрации бегуну (email + номер) отправляется только из вебхука оплаты Kaspi**, никогда по клику «Оплатить» — до подтверждения от Kaspi человек не может считаться зарегистрированным. См. T15/T16.
 
 ## Сущности
 
@@ -73,8 +75,11 @@ VerificationToken {
 VolunteerApplication {
   id               String   @id
   userId           String   -> User
+  eventId          String   -> Event   // заявка на конкретное событие, не «вообще»
   status           Enum(PENDING, APPROVED, REJECTED) @default(PENDING)
   motivation       String
+  experience       String              // прошлый опыт волонтёрства/забегов
+  stravaUrl        String?
   availability     String
   createdAt        DateTime @default(now())
   reviewedByUserId String?  -> User
@@ -118,6 +123,7 @@ Event {
   medicalCancellationDeadline DateTime
   resultsUrl                String?  // live.myrace.info или Instagram, произвольная ссылка
   coverImageUrl              String?  // обложка забега, загружается в админке
+  volunteerChatUrl           String?  // ссылка на Telegram-чат волонтёров, задаёт админ
   createdAt                 DateTime @default(now())
 }
 
@@ -217,4 +223,4 @@ Notification {
 - Оплата сейчас на реквизиты (банк) или уже Kaspi Pay — подтвердить у организаторов (T14/T15)
 - Физический номер на груди = номер из нашей системы, гарантированно? (нужно для матчинга Result → Registration, T20/T21)
 - Лимит участников Ski Summer Fest не указан в положении
-- Провайдер объектного хранилища под `Event.coverImageUrl` (Cloudflare R2 / S3 / другое) — не влияет на схему, но нужен для T38
+- Провайдер объектного хранилища под `Event.coverImageUrl` (Cloudflare R2 / S3 / другое) — не влияет на схему, но нужен для T42

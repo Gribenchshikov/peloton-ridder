@@ -63,12 +63,18 @@ model VerificationToken {
   createdAt DateTime @default(now())
 }
 
+// Заявка на волонтёрство подаётся на конкретное событие (не «стать волонтёром вообще»).
+// При одобрении в кабинете появляется блок с event.volunteerChatUrl (см. Event).
 model VolunteerApplication {
   id           String          @id @default(cuid())
   userId       String
   user         User            @relation("Applicant", fields: [userId], references: [id])
+  eventId      String
+  event        Event           @relation(fields: [eventId], references: [id])
   status       VolunteerStatus @default(PENDING)
   motivation   String
+  experience   String // прошлый опыт волонтёрства/забегов, которые бегал
+  stravaUrl    String?
   availability String
   createdAt    DateTime        @default(now())
   reviewedById String?
@@ -126,14 +132,16 @@ model Event {
   medicalCancellationDeadline  DateTime
   resultsUrl                   String?
   coverImageUrl                String?
+  volunteerChatUrl             String? // ссылка на Telegram-чат волонтёров, задаёт админ при создании/редактировании
   createdAt                    DateTime    @default(now())
 
-  distances     Distance[]
-  registrations Registration[]
-  waitlist      Waitlist[]
-  results       Result[]
-  eventPartners EventPartner[]
-  notifications Notification[]
+  distances             Distance[]
+  registrations         Registration[]
+  waitlist               Waitlist[]
+  results               Result[]
+  eventPartners          EventPartner[]
+  notifications          Notification[]
+  volunteerApplications  VolunteerApplication[]
 
   @@unique([raceId, year])
 }
