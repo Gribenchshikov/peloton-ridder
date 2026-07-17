@@ -60,5 +60,30 @@
     "participantsEmpty": "No one has registered yet — be the first.",
     "participantsCount": "{count, plural, one {# participant} other {# participants}}",
     "registerCta": "Register"
+  },
+  "Auth": {
+    "registerEyebrow": "Personal account",
+    "registerTitle": "Create your participant profile",
+    "registerSubtitle": "Your details are saved to your account — no need to re-enter them for every race.",
+    "loginEyebrow": "Personal account",
+    "loginTitle": "Sign in",
+    "name": "Name",
+    "email": "Email",
+    "city": "City",
+    "password": "Password",
+    "registerCta": "Create profile",
+    "loginCta": "Sign in",
+    "submitting": "One second…",
+    "hasAccount": "Already have an account?",
+    "noAccount": "Don't have an account yet?",
+    "errorEmailTaken": "This email is already registered — try signing in instead.",
+    "errorInvalid": "Please check the fields — something isn't filled in correctly.",
+    "errorInvalidCredentials": "Invalid email or password.",
+    "checkEmailTitle": "Check your email",
+    "checkEmailText": "We've sent a confirmation link. Follow it to activate your account.",
+    "verifySuccessTitle": "Email confirmed",
+    "verifySuccessText": "Your account is active — you can sign in now.",
+    "verifyFailTitle": "Link is invalid",
+    "verifyFailText": "This confirmation link has expired or was already used."
   }
 }

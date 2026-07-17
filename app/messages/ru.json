@@ -60,5 +60,30 @@
     "participantsEmpty": "Пока никто не зарегистрирован — будьте первым.",
     "participantsCount": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}",
     "registerCta": "Зарегистрироваться"
+  },
+  "Auth": {
+    "registerEyebrow": "Личный кабинет",
+    "registerTitle": "Создайте профиль участника",
+    "registerSubtitle": "Данные сохранятся в личном кабинете — не нужно вводить их заново при регистрации на каждый старт.",
+    "loginEyebrow": "Личный кабинет",
+    "loginTitle": "Вход в аккаунт",
+    "name": "Имя",
+    "email": "Email",
+    "city": "Город",
+    "password": "Пароль",
+    "registerCta": "Создать профиль",
+    "loginCta": "Войти",
+    "submitting": "Секунду…",
+    "hasAccount": "Уже есть аккаунт?",
+    "noAccount": "Ещё нет аккаунта?",
+    "errorEmailTaken": "Этот email уже зарегистрирован — попробуйте войти.",
+    "errorInvalid": "Проверьте заполненные поля — что-то указано неверно.",
+    "errorInvalidCredentials": "Неверный email или пароль.",
+    "checkEmailTitle": "Проверьте почту",
+    "checkEmailText": "Мы отправили ссылку для подтверждения регистрации. Перейдите по ней, чтобы активировать аккаунт.",
+    "verifySuccessTitle": "Email подтверждён",
+    "verifySuccessText": "Аккаунт активирован — теперь можно войти.",
+    "verifyFailTitle": "Ссылка недействительна",
+    "verifyFailText": "Ссылка для подтверждения устарела или уже была использована."
   }
 }

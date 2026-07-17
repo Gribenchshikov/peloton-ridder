@@ -60,5 +60,30 @@
     "participantsEmpty": "Әзірге ешкім тіркелген жоқ — бірінші болыңыз.",
     "participantsCount": "{count, plural, other {# қатысушы}}",
     "registerCta": "Тіркелу"
+  },
+  "Auth": {
+    "registerEyebrow": "Жеке кабинет",
+    "registerTitle": "Қатысушы профилін жасаңыз",
+    "registerSubtitle": "Деректер жеке кабинетте сақталады — әр старттың алдында қайта енгізудің қажеті жоқ.",
+    "loginEyebrow": "Жеке кабинет",
+    "loginTitle": "Аккаунтқа кіру",
+    "name": "Аты-жөні",
+    "email": "Email",
+    "city": "Қала",
+    "password": "Құпия сөз",
+    "registerCta": "Профиль жасау",
+    "loginCta": "Кіру",
+    "submitting": "Бір сәт…",
+    "hasAccount": "Аккаунтыңыз бар ма?",
+    "noAccount": "Аккаунтыңыз жоқ па?",
+    "errorEmailTaken": "Бұл email бұрын тіркелген — кіріп көріңіз.",
+    "errorInvalid": "Толтырылған өрістерді тексеріңіз — бірдеңе қате көрсетілген.",
+    "errorInvalidCredentials": "Email немесе құпия сөз қате.",
+    "checkEmailTitle": "Поштаңызды тексеріңіз",
+    "checkEmailText": "Тіркелуді растау сілтемесін жібердік. Аккаунтты белсендіру үшін сілтемеге өтіңіз.",
+    "verifySuccessTitle": "Email расталды",
+    "verifySuccessText": "Аккаунт белсендірілді — енді кіре аласыз.",
+    "verifyFailTitle": "Сілтеме жарамсыз",
+    "verifyFailText": "Растау сілтемесінің мерзімі өтіп кетті немесе бұрын қолданылған."
   }
 }
