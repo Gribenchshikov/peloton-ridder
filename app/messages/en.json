@@ -108,6 +108,7 @@
     "eyebrow": "Personal account",
     "title": "Hi, {name}",
     "logoutCta": "Sign out",
+    "adminCta": "Admin panel",
     "profileTitle": "Profile",
     "phone": "Phone",
     "saveCta": "Save",
@@ -148,5 +149,13 @@
     "paidText": "Your bib number: {bib}",
     "cancelledTitle": "Registration cancelled",
     "toAccountCta": "Go to account"
+  },
+  "Admin": {
+    "eyebrow": "Admin panel",
+    "title": "Organizer dashboard",
+    "backToSiteCta": "Back to site",
+    "logoutCta": "Sign out",
+    "eventsTitle": "Races",
+    "eventsEmpty": "No races yet."
   }
 }

@@ -32,6 +32,7 @@ export function getUserProfile(userId: string) {
       email: true,
       city: true,
       phone: true,
+      isAdmin: true,
       registrations: {
         select: {
           id: true,

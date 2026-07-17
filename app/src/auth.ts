@@ -33,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // name намеренно не передаём — jwt-колбэк ниже копирует в токен только id,
         // так что имя всё равно не долетело бы до сессии (см. callbacks.jwt).
-        return { id: user.id, email: user.email };
+        return { id: user.id, email: user.email, isAdmin: user.isAdmin };
       },
     }),
   ],
@@ -41,25 +41,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.isAdmin = user.isAdmin ?? false;
         return token;
       }
       // Не первый вход — на каждый следующий запрос сверяем, не сброшен ли пароль
-      // ПОСЛЕ выдачи этого токена (T44: /reset-password ставит passwordChangedAt).
-      // Без этой проверки угнанная сессия остаётся рабочей до истечения JWT (30 дней
+      // ПОСЛЕ выдачи этого токена (T44: /reset-password ставит passwordChangedAt),
+      // и заодно освежаем isAdmin (T17: чтобы выдача/отзыв админки применялась на
+      // следующий запрос, а не только после повторного логина).
+      // Без первой проверки угнанная сессия остаётся рабочей до истечения JWT (30 дней
       // по умолчанию) даже после того, как владелец аккаунта сменил пароль.
       if (token.id && token.iat) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { passwordChangedAt: true },
+          select: { passwordChangedAt: true, isAdmin: true },
         });
         if (dbUser?.passwordChangedAt && Math.floor(dbUser.passwordChangedAt.getTime() / 1000) > token.iat) {
           return null;
         }
+        token.isAdmin = dbUser?.isAdmin ?? false;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) session.user.id = token.id as string;
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.isAdmin = (token.isAdmin as boolean) ?? false;
+      }
       return session;
     },
   },

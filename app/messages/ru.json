@@ -108,6 +108,7 @@
     "eyebrow": "Личный кабинет",
     "title": "Привет, {name}",
     "logoutCta": "Выйти",
+    "adminCta": "Админка",
     "profileTitle": "Профиль",
     "phone": "Телефон",
     "saveCta": "Сохранить",
@@ -148,5 +149,13 @@
     "paidText": "Ваш стартовый номер: {bib}",
     "cancelledTitle": "Регистрация отменена",
     "toAccountCta": "В личный кабинет"
+  },
+  "Admin": {
+    "eyebrow": "Админка",
+    "title": "Панель организатора",
+    "backToSiteCta": "На сайт",
+    "logoutCta": "Выйти",
+    "eventsTitle": "Забеги",
+    "eventsEmpty": "Пока нет ни одного забега."
   }
 }

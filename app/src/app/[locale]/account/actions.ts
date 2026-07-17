@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
@@ -55,8 +54,4 @@ export async function updateProfileAction(
 
   revalidatePath("/[locale]/account", "page");
   return { success: true };
-}
-
-export async function logoutAction() {
-  await signOut({ redirectTo: "/" });
 }

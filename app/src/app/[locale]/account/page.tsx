@@ -4,7 +4,7 @@ import { redirect } from "@/i18n/navigation";
 import { getUserProfile } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
-import { logoutAction } from "./actions";
+import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
   params,
@@ -27,7 +27,7 @@ export default async function AccountPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
-      <AccountHeader name={profile.firstName} />
+      <AccountHeader name={profile.firstName} isAdmin={profile.isAdmin} />
       <ProfileForm
         user={{
           firstName: profile.firstName,
@@ -44,7 +44,7 @@ export default async function AccountPage({
   );
 }
 
-function AccountHeader({ name }: { name: string }) {
+function AccountHeader({ name, isAdmin }: { name: string; isAdmin: boolean }) {
   const t = useTranslations("Account");
   return (
     <div className="flex items-center justify-between">
@@ -52,14 +52,24 @@ function AccountHeader({ name }: { name: string }) {
         <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
         <h1 className="mt-2 font-display text-2xl font-bold text-ink">{t("title", { name })}</h1>
       </div>
-      <form action={logoutAction}>
-        <button
-          type="submit"
-          className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-        >
-          {t("logoutCta")}
-        </button>
-      </form>
+      <div className="flex items-center gap-3">
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {t("adminCta")}
+          </Link>
+        )}
+        <form action={logoutAction}>
+          <button
+            type="submit"
+            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {t("logoutCta")}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

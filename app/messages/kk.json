@@ -108,6 +108,7 @@
     "eyebrow": "Жеке кабинет",
     "title": "Сәлем, {name}",
     "logoutCta": "Шығу",
+    "adminCta": "Әкімшілік",
     "profileTitle": "Профиль",
     "phone": "Телефон",
     "saveCta": "Сақтау",
@@ -148,5 +149,13 @@
     "paidText": "Сіздің старт нөміріңіз: {bib}",
     "cancelledTitle": "Тіркелу бас тартылды",
     "toAccountCta": "Жеке кабинетке"
+  },
+  "Admin": {
+    "eyebrow": "Әкімшілік",
+    "title": "Ұйымдастырушы панелі",
+    "backToSiteCta": "Сайтқа",
+    "logoutCta": "Шығу",
+    "eventsTitle": "Старттар",
+    "eventsEmpty": "Әзірге бірде-бір старт жоқ."
   }
 }
