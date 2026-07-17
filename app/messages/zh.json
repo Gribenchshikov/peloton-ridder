@@ -1,7 +1,36 @@
 {
   "Home": {
-    "eyebrow": "Peloton Ridder · i18n 检查",
+    "eyebrow": "2026赛季 · 阿尔泰山脉赛事",
     "title": "在群山起始之地奔跑",
-    "subtitle": "Ridder Race Series — Radon Race、Ridder UpHill、Panorama Fall Run"
+    "lead": "Peloton Ridder 不仅仅是一年几场比赛，更是一个俱乐部：为本地跑者提供常规训练，为准备山地赛事的跑者提供训练营。",
+    "joinCta": "加入俱乐部",
+    "allEventsCta": "全部赛事",
+    "nextRaceEyebrow": "最近的比赛",
+    "viewRaceCta": "查看赛事",
+    "calendarEyebrow": "赛季日历",
+    "calendarTitle": "2026赛季赛事",
+    "seriesEyebrow": "Ridder Race Series",
+    "seriesTitle": "三场比赛，一个系列，一个总成绩",
+    "seriesText": "{races} 组成本赛季官方系列赛。",
+    "seriesCta": "了解系列赛",
+    "volunteerEyebrow": "志愿者",
+    "volunteerTitle": "参与赛事志愿服务",
+    "volunteerText": "补给站、签到处和赛道都需要志愿者，无需以往经验。",
+    "volunteerCta": "成为志愿者"
+  },
+  "Status": {
+    "OPEN": "报名开放",
+    "DRAFT": "即将开始",
+    "CLOSED": "报名截止",
+    "COMPLETED": "已结束"
+  },
+  "Countdown": {
+    "days": "天",
+    "hours": "小时",
+    "min": "分",
+    "sec": "秒"
+  },
+  "Common": {
+    "km": "公里"
   }
 }

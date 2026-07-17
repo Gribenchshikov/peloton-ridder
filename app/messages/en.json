@@ -1,7 +1,36 @@
 {
   "Home": {
-    "eyebrow": "Peloton Ridder · i18n check",
+    "eyebrow": "2026 season · races in the Altai mountains",
     "title": "Run where the mountains begin",
-    "subtitle": "Ridder Race Series — Radon Race, Ridder UpHill, Panorama Fall Run"
+    "lead": "Peloton Ridder is more than a few races a year. It's a club: regular training for local runners and a training camp for those preparing for their own mountain races.",
+    "joinCta": "Join the club",
+    "allEventsCta": "All races",
+    "nextRaceEyebrow": "Next race",
+    "viewRaceCta": "View race",
+    "calendarEyebrow": "Season calendar",
+    "calendarTitle": "2026 season races",
+    "seriesEyebrow": "Ridder Race Series",
+    "seriesTitle": "Three races — one series, one standing",
+    "seriesText": "{races} are combined into the season's official series.",
+    "seriesCta": "About the series",
+    "volunteerEyebrow": "Volunteering",
+    "volunteerTitle": "Help out at races",
+    "volunteerText": "We need volunteers at aid stations, registration and on course. No prior experience needed.",
+    "volunteerCta": "Become a volunteer"
+  },
+  "Status": {
+    "OPEN": "Registration open",
+    "DRAFT": "Coming soon",
+    "CLOSED": "Registration closed",
+    "COMPLETED": "Finished"
+  },
+  "Countdown": {
+    "days": "days",
+    "hours": "hours",
+    "min": "min",
+    "sec": "sec"
+  },
+  "Common": {
+    "km": "km"
   }
 }

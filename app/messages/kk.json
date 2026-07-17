@@ -1,7 +1,36 @@
 {
   "Home": {
-    "eyebrow": "Peloton Ridder · i18n тексеруі",
+    "eyebrow": "2026 маусымы · Алтау тауларындағы старттар",
     "title": "Таулар басталатын жерде жүгір",
-    "subtitle": "Ridder Race Series — Radon Race, Ridder UpHill, Panorama Fall Run"
+    "lead": "Peloton Ridder — жылына бірнеше старт қана емес. Бұл клуб: жергілікті жүгірушілерге арналған тұрақты жаттығулар және таулы старттарға дайындалатындарға арналған жаттығу лагері.",
+    "joinCta": "Клубқа қосылу",
+    "allEventsCta": "Барлық жарыстар",
+    "nextRaceEyebrow": "Жақын арадағы старт",
+    "viewRaceCta": "Жарысты қарау",
+    "calendarEyebrow": "Маусым күнтізбесі",
+    "calendarTitle": "2026 маусымының жарыстары",
+    "seriesEyebrow": "Ridder Race Series",
+    "seriesTitle": "Үш старт — бір серия, бір есеп",
+    "seriesText": "{races} маусымның ортақ сериясына біріктірілген.",
+    "seriesCta": "Серия туралы білу",
+    "volunteerEyebrow": "Волонтёрлық",
+    "volunteerTitle": "Старттарда көмектес",
+    "volunteerText": "Тамақтану пункттерінде, тіркеуде және трассада волонтёрлар қажет. Алғашқы тәжірибе міндетті емес.",
+    "volunteerCta": "Волонтёр болу"
+  },
+  "Status": {
+    "OPEN": "Тіркеу ашық",
+    "DRAFT": "Жақында",
+    "CLOSED": "Тіркеу жабық",
+    "COMPLETED": "Аяқталды"
+  },
+  "Countdown": {
+    "days": "күн",
+    "hours": "сағат",
+    "min": "минут",
+    "sec": "секунд"
+  },
+  "Common": {
+    "km": "км"
   }
 }
