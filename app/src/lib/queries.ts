@@ -87,6 +87,35 @@ export function getEventForRegistration(slug: string, year: number) {
   });
 }
 
+export function getRacesForAdmin() {
+  return prisma.race.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
+}
+
+export function getEventForAdmin(id: string) {
+  return prisma.event.findUnique({
+    where: { id },
+    include: {
+      race: { select: { name: true } },
+      distances: {
+        orderBy: { km: "asc" },
+        select: {
+          id: true,
+          discipline: true,
+          name: true,
+          km: true,
+          gain: true,
+          price: true,
+          minAge: true,
+          maxAge: true,
+          cutoffMinutes: true,
+          bibRangeStart: true,
+          bibRangeEnd: true,
+        },
+      },
+    },
+  });
+}
+
 export function getEventDetail(slug: string, year: number) {
   return prisma.event.findFirst({
     where: { year, race: { slug } },

@@ -1,5 +1,9 @@
-import { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+export function isUniqueConstraintError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
+}
 
 // Singleton через globalThis — иначе в dev-режиме Next.js (hot reload) плодятся
 // новые подключения к базе на каждое сохранение файла.

@@ -36,12 +36,20 @@ export function AdminView({ events }: { events: EventRow[] }) {
       </div>
 
       <section>
-        <h2 className="font-display text-lg font-bold text-ink">{t("eventsTitle")}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-bold text-ink">{t("eventsTitle")}</h2>
+          <Link
+            href="/admin/events/new"
+            className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+          >
+            {t("createEventCta")}
+          </Link>
+        </div>
         {events.length === 0 ? (
           <p className="mt-3 text-sm text-ink-faint">{t("eventsEmpty")}</p>
         ) : (
           <div className="mt-3 overflow-x-auto rounded-[var(--radius-m)] border border-border">
-            <table className="w-full min-w-[560px] text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <tbody>
                 {events.map((event) => (
                   <tr key={event.id} className="border-b border-border last:border-0">
@@ -53,7 +61,12 @@ export function AdminView({ events }: { events: EventRow[] }) {
                     <td className="px-4 py-2.5 text-ink-soft">
                       {format.dateTime(event.dateISO, { day: "numeric", month: "long", year: "numeric" })}
                     </td>
-                    <td className="px-4 py-2.5 text-right text-ink-faint">{tStatus(event.status)}</td>
+                    <td className="px-4 py-2.5 text-ink-faint">{tStatus(event.status)}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Link href={`/admin/events/${event.id}`} className="font-semibold text-ink hover:text-ember">
+                        {t("editCta")}
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
