@@ -1,6 +1,7 @@
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { getEventWithRegistrations } from "@/lib/queries";
+import { RegistrationActions } from "./RegistrationActions";
 
 type EventData = NonNullable<Awaited<ReturnType<typeof getEventWithRegistrations>>>;
 type Registration = EventData["registrations"][number];
@@ -115,7 +116,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
         <p className="text-sm text-ink-faint">{t("registrationsEmpty")}</p>
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
-          <table className="w-full min-w-[700px] text-sm">
+          <table className="w-full min-w-[880px] text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2">
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColBib")}</th>
@@ -125,6 +126,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColDistance")}</th>
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
                 <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
+                <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -146,6 +148,14 @@ export function RegistrationsView({ event }: { event: EventData }) {
                   </td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
                     {format.dateTime(reg.createdAt, { day: "numeric", month: "short" })}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <RegistrationActions
+                      registrationId={reg.id}
+                      eventId={event.id}
+                      distanceId={reg.distance.id}
+                      distances={event.distances}
+                    />
                   </td>
                 </tr>
               ))}
