@@ -118,6 +118,7 @@ export function getUsersForAdmin() {
       email: true,
       emailVerified: true,
       isAdmin: true,
+      bannedUntil: true,
       createdAt: true,
       _count: { select: { registrations: true } },
     },

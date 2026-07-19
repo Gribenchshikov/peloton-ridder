@@ -2,47 +2,19 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import type { getUsersForAdmin } from "@/lib/queries";
-import { toggleAdminAction } from "./actions";
+import { updateUserAction } from "./actions";
 
 type User = Awaited<ReturnType<typeof getUsersForAdmin>>[number];
 
-function ToggleAdminButton({ user, isSelf }: { user: User; isSelf: boolean }) {
-  const t = useTranslations("Admin");
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+type UserActionType = "menu" | "toggleAdmin" | "ban" | "unban" | "forceReset" | "edit";
 
-  function handle() {
-    setError(null);
-    startTransition(async () => {
-      const res = await toggleAdminAction(user.id, !user.isAdmin);
-      if (res.error === "cannot_demote_self") setError(t("errorCannotDemoteSelf"));
-    });
-  }
-
-  if (isSelf) {
-    return <span className="text-xs text-ink-faint">{t("usersYou")}</span>;
-  }
-
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        onClick={handle}
-        disabled={pending}
-        className={[
-          "rounded-[var(--radius-s)] px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50",
-          user.isAdmin
-            ? "border border-border text-ink-soft hover:bg-surface-2"
-            : "bg-ember text-white hover:bg-ember-strong",
-        ].join(" ")}
-      >
-        {pending ? "…" : user.isAdmin ? t("usersRevokeAdmin") : t("usersMakeAdmin")}
-      </button>
-      {error && <span className="text-xs text-red-500">{error}</span>}
-    </div>
-  );
-}
+type ActiveAction = {
+  userId: string;
+  type: UserActionType;
+  makeAdmin?: boolean;
+};
 
 export function UsersView({
   users,
@@ -52,10 +24,108 @@ export function UsersView({
   currentUserId?: string;
 }) {
   const t = useTranslations("Admin");
-  const format = useTranslations("Admin");
+  const [activeTab, setActiveTab] = useState<"admins" | "runners">("admins");
+  const [activeAction, setActiveAction] = useState<ActiveAction | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [banDays, setBanDays] = useState("7");
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   const admins = users.filter((u) => u.isAdmin);
   const regular = users.filter((u) => !u.isAdmin);
+  const visibleUsers = activeTab === "admins" ? admins : regular;
+
+  function resetAction() {
+    setActiveAction(null);
+    setTwoFaCode("");
+    setBanDays("7");
+    setEditFirstName("");
+    setEditLastName("");
+    setEditEmail("");
+    setFormError(null);
+  }
+
+  function openMenu(user: User) {
+    setFormError(null);
+    setTwoFaCode("");
+    setBanDays("7");
+    setEditFirstName("");
+    setEditLastName("");
+    setEditEmail("");
+    setActiveAction({ userId: user.id, type: "menu" });
+  }
+
+  function openAction(user: User, type: UserActionType) {
+    setFormError(null);
+    setTwoFaCode("");
+    setBanDays("7");
+    setActiveAction({
+      userId: user.id,
+      type,
+      makeAdmin: type === "toggleAdmin" ? !user.isAdmin : undefined,
+    });
+    if (type === "edit") {
+      setEditFirstName(user.firstName);
+      setEditLastName(user.lastName);
+      setEditEmail(user.email);
+    }
+  }
+
+  async function handleSubmitAction(user: User) {
+    if (!activeAction) return;
+    setFormError(null);
+
+    startTransition(async () => {
+      const payload: Record<string, unknown> = {};
+      const action = activeAction.type;
+
+      if (action === "ban") {
+        const days = Number(banDays) || 0;
+        if (days <= 0) {
+          setFormError(t("usersBanDaysError"));
+          return;
+        }
+        payload.banDays = days;
+      }
+
+      if (action === "edit") {
+        if (!editFirstName.trim() || !editLastName.trim() || !editEmail.trim()) {
+          setFormError(t("usersEditFieldsRequired"));
+          return;
+        }
+        payload.firstName = editFirstName.trim();
+        payload.lastName = editLastName.trim();
+        payload.email = editEmail.trim();
+      }
+
+      if (action === "toggleAdmin") {
+        payload.makeAdmin = activeAction.makeAdmin ?? false;
+      }
+      const res = await updateUserAction(user.id, action, payload, twoFaCode);
+      if (res.error === "cannot_demote_self") {
+        setFormError(t("errorCannotDemoteSelf"));
+        return;
+      }
+      if (res.error === "invalid_2fa_code") {
+        setFormError(t("errorInvalidTwoFaCode"));
+        return;
+      }
+      if (res.error === "email_taken") {
+        setFormError(t("usersEmailTaken"));
+        return;
+      }
+      if (res.error) {
+        setFormError(t("usersActionFailed"));
+        return;
+      }
+      if (res.ok) {
+        resetAction();
+      }
+    });
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-16">
@@ -89,6 +159,41 @@ export function UsersView({
         </div>
       </div>
 
+      <div className="rounded-[var(--radius-m)] border border-border bg-surface p-4">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("admins");
+              resetAction();
+            }}
+            className={
+              "rounded-[var(--radius-s)] px-4 py-2 text-sm font-semibold transition-colors " +
+              (activeTab === "admins"
+                ? "bg-ember text-white"
+                : "border border-border bg-transparent text-ink hover:bg-surface-2")
+            }
+          >
+            {t("adminsTab")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("runners");
+              resetAction();
+            }}
+            className={
+              "rounded-[var(--radius-s)] px-4 py-2 text-sm font-semibold transition-colors " +
+              (activeTab === "runners"
+                ? "bg-ember text-white"
+                : "border border-border bg-transparent text-ink hover:bg-surface-2")
+            }
+          >
+            {t("runnersTab")}
+          </button>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
         <table className="w-full min-w-[640px] text-sm">
@@ -104,46 +209,226 @@ export function UsersView({
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-border last:border-0 hover:bg-surface-2">
-                <td className="px-4 py-2.5 font-medium text-ink">
-                  {user.firstName} {user.lastName}
-                </td>
-                <td className="px-4 py-2.5 text-ink-soft">{user.email}</td>
-                <td className="px-4 py-2.5 text-center">
-                  {user.isAdmin ? (
-                    <span className="inline-flex items-center rounded-full bg-ember/10 px-2 py-0.5 text-xs font-bold text-ember">
-                      Admin
-                    </span>
-                  ) : (
-                    <span className="text-xs text-ink-faint">{t("usersRoleUser")}</span>
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-center">
-                  {user.emailVerified ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">✓</span>
-                  ) : (
-                    <span className="text-ink-faint">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-center tabular-nums text-ink-soft">
-                  {user._count.registrations}
-                </td>
-                <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
-                  {new Date(user.createdAt).toLocaleDateString("ru-RU", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  <ToggleAdminButton
-                    user={user}
-                    isSelf={user.id === currentUserId}
-                  />
+            {visibleUsers.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink-soft">
+                  {activeTab === "admins" ? t("usersAdminsEmpty") : t("usersRunnersEmpty")}
                 </td>
               </tr>
-            ))}
+            ) : (
+              visibleUsers.map((user) => {
+                const isBanned = user.bannedUntil && new Date(user.bannedUntil) > new Date();
+                const isActiveAction = activeAction?.userId === user.id;
+                return (
+                  <Fragment key={user.id}>
+                    <tr className="border-b border-border last:border-0 hover:bg-surface-2">
+                      <td className="px-4 py-2.5 font-medium text-ink">
+                        {user.firstName} {user.lastName}
+                      </td>
+                      <td className="px-4 py-2.5 text-ink-soft">{user.email}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        {user.isAdmin ? (
+                          <span className="inline-flex items-center rounded-full bg-ember/10 px-2 py-0.5 text-xs font-bold text-ember">
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="text-xs text-ink-faint">{t("usersRoleUser")}</span>
+                        )}
+                        {isBanned ? (
+                          <div className="mt-1 text-[11px] font-semibold text-red-600">
+                            {t("usersBannedUntil", {
+                              date: new Intl.DateTimeFormat("ru-RU", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              }).format(new Date(user.bannedUntil!)),
+                            })}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {user.emailVerified ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">✓</span>
+                        ) : (
+                          <span className="text-ink-faint">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-center tabular-nums text-ink">
+                        {user._count.registrations}
+                      </td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-ink">
+                        {new Date(user.createdAt).toLocaleDateString("ru-RU", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        {user.id === currentUserId ? (
+                          <span className="text-xs text-ink-faint">{t("usersYou")}</span>
+                        ) : (
+                          <div className="flex flex-col items-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openMenu(user)}
+                              disabled={pending}
+                              className="rounded-[var(--radius-s)] bg-ember px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+                            >
+                              {t("usersManage")}
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                    {isActiveAction ? (
+                      activeAction.type === "menu" ? (
+                        <tr className="bg-surface-2" key={`${user.id}-menu`}>
+                          <td colSpan={7} className="px-4 py-4">
+                            <div className="flex flex-col gap-2 rounded-[var(--radius-m)] border border-border bg-white p-4 shadow-sm">
+                              <div className="grid gap-2 sm:grid-cols-4">
+                                <button
+                                  type="button"
+                                  onClick={() => openAction(user, "toggleAdmin")}
+                                  disabled={pending}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {user.isAdmin ? t("usersRevokeAdmin") : t("usersMakeAdmin")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openAction(user, isBanned ? "unban" : "ban")}
+                                  disabled={pending}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {isBanned ? t("usersUnban") : t("usersBan")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openAction(user, "forceReset")}
+                                  disabled={pending}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {t("usersForceReset")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openAction(user, "edit")}
+                                  disabled={pending}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {t("usersEditButton")}
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={resetAction}
+                                className="self-end rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+                              >
+                                {t("usersActionCancel")}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr className="bg-surface-2" key={`${user.id}-action`}>
+                          <td colSpan={7} className="px-4 py-4">
+                            <div className="rounded-[var(--radius-m)] border border-border bg-white p-4 shadow-sm">
+                              <div className="mb-3 text-sm text-ink-soft">
+                                {activeAction.type === "toggleAdmin" &&
+                                  t(user.isAdmin ? "usersConfirmDemote" : "usersConfirmPromote")}
+                                {activeAction.type === "ban" &&
+                                  t("usersConfirmBan", { days: banDays })}
+                                {activeAction.type === "unban" && t("usersConfirmUnban")}
+                                {activeAction.type === "forceReset" && t("usersConfirmForceReset")}
+                                {activeAction.type === "edit" && t("usersConfirmEdit")}
+                              </div>
+                              {activeAction.type === "ban" ? (
+                                <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                                  <label className="text-sm text-ink">
+                                    {t("usersBanDaysLabel")}
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={banDays}
+                                      onChange={(event) => setBanDays(event.target.value)}
+                                      className="mt-1 w-full rounded-[var(--radius-s)] border border-border bg-surface px-2 py-2 text-sm text-ink"
+                                    />
+                                  </label>
+                                </div>
+                              ) : null}
+                              {activeAction.type === "edit" ? (
+                                <div className="mb-4 grid gap-3 sm:grid-cols-3">
+                                  <label className="text-sm text-ink">
+                                    {t("usersFirstNameLabel")}
+                                    <input
+                                      type="text"
+                                      value={editFirstName}
+                                      onChange={(event) => setEditFirstName(event.target.value)}
+                                      className="mt-1 w-full rounded-[var(--radius-s)] border border-border bg-surface px-2 py-2 text-sm text-ink"
+                                    />
+                                  </label>
+                                  <label className="text-sm text-ink">
+                                    {t("usersLastNameLabel")}
+                                    <input
+                                      type="text"
+                                      value={editLastName}
+                                      onChange={(event) => setEditLastName(event.target.value)}
+                                      className="mt-1 w-full rounded-[var(--radius-s)] border border-border bg-surface px-2 py-2 text-sm text-ink"
+                                    />
+                                  </label>
+                                  <label className="text-sm text-ink">
+                                    {t("usersEmailLabel")}
+                                    <input
+                                      type="email"
+                                      value={editEmail}
+                                      onChange={(event) => setEditEmail(event.target.value)}
+                                      className="mt-1 w-full rounded-[var(--radius-s)] border border-border bg-surface px-2 py-2 text-sm text-ink"
+                                    />
+                                  </label>
+                                </div>
+                              ) : null}
+                              <div className="mb-4 grid gap-2">
+                                <label className="text-sm text-ink">
+                                  {t("enterTwoFaCodeLabel")}
+                                  <input
+                                    type="text"
+                                    value={twoFaCode}
+                                    onChange={(event) => setTwoFaCode(event.target.value)}
+                                    placeholder="123456"
+                                    className="mt-1 w-full rounded-[var(--radius-s)] border border-border bg-surface px-2 py-2 text-sm text-ink"
+                                  />
+                                </label>
+                                <p className="text-xs text-ink-faint">{t("twoFaMockHint")}</p>
+                              </div>
+                              {formError ? (
+                                <p className="mb-3 text-sm font-semibold text-red-600">{formError}</p>
+                              ) : null}
+                              <div className="flex flex-wrap gap-2 justify-end">
+                                <button
+                                  type="button"
+                                  onClick={resetAction}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+                                >
+                                  {t("usersActionCancel")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSubmitAction(user)}
+                                  disabled={pending}
+                                  className="rounded-[var(--radius-s)] bg-ember px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-ember-strong disabled:opacity-50"
+                                >
+                                  {t("usersActionConfirm")}
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    ) : null}
+                  </Fragment>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

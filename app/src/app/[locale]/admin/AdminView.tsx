@@ -34,57 +34,74 @@ export function AdminView({ events }: { events: EventRow[] }) {
         </div>
       </div>
 
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-ink">{t("usersTitle")}</h2>
-          <Link
-            href="/admin/users"
-            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-          >
-            {t("manageUsersCta")}
-          </Link>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-bold text-ink">{t("usersTitle")}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{t("usersSubtitle")}</p>
+            </div>
+            <Link
+              href="/admin/users"
+              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {t("manageUsersCta")}
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-bold text-ink">{t("clubTitle")}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{t("clubSubtitle")}</p>
+            </div>
+            <Link
+              href="/admin/club"
+              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {t("manageClubCta")}
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-bold text-ink">{t("racesTitle")}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{t("racesSubtitle")}</p>
+            </div>
+            <Link
+              href="/admin/races"
+              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {t("manageRacesCta")}
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-bold text-ink">{t("partnersTitle")}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{t("partnersSubtitle")}</p>
+            </div>
+            <Link
+              href="/admin/partners"
+              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {t("managePartnersCta")}
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-ink">{t("clubTitle")}</h2>
-          <Link
-            href="/admin/club"
-            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-          >
-            {t("manageClubCta")}
-          </Link>
-        </div>
-      </section>
-
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-ink">{t("racesTitle")}</h2>
-          <Link
-            href="/admin/races"
-            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-          >
-            {t("manageRacesCta")}
-          </Link>
-        </div>
-      </section>
-
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-ink">{t("partnersTitle")}</h2>
-          <Link
-            href="/admin/partners"
-            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-          >
-            {t("managePartnersCta")}
-          </Link>
-        </div>
-      </section>
-
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-ink">{t("eventsTitle")}</h2>
+      <section className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-lg font-bold text-ink">{t("eventsTitle")}</h2>
+            <p className="mt-1 text-sm text-ink-soft">{t("eventsSubtitle")}</p>
+          </div>
           <Link
             href="/admin/events/new"
             className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
@@ -92,6 +109,9 @@ export function AdminView({ events }: { events: EventRow[] }) {
             {t("createEventCta")}
           </Link>
         </div>
+      </section>
+
+      <section>
         <AdminEventsTable events={events} />
       </section>
     </main>
