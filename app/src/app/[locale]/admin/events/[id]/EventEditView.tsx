@@ -7,11 +7,16 @@ import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
 import { RegulationsSection } from "./RegulationsSection";
+import { AboutSection } from "./AboutSection";
+import { DayProgramSection } from "./DayProgramSection";
+import { HowToGetSection } from "./HowToGetSection";
+import { EquipmentSection } from "./EquipmentSection";
 import { DeleteEventButton } from "./DeleteEventButton";
 import { deleteEventAction } from "../actions";
 import type { Partner } from "@/generated/prisma/client";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
+import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
 
 type EventWithDetails = NonNullable<Awaited<ReturnType<typeof getEventForAdmin>>>;
 
@@ -146,6 +151,40 @@ export function EventEditView({ event, allPartners, wizard, locale }: { event: E
         initialFiles={(event.regulationFiles as RegulationFile[] | null) ?? []}
         initialBlocks={(event.regulationBlocks as RegulationBlock[] | null) ?? []}
       />
+
+      <section>
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">О забеге</div>
+        <AboutSection
+          eventId={event.id}
+          initialAboutText={event.aboutText ?? ""}
+          initialPhotoLinks={(event.photoLinks as PhotoLink[] | null) ?? []}
+        />
+      </section>
+
+      <section>
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">Программа дня</div>
+        <DayProgramSection
+          eventId={event.id}
+          initialItems={(event.dayProgram as DayProgramItem[] | null) ?? []}
+        />
+      </section>
+
+      <section>
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">Как добраться</div>
+        <HowToGetSection
+          eventId={event.id}
+          initialText={event.howToGet ?? ""}
+        />
+      </section>
+
+      <section>
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">Снаряжение</div>
+        <EquipmentSection
+          eventId={event.id}
+          distances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
+          initialEquipment={(event.distanceEquipment as DistanceEquipment | null) ?? {}}
+        />
+      </section>
 
       <div className="border-t border-danger/20 pt-6">
         <div className="text-xs font-bold uppercase tracking-wide text-danger/60 mb-3">Опасная зона</div>

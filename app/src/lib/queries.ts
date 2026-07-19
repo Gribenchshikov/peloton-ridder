@@ -17,6 +17,13 @@ export function getNextEvent() {
   });
 }
 
+export function getAdminEvents() {
+  return prisma.event.findMany({
+    include: { race: true, distances: true },
+    orderBy: { dateISO: "desc" },
+  });
+}
+
 export function getSeriesWithRaces() {
   return prisma.series.findFirst({
     include: { seriesRaces: { include: { race: true }, orderBy: { stageOrder: "asc" } } },

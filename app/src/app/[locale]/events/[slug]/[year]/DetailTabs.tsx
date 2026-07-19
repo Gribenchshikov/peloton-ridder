@@ -11,8 +11,10 @@ import { fullName } from "@/lib/user";
 import type { ProfileData } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock, RegulationLocale } from "@/types/regulation";
+import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
+import { EQUIPMENT_ITEMS } from "@/types/eventContent";
 
-type Tab = "course" | "regulation" | "participants" | "profile";
+type Tab = "about" | "regulation" | "participants" | "profile" | "dayprogram" | "howtoget" | "equipment";
 
 type Registration = {
   id: string;
@@ -31,37 +33,60 @@ export type DistanceWithProfile = {
   raceStartMinutes: number | null;
 };
 
+type DistanceBasic = { id: string; name: string; km: number };
+
 type Props = {
   courseIntro: string;
+  aboutText: string;
+  photoLinks: PhotoLink[];
+  dayProgram: DayProgramItem[];
+  howToGet: string;
+  distanceEquipment: DistanceEquipment;
   regulationFiles: RegulationFile[];
   regulationBlocks: RegulationBlock[];
   registrations: Registration[];
   distances?: DistanceWithProfile[];
+  allDistances?: DistanceBasic[];
 };
 
 export function DetailTabs({
   courseIntro,
+  aboutText,
+  photoLinks,
+  dayProgram,
+  howToGet,
+  distanceEquipment,
   regulationFiles,
   regulationBlocks,
   registrations,
   distances = [],
+  allDistances = [],
 }: Props) {
   const t = useTranslations("EventDetail");
   const locale = useLocale() as RegulationLocale;
   const hasProfile = distances.length > 0;
-  const [tab, setTab] = useState<Tab>("course");
+  const [tab, setTab] = useState<Tab>("about");
   const [activeDistId, setActiveDistId] = useState(distances[0]?.id ?? "");
+  const [equipDistId, setEquipDistId] = useState(allDistances[0]?.id ?? "");
   const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
 
   const filesForLocale = regulationFiles.filter((f) => f.locale === locale);
   const hasRegulation = filesForLocale.length > 0 || regulationBlocks.length > 0;
+  const aboutBody = aboutText || courseIntro;
+  const hasEquipment = Object.keys(distanceEquipment).length > 0;
 
   const tabs: { id: Tab; label: string; hidden?: boolean }[] = [
-    { id: "course", label: t("courseTitle") },
+    { id: "about", label: t("aboutTitle") },
     { id: "regulation", label: t("regulationTitle") },
+    { id: "dayprogram", label: t("dayProgramTitle"), hidden: dayProgram.length === 0 },
+    { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet },
+    { id: "equipment", label: t("equipmentTitle"), hidden: !hasEquipment },
     { id: "profile", label: t("courseProfileTitle"), hidden: !hasProfile },
     { id: "participants", label: t("participantsTitle") },
   ];
+
+  const equipDist = allDistances.find((d) => d.id === equipDistId) ?? allDistances[0];
+  const equipForDist = equipDist ? (distanceEquipment[equipDist.id] ?? { required: [], recommended: [] }) : { required: [], recommended: [] };
 
   return (
     <div className="rounded-[var(--radius-m)] border border-border bg-surface">
@@ -82,19 +107,47 @@ export function DetailTabs({
       </div>
 
       <div className="overflow-hidden p-6">
-        {tab === "course" && (
-          <div>
-            {courseIntro ? (
+        {/* ── О забеге ── */}
+        {tab === "about" && (
+          <div className="flex flex-col gap-6">
+            {aboutBody ? (
               <p
-                className="max-w-2xl text-[1.02rem] leading-relaxed text-ink-soft"
-                dangerouslySetInnerHTML={{ __html: courseIntro }}
+                className="max-w-2xl text-[1.02rem] leading-relaxed text-ink-soft break-words"
+                dangerouslySetInnerHTML={{ __html: aboutBody }}
               />
             ) : (
-              <p className="text-sm text-ink-faint">{t("courseEmpty")}</p>
+              <p className="text-sm text-ink-faint">{t("aboutEmpty")}</p>
+            )}
+
+            {photoLinks.length > 0 && (
+              <div>
+                <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">
+                  {t("photoLinksLabel")}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {photoLinks.map((link, i) => (
+                    <a
+                      key={i}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
+                        <rect x="1" y="2" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                        <path d="M1 9l3.5-3.5L7 8l3-3 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <circle cx="4.5" cy="5.5" r="1" fill="currentColor"/>
+                      </svg>
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
 
+        {/* ── Регламент ── */}
         {tab === "regulation" && (
           <div className="flex flex-col gap-6">
             {!hasRegulation && (
@@ -153,9 +206,102 @@ export function DetailTabs({
           </div>
         )}
 
+        {/* ── Программа дня ── */}
+        {tab === "dayprogram" && (
+          <div>
+            {dayProgram.length === 0 ? (
+              <p className="text-sm text-ink-faint">{t("dayProgramEmpty")}</p>
+            ) : (
+              <div className="flex flex-col">
+                {dayProgram.map((item, i) => (
+                  <div key={i} className="flex gap-4 py-3 border-b border-border last:border-0">
+                    <div className="w-16 shrink-0 font-display text-sm font-bold text-ember tabular-nums">{item.time}</div>
+                    <div className="text-sm leading-relaxed text-ink-soft">{item.description}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Как добраться ── */}
+        {tab === "howtoget" && (
+          <div>
+            {howToGet ? (
+              <p className="max-w-2xl text-sm leading-relaxed text-ink-soft whitespace-pre-line break-words">
+                {howToGet}
+              </p>
+            ) : (
+              <p className="text-sm text-ink-faint">{t("howToGetEmpty")}</p>
+            )}
+          </div>
+        )}
+
+        {/* ── Снаряжение ── */}
+        {tab === "equipment" && (
+          <div className="flex flex-col gap-5">
+            {allDistances.length > 1 && (
+              <div className="flex gap-1 overflow-x-auto">
+                {allDistances.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setEquipDistId(d.id)}
+                    className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+                      d.id === equipDistId
+                        ? "bg-ember text-white"
+                        : "border border-border text-ink-soft hover:text-ink"
+                    }`}
+                  >
+                    {d.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {equipForDist.required.length === 0 && equipForDist.recommended.length === 0 ? (
+              <p className="text-sm text-ink-faint">{t("equipmentEmpty")}</p>
+            ) : (
+              <div className="flex flex-col gap-5">
+                {equipForDist.required.length > 0 && (
+                  <div>
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-danger">{t("equipmentRequired")}</div>
+                    <ul className="flex flex-col gap-1.5">
+                      {equipForDist.required.map((key) => {
+                        const item = EQUIPMENT_ITEMS.find((e) => e.key === key);
+                        return item ? (
+                          <li key={key} className="flex items-center gap-2.5 text-sm text-ink">
+                            <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
+                            {item.label}
+                          </li>
+                        ) : null;
+                      })}
+                    </ul>
+                  </div>
+                )}
+                {equipForDist.recommended.length > 0 && (
+                  <div>
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-dawn">{t("equipmentRecommended")}</div>
+                    <ul className="flex flex-col gap-1.5">
+                      {equipForDist.recommended.map((key) => {
+                        const item = EQUIPMENT_ITEMS.find((e) => e.key === key);
+                        return item ? (
+                          <li key={key} className="flex items-center gap-2.5 text-sm text-ink-soft">
+                            <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-dawn" />
+                            {item.label}
+                          </li>
+                        ) : null;
+                      })}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Профиль трассы ── */}
         {tab === "profile" && activeDist && (
           <div className="flex flex-col gap-5">
-            {/* Distance selector + GPX download */}
             <div className="flex items-center justify-between gap-3">
               {distances.length > 1 ? (
                 <div className="flex gap-1 overflow-x-auto">
@@ -191,7 +337,6 @@ export function DetailTabs({
               )}
             </div>
 
-            {/* Elevation chart */}
             <ElevationProfile
               points={activeDist.profileData.points}
               gainM={activeDist.profileData.gainM}
@@ -201,7 +346,6 @@ export function DetailTabs({
               raceStartMinutes={activeDist.raceStartMinutes}
             />
 
-            {/* Map */}
             {activeDist.profileData.track && activeDist.profileData.meta && activeDist.profileData.track.length >= 2 && (
               <TrackMap
                 key={activeDist.id}
@@ -211,7 +355,6 @@ export function DetailTabs({
               />
             )}
 
-            {/* Aid station time chart */}
             {activeDist.aidStations.length > 0 && (
               <TimeChart
                 stations={activeDist.aidStations}
@@ -222,6 +365,7 @@ export function DetailTabs({
           </div>
         )}
 
+        {/* ── Участники ── */}
         {tab === "participants" && (
           <div>
             {registrations.length === 0 ? (

@@ -147,7 +147,12 @@ model Event {
   coverImageUrl                String?
   volunteerChatUrl             String?
   regulationFiles              Json?
-  regulationBlocks             Json? // ссылка на Telegram-чат волонтёров, задаёт админ при создании/редактировании
+  regulationBlocks             Json?
+  aboutText                    String?
+  photoLinks                   Json?    // { url: string; label: string }[]
+  dayProgram                   Json?    // { time: string; description: string }[]
+  howToGet                     String?
+  distanceEquipment            Json?    // { [distanceId]: { required: string[]; recommended: string[] } }
   createdAt                    DateTime    @default(now())
 
   distances             Distance[]

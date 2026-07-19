@@ -190,8 +190,9 @@ function SeriesSection({
 
   return (
     <section className="px-6 pb-16">
+      <div className="mx-auto max-w-6xl">
       <div
-        className="relative mx-auto overflow-hidden rounded-[var(--radius-l)] px-10 py-14 sm:px-14"
+        className="relative overflow-hidden rounded-[var(--radius-l)] px-10 py-14 sm:px-14"
         style={{
           background: "linear-gradient(100deg, rgba(20,38,22,.95) 0%, rgba(20,38,22,.80) 42%, rgba(20,38,22,.45) 100%), var(--spruce)",
         }}
@@ -207,6 +208,7 @@ function SeriesSection({
             {t("seriesCta")}
           </button>
         </div>
+      </div>
       </div>
     </section>
   );

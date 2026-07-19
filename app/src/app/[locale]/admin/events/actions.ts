@@ -3,12 +3,14 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma, isUniqueConstraintError } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
 import { parseGpx } from "@/lib/gpxParser";
 import { redirect } from "@/i18n/navigation";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
+import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -434,6 +436,110 @@ export async function updateRegulationBlocksAction(
   if (!result.success) return { error: "invalid" };
 
   await prisma.event.update({ where: { id: eventId }, data: { regulationBlocks: result.data as RegulationBlock[] } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+// ── About / О забеге ─────────────────────────────────────────────────────────
+
+export async function updateAboutAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const aboutText = formData.get("aboutText");
+  const linksRaw = formData.get("photoLinks");
+
+  let photoLinks: PhotoLink[] = [];
+  if (typeof linksRaw === "string" && linksRaw) {
+    try { photoLinks = JSON.parse(linksRaw); } catch { return { error: "invalid" }; }
+  }
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: {
+      aboutText: typeof aboutText === "string" ? aboutText || null : null,
+      photoLinks: photoLinks.length ? (photoLinks as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
+    },
+  });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+// ── Day program / Программа дня ──────────────────────────────────────────────
+
+export async function updateDayProgramAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const raw = formData.get("dayProgram");
+  if (typeof raw !== "string") return { error: "invalid" };
+
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { return { error: "invalid" }; }
+
+  const Schema = z.array(z.object({ time: z.string().max(20), description: z.string().max(500) }));
+  const result = Schema.safeParse(parsed);
+  if (!result.success) return { error: "invalid" };
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: { dayProgram: result.data.length ? (result.data as unknown as Prisma.InputJsonValue) : Prisma.DbNull },
+  });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+// ── How to get there / Как добраться ─────────────────────────────────────────
+
+export async function updateHowToGetAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const text = formData.get("howToGet");
+  await prisma.event.update({
+    where: { id: eventId },
+    data: { howToGet: typeof text === "string" ? text || null : null },
+  });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+// ── Equipment / Снаряжение ───────────────────────────────────────────────────
+
+export async function updateDistanceEquipmentAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const raw = formData.get("distanceEquipment");
+  if (typeof raw !== "string") return { error: "invalid" };
+
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { return { error: "invalid" }; }
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: { distanceEquipment: parsed as DistanceEquipment },
+  });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
   return { success: true };

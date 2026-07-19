@@ -1,14 +1,13 @@
-import { useTranslations, useFormatter } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import type { getHomeEvents } from "@/lib/queries";
+import type { getAdminEvents } from "@/lib/queries";
 import { logoutAction } from "@/lib/authActions";
+import { AdminEventsTable } from "./AdminEventsTable";
 
-type EventRow = Awaited<ReturnType<typeof getHomeEvents>>[number];
+type EventRow = Awaited<ReturnType<typeof getAdminEvents>>[number];
 
 export function AdminView({ events }: { events: EventRow[] }) {
   const t = useTranslations("Admin");
-  const tStatus = useTranslations("Status");
-  const format = useFormatter();
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-16">
@@ -93,39 +92,7 @@ export function AdminView({ events }: { events: EventRow[] }) {
             {t("createEventCta")}
           </Link>
         </div>
-        {events.length === 0 ? (
-          <p className="mt-3 text-sm text-ink-faint">{t("eventsEmpty")}</p>
-        ) : (
-          <div className="mt-3 overflow-x-auto rounded-[var(--radius-m)] border border-border">
-            <table className="w-full min-w-[640px] text-sm">
-              <tbody>
-                {events.map((event) => (
-                  <tr key={event.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5 font-semibold text-ink">
-                      <Link href={`/events/${event.race.slug}/${event.year}`} className="hover:text-ember">
-                        {event.race.name} {event.year}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2.5 text-ink-soft">
-                      {format.dateTime(event.dateISO, { day: "numeric", month: "long", year: "numeric" })}
-                    </td>
-                    <td className="px-4 py-2.5 text-ink-faint">{tStatus(event.status)}</td>
-                    <td className="px-4 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-4">
-                        <Link href={`/admin/registrations/${event.race.slug}/${event.year}`} className="text-sm font-semibold text-ink-soft hover:text-ink">
-                          {t("viewRegistrationsCta")}
-                        </Link>
-                        <Link href={`/admin/events/${event.id}`} className="font-semibold text-ink hover:text-ember">
-                          {t("editCta")}
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AdminEventsTable events={events} />
       </section>
     </main>
   );

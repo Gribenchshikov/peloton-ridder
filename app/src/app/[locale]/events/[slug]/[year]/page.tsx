@@ -11,6 +11,7 @@ import type { Distance } from "@/generated/prisma/client";
 import type { ProfileData } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
+import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-white/20 text-white backdrop-blur-sm",
@@ -38,6 +39,9 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
   const regulationFiles = (event.regulationFiles as RegulationFile[] | null) ?? [];
   const regulationBlocks = (event.regulationBlocks as RegulationBlock[] | null) ?? [];
+  const photoLinks = (event.photoLinks as PhotoLink[] | null) ?? [];
+  const dayProgram = (event.dayProgram as DayProgramItem[] | null) ?? [];
+  const distanceEquipment = (event.distanceEquipment as DistanceEquipment | null) ?? {};
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
   const paidCount = event.registrations.length;
 
@@ -146,10 +150,16 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
           <div className="flex min-w-0 flex-col gap-6">
             <DetailTabs
               courseIntro={event.race.courseIntro ?? ""}
+              aboutText={event.aboutText ?? ""}
+              photoLinks={photoLinks}
+              dayProgram={dayProgram}
+              howToGet={event.howToGet ?? ""}
+              distanceEquipment={distanceEquipment}
               regulationFiles={regulationFiles}
               regulationBlocks={regulationBlocks}
               registrations={event.registrations}
               distances={distancesWithProfile}
+              allDistances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
             />
           </div>
 
