@@ -7,6 +7,7 @@ import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
 import { parseGpx } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
+import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -316,5 +317,88 @@ export async function deleteDistanceAction(
 
   await prisma.distance.delete({ where: { id: distanceId } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
+  return { success: true };
+}
+
+// ── Regulation files ─────────────────────────────────────────────────────────
+
+export async function uploadRegulationFileAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("file");
+  const locale = formData.get("locale");
+  const name = formData.get("name");
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+  if (typeof locale !== "string" || !["ru", "kk", "en"].includes(locale)) return { error: "invalid" };
+
+  const saved = await saveFile(file, "regulations");
+  if ("error" in saved) return { error: saved.error };
+
+  const displayName = typeof name === "string" && name.trim() ? name.trim() : file.name;
+
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { regulationFiles: true } });
+  const existing = (event?.regulationFiles ?? []) as RegulationFile[];
+  const updated = [...existing, { locale, name: displayName, url: saved.url } as RegulationFile];
+
+  await prisma.event.update({ where: { id: eventId }, data: { regulationFiles: updated } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+export async function removeRegulationFileAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const url = formData.get("url");
+  if (typeof url !== "string") return { error: "invalid" };
+
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { regulationFiles: true } });
+  const existing = (event?.regulationFiles ?? []) as RegulationFile[];
+  const updated = existing.filter((f) => f.url !== url);
+
+  await prisma.event.update({ where: { id: eventId }, data: { regulationFiles: updated } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+// ── Regulation blocks ─────────────────────────────────────────────────────────
+
+export async function updateRegulationBlocksAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const raw = formData.get("blocks");
+  if (typeof raw !== "string") return { error: "invalid" };
+
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { return { error: "invalid" }; }
+
+  const BlockSchema = z.array(z.object({
+    id: z.string(),
+    order: z.number().int(),
+    title: z.object({ ru: z.string(), kk: z.string(), en: z.string() }),
+    content: z.object({ ru: z.string(), kk: z.string(), en: z.string() }),
+  }));
+  const result = BlockSchema.safeParse(parsed);
+  if (!result.success) return { error: "invalid" };
+
+  await prisma.event.update({ where: { id: eventId }, data: { regulationBlocks: result.data as RegulationBlock[] } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
   return { success: true };
 }

@@ -6,8 +6,10 @@ import { EventForm } from "../EventForm";
 import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
+import { RegulationsSection } from "./RegulationsSection";
 import type { Partner } from "@/generated/prisma/client";
 import type { AidStation } from "@/types/aidStation";
+import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 
 type EventWithDetails = NonNullable<Awaited<ReturnType<typeof getEventForAdmin>>>;
 
@@ -128,6 +130,7 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
           ...d,
           hasProfile: d.profileData != null,
           aidStations: (aidStations as AidStation[] | null) ?? [],
+          raceStartMinutes: d.raceStartMinutes ?? null,
         }))}
       />
       <MerchSection eventId={event.id} items={event.merchItems} />
@@ -135,6 +138,11 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
         eventId={event.id}
         linked={event.eventPartners}
         all={allPartners}
+      />
+      <RegulationsSection
+        eventId={event.id}
+        initialFiles={(event.regulationFiles as RegulationFile[] | null) ?? []}
+        initialBlocks={(event.regulationBlocks as RegulationBlock[] | null) ?? []}
       />
     </main>
   );

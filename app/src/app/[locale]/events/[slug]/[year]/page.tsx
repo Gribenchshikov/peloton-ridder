@@ -10,6 +10,7 @@ import { DetailTabs, type DistanceWithProfile } from "./DetailTabs";
 import type { Distance } from "@/generated/prisma/client";
 import type { ProfileData } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
+import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-white/20 text-white backdrop-blur-sm",
@@ -35,7 +36,8 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
   const tStatus = useTranslations("Status");
   const format = useFormatter();
 
-  const equipment = (event.race.equipment as string[] | null) ?? [];
+  const regulationFiles = (event.regulationFiles as RegulationFile[] | null) ?? [];
+  const regulationBlocks = (event.regulationBlocks as RegulationBlock[] | null) ?? [];
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
   const paidCount = event.registrations.length;
 
@@ -144,7 +146,8 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
           <div className="flex flex-col gap-6">
             <DetailTabs
               courseIntro={event.race.courseIntro ?? ""}
-              equipment={equipment}
+              regulationFiles={regulationFiles}
+              regulationBlocks={regulationBlocks}
               registrations={event.registrations}
               distances={distancesWithProfile}
             />

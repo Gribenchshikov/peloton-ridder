@@ -11,6 +11,10 @@ const ALLOWED_TYPES = new Set([
   "application/octet-stream",
   "text/xml",
   "application/xml",
+  // Documents (regulation files)
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
 const MAX_BYTES = 20 * 1024 * 1024; // 20 MB (GPX files can be large)
 
@@ -46,7 +50,13 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
         ? "webp"
         : file.type === "image/svg+xml"
           ? "svg"
-          : "jpg";
+          : file.type === "application/pdf"
+            ? "pdf"
+            : file.type === "application/msword"
+              ? "doc"
+              : file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                ? "docx"
+                : "jpg";
   const filename = `${crypto.randomUUID()}.${ext}`;
 
   const uploadDir = process.env.UPLOAD_DIR

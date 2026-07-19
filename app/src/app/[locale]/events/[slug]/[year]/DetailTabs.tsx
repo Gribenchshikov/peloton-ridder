@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations, useFormatter } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useFormatter } from "next-intl";
 import { Icon } from "@/components/IconSprite";
 import { ElevationProfile } from "@/components/ElevationProfile";
 import { TrackMap } from "@/components/TrackMap";
@@ -9,8 +10,9 @@ import { TimeChart } from "@/components/TimeChart";
 import { fullName } from "@/lib/user";
 import type { ProfileData } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
+import type { RegulationFile, RegulationBlock, RegulationLocale } from "@/types/regulation";
 
-type Tab = "course" | "equipment" | "participants" | "profile";
+type Tab = "course" | "regulation" | "participants" | "profile";
 
 type Registration = {
   id: string;
@@ -31,21 +33,32 @@ export type DistanceWithProfile = {
 
 type Props = {
   courseIntro: string;
-  equipment: string[];
+  regulationFiles: RegulationFile[];
+  regulationBlocks: RegulationBlock[];
   registrations: Registration[];
   distances?: DistanceWithProfile[];
 };
 
-export function DetailTabs({ courseIntro, equipment, registrations, distances = [] }: Props) {
+export function DetailTabs({
+  courseIntro,
+  regulationFiles,
+  regulationBlocks,
+  registrations,
+  distances = [],
+}: Props) {
   const t = useTranslations("EventDetail");
+  const locale = useLocale() as RegulationLocale;
   const hasProfile = distances.length > 0;
   const [tab, setTab] = useState<Tab>("course");
   const [activeDistId, setActiveDistId] = useState(distances[0]?.id ?? "");
   const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
 
+  const filesForLocale = regulationFiles.filter((f) => f.locale === locale);
+  const hasRegulation = filesForLocale.length > 0 || regulationBlocks.length > 0;
+
   const tabs: { id: Tab; label: string; hidden?: boolean }[] = [
     { id: "course", label: t("courseTitle") },
-    { id: "equipment", label: t("equipmentTitle") },
+    { id: "regulation", label: t("regulationTitle") },
     { id: "profile", label: t("courseProfileTitle"), hidden: !hasProfile },
     { id: "participants", label: t("participantsTitle") },
   ];
@@ -82,19 +95,60 @@ export function DetailTabs({ courseIntro, equipment, registrations, distances = 
           </div>
         )}
 
-        {tab === "equipment" && (
-          <div>
-            {equipment.length === 0 ? (
-              <p className="text-sm text-ink-faint">{t("equipmentEmpty")}</p>
-            ) : (
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {equipment.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-ink-soft">
-                    <Icon name="i-check" className="mt-0.5 h-4 w-4 shrink-0 text-spruce" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+        {tab === "regulation" && (
+          <div className="flex flex-col gap-6">
+            {!hasRegulation && (
+              <p className="text-sm text-ink-faint">{t("regulationEmpty")}</p>
+            )}
+
+            {filesForLocale.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">
+                  {t("regulationFilesLabel")}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {filesForLocale.map((f, i) => (
+                    <a
+                      key={i}
+                      href={f.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                        <path d="M9 1v4h4" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                        <path d="M8 10V7M6.5 8.5 8 10l1.5-1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="flex-1">{f.name}</span>
+                      <span className="shrink-0 text-xs text-ember">{t("regulationDownloadLabel")}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {regulationBlocks.length > 0 && (
+              <div className="flex flex-col gap-4">
+                {regulationBlocks
+                  .slice()
+                  .sort((a, b) => a.order - b.order)
+                  .map((block) => {
+                    const title = block.title[locale] || block.title.ru || block.title.en || block.title.kk;
+                    const content = block.content[locale] || block.content.ru || block.content.en || block.content.kk;
+                    if (!title && !content) return null;
+                    return (
+                      <div key={block.id} className="flex flex-col gap-2">
+                        {title && (
+                          <h3 className="font-display text-base font-bold text-ink">{title}</h3>
+                        )}
+                        {content && (
+                          <p className="text-sm leading-relaxed text-ink-soft whitespace-pre-line">{content}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
             )}
           </div>
         )}
