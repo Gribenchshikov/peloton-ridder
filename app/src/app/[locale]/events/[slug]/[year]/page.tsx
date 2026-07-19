@@ -6,14 +6,14 @@ import { getEventDetail } from "@/lib/queries";
 import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
-import { fullName } from "@/lib/user";
+import { DetailTabs } from "./DetailTabs";
 import type { Distance } from "@/generated/prisma/client";
 
 const STATUS_STYLE: Record<string, string> = {
-  OPEN: "bg-success-tint text-success",
-  DRAFT: "bg-surface-2 text-ink-faint",
-  CLOSED: "bg-warn-tint text-warn",
-  COMPLETED: "bg-surface-2 text-ink-faint",
+  OPEN: "bg-white/20 text-white backdrop-blur-sm",
+  DRAFT: "bg-white/15 text-white/70 backdrop-blur-sm",
+  CLOSED: "bg-white/15 text-white/70 backdrop-blur-sm",
+  COMPLETED: "bg-white/15 text-white/70 backdrop-blur-sm",
 };
 
 export default async function EventDetailPage({
@@ -35,185 +35,204 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
   const equipment = (event.race.equipment as string[] | null) ?? [];
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
+  const paidCount = event.registrations.length;
 
   return (
     <main className="flex-1">
-      <section
-        className="relative flex min-h-[280px] items-end px-6 py-10"
-        style={{ backgroundColor: event.race.color }}
-      >
-        {event.coverImageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.coverImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="relative mx-auto w-full max-w-6xl text-white">
-          <Link
-            href="/events"
-            className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-white/85 hover:text-white"
-          >
-            <Icon name="i-arrow" className="h-4 w-4 rotate-180" />
-            {t("backToEvents")}
-          </Link>
-          <span
-            className={`inline-flex rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wide backdrop-blur ${STATUS_STYLE[event.status]}`}
-          >
-            {tStatus(event.status)}
-          </span>
-          <h1 className="mt-3 font-display text-3xl font-extrabold sm:text-4xl">
-            {event.race.name} {event.year}
-          </h1>
-          <div className="mt-3 flex flex-wrap gap-4 text-sm text-white/90">
-            <span className="flex items-center gap-2">
-              <Icon name="i-clock" className="h-4 w-4" />
-              {format.dateTime(event.dateISO, { day: "numeric", month: "long", year: "numeric" })}
-            </span>
-            <span className="flex items-center gap-2">
-              <Icon name="i-pin" className="h-4 w-4" />
-              {event.location}
-            </span>
-          </div>
-        </div>
-      </section>
+      <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
+        {/* Back link */}
+        <Link
+          href="/events"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-ink-faint transition-colors hover:text-ink"
+        >
+          <Icon name="i-arrow" className="h-4 w-4 rotate-180" />
+          {t("backToEvents")}
+        </Link>
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 lg:grid-cols-[1fr_360px]">
-        <div className="flex flex-col gap-8">
-          <section>
-            <h2 className="font-display text-xl font-bold text-ink">{t("courseTitle")}</h2>
-            <p
-              className="mt-3 max-w-2xl text-ink-soft"
-              dangerouslySetInnerHTML={{ __html: event.race.courseIntro }}
+        {/* Hero — rounded, inside container */}
+        <div
+          className="relative mb-8 flex min-h-[340px] flex-col justify-end overflow-hidden rounded-[var(--radius-l)] p-8 sm:p-10"
+          style={{ backgroundColor: event.race.color }}
+        >
+          {event.coverImageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={event.coverImageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-[center_55%]"
             />
-          </section>
+          )}
+          {/* Gradient scrim */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(15,18,13,.1) 0%, rgba(15,18,13,.45) 60%, rgba(15,18,13,.85) 100%)",
+            }}
+          />
 
-          <section>
-            <h2 className="font-display text-xl font-bold text-ink">{t("equipmentTitle")}</h2>
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {equipment.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-ink-soft">
-                  <Icon name="i-check" className="mt-0.5 h-4 w-4 shrink-0 text-spruce" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section>
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold text-ink">{t("participantsTitle")}</h2>
-              {event.registrations.length > 0 && (
-                <span className="text-sm text-ink-faint">{t("participantsCount", { count: event.registrations.length })}</span>
-              )}
+          {/* Content above scrim */}
+          <div className="relative z-10 text-white">
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wide ${STATUS_STYLE[event.status]}`}
+            >
+              {tStatus(event.status)}
+            </span>
+            <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight sm:text-4xl lg:text-[clamp(2rem,4.4vw,3.2rem)]">
+              {event.race.name} {event.year}
+            </h1>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm text-white/85">
+              <span className="flex items-center gap-2">
+                <Icon name="i-clock" className="h-4 w-4" />
+                {format.dateTime(event.dateISO, { day: "numeric", month: "long", year: "numeric" })}
+              </span>
+              <span className="flex items-center gap-2">
+                <Icon name="i-pin" className="h-4 w-4" />
+                {event.location}
+              </span>
             </div>
-            {event.registrations.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-faint">{t("participantsEmpty")}</p>
-            ) : (
-              <div className="mt-3 overflow-x-auto rounded-[var(--radius-m)] border border-border">
-                <table className="w-full min-w-[420px] text-sm">
-                  <tbody>
-                    {event.registrations.map((r) => (
-                      <tr key={r.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-2.5 font-semibold text-ink">{fullName(r.user)}</td>
-                        <td className="px-4 py-2.5 text-ink-soft">{r.distance.name}</td>
-                        <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">#{r.bibNumber ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+            {/* Stats strip */}
+            {event.distances.length > 0 && (
+              <div
+                className="mt-5 grid gap-px overflow-hidden rounded-[var(--radius-m)] border border-white/20 backdrop-blur-md"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.min(event.distances.length + (paidCount > 0 ? 1 : 0), 4)}, 1fr)`,
+                  background: "rgba(255,255,255,.14)",
+                }}
+              >
+                {event.distances.slice(0, 3).map((d) => (
+                  <div key={d.id} className="bg-black/25 px-4 py-3">
+                    <span className="mb-1 block text-[.62rem] uppercase tracking-wide text-white/60">
+                      {d.name}
+                    </span>
+                    <b className="font-display text-[1.1rem] font-bold">
+                      {d.km ? `${d.km} км` : "—"}
+                    </b>
+                  </div>
+                ))}
+                {paidCount > 0 && (
+                  <div className="bg-black/25 px-4 py-3">
+                    <span className="mb-1 block text-[.62rem] uppercase tracking-wide text-white/60">
+                      {t("participantsTitle")}
+                    </span>
+                    <b className="font-display text-[1.1rem] font-bold">{paidCount}</b>
+                  </div>
+                )}
               </div>
             )}
-          </section>
+          </div>
         </div>
 
-        <aside className="flex flex-col gap-5">
-          <div className="rounded-[var(--radius-l)] border border-border bg-surface p-5">
-            <h3 className="font-display text-lg font-bold text-ink">{t("distancesTitle")}</h3>
-            <div className="mt-3 flex flex-col gap-4">
-              {disciplines.map((discipline) => (
-                <div key={discipline}>
-                  <div className="text-xs font-bold uppercase tracking-wide text-ember">{discipline}</div>
-                  <div className="mt-2 flex flex-col gap-2">
-                    {event.distances
-                      .filter((d) => d.discipline === discipline)
-                      .map((d) => (
-                        <DistanceRow key={d.id} distance={d} />
-                      ))}
+        {/* Content grid */}
+        <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
+          {/* LEFT: Tabs (О трассе / Снаряжение / Участники) */}
+          <div>
+            <DetailTabs
+              courseIntro={event.race.courseIntro ?? ""}
+              equipment={equipment}
+              registrations={event.registrations}
+            />
+          </div>
+
+          {/* RIGHT: sticky sidebar */}
+          <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
+            {/* Distances + CTA */}
+            <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+              <h3 className="mb-4 font-display text-base font-bold text-ink">{t("distancesTitle")}</h3>
+              <div className="flex flex-col gap-3">
+                {disciplines.map((discipline) => (
+                  <div key={discipline}>
+                    <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-ember">
+                      {discipline}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {event.distances
+                        .filter((d) => d.discipline === discipline)
+                        .map((d) => (
+                          <DistanceRow key={d.id} distance={d} />
+                        ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-              {noDisciplineDistances.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  {noDisciplineDistances.map((d) => (
-                    <DistanceRow key={d.id} distance={d} />
-                  ))}
+                ))}
+                {noDisciplineDistances.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {noDisciplineDistances.map((d) => (
+                      <DistanceRow key={d.id} distance={d} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {event.status === "OPEN" ? (
+                <>
+                  <Link
+                    href={`/events/${event.race.slug}/${event.year}/register`}
+                    className="mt-5 flex w-full items-center justify-center rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+                  >
+                    {t("registerCta")}
+                  </Link>
+                  <p className="mt-2 text-center text-[0.74rem] text-ink-faint">{t("paymentHint")}</p>
+                </>
+              ) : (
+                <div className="mt-5 w-full rounded-[var(--radius-s)] bg-surface-2 px-5 py-3 text-center text-sm font-bold text-ink-faint">
+                  {tStatus(event.status)}
                 </div>
               )}
             </div>
-            {event.status === "OPEN" ? (
-              <Link
-                href={`/events/${event.race.slug}/${event.year}/register`}
-                className="mt-5 flex w-full items-center justify-center rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
-              >
-                {t("registerCta")}
-              </Link>
-            ) : (
-              <button
-                disabled
-                className="mt-5 w-full cursor-not-allowed rounded-[var(--radius-s)] bg-surface-2 px-5 py-3 text-sm font-bold text-ink-faint"
-              >
-                {t("registerCta")}
-              </button>
-            )}
-          </div>
 
-          <div className="rounded-[var(--radius-l)] border border-border bg-surface p-5">
-            <h3 className="font-display text-lg font-bold text-ink">{t("keyDatesTitle")}</h3>
-            <dl className="mt-3 flex flex-col gap-2.5 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-ink-faint">{t("registrationDeadline")}</dt>
-                <dd className="text-right font-semibold text-ink">
-                  {format.dateTime(event.registrationDeadline, { day: "numeric", month: "long" })}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-ink-faint">{t("cancellationDeadline")}</dt>
-                <dd className="text-right font-semibold text-ink">
-                  {format.dateTime(event.cancellationDeadline, { day: "numeric", month: "long" })}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-ink-faint">{t("medicalDeadline")}</dt>
-                <dd className="text-right font-semibold text-ink">
-                  {format.dateTime(event.medicalCancellationDeadline, { day: "numeric", month: "long" })}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          {event.transferPrice && (
-            <div className="rounded-[var(--radius-l)] border border-border bg-surface p-5">
-              <h3 className="font-display text-lg font-bold text-ink">{t("transferTitle")}</h3>
-              <p className="mt-2 text-sm text-ink-soft">
-                {t("transferText", { price: formatKzt(format, event.transferPrice) })}
-              </p>
+            {/* Key dates */}
+            <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+              <h3 className="mb-4 font-display text-base font-bold text-ink">{t("keyDatesTitle")}</h3>
+              <dl className="flex flex-col gap-3 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-faint">{t("registrationDeadline")}</dt>
+                  <dd className="text-right font-semibold text-ink">
+                    {format.dateTime(event.registrationDeadline, { day: "numeric", month: "long" })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-faint">{t("cancellationDeadline")}</dt>
+                  <dd className="text-right font-semibold text-ink">
+                    {format.dateTime(event.cancellationDeadline, { day: "numeric", month: "long" })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-faint">{t("medicalDeadline")}</dt>
+                  <dd className="text-right font-semibold text-ink">
+                    {format.dateTime(event.medicalCancellationDeadline, { day: "numeric", month: "long" })}
+                  </dd>
+                </div>
+              </dl>
             </div>
-          )}
 
-          {event.resultsUrl && (
-            <a
-              href={event.resultsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-[var(--radius-l)] border border-border bg-surface p-5 transition-colors hover:bg-surface-2"
-            >
-              <h3 className="font-display text-lg font-bold text-ink">{t("resultsTitle")}</h3>
-              <span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ember">
-                {t("resultsCta")}
-                <Icon name="i-arrow" className="h-4 w-4" />
-              </span>
-            </a>
-          )}
-        </aside>
+            {/* Transfer */}
+            {event.transferPrice != null && (
+              <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+                <h3 className="mb-2 font-display text-base font-bold text-ink">{t("transferTitle")}</h3>
+                <p className="text-sm text-ink-soft">
+                  {t("transferText", { price: formatKzt(format, event.transferPrice) })}
+                </p>
+              </div>
+            )}
+
+            {/* Results */}
+            {event.resultsUrl && (
+              <a
+                href={event.resultsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-[var(--radius-m)] border border-border bg-surface p-5 transition-colors hover:bg-surface-2"
+              >
+                <h3 className="font-display text-base font-bold text-ink">{t("resultsTitle")}</h3>
+                <span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ember">
+                  {t("resultsCta")}
+                  <Icon name="i-arrow" className="h-4 w-4" />
+                </span>
+              </a>
+            )}
+          </aside>
+        </div>
       </div>
     </main>
   );

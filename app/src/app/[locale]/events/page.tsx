@@ -26,17 +26,22 @@ function EventsView({
   const t = useTranslations("Events");
 
   const tabClass = (active: boolean) =>
-    `rounded-[var(--radius-s)] px-4 py-2 text-sm font-bold transition-colors ${
-      active ? "bg-ember text-white" : "text-ink-soft hover:bg-surface-2"
+    `rounded-full px-[18px] py-[9px] text-[.85rem] font-bold transition-colors ${
+      active
+        ? "bg-surface text-ink shadow-[0_1px_4px_rgba(0,0,0,.12)]"
+        : "text-ink-soft hover:text-ink"
     }`;
 
   return (
     <main className="flex-1 px-6 py-16">
       <div className="mx-auto max-w-6xl">
-        <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
-        <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ember">
+          <span className="h-1.5 w-1.5 rounded-full bg-ember" />
+          {t("eyebrow")}
+        </span>
+        <div className="mt-2.5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{t("title")}</h1>
-          <div className="flex gap-1 rounded-[var(--radius-m)] border border-border bg-surface p-1">
+          <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface-2 p-1">
             <Link href="/events" className={tabClass(!isArchive)}>
               {t("calendarTab")}
             </Link>

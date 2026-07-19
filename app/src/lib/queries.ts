@@ -2,8 +2,10 @@ import { prisma } from "@/lib/prisma";
 
 export function getHomeEvents() {
   return prisma.event.findMany({
+    where: { status: { in: ["OPEN", "DRAFT"] } },
     include: { race: true, distances: true },
     orderBy: { dateISO: "asc" },
+    take: 4,
   });
 }
 
@@ -92,12 +94,46 @@ export function getEventForRegistration(slug: string, year: number) {
       registrationDeadline: true,
       race: { select: { name: true, slug: true } },
       distances: { orderBy: { km: "asc" } },
+      merchItems: {
+        orderBy: { order: "asc" },
+        select: { id: true, name: true, requiresSize: true },
+      },
     },
+  });
+}
+
+export function getUsersForAdmin() {
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      emailVerified: true,
+      isAdmin: true,
+      createdAt: true,
+      _count: { select: { registrations: true } },
+    },
+    orderBy: [{ isAdmin: "desc" }, { createdAt: "asc" }],
   });
 }
 
 export function getRacesForAdmin() {
   return prisma.race.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
+}
+
+export function getRacesListForAdmin() {
+  return prisma.race.findMany({
+    select: { id: true, name: true, slug: true, icon: true, color: true, _count: { select: { events: true } } },
+    orderBy: { name: "asc" },
+  });
+}
+
+export function getRaceForAdmin(id: string) {
+  return prisma.race.findUnique({
+    where: { id },
+    select: { id: true, name: true, slug: true, courseIntro: true, icon: true, color: true },
+  });
 }
 
 export function getEventForAdmin(id: string) {
@@ -114,12 +150,76 @@ export function getEventForAdmin(id: string) {
           km: true,
           gain: true,
           price: true,
+          maxSlots: true,
           minAge: true,
           maxAge: true,
           cutoffMinutes: true,
+          requiresQualification: true,
+          qualificationNote: true,
+          requiresInsurance: true,
           bibRangeStart: true,
           bibRangeEnd: true,
         },
+      },
+      merchItems: {
+        orderBy: { order: "asc" },
+        select: { id: true, name: true, requiresSize: true, order: true },
+      },
+    },
+  });
+}
+
+export function getEventWithRegistrationsBySlug(slug: string, year: number) {
+  return prisma.event.findFirst({
+    where: { year, race: { slug } },
+    select: {
+      id: true,
+      year: true,
+      race: { select: { name: true, slug: true } },
+      distances: {
+        orderBy: { km: "asc" },
+        select: { id: true, name: true, km: true, bibRangeStart: true, bibRangeEnd: true },
+      },
+      registrations: {
+        where: {
+          OR: [
+            { status: "PAID" },
+            { status: "RESERVED", reservedUntil: { gt: new Date() } },
+          ],
+        },
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true, phone: true } },
+          distance: { select: { id: true, name: true, km: true } },
+        },
+        orderBy: [{ status: "asc" }, { createdAt: "asc" }],
+      },
+    },
+  });
+}
+
+export function getEventWithRegistrations(id: string) {
+  return prisma.event.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      year: true,
+      race: { select: { name: true, slug: true } },
+      distances: {
+        orderBy: { km: "asc" },
+        select: { id: true, name: true, km: true, bibRangeStart: true, bibRangeEnd: true },
+      },
+      registrations: {
+        where: {
+          OR: [
+            { status: "PAID" },
+            { status: "RESERVED", reservedUntil: { gt: new Date() } },
+          ],
+        },
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true, phone: true } },
+          distance: { select: { id: true, name: true, km: true } },
+        },
+        orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
     },
   });

@@ -12,7 +12,7 @@ function split(msLeft: number) {
   return { days, hours, min, sec };
 }
 
-export function Countdown({ targetISO }: { targetISO: string }) {
+export function Countdown({ targetISO, dark }: { targetISO: string; dark?: boolean }) {
   const t = useTranslations("Countdown");
   const target = new Date(targetISO).getTime();
   // null до монтирования на клиенте — иначе SSR и первый клиентский рендер
@@ -41,11 +41,20 @@ export function Countdown({ targetISO }: { targetISO: string }) {
   return (
     <div className="flex gap-3" suppressHydrationWarning>
       {cells.map(([value, label]) => (
-        <div key={label} className="flex flex-1 flex-col items-center rounded-[var(--radius-s)] bg-surface-2 px-3 py-2">
-          <b className="font-display text-xl tabular-nums text-ink">
+        <div
+          key={label}
+          className={`flex flex-1 flex-col items-center rounded-[10px] px-3 py-[10px] text-center ${
+            dark
+              ? "border border-[rgba(251,248,241,.18)] bg-[rgba(251,248,241,.08)]"
+              : "bg-surface-2"
+          }`}
+        >
+          <b className={`block font-display text-xl tabular-nums ${dark ? "text-[#FBF8F1]" : "text-ink"}`}>
             {parts ? String(value).padStart(2, "0") : "--"}
           </b>
-          <span className="text-[0.68rem] text-ink-faint">{label}</span>
+          <span className={`text-[0.62rem] uppercase tracking-wider ${dark ? "text-[rgba(251,248,241,.55)]" : "text-ink-faint"}`}>
+            {label}
+          </span>
         </div>
       ))}
     </div>
