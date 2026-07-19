@@ -236,31 +236,40 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
             {event.eventPartners.length > 0 && (
               <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
                 <h3 className="mb-4 font-display text-base font-bold text-ink">{t("partnersTitle")}</h3>
-                <div className="flex flex-wrap gap-3">
-                  {event.eventPartners.map(({ partner }) =>
-                    partner.websiteUrl ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {event.eventPartners.map(({ partner }) => {
+                    const inner = (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={partner.logoUrl}
+                          alt={partner.name}
+                          className="h-10 w-full object-contain"
+                        />
+                        <span className="mt-2 block text-center text-[0.7rem] font-semibold leading-tight text-ink-soft">
+                          {partner.name}
+                        </span>
+                      </>
+                    );
+                    return partner.websiteUrl ? (
                       <a
                         key={partner.id}
                         href={partner.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title={partner.name}
-                        className="flex h-12 items-center rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 transition-colors hover:border-[var(--ink-faint)]"
+                        className="flex flex-col items-center rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-3 transition-colors hover:border-[var(--ink-faint)] hover:bg-surface"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={partner.logoUrl} alt={partner.name} className="h-6 max-w-[90px] object-contain" />
+                        {inner}
                       </a>
                     ) : (
                       <div
                         key={partner.id}
-                        title={partner.name}
-                        className="flex h-12 items-center rounded-[var(--radius-s)] border border-border bg-surface-2 px-3"
+                        className="flex flex-col items-center rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-3"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={partner.logoUrl} alt={partner.name} className="h-6 max-w-[90px] object-contain" />
+                        {inner}
                       </div>
-                    )
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             )}

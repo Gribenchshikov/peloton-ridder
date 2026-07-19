@@ -66,7 +66,7 @@ export function PartnerForm({ action, defaultValues = {}, submitLabel, extra }: 
         {defaultValues.logoUrl && (
           <input type="hidden" name="currentLogoUrl" value={defaultValues.logoUrl} />
         )}
-        <span className="text-xs text-ink-faint">JPEG, PNG, WebP или SVG · макс. 5 МБ</span>
+        <span className="text-xs text-ink-faint">JPEG, PNG, WebP или SVG · макс. 5 МБ · рекомендуем 240×80 px, прозрачный фон</span>
       </div>
 
       <FormField label={t("partnerFieldWebsiteUrl")} name="websiteUrl" type="url" defaultValue={defaultValues.websiteUrl} />
