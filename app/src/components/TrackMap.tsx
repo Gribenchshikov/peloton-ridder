@@ -72,7 +72,7 @@ export function TrackMap({ track, startLat, startLon, color = "#E2531F" }: Props
   return (
     <div
       ref={containerRef}
-      className="h-60 w-full overflow-hidden rounded-[var(--radius-m)] border border-border"
+      className="h-[480px] w-full overflow-hidden rounded-[var(--radius-m)] border border-border"
       aria-label="Карта трассы"
     />
   );
