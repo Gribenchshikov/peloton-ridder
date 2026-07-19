@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { ElevationPoint } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
 
@@ -28,6 +31,12 @@ function elevationAtKm(points: ElevationPoint[], km: number): number {
   return points.reduce((prev, curr) => (Math.abs(curr.d - km) < Math.abs(prev.d - km) ? curr : prev)).e;
 }
 
+function formatCutoff(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `+${h}:${m.toString().padStart(2, "0")}`;
+}
+
 const STATION_EMOJI: Record<string, string> = {
   water: "💧",
   food: "🍌",
@@ -40,7 +49,12 @@ const STATION_COLOR: Record<string, string> = {
   checkpoint: "#F59E0B",
 };
 
+const TOOLTIP_W = 90;
+const TOOLTIP_PADDING = 10;
+
 export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidStations = [], distanceName }: Props) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
   if (points.length < 2) return null;
 
   const maxD = points[points.length - 1].d;
@@ -53,12 +67,10 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
   const toY = (e: number) => PAD.top + CH - ((e - minE) / eRange) * CH;
   const chartBottom = PAD.top + CH; // y=172
 
-  // Build SVG path for profile + closed area
   const linePts = points.map((p) => `${toX(p.d).toFixed(1)},${toY(p.e).toFixed(1)}`).join(" L");
   const profileD = `M${linePts}`;
   const areaD = `M${toX(0).toFixed(1)},${toY(minE).toFixed(1)} L${linePts} L${toX(maxD).toFixed(1)},${toY(minE).toFixed(1)} Z`;
 
-  // Horizontal grid lines
   const interval = niceInterval(eRange);
   const firstLine = Math.ceil(minE / interval) * interval;
   const gridLines: number[] = [];
@@ -66,7 +78,6 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
     if (e > minE + eRange * 0.05) gridLines.push(e);
   }
 
-  // X axis distance labels (every ~10 km, at most 8 labels)
   const xStep = Math.ceil(maxD / 8 / 5) * 5 || 1;
   const xLabels: number[] = [];
   for (let d = xStep; d < maxD - xStep * 0.3; d += xStep) xLabels.push(d);
@@ -75,7 +86,6 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Stats row */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         <span className="font-bold text-ink">{distanceName}</span>
         <span className="font-semibold text-ink">↑ {gainM.toLocaleString()} м</span>
@@ -83,7 +93,6 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
         <span className="font-semibold text-ink">{maxD.toFixed(1)} км</span>
       </div>
 
-      {/* SVG profile */}
       <div className="overflow-hidden rounded-[var(--radius-s)] border border-border bg-surface-2">
         <svg
           viewBox={`0 0 ${W} ${H}`}
@@ -104,27 +113,8 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
             const y = toY(e).toFixed(1);
             return (
               <g key={e}>
-                <line
-                  x1={PAD.left}
-                  y1={y}
-                  x2={W - PAD.right}
-                  y2={y}
-                  stroke="currentColor"
-                  strokeWidth="0.5"
-                  strokeOpacity="0.3"
-                  className="text-ink"
-                />
-                <text
-                  x={PAD.left - 4}
-                  y={y}
-                  dy="-0.3em"
-                  textAnchor="end"
-                  fontSize="8"
-                  fill="currentColor"
-                  fillOpacity="0.65"
-                  className="text-ink"
-                  fontFamily="system-ui,sans-serif"
-                >
+                <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.3" className="text-ink" />
+                <text x={PAD.left - 4} y={y} dy="-0.3em" textAnchor="end" fontSize="8" fill="currentColor" fillOpacity="0.65" className="text-ink" fontFamily="system-ui,sans-serif">
                   {e}
                 </text>
               </g>
@@ -138,92 +128,99 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
           <path d={profileD} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
 
           {/* Aid station markers */}
-          {aidStations.map((s) => {
+          {aidStations.map((s, i) => {
             if (s.km > maxD) return null;
-            const x = toX(s.km).toFixed(1);
-            const xNum = parseFloat(x);
+            const xNum = toX(s.km);
+            const x = xNum.toFixed(1);
             const profileY = toY(elevationAtKm(points, s.km));
             const markerColor = STATION_COLOR[s.type] ?? "#6B7280";
             const emoji = STATION_EMOJI[s.type] ?? "•";
             const label = s.name.length > 9 ? s.name.slice(0, 8) + "…" : s.name;
+            const isHovered = hoveredIdx === i;
+
+            // Tooltip positioning — clamp to stay inside viewBox
+            const hasCutoff = s.cutoffMinutes != null;
+            const tooltipH = hasCutoff ? 30 : 19;
+            const tooltipX = Math.max(PAD.left, Math.min(W - PAD.right - TOOLTIP_W, xNum - TOOLTIP_W / 2));
+            const tooltipY = Math.max(PAD.top + 2, profileY - tooltipH - TOOLTIP_PADDING);
 
             return (
-              <g key={`${s.name}-${s.km}`}>
-                {/* Dashed connector from profile dot to chart baseline */}
-                <line
-                  x1={x}
-                  y1={profileY.toFixed(1)}
-                  x2={x}
-                  y2={chartBottom}
-                  stroke={markerColor}
-                  strokeWidth="0.8"
-                  strokeDasharray="2.5,2"
-                  strokeOpacity="0.6"
-                />
-                {/* Circle on the profile line */}
-                <circle
-                  cx={xNum}
-                  cy={profileY}
-                  r={3.5}
-                  fill="white"
-                  stroke={markerColor}
-                  strokeWidth="1.5"
-                />
+              <g
+                key={`${s.name}-${s.km}`}
+                onMouseEnter={() => setHoveredIdx(i)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{ cursor: "default" }}
+              >
+                {/* Wide invisible hit area so hover is easy to trigger */}
+                <rect x={xNum - 12} y={PAD.top} width={24} height={H} fill="transparent" />
+
+                {/* Dashed connector */}
+                <line x1={x} y1={profileY.toFixed(1)} x2={x} y2={chartBottom} stroke={markerColor} strokeWidth="0.8" strokeDasharray="2.5,2" strokeOpacity="0.6" />
+
+                {/* Circle on profile line */}
+                <circle cx={xNum} cy={profileY} r={isHovered ? 5 : 3.5} fill="white" stroke={markerColor} strokeWidth="1.5" style={{ transition: "r 0.1s" }} />
+
                 {/* Emoji icon below chart */}
-                <text
-                  x={x}
-                  y={chartBottom + 18}
-                  textAnchor="middle"
-                  fontSize="14"
-                  fontFamily="system-ui,sans-serif"
-                >
+                <text x={x} y={chartBottom + 18} textAnchor="middle" fontSize="14" fontFamily="system-ui,sans-serif">
                   {emoji}
                 </text>
+
                 {/* Station name */}
-                <text
-                  x={x}
-                  y={chartBottom + 36}
-                  textAnchor="middle"
-                  fontSize="7"
-                  fill={markerColor}
-                  fillOpacity="0.9"
-                  fontFamily="system-ui,sans-serif"
-                  fontWeight="600"
-                >
+                <text x={x} y={chartBottom + 36} textAnchor="middle" fontSize="7" fill={markerColor} fillOpacity="0.9" fontFamily="system-ui,sans-serif" fontWeight="600">
                   {label}
                 </text>
+
+                {/* Tooltip */}
+                {isHovered && (
+                  <g>
+                    {/* Arrow pointer */}
+                    <polygon
+                      points={`${xNum - 4},${tooltipY + tooltipH} ${xNum + 4},${tooltipY + tooltipH} ${xNum},${tooltipY + tooltipH + 5}`}
+                      fill="#111827"
+                      fillOpacity="0.92"
+                    />
+                    {/* Background */}
+                    <rect x={tooltipX} y={tooltipY} width={TOOLTIP_W} height={tooltipH} rx="3" fill="#111827" fillOpacity="0.92" />
+                    {/* km line */}
+                    <text
+                      x={tooltipX + TOOLTIP_W / 2}
+                      y={tooltipY + 12}
+                      textAnchor="middle"
+                      fontSize="9"
+                      fontWeight="700"
+                      fill="white"
+                      fontFamily="system-ui,sans-serif"
+                    >
+                      {s.km} км
+                    </text>
+                    {/* Cutoff line */}
+                    {hasCutoff && (
+                      <text
+                        x={tooltipX + TOOLTIP_W / 2}
+                        y={tooltipY + 24}
+                        textAnchor="middle"
+                        fontSize="8"
+                        fill="rgba(255,255,255,0.72)"
+                        fontFamily="system-ui,sans-serif"
+                      >
+                        Кат-офф: {formatCutoff(s.cutoffMinutes!)}
+                      </text>
+                    )}
+                  </g>
+                )}
               </g>
             );
           })}
 
           {/* X axis labels */}
           {xLabels.map((d) => (
-            <text
-              key={d}
-              x={toX(d).toFixed(1)}
-              y={H - 4}
-              textAnchor="middle"
-              fontSize="7.5"
-              fill="currentColor"
-              fillOpacity="0.4"
-              className="text-ink"
-              fontFamily="system-ui,sans-serif"
-            >
+            <text key={d} x={toX(d).toFixed(1)} y={H - 4} textAnchor="middle" fontSize="7.5" fill="currentColor" fillOpacity="0.4" className="text-ink" fontFamily="system-ui,sans-serif">
               {d}км
             </text>
           ))}
 
           {/* Bottom baseline */}
-          <line
-            x1={PAD.left}
-            y1={chartBottom}
-            x2={W - PAD.right}
-            y2={chartBottom}
-            stroke="currentColor"
-            strokeWidth="0.5"
-            strokeOpacity="0.2"
-            className="text-ink"
-          />
+          <line x1={PAD.left} y1={chartBottom} x2={W - PAD.right} y2={chartBottom} stroke="currentColor" strokeWidth="0.5" strokeOpacity="0.2" className="text-ink" />
         </svg>
       </div>
     </div>
