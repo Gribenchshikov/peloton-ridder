@@ -155,6 +155,7 @@ model Event {
   eventPartners          EventPartner[]
   notifications          Notification[]
   volunteerApplications  VolunteerApplication[]
+  merchItems             MerchItem[]
 
   @@unique([raceId, year])
 }
@@ -162,24 +163,53 @@ model Event {
 // discipline используется только у Ridder UpHill (Лыжная гонка / Ski tour / Скиальпинизм / Скайраннинг).
 // Возрастные тарифы внутри одной трассы — отдельные строки Distance (тот же km, разные price/minAge/maxAge).
 model Distance {
-  id            String   @id @default(cuid())
-  eventId       String
-  event         Event    @relation(fields: [eventId], references: [id])
-  discipline    String?
-  name          String
-  km            Float
-  gain          Int?
-  price         Int
-  minAge        Int?
-  maxAge        Int?
-  cutoffMinutes Int?
-  profileData   Json?
-  bibRangeStart Int
-  bibRangeEnd   Int
-  createdAt     DateTime @default(now())
+  id                    String   @id @default(cuid())
+  eventId               String
+  event                 Event    @relation(fields: [eventId], references: [id])
+  discipline            String?
+  name                  String
+  km                    Float
+  gain                  Int?
+  price                 Int
+  maxSlots              Int?
+  minAge                Int?
+  maxAge                Int?
+  cutoffMinutes         Int?
+  requiresQualification Boolean  @default(false)
+  qualificationNote     String?
+  requiresInsurance     Boolean  @default(false)
+  profileData           Json?
+  bibRangeStart         Int
+  bibRangeEnd           Int
+  createdAt             DateTime @default(now())
 
   registrations Registration[]
   waitlist      Waitlist[]
+}
+
+// Мерч, включённый в стоимость регистрации на Event (футболка, баф, медаль и т.п.).
+// requiresSize=true → участник выбирает размер (XS/S/M/L/XL/XXL) при регистрации.
+model MerchItem {
+  id           String   @id @default(cuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id])
+  name         String
+  requiresSize Boolean  @default(false)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  registrationMerch RegistrationMerch[]
+}
+
+model RegistrationMerch {
+  id             String       @id @default(cuid())
+  registrationId String
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  merchItemId    String
+  merchItem      MerchItem    @relation(fields: [merchItemId], references: [id])
+  size           String?
+
+  @@unique([registrationId, merchItemId])
 }
 
 model Registration {
@@ -198,7 +228,8 @@ model Registration {
   kaspiPaymentUrl String?
   createdAt       DateTime           @default(now())
 
-  result Result?
+  result            Result?
+  registrationMerch RegistrationMerch[]
 
   @@index([eventId])
   @@index([distanceId])
@@ -256,11 +287,19 @@ model EventPartner {
   @@unique([eventId, partnerId])
 }
 
+enum MemberType {
+  TEAM
+  VOLUNTEER
+}
+
 model TeamMember {
-  id    String @id @default(cuid())
-  name  String
-  role  String
-  order Int
+  id       String     @id @default(cuid())
+  name     String
+  role     String
+  bio      String?
+  photoUrl String?
+  type     MemberType @default(TEAM)
+  order    Int
 }
 
 model TrainingGroup {
