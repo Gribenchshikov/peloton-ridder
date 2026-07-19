@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { auth } from "@/auth";
 import { MobileMenu } from "./MobileMenu";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 export async function SiteHeader({ locale }: { locale: string }) {
   const [session, t] = await Promise.all([auth(), getTranslations("Nav")]);
@@ -39,6 +40,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
 
         {/* Desktop right side */}
         <div className="hidden items-center gap-2 md:flex">
+          <LocaleSwitcher />
           {isAdmin && (
             <Link
               href="/admin"

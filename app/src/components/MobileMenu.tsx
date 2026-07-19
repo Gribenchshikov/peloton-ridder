@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 type NavLink = { href: string; label: string };
 
@@ -57,7 +58,10 @@ export function MobileMenu({
               </Link>
             ))}
           </nav>
-          <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+          <div className="mt-3 border-t border-border pt-3">
+            <LocaleSwitcher className="mb-3" />
+          </div>
+          <div className="flex flex-col gap-2">
             {isAdmin && (
               <Link
                 href="/admin"

@@ -7,6 +7,8 @@ import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
 import { RegulationsSection } from "./RegulationsSection";
+import { DeleteEventButton } from "./DeleteEventButton";
+import { deleteEventAction } from "../actions";
 import type { Partner } from "@/generated/prisma/client";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
@@ -30,7 +32,7 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
   );
 }
 
-export function EventEditView({ event, allPartners, wizard }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3" }) {
+export function EventEditView({ event, allPartners, wizard, locale }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3"; locale: string }) {
   const t = useTranslations("Admin");
 
   if (wizard === "2") {
@@ -144,6 +146,11 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
         initialFiles={(event.regulationFiles as RegulationFile[] | null) ?? []}
         initialBlocks={(event.regulationBlocks as RegulationBlock[] | null) ?? []}
       />
+
+      <div className="border-t border-danger/20 pt-6">
+        <div className="text-xs font-bold uppercase tracking-wide text-danger/60 mb-3">Опасная зона</div>
+        <DeleteEventButton action={deleteEventAction.bind(null, locale, event.id)} />
+      </div>
     </main>
   );
 }

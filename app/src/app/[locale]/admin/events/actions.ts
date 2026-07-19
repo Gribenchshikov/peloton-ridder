@@ -6,6 +6,7 @@ import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
 import { parseGpx } from "@/lib/gpxParser";
+import { redirect } from "@/i18n/navigation";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 
@@ -318,6 +319,41 @@ export async function deleteDistanceAction(
   await prisma.distance.delete({ where: { id: distanceId } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   return { success: true };
+}
+
+// ── Delete event ──────────────────────────────────────────────────────────────
+
+export async function deleteEventAction(
+  locale: string,
+  eventId: string,
+  _prevState: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const hasPaid = await prisma.registration.findFirst({
+    where: { eventId, status: "PAID" },
+    select: { id: true },
+  });
+  if (hasPaid) return { error: "hasRegistrations" };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.registrationMerch.deleteMany({ where: { registration: { eventId } } });
+    await tx.registration.deleteMany({ where: { eventId } });
+    await tx.waitlist.deleteMany({ where: { eventId } });
+    await tx.result.deleteMany({ where: { eventId } });
+    await tx.notification.deleteMany({ where: { eventId } });
+    await tx.volunteerApplication.deleteMany({ where: { eventId } });
+    await tx.eventPartner.deleteMany({ where: { eventId } });
+    await tx.merchItem.deleteMany({ where: { eventId } });
+    await tx.distance.deleteMany({ where: { eventId } });
+    await tx.event.delete({ where: { id: eventId } });
+  });
+
+  revalidatePath("/[locale]/admin", "page");
+  redirect({ href: "/admin", locale });
+  return {};
 }
 
 // ── Regulation files ─────────────────────────────────────────────────────────

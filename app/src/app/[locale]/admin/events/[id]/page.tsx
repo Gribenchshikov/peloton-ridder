@@ -22,5 +22,5 @@ export default async function EditEventPage({
   if (!event) notFound();
 
   const wizardStep = wizard === "2" ? "2" : wizard === "3" ? "3" : undefined;
-  return <EventEditView event={event} allPartners={allPartners} wizard={wizardStep} />;
+  return <EventEditView event={event} allPartners={allPartners} wizard={wizardStep} locale={locale} />;
 }
