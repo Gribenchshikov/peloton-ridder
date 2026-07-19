@@ -23,7 +23,7 @@ export function TrackMap({ track, startLat, startLon, color = "#E2531F" }: Props
       // Prevent double-init if effect re-runs
       if ((el as HTMLElement & { _leaflet_id?: number })._leaflet_id) return;
 
-      const map = L.map(el, { zoomControl: true, scrollWheelZoom: false }).setView(
+      const map = L.map(el, { zoomControl: true, scrollWheelZoom: false, maxBoundsViscosity: 1.0 }).setView(
         [startLat, startLon],
         11,
       );
@@ -39,7 +39,13 @@ export function TrackMap({ track, startLat, startLon, color = "#E2531F" }: Props
         opacity: 0.85,
       }).addTo(map);
 
-      map.fitBounds(polyline.getBounds(), { padding: [24, 24] });
+      const trackBounds = polyline.getBounds();
+      map.fitBounds(trackBounds, { padding: [24, 24] });
+
+      // Lock the map to the track area + 40% padding on each side.
+      // Prevents users from panning to unrelated regions and wasting tile quota.
+      map.setMaxBounds(trackBounds.pad(0.4));
+      map.setMinZoom(map.getZoom() - 2);
 
       // Start marker (green circle)
       const startIcon = L.divIcon({
