@@ -35,8 +35,8 @@ export function TrackMap({ track, startLat, startLon, color = "#E2531F" }: Props
           : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
           attribution: key
-            ? '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-            : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            ? '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>'
+            : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
           maxZoom: 18,
           tileSize: key ? 512 : 256,
           zoomOffset: key ? -1 : 0,
