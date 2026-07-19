@@ -79,7 +79,8 @@
     "transferRoute": "Риддер → место старта и обратно",
     "transferPerPerson": "/ человек",
     "statsDistances": "{count, plural, one {# дистанция} few {# дистанции} many {# дистанций} other {# дистанций}}",
-    "statsParticipants": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}"
+    "statsParticipants": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}",
+    "partnersTitle": "Партнёры забега"
   },
   "Auth": {
     "registerEyebrow": "Личный кабинет",
@@ -298,7 +299,19 @@
     "raceFieldIntro": "Описание трассы",
     "raceErrorDuplicateSlug": "Трасса с таким slug уже существует.",
     "raceErrorUnauthorized": "Нет доступа.",
-    "fieldTransferEnabled": "Трансфер (доступен)"
+    "fieldTransferEnabled": "Трансфер (доступен)",
+    "partnersTitle": "Партнёры",
+    "createPartnerCta": "Добавить партнёра",
+    "newPartnerTitle": "Новый партнёр",
+    "partnersEmpty": "Партнёров пока нет.",
+    "partnerSaved": "Сохранено.",
+    "partnerFieldName": "Название",
+    "partnerFieldLogoUrl": "URL логотипа",
+    "partnerFieldWebsiteUrl": "Сайт (необязательно)",
+    "managePartnersCta": "Управление",
+    "eventPartnersTitle": "Партнёры забега",
+    "eventPartnersEmpty": "Нет привязанных партнёров.",
+    "eventPartnersNoGlobal": "Сначала создайте партнёров в разделе «Партнёры»."
   },
   "About": {
     "eyebrow": "О клубе",

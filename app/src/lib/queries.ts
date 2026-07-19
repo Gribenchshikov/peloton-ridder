@@ -165,6 +165,7 @@ export function getEventForAdmin(id: string) {
         orderBy: { order: "asc" },
         select: { id: true, name: true, requiresSize: true, order: true },
       },
+      eventPartners: { include: { partner: true } },
     },
   });
 }

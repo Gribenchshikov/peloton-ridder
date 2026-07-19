@@ -73,6 +73,18 @@ export function AdminView({ events }: { events: EventRow[] }) {
 
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg font-bold text-ink">{t("partnersTitle")}</h2>
+          <Link
+            href="/admin/partners"
+            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {t("managePartnersCta")}
+          </Link>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-bold text-ink">{t("eventsTitle")}</h2>
           <Link
             href="/admin/events/new"

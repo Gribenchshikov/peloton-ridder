@@ -75,7 +75,8 @@
     "transferRoute": "Ridder → start line and back",
     "transferPerPerson": "/ person",
     "statsDistances": "{count, plural, one {# distance} other {# distances}}",
-    "statsParticipants": "{count, plural, one {# participant} other {# participants}}"
+    "statsParticipants": "{count, plural, one {# participant} other {# participants}}",
+    "partnersTitle": "Race Partners"
   },
   "Auth": {
     "registerEyebrow": "Personal account",
@@ -294,7 +295,19 @@
     "raceFieldIntro": "Course description",
     "raceErrorDuplicateSlug": "A race route with this slug already exists.",
     "raceErrorUnauthorized": "Unauthorized.",
-    "fieldTransferEnabled": "Transfer (available)"
+    "fieldTransferEnabled": "Transfer (available)",
+    "partnersTitle": "Partners",
+    "createPartnerCta": "Add partner",
+    "newPartnerTitle": "New partner",
+    "partnersEmpty": "No partners yet.",
+    "partnerSaved": "Saved.",
+    "partnerFieldName": "Name",
+    "partnerFieldLogoUrl": "Logo URL",
+    "partnerFieldWebsiteUrl": "Website (optional)",
+    "managePartnersCta": "Manage",
+    "eventPartnersTitle": "Race partners",
+    "eventPartnersEmpty": "No partners linked.",
+    "eventPartnersNoGlobal": "Create partners in the Partners section first."
   },
   "About": {
     "eyebrow": "About",

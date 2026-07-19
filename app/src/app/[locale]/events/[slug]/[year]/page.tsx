@@ -231,6 +231,39 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
                 </span>
               </a>
             )}
+
+            {/* Partners */}
+            {event.eventPartners.length > 0 && (
+              <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+                <h3 className="mb-4 font-display text-base font-bold text-ink">{t("partnersTitle")}</h3>
+                <div className="flex flex-wrap gap-3">
+                  {event.eventPartners.map(({ partner }) =>
+                    partner.websiteUrl ? (
+                      <a
+                        key={partner.id}
+                        href={partner.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={partner.name}
+                        className="flex h-12 items-center rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 transition-colors hover:border-[var(--ink-faint)]"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={partner.logoUrl} alt={partner.name} className="h-6 max-w-[90px] object-contain" />
+                      </a>
+                    ) : (
+                      <div
+                        key={partner.id}
+                        title={partner.name}
+                        className="flex h-12 items-center rounded-[var(--radius-s)] border border-border bg-surface-2 px-3"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={partner.logoUrl} alt={partner.name} className="h-6 max-w-[90px] object-contain" />
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       </div>

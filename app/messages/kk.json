@@ -75,7 +75,8 @@
     "transferRoute": "Риддер → старт орны және кері",
     "transferPerPerson": "/ адам",
     "statsDistances": "{count, plural, other {# дистанция}}",
-    "statsParticipants": "{count, plural, other {# қатысушы}}"
+    "statsParticipants": "{count, plural, other {# қатысушы}}",
+    "partnersTitle": "Жарыс серіктестері"
   },
   "Auth": {
     "registerEyebrow": "Жеке кабинет",
@@ -294,7 +295,19 @@
     "raceFieldIntro": "Трасса сипаттамасы",
     "raceErrorDuplicateSlug": "Бұл slug бар трасса бар.",
     "raceErrorUnauthorized": "Рұқсат жоқ.",
-    "fieldTransferEnabled": "Трансфер (қолжетімді)"
+    "fieldTransferEnabled": "Трансфер (қолжетімді)",
+    "partnersTitle": "Серіктестер",
+    "createPartnerCta": "Серіктес қосу",
+    "newPartnerTitle": "Жаңа серіктес",
+    "partnersEmpty": "Серіктес жоқ.",
+    "partnerSaved": "Сақталды.",
+    "partnerFieldName": "Атауы",
+    "partnerFieldLogoUrl": "Логотип URL",
+    "partnerFieldWebsiteUrl": "Сайт (міндетті емес)",
+    "managePartnersCta": "Басқару",
+    "eventPartnersTitle": "Жарыс серіктестері",
+    "eventPartnersEmpty": "Серіктестер жоқ.",
+    "eventPartnersNoGlobal": "Алдымен «Серіктестер» бөлімінде серіктес жасаңыз."
   },
   "About": {
     "eyebrow": "Клуб туралы",

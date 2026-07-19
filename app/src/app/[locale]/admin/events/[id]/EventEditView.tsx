@@ -5,6 +5,8 @@ import { AdminFormHeader } from "../AdminFormHeader";
 import { EventForm } from "../EventForm";
 import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
+import { PartnersSection } from "./PartnersSection";
+import type { Partner } from "@/generated/prisma/client";
 
 type EventWithDetails = NonNullable<Awaited<ReturnType<typeof getEventForAdmin>>>;
 
@@ -25,7 +27,7 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
   );
 }
 
-export function EventEditView({ event, wizard }: { event: EventWithDetails; wizard?: "2" | "3" }) {
+export function EventEditView({ event, allPartners, wizard }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3" }) {
   const t = useTranslations("Admin");
 
   if (wizard === "2") {
@@ -113,6 +115,11 @@ export function EventEditView({ event, wizard }: { event: EventWithDetails; wiza
 
       <DistancesSection eventId={event.id} distances={event.distances} />
       <MerchSection eventId={event.id} items={event.merchItems} />
+      <PartnersSection
+        eventId={event.id}
+        linked={event.eventPartners}
+        all={allPartners}
+      />
     </main>
   );
 }
