@@ -6,8 +6,7 @@ import { getEventDetail } from "@/lib/queries";
 import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
-import { DetailTabs } from "./DetailTabs";
-import { DistanceProfiles } from "./DistanceProfiles";
+import { DetailTabs, type DistanceWithProfile } from "./DetailTabs";
 import type { Distance } from "@/generated/prisma/client";
 import type { ProfileData } from "@/lib/gpxParser";
 
@@ -39,7 +38,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
   const paidCount = event.registrations.length;
 
-  const distancesWithProfile = event.distances
+  const distancesWithProfile: DistanceWithProfile[] = event.distances
     .filter((d) => d.profileData != null)
     .map((d) => ({
       id: d.id,
@@ -47,7 +46,6 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
       km: d.km,
       profileData: d.profileData as unknown as ProfileData,
       gpxUrl: d.gpxUrl ?? null,
-      color: undefined,
     }));
 
   return (
@@ -139,16 +137,14 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
         {/* Content grid */}
         <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
-          {/* LEFT: Tabs (О трассе / Снаряжение / Участники) + elevation profiles */}
+          {/* LEFT: Tabs */}
           <div className="flex flex-col gap-6">
             <DetailTabs
               courseIntro={event.race.courseIntro ?? ""}
               equipment={equipment}
               registrations={event.registrations}
+              distances={distancesWithProfile}
             />
-            {distancesWithProfile.length > 0 && (
-              <DistanceProfiles distances={distancesWithProfile} />
-            )}
           </div>
 
           {/* RIGHT: sticky sidebar */}

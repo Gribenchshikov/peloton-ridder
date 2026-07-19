@@ -80,7 +80,9 @@
     "transferPerPerson": "/ человек",
     "statsDistances": "{count, plural, one {# дистанция} few {# дистанции} many {# дистанций} other {# дистанций}}",
     "statsParticipants": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}",
-    "partnersTitle": "Партнёры забега"
+    "partnersTitle": "Партнёры забега",
+    "courseProfileTitle": "Профиль трассы",
+    "downloadGpxCta": "Скачать GPX"
   },
   "Auth": {
     "registerEyebrow": "Личный кабинет",

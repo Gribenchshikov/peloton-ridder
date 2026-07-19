@@ -76,7 +76,9 @@
     "transferPerPerson": "/ person",
     "statsDistances": "{count, plural, one {# distance} other {# distances}}",
     "statsParticipants": "{count, plural, one {# participant} other {# participants}}",
-    "partnersTitle": "Race Partners"
+    "partnersTitle": "Race Partners",
+    "courseProfileTitle": "Course profile",
+    "downloadGpxCta": "Download GPX"
   },
   "Auth": {
     "registerEyebrow": "Personal account",

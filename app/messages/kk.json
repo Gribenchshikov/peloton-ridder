@@ -76,7 +76,9 @@
     "transferPerPerson": "/ адам",
     "statsDistances": "{count, plural, other {# дистанция}}",
     "statsParticipants": "{count, plural, other {# қатысушы}}",
-    "partnersTitle": "Жарыс серіктестері"
+    "partnersTitle": "Жарыс серіктестері",
+    "courseProfileTitle": "Трасса профилі",
+    "downloadGpxCta": "GPX жүктеу"
   },
   "Auth": {
     "registerEyebrow": "Жеке кабинет",

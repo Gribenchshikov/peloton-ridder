@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { Icon } from "@/components/IconSprite";
+import { ElevationProfile } from "@/components/ElevationProfile";
+import { TrackMap } from "@/components/TrackMap";
 import { fullName } from "@/lib/user";
+import type { ProfileData } from "@/lib/gpxParser";
 
-type Tab = "course" | "equipment" | "participants";
+type Tab = "course" | "equipment" | "participants" | "profile";
 
 type Registration = {
   id: string;
@@ -14,26 +17,39 @@ type Registration = {
   bibNumber: number | null;
 };
 
+export type DistanceWithProfile = {
+  id: string;
+  name: string;
+  km: number;
+  profileData: ProfileData;
+  gpxUrl: string | null;
+};
+
 type Props = {
   courseIntro: string;
   equipment: string[];
   registrations: Registration[];
+  distances?: DistanceWithProfile[];
 };
 
-export function DetailTabs({ courseIntro, equipment, registrations }: Props) {
+export function DetailTabs({ courseIntro, equipment, registrations, distances = [] }: Props) {
   const t = useTranslations("EventDetail");
+  const hasProfile = distances.length > 0;
   const [tab, setTab] = useState<Tab>("course");
+  const [activeDistId, setActiveDistId] = useState(distances[0]?.id ?? "");
+  const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
 
-  const tabs: { id: Tab; label: string }[] = [
+  const tabs: { id: Tab; label: string; hidden?: boolean }[] = [
     { id: "course", label: t("courseTitle") },
     { id: "equipment", label: t("equipmentTitle") },
+    { id: "profile", label: t("courseProfileTitle"), hidden: !hasProfile },
     { id: "participants", label: t("participantsTitle") },
   ];
 
   return (
     <div className="rounded-[var(--radius-m)] border border-border bg-surface">
       <div className="flex gap-0 overflow-x-auto border-b border-border px-4">
-        {tabs.map(({ id, label }) => (
+        {tabs.filter((t) => !t.hidden).map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
@@ -75,6 +91,64 @@ export function DetailTabs({ courseIntro, equipment, registrations }: Props) {
                   </li>
                 ))}
               </ul>
+            )}
+          </div>
+        )}
+
+        {tab === "profile" && activeDist && (
+          <div className="flex flex-col gap-5">
+            {/* Distance selector + GPX download */}
+            <div className="flex items-center justify-between gap-3">
+              {distances.length > 1 ? (
+                <div className="flex gap-1 overflow-x-auto">
+                  {distances.map((d) => (
+                    <button
+                      key={d.id}
+                      onClick={() => setActiveDistId(d.id)}
+                      className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+                        d.id === activeDistId
+                          ? "bg-ember text-white"
+                          : "border border-border text-ink-soft hover:text-ink"
+                      }`}
+                    >
+                      {d.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm font-semibold text-ink">{activeDist.name}</span>
+              )}
+
+              {activeDist.gpxUrl && (
+                <a
+                  href={activeDist.gpxUrl}
+                  download
+                  className="shrink-0 flex items-center gap-1.5 rounded-[var(--radius-s)] border border-border px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-ink-soft hover:text-ink"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+                    <path d="M6 1v7M3 6l3 3 3-3M1 10h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {t("downloadGpxCta")}
+                </a>
+              )}
+            </div>
+
+            {/* Elevation chart */}
+            <ElevationProfile
+              points={activeDist.profileData.points}
+              gainM={activeDist.profileData.gainM}
+              lossM={activeDist.profileData.lossM}
+              distanceName={activeDist.name}
+            />
+
+            {/* Map */}
+            {activeDist.profileData.track && activeDist.profileData.meta && activeDist.profileData.track.length >= 2 && (
+              <TrackMap
+                key={activeDist.id}
+                track={activeDist.profileData.track}
+                startLat={activeDist.profileData.meta.startLat}
+                startLon={activeDist.profileData.meta.startLon}
+              />
             )}
           </div>
         )}
