@@ -4,6 +4,8 @@ import { setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { IconSprite } from "@/components/IconSprite";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -34,7 +36,13 @@ export default async function RootLayout({
     <html lang={locale} className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <IconSprite />
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <SiteHeader locale={locale} />
+          <div className="flex flex-1 flex-col">
+            {children}
+          </div>
+          <SiteFooter />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

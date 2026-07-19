@@ -3,21 +3,34 @@ export function FormField({
   name,
   type,
   required,
+  optional,
   minLength,
   defaultValue,
   step,
+  placeholder,
+  hint,
+  error,
 }: {
   label: string;
   name: string;
   type: string;
   required?: boolean;
+  optional?: boolean;
   minLength?: number;
   defaultValue?: string;
   step?: string;
+  placeholder?: string;
+  hint?: string;
+  error?: boolean;
 }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
-      <span className="font-semibold text-ink-soft">{label}</span>
+      <span className="flex items-baseline gap-1.5 font-semibold text-ink-soft">
+        {label}
+        {optional && (
+          <span className="text-xs font-normal text-ink-faint">опционально</span>
+        )}
+      </span>
       <input
         name={name}
         type={type}
@@ -25,8 +38,15 @@ export function FormField({
         minLength={minLength}
         defaultValue={defaultValue}
         step={step}
-        className="rounded-[var(--radius-s)] border border-border bg-stone-50 px-3 py-2.5 text-ink outline-none focus:border-ember"
+        placeholder={placeholder}
+        className={[
+          "rounded-[var(--radius-s)] border bg-stone-50 px-3 py-2.5 text-ink outline-none transition-colors",
+          error
+            ? "border-danger focus:border-danger"
+            : "border-border focus:border-ember",
+        ].join(" ")}
       />
+      {hint && <span className="text-xs text-ink-faint">{hint}</span>}
     </label>
   );
 }
