@@ -162,6 +162,7 @@ export function getEventForAdmin(id: string) {
           profileData: true,
           gpxUrl: true,
           aidStations: true,
+          raceStartMinutes: true,
         },
       },
       merchItems: {

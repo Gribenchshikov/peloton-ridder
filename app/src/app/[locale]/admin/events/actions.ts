@@ -237,6 +237,28 @@ const AidStationSchema = z.object({
   cutoffMinutes: z.coerce.number().int().min(0).optional(),
 });
 
+export async function updateRaceStartAction(
+  distanceId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const raw = formData.get("raceStartMinutes");
+  const minutes = raw === "" || raw == null ? null : Number(raw);
+  if (minutes !== null && (isNaN(minutes) || minutes < 0 || minutes >= 1440)) return { error: "invalid" };
+
+  await prisma.distance.update({
+    where: { id: distanceId },
+    data: { raceStartMinutes: minutes },
+  });
+
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
 export async function updateAidStationsAction(
   distanceId: string,
   _prevState: ActionState,

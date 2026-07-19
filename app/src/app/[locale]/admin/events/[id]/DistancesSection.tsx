@@ -11,7 +11,7 @@ export function DistancesSection({
   distances,
 }: {
   eventId: string;
-  distances: (DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null; aidStations?: AidStation[] | null })[];
+  distances: (DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null; aidStations?: AidStation[] | null; raceStartMinutes?: number | null })[];
 }) {
   const t = useTranslations("Admin");
   const [formKey, setFormKey] = useState(0);

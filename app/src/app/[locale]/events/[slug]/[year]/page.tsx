@@ -48,6 +48,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
       profileData: d.profileData as unknown as ProfileData,
       gpxUrl: d.gpxUrl ?? null,
       aidStations: (d.aidStations as AidStation[] | null) ?? [],
+      raceStartMinutes: d.raceStartMinutes ?? null,
     }));
 
   return (

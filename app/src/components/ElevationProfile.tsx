@@ -10,6 +10,7 @@ type Props = {
   lossM: number;
   color?: string;
   aidStations?: AidStation[];
+  raceStartMinutes?: number | null;
   distanceName: string;
 };
 
@@ -31,10 +32,19 @@ function elevationAtKm(points: ElevationPoint[], km: number): number {
   return points.reduce((prev, curr) => (Math.abs(curr.d - km) < Math.abs(prev.d - km) ? curr : prev)).e;
 }
 
-function formatCutoff(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `+${h}:${m.toString().padStart(2, "0")}`;
+function padTwo(n: number) {
+  return n.toString().padStart(2, "0");
+}
+
+function formatCutoff(cutoffMinutes: number, raceStartMinutes?: number | null): string {
+  if (raceStartMinutes != null) {
+    const total = raceStartMinutes + cutoffMinutes;
+    const day = Math.floor(total / 1440);
+    const mins = total % 1440;
+    const time = `${padTwo(Math.floor(mins / 60))}:${padTwo(mins % 60)}`;
+    return day > 0 ? `${time} +${day}д` : time;
+  }
+  return `+${Math.floor(cutoffMinutes / 60)}:${padTwo(cutoffMinutes % 60)}`;
 }
 
 const STATION_EMOJI: Record<string, string> = {
@@ -52,7 +62,7 @@ const STATION_COLOR: Record<string, string> = {
 const TOOLTIP_W = 90;
 const TOOLTIP_PADDING = 10;
 
-export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidStations = [], distanceName }: Props) {
+export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidStations = [], raceStartMinutes, distanceName }: Props) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (points.length < 2) return null;
@@ -203,7 +213,7 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
                         fill="rgba(255,255,255,0.72)"
                         fontFamily="system-ui,sans-serif"
                       >
-                        Кат-офф: {formatCutoff(s.cutoffMinutes!)}
+                        Кат-офф: {formatCutoff(s.cutoffMinutes!, raceStartMinutes)}
                       </text>
                     )}
                   </g>

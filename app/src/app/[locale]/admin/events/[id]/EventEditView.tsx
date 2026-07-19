@@ -44,6 +44,7 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
             ...d,
             hasProfile: d.profileData != null,
             aidStations: (aidStations as AidStation[] | null) ?? [],
+            raceStartMinutes: d.raceStartMinutes ?? null,
           }))}
         />
         <div className="flex items-center gap-3">

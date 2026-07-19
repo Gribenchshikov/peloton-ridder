@@ -13,7 +13,7 @@ const initialDeleteState: ActionState = {};
 export function DistanceRow({
   distance,
 }: {
-  distance: DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null; aidStations?: AidStation[] | null };
+  distance: DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null; aidStations?: AidStation[] | null; raceStartMinutes?: number | null };
 }) {
   const t = useTranslations("Admin");
   const tCommon = useTranslations("Common");
@@ -126,6 +126,7 @@ export function DistanceRow({
           <AidStationEditor
             distanceId={distance.id}
             initialStations={distance.aidStations ?? []}
+            initialRaceStartMinutes={distance.raceStartMinutes ?? null}
           />
         </div>
       )}

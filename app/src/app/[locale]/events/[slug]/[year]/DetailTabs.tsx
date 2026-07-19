@@ -26,6 +26,7 @@ export type DistanceWithProfile = {
   profileData: ProfileData;
   gpxUrl: string | null;
   aidStations: AidStation[];
+  raceStartMinutes: number | null;
 };
 
 type Props = {
@@ -143,6 +144,7 @@ export function DetailTabs({ courseIntro, equipment, registrations, distances = 
               lossM={activeDist.profileData.lossM}
               distanceName={activeDist.name}
               aidStations={activeDist.aidStations}
+              raceStartMinutes={activeDist.raceStartMinutes}
             />
 
             {/* Map */}
@@ -160,6 +162,7 @@ export function DetailTabs({ courseIntro, equipment, registrations, distances = 
               <TimeChart
                 stations={activeDist.aidStations}
                 points={activeDist.profileData.points}
+                raceStartMinutes={activeDist.raceStartMinutes}
               />
             )}
           </div>
