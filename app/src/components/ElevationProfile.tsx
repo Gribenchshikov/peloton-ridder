@@ -93,8 +93,8 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
         >
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity="0.35" />
-              <stop offset="100%" stopColor={color} stopOpacity="0.04" />
+              <stop offset="0%" stopColor={color} stopOpacity="0.6" />
+              <stop offset="100%" stopColor={color} stopOpacity="0.08" />
             </linearGradient>
           </defs>
 
@@ -109,8 +109,8 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
                   x2={W - PAD.right}
                   y2={y}
                   stroke="currentColor"
-                  strokeWidth="0.4"
-                  strokeOpacity="0.18"
+                  strokeWidth="0.5"
+                  strokeOpacity="0.3"
                   className="text-ink"
                 />
                 <text
@@ -120,7 +120,7 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
                   textAnchor="end"
                   fontSize="8"
                   fill="currentColor"
-                  fillOpacity="0.45"
+                  fillOpacity="0.65"
                   className="text-ink"
                   fontFamily="system-ui,sans-serif"
                 >
@@ -134,7 +134,7 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
           <path d={areaD} fill={`url(#${gradId})`} />
 
           {/* Profile line */}
-          <path d={profileD} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+          <path d={profileD} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" />
 
           {/* Aid station markers */}
           {aidStations.map((s) => {

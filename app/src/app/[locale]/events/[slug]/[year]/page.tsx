@@ -47,7 +47,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
       km: d.km,
       profileData: d.profileData as unknown as ProfileData,
       gpxUrl: d.gpxUrl ?? null,
-      color: event.race.color,
+      color: undefined,
     }));
 
   return (
