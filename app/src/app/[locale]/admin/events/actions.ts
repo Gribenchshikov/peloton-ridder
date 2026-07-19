@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
-import { redirect } from "@/i18n/navigation";
+import { saveFile } from "@/lib/storage";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -31,8 +31,8 @@ const EventFieldsSchema = z.object({
   medicalCancellationDeadline: z.coerce.date(),
   transferPrice: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
   resultsUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
-  coverImageUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   volunteerChatUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
+  // coverImageUrl обрабатывается отдельно через saveFile (file upload), не через Zod
 });
 
 const CreateEventSchema = EventFieldsSchema.extend({
@@ -46,54 +46,80 @@ const DistanceFieldsSchema = z
     km: z.coerce.number().positive(),
     gain: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
     price: z.coerce.number().int().min(0),
+    maxSlots: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional()),
     minAge: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).max(120).optional()),
     maxAge: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).max(120).optional()),
     cutoffMinutes: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
+    requiresQualification: z.preprocess((v) => v === "on", z.boolean()),
+    qualificationNote: z.preprocess(emptyToUndefined, z.string().trim().max(500).optional()),
+    requiresInsurance: z.preprocess((v) => v === "on", z.boolean()),
     bibRangeStart: z.coerce.number().int().min(0),
     bibRangeEnd: z.coerce.number().int().min(0),
   })
   .refine((d) => d.bibRangeEnd >= d.bibRangeStart, { path: ["bibRangeEnd"], message: "bibRange" });
 
-export type ActionState = { error?: string; success?: boolean };
+const MerchItemFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  requiresSize: z.preprocess((v) => v === "on", z.boolean()),
+  order: z.coerce.number().int().min(0).max(9999),
+});
 
-/** Парсит FormData по схеме и сводит любую ошибку валидации к единому "invalid" —
- * дальше формы просто показывают общий "проверьте поля", без разбора по конкретному полю. */
-function parseFormData<T>(schema: z.ZodType<T>, formData: FormData): { data: T } | { error: "invalid" } {
+export type ActionState = { error?: string; success?: boolean; eventId?: string; invalidFields?: string[] };
+
+function parseFormData<T>(schema: z.ZodType<T>, formData: FormData): { data: T } | { error: "invalid"; invalidFields: string[] } {
   const parsed = schema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "invalid" };
+  if (!parsed.success) {
+    const invalidFields = [...new Set(parsed.error.issues.map((i) => String(i.path[0])).filter(Boolean))];
+    return { error: "invalid", invalidFields };
+  }
   return { data: parsed.data };
 }
 
-export async function createEventAction(locale: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
+async function extractCoverUrl(formData: FormData, existing: string | null | undefined): Promise<{ coverImageUrl: string | null } | { error: string }> {
+  const file = formData.get("coverImage");
+  if (file instanceof File && file.size > 0) {
+    const result = await saveFile(file, "events");
+    if ("error" in result) return { error: result.error };
+    return { coverImageUrl: result.url };
+  }
+  const kept = formData.get("currentCoverImageUrl");
+  return { coverImageUrl: typeof kept === "string" && kept ? kept : (existing ?? null) };
+}
+
+export async function createEventAction(_locale: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
+
+  const coverResult = await extractCoverUrl(formData, null);
+  if ("error" in coverResult) return { error: coverResult.error };
 
   const parsed = parseFormData(CreateEventSchema, formData);
   if ("error" in parsed) return parsed;
 
   let eventId: string;
   try {
-    const event = await prisma.event.create({ data: parsed.data });
+    const event = await prisma.event.create({ data: { ...parsed.data, ...coverResult } });
     eventId = event.id;
   } catch (err) {
-    // Уникальный (raceId, year) конфликт — если организатор по ошибке создаёт второй
-    // забег той же трассы на тот же год, это почти наверняка опечатка, не гасим молча.
     if (isUniqueConstraintError(err)) return { error: "duplicate" };
     throw err;
   }
 
-  return redirect({ href: `/admin/events/${eventId}`, locale });
+  return { eventId };
 }
 
 export async function updateEventAction(eventId: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
 
+  const coverResult = await extractCoverUrl(formData, null);
+  if ("error" in coverResult) return { error: coverResult.error };
+
   const parsed = parseFormData(EventFieldsSchema, formData);
   if ("error" in parsed) return parsed;
 
   try {
-    await prisma.event.update({ where: { id: eventId }, data: parsed.data });
+    await prisma.event.update({ where: { id: eventId }, data: { ...parsed.data, ...coverResult } });
   } catch (err) {
     if (isUniqueConstraintError(err)) return { error: "duplicate" };
     throw err;
@@ -127,6 +153,50 @@ export async function updateDistanceAction(
   if ("error" in parsed) return parsed;
 
   await prisma.distance.update({ where: { id: distanceId }, data: parsed.data });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  return { success: true };
+}
+
+export async function createMerchAction(eventId: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const parsed = parseFormData(MerchItemFieldsSchema, formData);
+  if ("error" in parsed) return parsed;
+
+  await prisma.merchItem.create({ data: { ...parsed.data, eventId } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  return { success: true };
+}
+
+export async function updateMerchAction(
+  merchItemId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const parsed = parseFormData(MerchItemFieldsSchema, formData);
+  if ("error" in parsed) return parsed;
+
+  await prisma.merchItem.update({ where: { id: merchItemId }, data: parsed.data });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  return { success: true };
+}
+
+export async function deleteMerchAction(
+  merchItemId: string,
+  _prevState: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  void _prevState;
+  void _formData;
+
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  await prisma.merchItem.delete({ where: { id: merchItemId } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   return { success: true };
 }
