@@ -141,6 +141,7 @@ export function DistanceSelect({
       {state.error === "closed" && <p className="text-sm text-danger">{t("errorClosed")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
       {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
+      {state.error === "registration_blocked" && <p className="text-sm text-danger">{t("errorRegistrationBlocked")}</p>}
       {state.error === "missing_size" && <p className="text-sm text-danger">{t("errorMissingSize")}</p>}
 
       <button

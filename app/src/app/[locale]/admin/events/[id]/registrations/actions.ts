@@ -12,6 +12,10 @@ export type RegistrationAdminActionState = {
 };
 
 const ChangeDistanceSchema = z.object({ distanceId: z.string().min(1) });
+const CancelRegistrationSchema = z.object({
+  adminComment: z.string().trim().min(1).max(1000),
+  allowReregistration: z.preprocess((value) => value === "on", z.boolean()),
+});
 
 function isActiveStatus(status: "RESERVED" | "PAID" | "CANCELLED") {
   return status === "RESERVED" || status === "PAID";
@@ -34,13 +38,18 @@ export async function cancelRegistrationAction(
   registrationId: string,
   eventId: string,
   _prevState: RegistrationAdminActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<RegistrationAdminActionState> {
   void _prevState;
-  void _formData;
 
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
+
+  const parsed = CancelRegistrationSchema.safeParse({
+    adminComment: formData.get("adminComment"),
+    allowReregistration: formData.get("allowReregistration"),
+  });
+  if (!parsed.success) return { error: "invalid" };
 
   const outcome = await prisma.$transaction(async (tx) => {
     const registration = await tx.registration.findUnique({
@@ -56,7 +65,13 @@ export async function cancelRegistrationAction(
 
     await tx.registration.update({
       where: { id: registrationId },
-      data: { status: "CANCELLED", reservedUntil: null, bibNumber: null },
+      data: {
+        status: "CANCELLED",
+        reservedUntil: null,
+        bibNumber: null,
+        adminComment: parsed.data.adminComment,
+        allowReregistration: parsed.data.allowReregistration,
+      },
     });
     await reassignPaidBibNumbers(tx, eventId);
     return { success: "cancelled" as const };

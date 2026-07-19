@@ -82,6 +82,14 @@ export async function createRegistrationAction(
     });
     if (existing) return { kind: "existing" as const, registrationId: existing.id };
 
+    const cancelled = await tx.registration.findFirst({
+      where: { userId, eventId, status: "CANCELLED" },
+      orderBy: { createdAt: "desc" },
+    });
+    if (cancelled && !cancelled.allowReregistration) {
+      return { kind: "error" as const, error: "registration_blocked" as const };
+    }
+
     const activeCount = await tx.registration.count({
       where: {
         distanceId,
@@ -94,15 +102,17 @@ export async function createRegistrationAction(
     const capacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
     if (activeCount >= capacity) return { kind: "error" as const, error: "full" };
 
-    const registration = await tx.registration.create({
-      data: {
-        userId,
-        eventId,
-        distanceId,
-        status: "RESERVED",
-        reservedUntil: new Date(now.getTime() + RESERVATION_TTL_MS),
-      },
-    });
+    const reservationData = {
+      distanceId,
+      status: "RESERVED" as const,
+      bibNumber: null,
+      reservedUntil: new Date(now.getTime() + RESERVATION_TTL_MS),
+      adminComment: null,
+      allowReregistration: false,
+    };
+    const registration = cancelled
+      ? await tx.registration.update({ where: { id: cancelled.id }, data: reservationData })
+      : await tx.registration.create({ data: { userId, eventId, ...reservationData } });
 
     // Create RegistrationMerch entries for this event's merch items
     const eventMerch = await tx.event.findUnique({
@@ -122,7 +132,13 @@ export async function createRegistrationAction(
           merchData.push({ registrationId: registration.id, merchItemId: item.id, size: null });
         }
       }
-      await tx.registrationMerch.createMany({ data: merchData });
+      for (const merch of merchData) {
+        await tx.registrationMerch.upsert({
+          where: { registrationId_merchItemId: { registrationId: registration.id, merchItemId: merch.merchItemId } },
+          create: merch,
+          update: { size: merch.size },
+        });
+      }
     }
 
     return { kind: "created" as const, registrationId: registration.id };

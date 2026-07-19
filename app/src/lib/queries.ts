@@ -197,6 +197,7 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
           OR: [
             { status: "PAID" },
             { status: "RESERVED", reservedUntil: { gt: new Date() } },
+            { status: "CANCELLED" },
           ],
         },
         include: {
@@ -225,6 +226,7 @@ export function getEventWithRegistrations(id: string) {
           OR: [
             { status: "PAID" },
             { status: "RESERVED", reservedUntil: { gt: new Date() } },
+            { status: "CANCELLED" },
           ],
         },
         include: {

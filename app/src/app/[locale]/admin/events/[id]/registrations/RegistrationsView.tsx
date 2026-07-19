@@ -9,16 +9,19 @@ type Registration = EventData["registrations"][number];
 function StatusBadge({ status }: { status: Registration["status"] }) {
   const t = useTranslations("Admin");
   const isPaid = status === "PAID";
+  const isCancelled = status === "CANCELLED";
   return (
     <span
       className={[
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
         isPaid
           ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-          : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+          : isCancelled
+            ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+            : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       ].join(" ")}
     >
-      {isPaid ? t("regStatusPaid") : t("regStatusReserved")}
+      {isPaid ? t("regStatusPaid") : isCancelled ? t("regStatusCancelled") : t("regStatusReserved")}
     </span>
   );
 }
@@ -116,7 +119,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
         <p className="text-sm text-ink-faint">{t("registrationsEmpty")}</p>
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
-          <table className="w-full min-w-[880px] text-sm">
+          <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2">
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColBib")}</th>
@@ -125,6 +128,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColPhone")}</th>
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColDistance")}</th>
                 <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
+                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColComment")}</th>
                 <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
                 <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
               </tr>
@@ -146,6 +150,9 @@ export function RegistrationsView({ event }: { event: EventData }) {
                   <td className="px-4 py-2.5">
                     <StatusBadge status={reg.status} />
                   </td>
+                  <td className="max-w-56 px-4 py-2.5 text-xs text-ink-soft">
+                    {reg.adminComment ?? "—"}
+                  </td>
                   <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
                     {format.dateTime(reg.createdAt, { day: "numeric", month: "short" })}
                   </td>
@@ -154,6 +161,8 @@ export function RegistrationsView({ event }: { event: EventData }) {
                       registrationId={reg.id}
                       eventId={event.id}
                       distanceId={reg.distance.id}
+                      status={reg.status}
+                      allowReregistration={reg.allowReregistration}
                       distances={event.distances}
                     />
                   </td>

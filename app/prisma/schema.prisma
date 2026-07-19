@@ -233,6 +233,8 @@ model Registration {
   status          RegistrationStatus @default(RESERVED)
   bibNumber       Int?
   reservedUntil   DateTime?
+  adminComment    String?
+  allowReregistration Boolean        @default(false)
   disqualified    Boolean            @default(false)
   kaspiOrderId    String?
   kaspiPaymentUrl String?
