@@ -10,7 +10,7 @@ export function DistancesSection({
   distances,
 }: {
   eventId: string;
-  distances: (DistanceDefaults & { id: string })[];
+  distances: (DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null })[];
 }) {
   const t = useTranslations("Admin");
   const [formKey, setFormKey] = useState(0);

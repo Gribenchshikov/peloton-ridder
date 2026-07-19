@@ -37,7 +37,13 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
           <AdminFormHeader title={t("distancesTitle")} />
           <WizardStepper current={2} />
         </div>
-        <DistancesSection eventId={event.id} distances={event.distances} />
+        <DistancesSection
+          eventId={event.id}
+          distances={event.distances.map((d) => ({
+            ...d,
+            hasProfile: d.profileData != null,
+          }))}
+        />
         <div className="flex items-center gap-3">
           <Link
             href={`/admin/events/${event.id}?wizard=3`}
@@ -113,7 +119,13 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
         }}
       />
 
-      <DistancesSection eventId={event.id} distances={event.distances} />
+      <DistancesSection
+        eventId={event.id}
+        distances={event.distances.map((d) => ({
+          ...d,
+          hasProfile: d.profileData != null,
+        }))}
+      />
       <MerchSection eventId={event.id} items={event.merchItems} />
       <PartnersSection
         eventId={event.id}

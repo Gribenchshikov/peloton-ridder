@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
+import { parseGpx } from "@/lib/gpxParser";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -198,6 +199,33 @@ export async function deleteMerchAction(
 
   await prisma.merchItem.delete({ where: { id: merchItemId } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
+  return { success: true };
+}
+
+export async function uploadTrackAction(
+  distanceId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("gpxFile");
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+
+  if (file.size > 20 * 1024 * 1024) return { error: "tooLarge" };
+
+  const text = await file.text();
+  const profileData = parseGpx(text);
+  if (!profileData) return { error: "invalidGpx" };
+
+  await prisma.distance.update({
+    where: { id: distanceId },
+    data: { profileData: profileData as object },
+  });
+
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
   return { success: true };
 }
 

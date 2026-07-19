@@ -7,7 +7,9 @@ import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
 import { DetailTabs } from "./DetailTabs";
+import { DistanceProfiles } from "./DistanceProfiles";
 import type { Distance } from "@/generated/prisma/client";
+import type { ProfileData } from "@/lib/gpxParser";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-white/20 text-white backdrop-blur-sm",
@@ -36,6 +38,17 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
   const equipment = (event.race.equipment as string[] | null) ?? [];
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
   const paidCount = event.registrations.length;
+
+  const distancesWithProfile = event.distances
+    .filter((d) => d.profileData != null)
+    .map((d) => ({
+      id: d.id,
+      name: d.name,
+      km: d.km,
+      profileData: d.profileData as unknown as ProfileData,
+      gpxUrl: d.gpxUrl ?? null,
+      color: event.race.color,
+    }));
 
   return (
     <main className="flex-1">
@@ -126,13 +139,16 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
         {/* Content grid */}
         <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
-          {/* LEFT: Tabs (О трассе / Снаряжение / Участники) */}
-          <div>
+          {/* LEFT: Tabs (О трассе / Снаряжение / Участники) + elevation profiles */}
+          <div className="flex flex-col gap-6">
             <DetailTabs
               courseIntro={event.race.courseIntro ?? ""}
               equipment={equipment}
               registrations={event.registrations}
             />
+            {distancesWithProfile.length > 0 && (
+              <DistanceProfiles distances={distancesWithProfile} />
+            )}
           </div>
 
           {/* RIGHT: sticky sidebar */}

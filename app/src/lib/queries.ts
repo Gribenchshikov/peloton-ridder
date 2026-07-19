@@ -159,6 +159,7 @@ export function getEventForAdmin(id: string) {
           requiresInsurance: true,
           bibRangeStart: true,
           bibRangeEnd: true,
+          profileData: true,
         },
       },
       merchItems: {

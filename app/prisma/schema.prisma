@@ -179,6 +179,7 @@ model Distance {
   qualificationNote     String?
   requiresInsurance     Boolean  @default(false)
   profileData           Json?
+  gpxUrl                String?
   bibRangeStart         Int
   bibRangeEnd           Int
   createdAt             DateTime @default(now())

@@ -1,8 +1,18 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+  // GPX tracks (Garmin, Strava, Komoot export different MIME types for the same format)
+  "application/gpx+xml",
+  "application/octet-stream",
+  "text/xml",
+  "application/xml",
+]);
+const MAX_BYTES = 20 * 1024 * 1024; // 20 MB (GPX files can be large)
 
 export type SaveResult = { url: string } | { error: "invalidType" | "tooLarge" };
 
@@ -22,7 +32,21 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
   if (!ALLOWED_TYPES.has(file.type)) return { error: "invalidType" };
   if (file.size > MAX_BYTES) return { error: "tooLarge" };
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : file.type === "image/svg+xml" ? "svg" : "jpg";
+  const isGpx =
+    file.type === "application/gpx+xml" ||
+    file.type === "text/xml" ||
+    file.type === "application/xml" ||
+    file.type === "application/octet-stream" ||
+    file.name?.endsWith(".gpx");
+  const ext = isGpx
+    ? "gpx"
+    : file.type === "image/png"
+      ? "png"
+      : file.type === "image/webp"
+        ? "webp"
+        : file.type === "image/svg+xml"
+          ? "svg"
+          : "jpg";
   const filename = `${crypto.randomUUID()}.${ext}`;
 
   const uploadDir = process.env.UPLOAD_DIR
