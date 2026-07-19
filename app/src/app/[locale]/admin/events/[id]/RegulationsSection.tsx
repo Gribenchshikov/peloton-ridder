@@ -162,6 +162,18 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
     setStatus({});
   }
 
+  function moveBlock(id: string, dir: -1 | 1) {
+    setBlocks((prev) => {
+      const idx = prev.findIndex((b) => b.id === id);
+      const next = idx + dir;
+      if (next < 0 || next >= prev.length) return prev;
+      const arr = [...prev];
+      [arr[idx], arr[next]] = [arr[next], arr[idx]];
+      return arr;
+    });
+    setStatus({});
+  }
+
   function updateBlock(id: string, field: "title" | "content", lang: RegulationLocale, value: string) {
     setBlocks((prev) =>
       prev.map((b) => b.id === id ? { ...b, [field]: { ...b[field], [lang]: value } } : b)
@@ -183,21 +195,44 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
     <div className="flex flex-col gap-3">
       <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">Блоки контента</div>
 
-      {blocks.map((b) => {
+      {blocks.map((b, idx) => {
         const isOpen = expandedId === b.id;
         const previewTitle = b.title.ru || b.title.en || b.title.kk || "Новый блок";
         return (
           <div key={b.id} className="rounded-[var(--radius-s)] border border-border">
-            <div className="flex items-center gap-2 px-3 py-2.5">
+            <div className="flex items-center gap-1 px-2 py-2">
+              {/* Up / Down */}
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => moveBlock(b.id, -1)}
+                  disabled={idx === 0}
+                  className="flex h-5 w-5 items-center justify-center rounded text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-20"
+                  aria-label="Вверх"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveBlock(b.id, 1)}
+                  disabled={idx === blocks.length - 1}
+                  className="flex h-5 w-5 items-center justify-center rounded text-ink-faint transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-20"
+                  aria-label="Вниз"
+                >
+                  ▼
+                </button>
+              </div>
+              {/* Toggle */}
               <button
                 type="button"
                 onClick={() => setExpandedId(isOpen ? null : b.id)}
-                className="flex-1 text-left text-sm font-semibold text-ink"
+                className="flex-1 min-w-0 text-left text-sm font-semibold text-ink px-1"
               >
-                <span className="mr-2 text-ink-faint">{isOpen ? "▾" : "▸"}</span>
-                {previewTitle}
+                <span className="mr-1.5 text-ink-faint">{isOpen ? "▾" : "▸"}</span>
+                <span className="truncate">{previewTitle}</span>
               </button>
-              <button type="button" onClick={() => removeBlock(b.id)} className="text-xs text-danger hover:underline">
+              <span className="shrink-0 text-xs text-ink-faint tabular-nums mr-1">{idx + 1}/{blocks.length}</span>
+              <button type="button" onClick={() => removeBlock(b.id)} className="shrink-0 text-xs text-danger hover:underline px-1">
                 Удалить
               </button>
             </div>
@@ -215,15 +250,20 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
                       value={b.title[lang]}
                       onChange={(e) => updateBlock(b.id, "title", lang, e.target.value)}
                       placeholder="Заголовок блока"
-                      className="rounded border border-border bg-surface px-3 py-2 text-sm font-semibold focus:border-ember focus:outline-none"
+                      maxLength={200}
+                      className="w-full rounded border border-border bg-surface px-3 py-2 text-sm font-semibold focus:border-ember focus:outline-none"
                     />
                     <textarea
                       value={b.content[lang]}
                       onChange={(e) => updateBlock(b.id, "content", lang, e.target.value)}
                       placeholder="Текст блока…"
                       rows={4}
-                      className="resize-y rounded border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-ink focus:border-ember focus:outline-none"
+                      maxLength={3000}
+                      className="w-full resize-y rounded border border-border bg-surface px-3 py-2 text-sm leading-relaxed text-ink focus:border-ember focus:outline-none"
                     />
+                    <div className="text-right text-[10px] text-ink-faint tabular-nums">
+                      {b.content[lang].length}/3000
+                    </div>
                   </div>
                 ))}
               </div>
