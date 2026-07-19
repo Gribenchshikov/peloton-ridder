@@ -17,6 +17,9 @@ const prisma = new PrismaClient({ adapter });
 const TZ = "+06:00";
 
 async function main() {
+  await prisma.result.deleteMany();
+  await prisma.registration.deleteMany();
+  await prisma.waitlist.deleteMany();
   await prisma.distance.deleteMany();
   await prisma.event.deleteMany();
   await prisma.seriesRace.deleteMany();
@@ -227,9 +230,206 @@ async function main() {
     ],
   });
 
+  const romanRace = await prisma.race.create({
+    data: {
+      slug: "roman",
+      name: "Roman Race",
+      courseIntro: "Летний трейл в районе Риддера для любителей горного бега.",
+      equipment: ["Стартовый номер", "Кроссовки для трейла", "Вода", "Мобильный телефон"],
+      landmarks: [],
+      icon: "i-mountain",
+      color: "#6F4A8E",
+    },
+  });
+
+  const romanEvent = await prisma.event.create({
+    data: {
+      raceId: romanRace.id,
+      year: 2031,
+      dateISO: new Date(`2031-08-15T10:00:00${TZ}`),
+      status: "OPEN",
+      location: "Риддер, горный район возле Литвиновки",
+      registrationDeadline: new Date(`2031-08-10T18:00:00${TZ}`),
+      cancellationDeadline: new Date(`2031-08-12T18:00:00${TZ}`),
+      medicalCancellationDeadline: new Date(`2031-08-13T18:00:00${TZ}`),
+      resultsUrl: null,
+    },
+  });
+
+  const romanDistance = await prisma.distance.create({
+    data: {
+      eventId: romanEvent.id,
+      name: "18 км",
+      km: 18,
+      minAge: 18,
+      price: 25000,
+      cutoffMinutes: 420,
+      bibRangeStart: 1,
+      bibRangeEnd: 100,
+    },
+  });
+
+  const romanUsers = await Promise.all([
+    prisma.user.upsert({
+      where: { email: "roman.runner1@example.com" },
+      update: {
+        firstName: "Алма",
+        lastName: "Романова",
+        city: "Риддер",
+        passwordHash: "seeded",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+      create: {
+        id: "roman-user-1",
+        email: "roman.runner1@example.com",
+        passwordHash: "seeded",
+        firstName: "Алма",
+        lastName: "Романова",
+        city: "Риддер",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "roman.runner2@example.com" },
+      update: {
+        firstName: "Нурлан",
+        lastName: "Романов",
+        city: "Риддер",
+        passwordHash: "seeded",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+      create: {
+        id: "roman-user-2",
+        email: "roman.runner2@example.com",
+        passwordHash: "seeded",
+        firstName: "Нурлан",
+        lastName: "Романов",
+        city: "Риддер",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "roman.runner3@example.com" },
+      update: {
+        firstName: "Диана",
+        lastName: "Романова",
+        city: "Риддер",
+        passwordHash: "seeded",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+      create: {
+        id: "roman-user-3",
+        email: "roman.runner3@example.com",
+        passwordHash: "seeded",
+        firstName: "Диана",
+        lastName: "Романова",
+        city: "Риддер",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "roman.runner4@example.com" },
+      update: {
+        firstName: "Арсен",
+        lastName: "Романов",
+        city: "Риддер",
+        passwordHash: "seeded",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+      create: {
+        id: "roman-user-4",
+        email: "roman.runner4@example.com",
+        passwordHash: "seeded",
+        firstName: "Арсен",
+        lastName: "Романов",
+        city: "Риддер",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+    }),
+    prisma.user.upsert({
+      where: { email: "roman.runner5@example.com" },
+      update: {
+        firstName: "София",
+        lastName: "Романова",
+        city: "Риддер",
+        passwordHash: "seeded",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+      create: {
+        id: "roman-user-5",
+        email: "roman.runner5@example.com",
+        passwordHash: "seeded",
+        firstName: "София",
+        lastName: "Романова",
+        city: "Риддер",
+        isAdmin: false,
+        isVolunteer: false,
+      },
+    }),
+  ]);
+
+  await prisma.registration.createMany({
+    data: [
+      {
+        userId: romanUsers[0].id,
+        eventId: romanEvent.id,
+        distanceId: romanDistance.id,
+        status: "PAID",
+        bibNumber: 1,
+        allowReregistration: false,
+        createdAt: new Date(`2031-07-01T09:00:00${TZ}`),
+      },
+      {
+        userId: romanUsers[1].id,
+        eventId: romanEvent.id,
+        distanceId: romanDistance.id,
+        status: "PAID",
+        bibNumber: 2,
+        allowReregistration: false,
+        createdAt: new Date(`2031-07-02T09:00:00${TZ}`),
+      },
+      {
+        userId: romanUsers[2].id,
+        eventId: romanEvent.id,
+        distanceId: romanDistance.id,
+        status: "RESERVED",
+        reservedUntil: new Date(`2031-08-15T09:30:00${TZ}`),
+        allowReregistration: false,
+        createdAt: new Date(`2031-07-03T09:00:00${TZ}`),
+      },
+      {
+        userId: romanUsers[3].id,
+        eventId: romanEvent.id,
+        distanceId: romanDistance.id,
+        status: "CANCELLED",
+        adminComment: "Отменено по обращению участника.",
+        allowReregistration: true,
+        createdAt: new Date(`2031-07-04T09:00:00${TZ}`),
+      },
+      {
+        userId: romanUsers[4].id,
+        eventId: romanEvent.id,
+        distanceId: romanDistance.id,
+        status: "CANCELLED",
+        adminComment: "Отменено по инициативе организатора.",
+        allowReregistration: false,
+        createdAt: new Date(`2031-07-05T09:00:00${TZ}`),
+      },
+    ],
+  });
+
   console.log("Seed OK:", {
-    races: 4,
-    events: [uphillEvent.id, skiEvent.id, radonEvent.id, panoramaEvent.id].length,
+    races: 5,
+    events: [uphillEvent.id, skiEvent.id, radonEvent.id, panoramaEvent.id, romanEvent.id].length,
   });
 }
 

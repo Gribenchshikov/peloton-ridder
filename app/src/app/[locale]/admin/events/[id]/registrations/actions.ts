@@ -8,7 +8,7 @@ import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 
 export type RegistrationAdminActionState = {
   error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid";
-  success?: "cancelled" | "distance_changed";
+  success?: "cancelled" | "distance_changed" | "permission_changed" | "restored";
 };
 
 const ChangeDistanceSchema = z.object({ distanceId: z.string().min(1) });
@@ -16,6 +16,12 @@ const CancelRegistrationSchema = z.object({
   adminComment: z.string().trim().min(1).max(1000),
   allowReregistration: z.preprocess((value) => value === "on", z.boolean()),
 });
+const RestoreRegistrationSchema = z.object({
+  adminComment: z.string().trim().min(1).max(1000),
+  paid: z.preprocess((value) => value === "on", z.boolean()).optional(),
+});
+
+const RESERVATION_TTL_MS = 30 * 60 * 1000;
 
 function isActiveStatus(status: "RESERVED" | "PAID" | "CANCELLED") {
   return status === "RESERVED" || status === "PAID";
@@ -82,6 +88,78 @@ export async function cancelRegistrationAction(
   return outcome;
 }
 
+export async function restoreRegistrationAction(
+  registrationId: string,
+  eventId: string,
+  _prevState: RegistrationAdminActionState,
+  formData: FormData,
+): Promise<RegistrationAdminActionState> {
+  void _prevState;
+
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const parsed = RestoreRegistrationSchema.safeParse({
+    adminComment: formData.get("adminComment"),
+    paid: formData.get("paid"),
+  });
+  if (!parsed.success) return { error: "invalid" };
+
+  const outcome = await prisma.$transaction(async (tx) => {
+    const registration = await tx.registration.findUnique({
+      where: { id: registrationId },
+      select: { eventId: true, distanceId: true, status: true },
+    });
+    if (!registration || registration.eventId !== eventId) return { error: "not_found" as const };
+
+    await lockDistances(tx, [registration.distanceId]);
+    const hasResults = await tx.result.findFirst({ where: { eventId }, select: { id: true } });
+    if (hasResults) return { error: "has_results" as const };
+    if (registration.status !== "CANCELLED") return { error: "inactive" as const };
+
+    const paid = parsed.data.paid === true;
+    const distance = await tx.distance.findUnique({
+      where: { id: registration.distanceId },
+      select: { bibRangeStart: true, bibRangeEnd: true },
+    });
+    if (!distance) return { error: "invalid" as const };
+
+    const activeCount = await tx.registration.count({
+      where: {
+        distanceId: registration.distanceId,
+        id: { not: registrationId },
+        OR: [
+          { status: "PAID" },
+          { status: "RESERVED", reservedUntil: { gt: new Date() } },
+        ],
+      },
+    });
+    const capacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
+    if (activeCount >= capacity) return { error: "full" as const };
+
+    await tx.registration.update({
+      where: { id: registrationId },
+      data: {
+        status: paid ? "PAID" : "RESERVED",
+        reservedUntil: paid ? null : new Date(Date.now() + RESERVATION_TTL_MS),
+        bibNumber: null,
+        adminComment: parsed.data.adminComment,
+        allowReregistration: false,
+      },
+    });
+
+    if (paid) {
+      await reassignPaidBibNumbers(tx, eventId);
+    }
+
+    return { success: "restored" as const };
+  });
+
+  if ("error" in outcome) return outcome;
+  revalidateRegistrationPages();
+  return outcome;
+}
+
 export async function changeRegistrationDistanceAction(
   registrationId: string,
   eventId: string,
@@ -140,4 +218,27 @@ export async function changeRegistrationDistanceAction(
   if ("error" in outcome) return outcome;
   revalidateRegistrationPages();
   return outcome;
+}
+
+export async function toggleReregistrationPermissionAction(
+  registrationId: string,
+  eventId: string,
+  allowReregistration: boolean,
+  _prevState: RegistrationAdminActionState,
+  _formData: FormData,
+): Promise<RegistrationAdminActionState> {
+  void _prevState;
+  void _formData;
+
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const updated = await prisma.registration.updateMany({
+    where: { id: registrationId, eventId, status: "CANCELLED" },
+    data: { allowReregistration },
+  });
+  if (updated.count === 0) return { error: "inactive" };
+
+  revalidateRegistrationPages();
+  return { success: "permission_changed" };
 }
