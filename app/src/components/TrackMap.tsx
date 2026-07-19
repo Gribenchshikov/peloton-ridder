@@ -28,10 +28,20 @@ export function TrackMap({ track, startLat, startLon, color = "#E2531F" }: Props
         11,
       );
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 18,
-      }).addTo(map);
+      const key = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+      L.tileLayer(
+        key
+          ? `https://api.maptiler.com/maps/outdoor-v2/{z}/{x}/{y}.png?key=${key}`
+          : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: key
+            ? '© <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+            : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 18,
+          tileSize: key ? 512 : 256,
+          zoomOffset: key ? -1 : 0,
+        },
+      ).addTo(map);
 
       const polyline = L.polyline(track, {
         color,
