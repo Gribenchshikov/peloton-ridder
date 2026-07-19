@@ -7,6 +7,7 @@ import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
 import type { Partner } from "@/generated/prisma/client";
+import type { AidStation } from "@/types/aidStation";
 
 type EventWithDetails = NonNullable<Awaited<ReturnType<typeof getEventForAdmin>>>;
 
@@ -39,9 +40,10 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
         </div>
         <DistancesSection
           eventId={event.id}
-          distances={event.distances.map((d) => ({
+          distances={event.distances.map(({ aidStations, ...d }) => ({
             ...d,
             hasProfile: d.profileData != null,
+            aidStations: (aidStations as AidStation[] | null) ?? [],
           }))}
         />
         <div className="flex items-center gap-3">
@@ -121,9 +123,10 @@ export function EventEditView({ event, allPartners, wizard }: { event: EventWith
 
       <DistancesSection
         eventId={event.id}
-        distances={event.distances.map((d) => ({
+        distances={event.distances.map(({ aidStations, ...d }) => ({
           ...d,
           hasProfile: d.profileData != null,
+          aidStations: (aidStations as AidStation[] | null) ?? [],
         }))}
       />
       <MerchSection eventId={event.id} items={event.merchItems} />

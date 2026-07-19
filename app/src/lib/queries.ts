@@ -160,6 +160,8 @@ export function getEventForAdmin(id: string) {
           bibRangeStart: true,
           bibRangeEnd: true,
           profileData: true,
+          gpxUrl: true,
+          aidStations: true,
         },
       },
       merchItems: {
