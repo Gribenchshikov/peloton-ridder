@@ -29,7 +29,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} />
     </main>
   );
 }

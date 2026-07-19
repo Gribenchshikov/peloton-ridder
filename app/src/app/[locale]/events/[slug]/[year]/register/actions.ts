@@ -5,9 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 
-// Место держится забронированным (RESERVED) это время, пока не будет оплачено —
-// после T15 (реальные вебхуки) сюда добавится фоновая очистка просроченных броней.
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
+const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
 
 const CreateRegistrationSchema = z.object({
   eventId: z.string().min(1),
@@ -104,6 +103,28 @@ export async function createRegistrationAction(
         reservedUntil: new Date(now.getTime() + RESERVATION_TTL_MS),
       },
     });
+
+    // Create RegistrationMerch entries for this event's merch items
+    const eventMerch = await tx.event.findUnique({
+      where: { id: eventId },
+      select: { merchItems: { select: { id: true, requiresSize: true } } },
+    });
+    if (eventMerch?.merchItems.length) {
+      const merchData: { registrationId: string; merchItemId: string; size: string | null }[] = [];
+      for (const item of eventMerch.merchItems) {
+        if (item.requiresSize) {
+          const size = formData.get(`merch_size_${item.id}`);
+          if (typeof size !== "string" || !VALID_SIZES.has(size)) {
+            return { kind: "error" as const, error: "missing_size" as const };
+          }
+          merchData.push({ registrationId: registration.id, merchItemId: item.id, size });
+        } else {
+          merchData.push({ registrationId: registration.id, merchItemId: item.id, size: null });
+        }
+      }
+      await tx.registrationMerch.createMany({ data: merchData });
+    }
+
     return { kind: "created" as const, registrationId: registration.id };
   });
 
