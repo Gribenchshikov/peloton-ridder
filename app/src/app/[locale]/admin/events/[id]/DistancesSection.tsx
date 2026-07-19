@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { DistanceForm, type DistanceDefaults } from "../DistanceForm";
 import { DistanceRow } from "../DistanceRow";
+import type { AidStation } from "@/types/aidStation";
 
 export function DistancesSection({
   eventId,
   distances,
 }: {
   eventId: string;
-  distances: (DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null })[];
+  distances: (DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null; aidStations?: AidStation[] | null })[];
 }) {
   const t = useTranslations("Admin");
   const [formKey, setFormKey] = useState(0);

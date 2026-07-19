@@ -180,6 +180,7 @@ model Distance {
   requiresInsurance     Boolean  @default(false)
   profileData           Json?
   gpxUrl                String?
+  aidStations           Json?
   bibRangeStart         Int
   bibRangeEnd           Int
   createdAt             DateTime @default(now())

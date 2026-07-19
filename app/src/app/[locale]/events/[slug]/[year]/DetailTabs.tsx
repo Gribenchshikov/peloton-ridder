@@ -5,8 +5,10 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Icon } from "@/components/IconSprite";
 import { ElevationProfile } from "@/components/ElevationProfile";
 import { TrackMap } from "@/components/TrackMap";
+import { TimeChart } from "@/components/TimeChart";
 import { fullName } from "@/lib/user";
 import type { ProfileData } from "@/lib/gpxParser";
+import type { AidStation } from "@/types/aidStation";
 
 type Tab = "course" | "equipment" | "participants" | "profile";
 
@@ -23,6 +25,7 @@ export type DistanceWithProfile = {
   km: number;
   profileData: ProfileData;
   gpxUrl: string | null;
+  aidStations: AidStation[];
 };
 
 type Props = {
@@ -139,6 +142,7 @@ export function DetailTabs({ courseIntro, equipment, registrations, distances = 
               gainM={activeDist.profileData.gainM}
               lossM={activeDist.profileData.lossM}
               distanceName={activeDist.name}
+              aidStations={activeDist.aidStations}
             />
 
             {/* Map */}
@@ -148,6 +152,14 @@ export function DetailTabs({ courseIntro, equipment, registrations, distances = 
                 track={activeDist.profileData.track}
                 startLat={activeDist.profileData.meta.startLat}
                 startLon={activeDist.profileData.meta.startLon}
+              />
+            )}
+
+            {/* Aid station time chart */}
+            {activeDist.aidStations.length > 0 && (
+              <TimeChart
+                stations={activeDist.aidStations}
+                points={activeDist.profileData.points}
               />
             )}
           </div>

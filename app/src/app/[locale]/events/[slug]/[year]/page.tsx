@@ -9,6 +9,7 @@ import { DistanceInfo } from "@/components/DistanceInfo";
 import { DetailTabs, type DistanceWithProfile } from "./DetailTabs";
 import type { Distance } from "@/generated/prisma/client";
 import type { ProfileData } from "@/lib/gpxParser";
+import type { AidStation } from "@/types/aidStation";
 
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-white/20 text-white backdrop-blur-sm",
@@ -46,6 +47,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
       km: d.km,
       profileData: d.profileData as unknown as ProfileData,
       gpxUrl: d.gpxUrl ?? null,
+      aidStations: (d.aidStations as AidStation[] | null) ?? [],
     }));
 
   return (

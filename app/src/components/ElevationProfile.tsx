@@ -1,6 +1,5 @@
 import type { ElevationPoint } from "@/lib/gpxParser";
-
-type AidStation = { name: string; km: number; type?: string };
+import type { AidStation } from "@/types/aidStation";
 
 type Props = {
   points: ElevationPoint[];
@@ -8,15 +7,15 @@ type Props = {
   lossM: number;
   color?: string;
   aidStations?: AidStation[];
-  gpxUrl?: string | null;
   distanceName: string;
 };
 
 const W = 800;
-const H = 200;
-const PAD = { top: 16, right: 12, bottom: 28, left: 44 };
+// Extra bottom padding for aid station icons below the chart area
+const H = 240;
+const PAD = { top: 16, right: 12, bottom: 68, left: 44 };
 const CW = W - PAD.left - PAD.right;
-const CH = H - PAD.top - PAD.bottom;
+const CH = H - PAD.top - PAD.bottom; // = 156
 
 function niceInterval(range: number, targetLines = 4): number {
   const raw = range / targetLines;
@@ -25,7 +24,23 @@ function niceInterval(range: number, targetLines = 4): number {
   return candidates.find((c) => range / c <= targetLines + 1) ?? candidates[candidates.length - 1];
 }
 
-export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidStations = [], gpxUrl, distanceName }: Props) {
+function elevationAtKm(points: ElevationPoint[], km: number): number {
+  return points.reduce((prev, curr) => (Math.abs(curr.d - km) < Math.abs(prev.d - km) ? curr : prev)).e;
+}
+
+const STATION_EMOJI: Record<string, string> = {
+  water: "💧",
+  food: "🍌",
+  checkpoint: "🏁",
+};
+
+const STATION_COLOR: Record<string, string> = {
+  water: "#3B82F6",
+  food: "#10B981",
+  checkpoint: "#F59E0B",
+};
+
+export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidStations = [], distanceName }: Props) {
   if (points.length < 2) return null;
 
   const maxD = points[points.length - 1].d;
@@ -36,6 +51,7 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
 
   const toX = (d: number) => PAD.left + (d / maxD) * CW;
   const toY = (e: number) => PAD.top + CH - ((e - minE) / eRange) * CH;
+  const chartBottom = PAD.top + CH; // y=172
 
   // Build SVG path for profile + closed area
   const linePts = points.map((p) => `${toX(p.d).toFixed(1)},${toY(p.e).toFixed(1)}`).join(" L");
@@ -62,24 +78,9 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
       {/* Stats row */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         <span className="font-bold text-ink">{distanceName}</span>
-        <span className="text-ink-soft">
-          <span className="font-semibold text-ink">↑ {gainM.toLocaleString()} м</span>
-        </span>
-        <span className="text-ink-soft">
-          <span className="font-semibold text-ink">↓ {lossM.toLocaleString()} м</span>
-        </span>
-        <span className="text-ink-soft">
-          <span className="font-semibold text-ink">{maxD.toFixed(1)} км</span>
-        </span>
-        {gpxUrl && (
-          <a
-            href={gpxUrl}
-            download
-            className="ml-auto flex items-center gap-1 rounded-[var(--radius-s)] border border-border px-3 py-1 text-xs font-semibold text-ink-soft transition-colors hover:text-ink"
-          >
-            ↓ GPX
-          </a>
-        )}
+        <span className="font-semibold text-ink">↑ {gainM.toLocaleString()} м</span>
+        <span className="font-semibold text-ink">↓ {lossM.toLocaleString()} м</span>
+        <span className="font-semibold text-ink">{maxD.toFixed(1)} км</span>
       </div>
 
       {/* SVG profile */}
@@ -88,7 +89,7 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
           viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="none"
           className="w-full"
-          style={{ height: "clamp(140px, 22vw, 200px)" }}
+          style={{ height: "clamp(175px, 27vw, 240px)" }}
           aria-label={`Профиль трассы ${distanceName}`}
         >
           <defs>
@@ -140,37 +141,56 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
           {aidStations.map((s) => {
             if (s.km > maxD) return null;
             const x = toX(s.km).toFixed(1);
-            const markerColor = s.type === "finish" ? "#E74C3C" : s.type === "aid" ? "#3498DB" : "#27AE60";
+            const xNum = parseFloat(x);
+            const profileY = toY(elevationAtKm(points, s.km));
+            const markerColor = STATION_COLOR[s.type] ?? "#6B7280";
+            const emoji = STATION_EMOJI[s.type] ?? "•";
+            const label = s.name.length > 9 ? s.name.slice(0, 8) + "…" : s.name;
+
             return (
-              <g key={s.name + s.km}>
+              <g key={`${s.name}-${s.km}`}>
+                {/* Dashed connector from profile dot to chart baseline */}
                 <line
                   x1={x}
-                  y1={PAD.top}
+                  y1={profileY.toFixed(1)}
                   x2={x}
-                  y2={toY(minE).toFixed(1)}
+                  y2={chartBottom}
                   stroke={markerColor}
-                  strokeWidth="1"
-                  strokeDasharray="3,2"
-                  strokeOpacity="0.7"
+                  strokeWidth="0.8"
+                  strokeDasharray="2.5,2"
+                  strokeOpacity="0.6"
                 />
-                <rect
-                  x={parseFloat(x) - 14}
-                  y={PAD.top + CH + 2}
-                  width="28"
-                  height="11"
-                  fill={markerColor}
-                  rx="2"
+                {/* Circle on the profile line */}
+                <circle
+                  cx={xNum}
+                  cy={profileY}
+                  r={3.5}
+                  fill="white"
+                  stroke={markerColor}
+                  strokeWidth="1.5"
                 />
+                {/* Emoji icon below chart */}
                 <text
                   x={x}
-                  y={PAD.top + CH + 8.5}
+                  y={chartBottom + 18}
                   textAnchor="middle"
-                  fontSize="6.5"
-                  fill="white"
+                  fontSize="14"
+                  fontFamily="system-ui,sans-serif"
+                >
+                  {emoji}
+                </text>
+                {/* Station name */}
+                <text
+                  x={x}
+                  y={chartBottom + 36}
+                  textAnchor="middle"
+                  fontSize="7"
+                  fill={markerColor}
+                  fillOpacity="0.9"
                   fontFamily="system-ui,sans-serif"
                   fontWeight="600"
                 >
-                  {s.km}км
+                  {label}
                 </text>
               </g>
             );
@@ -196,9 +216,9 @@ export function ElevationProfile({ points, gainM, lossM, color = "#E74C3C", aidS
           {/* Bottom baseline */}
           <line
             x1={PAD.left}
-            y1={PAD.top + CH}
+            y1={chartBottom}
             x2={W - PAD.right}
-            y2={PAD.top + CH}
+            y2={chartBottom}
             stroke="currentColor"
             strokeWidth="0.5"
             strokeOpacity="0.2"

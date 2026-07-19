@@ -5,20 +5,22 @@ import { useTranslations, useFormatter } from "next-intl";
 import { formatKzt } from "@/lib/currency";
 import { DistanceForm, type DistanceDefaults } from "./DistanceForm";
 import { deleteDistanceAction, uploadTrackAction, type ActionState } from "./actions";
+import { AidStationEditor } from "./AidStationEditor";
+import type { AidStation } from "@/types/aidStation";
 
 const initialDeleteState: ActionState = {};
 
 export function DistanceRow({
   distance,
 }: {
-  distance: DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null };
+  distance: DistanceDefaults & { id: string; hasProfile?: boolean; gpxUrl?: string | null; aidStations?: AidStation[] | null };
 }) {
   const t = useTranslations("Admin");
   const tCommon = useTranslations("Common");
   const format = useFormatter();
   const [isEditing, setIsEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [uploadingGpx, setUploadingGpx] = useState(false);
+  const [showAidStations, setShowAidStations] = useState(false);
   const [gpxState, setGpxState] = useState<{ error?: string; success?: boolean }>({});
   const [isPending, startTransition] = useTransition();
 
@@ -73,6 +75,14 @@ export function DistanceRow({
           <input type="file" accept=".gpx,application/gpx+xml,text/xml,application/xml" className="sr-only" onChange={handleGpxChange} disabled={isPending} />
         </label>
 
+        <button
+          type="button"
+          onClick={() => setShowAidStations((v) => !v)}
+          className={`text-sm font-semibold transition-colors ${showAidStations ? "text-ember" : "text-ink-soft hover:text-ink"}`}
+        >
+          ПП{distance.aidStations?.length ? ` (${distance.aidStations.length})` : ""}
+        </button>
+
         {confirmingDelete ? (
           <>
             <span className="text-sm text-danger">{t("deleteConfirmLabel")}</span>
@@ -110,6 +120,14 @@ export function DistanceRow({
         <p className="w-full text-sm text-danger">
           {gpxState.error === "invalidGpx" ? t("gpxInvalid") : t("errorInvalid")}
         </p>
+      )}
+      {showAidStations && (
+        <div className="w-full">
+          <AidStationEditor
+            distanceId={distance.id}
+            initialStations={distance.aidStations ?? []}
+          />
+        </div>
       )}
     </div>
   );

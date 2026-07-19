@@ -6,6 +6,7 @@ import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
 import { parseGpx } from "@/lib/gpxParser";
+import type { AidStation } from "@/types/aidStation";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -222,6 +223,44 @@ export async function uploadTrackAction(
   await prisma.distance.update({
     where: { id: distanceId },
     data: { profileData: profileData as object },
+  });
+
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+const AidStationSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  km: z.coerce.number().min(0).max(9999),
+  type: z.enum(["water", "food", "checkpoint"]),
+  cutoffMinutes: z.coerce.number().int().min(0).optional(),
+});
+
+export async function updateAidStationsAction(
+  distanceId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const raw = formData.get("aidStations");
+  if (typeof raw !== "string") return { error: "invalid" };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { error: "invalid" };
+  }
+
+  const result = z.array(AidStationSchema).safeParse(parsed);
+  if (!result.success) return { error: "invalid" };
+
+  await prisma.distance.update({
+    where: { id: distanceId },
+    data: { aidStations: result.data as AidStation[] },
   });
 
   revalidatePath("/[locale]/admin/events/[id]", "page");
