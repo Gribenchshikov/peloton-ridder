@@ -81,7 +81,7 @@ export function DetailTabs({
         ))}
       </div>
 
-      <div className="p-6">
+      <div className="overflow-hidden p-6">
         {tab === "course" && (
           <div>
             {courseIntro ? (
@@ -143,7 +143,7 @@ export function DetailTabs({
                           <h3 className="font-display text-base font-bold text-ink">{title}</h3>
                         )}
                         {content && (
-                          <p className="text-sm leading-relaxed text-ink-soft whitespace-pre-line">{content}</p>
+                          <p className="text-sm leading-relaxed text-ink-soft whitespace-pre-line break-words">{content}</p>
                         )}
                       </div>
                     );

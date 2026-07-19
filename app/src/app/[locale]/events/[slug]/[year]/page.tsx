@@ -143,7 +143,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
         {/* Content grid */}
         <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
           {/* LEFT: Tabs */}
-          <div className="flex flex-col gap-6">
+          <div className="flex min-w-0 flex-col gap-6">
             <DetailTabs
               courseIntro={event.race.courseIntro ?? ""}
               regulationFiles={regulationFiles}
