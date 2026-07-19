@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export type SaveResult = { url: string } | { error: "invalidType" | "tooLarge" };
@@ -22,7 +22,7 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
   if (!ALLOWED_TYPES.has(file.type)) return { error: "invalidType" };
   if (file.size > MAX_BYTES) return { error: "tooLarge" };
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : file.type === "image/svg+xml" ? "svg" : "jpg";
   const filename = `${crypto.randomUUID()}.${ext}`;
 
   const uploadDir = process.env.UPLOAD_DIR

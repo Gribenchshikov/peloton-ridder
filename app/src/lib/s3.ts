@@ -57,4 +57,5 @@ export const s3Keys = {
   avatar: (userId: string, ext: string) => `avatars/${userId}.${ext}`,
   cover: (eventId: string, ext: string) => `covers/${eventId}.${ext}`,
   regulation: (eventId: string) => `regulations/${eventId}.pdf`,
+  logo: (partnerId: string, ext: string) => `logos/${partnerId}.${ext}`,
 };
