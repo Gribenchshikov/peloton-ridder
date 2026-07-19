@@ -38,3 +38,51 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const html = `<p>Перейдите по ссылке, чтобы задать новый пароль:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действует 24 часа. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>`;
   await sendMail(to, "Сброс пароля — Peloton Ridder", text, html);
 }
+
+export async function sendRegistrationConfirmationEmail(
+  to: string,
+  name: string,
+  raceName: string,
+  distanceName: string,
+  bibNumber: number,
+  dateISO: Date,
+  location: string,
+) {
+  const dateStr = new Intl.DateTimeFormat("ru", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(dateISO);
+
+  const subject = `Вы зарегистрированы — ${raceName} · №${bibNumber}`;
+
+  const text = [
+    `Здравствуйте, ${name}!`,
+    ``,
+    `Ваш платёж подтверждён. Вы зарегистрированы на забег.`,
+    ``,
+    `Забег: ${raceName}`,
+    `Дистанция: ${distanceName}`,
+    `Стартовый номер: №${bibNumber}`,
+    `Дата: ${dateStr}`,
+    `Место: ${location}`,
+    ``,
+    `С уважением,`,
+    `Peloton Ridder`,
+  ].join("\n");
+
+  const html = `
+<p>Здравствуйте, ${name}!</p>
+<p>Ваш платёж подтверждён. Вы зарегистрированы на забег.</p>
+<table style="border-collapse:collapse;margin:16px 0">
+  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Забег</td><td style="font-weight:600">${raceName}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Дистанция</td><td>${distanceName}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Стартовый номер</td><td style="font-size:20px;font-weight:700;color:#EA580C">№${bibNumber}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Дата</td><td>${dateStr}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Место</td><td>${location}</td></tr>
+</table>
+<p style="color:#888;font-size:13px">С уважением,<br>Peloton Ridder</p>
+`.trim();
+
+  await sendMail(to, subject, text, html);
+}

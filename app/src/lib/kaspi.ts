@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sendRegistrationConfirmationEmail } from "@/lib/mailer";
 
 // Пока нет реального мерчанта (см. .env.example) — вместо вызова Kaspi API работаем
 // в тестовом режиме: страница оплаты показывает баннер и кнопку «Симулировать оплату»
@@ -26,7 +27,7 @@ export function isTestPaymentModeEnabled() {
 // ownerUserId необязателен — реальный вебхук Kaspi его не знает, а тестовая кнопка
 // передаёт его, чтобы проверка владения тоже была внутри транзакции, без отдельного чтения.
 export async function confirmPayment(registrationId: string, ownerUserId?: string) {
-  return prisma.$transaction(async (tx) => {
+  const txResult = await prisma.$transaction(async (tx) => {
     const registration = await tx.registration.findUnique({
       where: { id: registrationId },
       include: { distance: true },
@@ -35,7 +36,7 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
       return null;
     }
     if (registration.status === "PAID") {
-      return registration;
+      return { reg: registration, justPaid: false };
     }
 
     const taken = await tx.registration.findMany({
@@ -48,10 +49,51 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
       bibNumber++;
     }
 
-    // Письмо с номером участника — T16, тут только фиксируем факт оплаты.
-    return tx.registration.update({
+    const updated = await tx.registration.update({
       where: { id: registrationId },
       data: { status: "PAID", bibNumber },
     });
+    return { reg: updated, justPaid: true };
   });
+
+  if (!txResult) return null;
+
+  if (txResult.justPaid) {
+    sendConfirmationEmail(txResult.reg.id).catch((e) => console.error("[kaspi] email error:", e));
+  }
+
+  return txResult.reg;
+}
+
+async function sendConfirmationEmail(registrationId: string) {
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: {
+      bibNumber: true,
+      user: { select: { email: true, firstName: true, lastName: true } },
+      event: {
+        select: {
+          year: true,
+          dateISO: true,
+          location: true,
+          race: { select: { name: true } },
+        },
+      },
+      distance: { select: { name: true } },
+    },
+  });
+  if (!reg || reg.bibNumber === null) return;
+
+  const name = `${reg.user.firstName} ${reg.user.lastName}`.trim();
+  const raceName = `${reg.event.race.name} ${reg.event.year}`;
+
+  await sendRegistrationConfirmationEmail(
+    reg.user.email,
+    name,
+    raceName,
+    reg.distance.name,
+    reg.bibNumber,
+    reg.event.dateISO,
+    reg.event.location,
+  );
 }
