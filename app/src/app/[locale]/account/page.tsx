@@ -201,7 +201,16 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
               <div className="flex flex-col items-end gap-1.5">
                 <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">{tStatus(reg.status)}</span>
                 <span className="text-xs text-ink-faint">{format.dateTime(reg.createdAt, { day: "numeric", month: "short", year: "numeric" })}</span>
+                {reg.status === "PAID" && (
+                  <Link
+                    href={`/tickets/${reg.id}`}
+                    className="text-xs font-semibold text-ember hover:underline"
+                  >
+                    {t("showQrCta")}
+                  </Link>
+                )}
                 {(reg.status === "RESERVED" || reg.status === "PAID") &&
+                  !reg.kitPickedUpAt &&
                   new Date() <= new Date(reg.event.cancellationDeadline) && (
                     <CancelRegistrationButton registrationId={reg.id} />
                   )}

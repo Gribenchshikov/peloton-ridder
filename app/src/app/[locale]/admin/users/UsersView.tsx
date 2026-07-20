@@ -35,9 +35,18 @@ export function UsersView({
   const [toast, setToast] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const admins = users.filter((u) => u.isAdmin);
   const regular = users.filter((u) => !u.isAdmin);
-  const visibleUsers = activeTab === "admins" ? admins : regular;
+  const baseUsers = activeTab === "admins" ? admins : regular;
+  const q = searchQuery.trim().toLowerCase();
+  const visibleUsers = q
+    ? baseUsers.filter((u) =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q),
+      )
+    : baseUsers;
 
   function resetAction() {
     setActiveAction(null);
@@ -82,6 +91,7 @@ export function UsersView({
     startTransition(async () => {
       const payload: Record<string, unknown> = {};
       const action = activeAction.type;
+      if (action === "menu") return;
 
       if (action === "ban") {
         const days = Number(banDays) || 0;
@@ -168,11 +178,13 @@ export function UsersView({
       </div>
 
       <div className="rounded-[var(--radius-m)] border border-border bg-surface p-4">
+        <div className="flex flex-col gap-3">
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => {
               setActiveTab("admins");
+              setSearchQuery("");
               resetAction();
             }}
             className={
@@ -188,6 +200,7 @@ export function UsersView({
             type="button"
             onClick={() => {
               setActiveTab("runners");
+              setSearchQuery("");
               resetAction();
             }}
             className={
@@ -199,6 +212,16 @@ export function UsersView({
           >
             {t("runnersTab")}
           </button>
+        </div>
+        {activeTab === "runners" && (
+          <input
+            type="search"
+            placeholder="Поиск по имени, фамилии или email…"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); resetAction(); }}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          />
+        )}
         </div>
       </div>
 

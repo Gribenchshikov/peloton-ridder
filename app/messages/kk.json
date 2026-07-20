@@ -190,6 +190,7 @@
     "profileSaved": "Өзгерістер сақталды.",
     "historyTitle": "Тіркелулер тарихы",
     "historyEmpty": "Әзірге ешбір стартқа тіркелген жоқсыз — тіркелген соң осында пайда болады.",
+    "showQrCta": "QR-код көрсету",
     "cancelCta": "Бас тарту",
     "cancelledLabel": "Бас тартылды",
     "cancelDialogTitle": "Тіркелуден бас тарту",
@@ -259,7 +260,13 @@
     "promoError_inactive": "Промокод өшірілген",
     "promoError_expired": "Промокодтың мерзімі өтті",
     "promoError_exhausted": "Промокодты пайдалану шегі таусылды",
-    "promoError_wrong_event": "Бұл промокод осы жарысқа жарамсыз"
+    "promoError_wrong_event": "Бұл промокод осы жарысқа жарамсыз",
+    "alreadyRegisteredTitle": "Сіз бұрын тіркелгенсіз",
+    "alreadyRegisteredText": "{race} жарысына тіркеліп қойғансыз.",
+    "showQrCta": "Билетті ашу",
+    "backToEventCta": "Жарыс бетіне оралу",
+    "birthDateLabel": "Туған күні",
+    "birthDateHint": "Профиліңізге сақталады"
   },
   "Payment": {
     "eyebrow": "Төлем",

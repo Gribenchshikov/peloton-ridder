@@ -190,6 +190,7 @@
     "profileSaved": "Changes saved.",
     "historyTitle": "Registration history",
     "historyEmpty": "No race registrations yet — once you sign up, they'll show up here.",
+    "showQrCta": "Show QR code",
     "cancelCta": "Cancel",
     "cancelledLabel": "Cancelled",
     "cancelDialogTitle": "Cancel registration",
@@ -259,7 +260,13 @@
     "promoError_inactive": "Promo code is disabled",
     "promoError_expired": "Promo code has expired",
     "promoError_exhausted": "Promo code usage limit reached",
-    "promoError_wrong_event": "This promo code is not valid for this event"
+    "promoError_wrong_event": "This promo code is not valid for this event",
+    "alreadyRegisteredTitle": "You're already registered",
+    "alreadyRegisteredText": "You are already registered for {race}.",
+    "showQrCta": "Open ticket",
+    "backToEventCta": "Back to event",
+    "birthDateLabel": "Date of birth",
+    "birthDateHint": "Will be saved to your profile"
   },
   "Payment": {
     "eyebrow": "Payment",

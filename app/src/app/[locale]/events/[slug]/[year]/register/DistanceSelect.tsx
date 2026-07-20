@@ -40,6 +40,7 @@ export function DistanceSelect({
   merchItems,
   clubs,
   tshirtSizeGuideUrl,
+  hasBirthDate,
 }: {
   eventId: string;
   locale: string;
@@ -47,6 +48,7 @@ export function DistanceSelect({
   merchItems: MerchItem[];
   clubs: RunningClub[];
   tshirtSizeGuideUrl?: string | null;
+  hasBirthDate: boolean;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
@@ -219,6 +221,24 @@ export function DistanceSelect({
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {/* Birth date — shown only when not set in profile */}
+      {!hasBirthDate && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-ink-soft">
+            {t("birthDateLabel")}
+            <span className="ml-1.5 text-xs font-bold text-danger">*</span>
+          </label>
+          <input
+            type="date"
+            name="birthDate"
+            required
+            max={new Date().toISOString().slice(0, 10)}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          />
+          <p className="text-xs text-ink-faint">{t("birthDateHint")}</p>
         </div>
       )}
 

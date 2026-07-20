@@ -190,6 +190,7 @@
     "profileSaved": "Изменения сохранены.",
     "historyTitle": "История регистраций",
     "historyEmpty": "Пока нет ни одной регистрации на забег — когда запишешься, она появится здесь.",
+    "showQrCta": "Показать QR-код",
     "cancelCta": "Отменить",
     "cancelledLabel": "Отменено",
     "cancelDialogTitle": "Отмена регистрации",
@@ -259,7 +260,13 @@
     "promoError_inactive": "Промокод деактивирован",
     "promoError_expired": "Срок действия промокода истёк",
     "promoError_exhausted": "Лимит использований промокода исчерпан",
-    "promoError_wrong_event": "Этот промокод не действует на данный забег"
+    "promoError_wrong_event": "Этот промокод не действует на данный забег",
+    "alreadyRegisteredTitle": "Вы уже зарегистрированы",
+    "alreadyRegisteredText": "Вы уже зарегистрированы на {race}.",
+    "showQrCta": "Открыть билет",
+    "backToEventCta": "К странице забега",
+    "birthDateLabel": "Дата рождения",
+    "birthDateHint": "Будет сохранена в вашем профиле"
   },
   "Payment": {
     "eyebrow": "Оплата",

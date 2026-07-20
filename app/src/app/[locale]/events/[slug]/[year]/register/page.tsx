@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { getEventForRegistration, getActiveRegistration, getUserContactInfo } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { RegisterView } from "./RegisterView";
@@ -51,6 +52,9 @@ export default async function EventRegisterPage({
     return { ...d, capacity, taken };
   });
   if (existing) {
+    if (existing.status === "PAID") {
+      return <AlreadyRegistered event={event} registration={existing} />;
+    }
     return redirect({ href: `/pay/${existing.id}`, locale });
   }
   if (!profile) {
@@ -60,7 +64,54 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} tshirtSizeGuideUrl={tshirtGuide?.value} />;
+  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} tshirtSizeGuideUrl={tshirtGuide?.value} hasBirthDate={!!profile.birthDate} />;
+}
+
+type ActiveReg = NonNullable<Awaited<ReturnType<typeof getActiveRegistration>>>;
+
+function AlreadyRegistered({
+  event,
+  registration,
+}: {
+  event: NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
+  registration: ActiveReg;
+}) {
+  const t = useTranslations("Registration");
+  return (
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-16">
+      <section className="rounded-[var(--radius-m)] border border-border bg-surface p-6">
+        <span className="text-xs font-bold uppercase tracking-wide text-spruce">{t("eyebrow")}</span>
+        <h1 className="mt-2 font-display text-2xl font-bold text-ink">
+          {t("alreadyRegisteredTitle")}
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-ink-soft">
+          {t("alreadyRegisteredText", { race: `${event.race.name} ${event.year}` })}
+        </p>
+        <div className="mt-4 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3">
+          <p className="text-xs text-ink-faint">{registration.distance.name} · {registration.distance.km} км</p>
+          {registration.bibNumber && (
+            <p className="mt-1 font-display text-3xl font-bold text-ink">
+              #{registration.bibNumber}
+            </p>
+          )}
+        </div>
+        <div className="mt-5 flex gap-3">
+          <Link
+            href={`/tickets/${registration.id}`}
+            className="rounded-[var(--radius-s)] bg-ember px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+          >
+            {t("showQrCta")}
+          </Link>
+          <Link
+            href={`/events/${event.race.slug}/${event.year}`}
+            className="rounded-[var(--radius-s)] border border-border px-5 py-2.5 text-sm font-semibold text-ink hover:bg-surface-2"
+          >
+            {t("backToEventCta")}
+          </Link>
+        </div>
+      </section>
+    </main>
+  );
 }
 
 function EmailConfirmationRequired({ email }: { email: string }) {

@@ -48,6 +48,14 @@ export async function createRegistrationAction(
   }
   const { eventId, distanceId, runningClubId, promoCode } = parsed.data;
 
+  const birthDateRaw = formData.get("birthDate");
+  if (birthDateRaw && typeof birthDateRaw === "string" && birthDateRaw.length > 0) {
+    const parsed = new Date(birthDateRaw);
+    if (!isNaN(parsed.getTime())) {
+      await prisma.user.update({ where: { id: userId }, data: { birthDate: parsed } });
+    }
+  }
+
   const now = new Date();
   const outcome = await prisma.$transaction(async (tx) => {
     // Одна учётная запись может иметь только одну активную регистрацию на

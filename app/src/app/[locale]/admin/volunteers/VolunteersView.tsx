@@ -32,13 +32,23 @@ type Tab = "applications" | "volunteers";
 
 export function VolunteersView({ applications }: { applications: Application[] }) {
   const [tab, setTab] = useState<Tab>("applications");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const pending = applications.filter((a) => a.status === "PENDING");
-  const approved = applications.filter((a) => a.status === "APPROVED");
-  const rejected = applications.filter((a) => a.status === "REJECTED");
+  const q = searchQuery.trim().toLowerCase();
+
+  const matchesQuery = (app: Application) =>
+    !q ||
+    `${app.user.firstName} ${app.user.lastName}`.toLowerCase().includes(q) ||
+    app.user.email.toLowerCase().includes(q);
+
+  const pending = applications.filter((a) => a.status === "PENDING" && matchesQuery(a));
+  const approved = applications.filter((a) => a.status === "APPROVED" && matchesQuery(a));
+  const rejected = applications.filter((a) => a.status === "REJECTED" && matchesQuery(a));
   const reviewed = [...approved, ...rejected].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+
+  const allPending = applications.filter((a) => a.status === "PENDING");
 
   // Group approved by user for volunteers tab
   const byUser = new Map<
@@ -54,13 +64,23 @@ export function VolunteersView({ applications }: { applications: Application[] }
 
   return (
     <div>
-      <div className="mb-6 flex gap-2 border-b border-border">
-        <TabButton active={tab === "applications"} onClick={() => setTab("applications")} badge={pending.length}>
+      <div className="mb-4 flex gap-2 border-b border-border">
+        <TabButton active={tab === "applications"} onClick={() => setTab("applications")} badge={allPending.length}>
           Заявки
         </TabButton>
         <TabButton active={tab === "volunteers"} onClick={() => setTab("volunteers")} badge={0}>
-          Волонтёры ({approved.length})
+          Волонтёры ({applications.filter((a) => a.status === "APPROVED").length})
         </TabButton>
+      </div>
+
+      <div className="mb-6">
+        <input
+          type="search"
+          placeholder="Поиск по имени, фамилии или email…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-sm rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+        />
       </div>
 
       {tab === "applications" && (

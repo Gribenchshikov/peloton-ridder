@@ -72,6 +72,7 @@ export function getUserProfile(userId: string) {
           id: true,
           status: true,
           bibNumber: true,
+          kitPickedUpAt: true,
           createdAt: true,
           cancelReason: true,
           event: {
@@ -125,6 +126,12 @@ export function getActiveRegistration(userId: string, eventId: string) {
         { status: "PAID" },
         { status: "RESERVED", reservedUntil: { gt: new Date() } },
       ],
+    },
+    select: {
+      id: true,
+      status: true,
+      bibNumber: true,
+      distance: { select: { name: true, km: true } },
     },
   });
 }
