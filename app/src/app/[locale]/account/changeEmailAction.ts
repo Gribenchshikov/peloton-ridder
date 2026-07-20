@@ -15,6 +15,7 @@ const Schema = z.object({
 export type ChangeEmailState = { error?: string; success?: boolean };
 
 export async function changeEmailAction(
+  locale: string,
   _prev: ChangeEmailState,
   formData: FormData,
 ): Promise<ChangeEmailState> {
@@ -45,7 +46,7 @@ export async function changeEmailAction(
 
   const token = await createEmailChangeToken(userId, newEmail);
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
-  await sendEmailChangeEmail(newEmail, `${appUrl}/ru/verify-email-change?token=${token}`);
+  await sendEmailChangeEmail(newEmail, `${appUrl}/${locale}/verify-email-change?token=${token}`);
 
   return { success: true };
 }

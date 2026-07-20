@@ -14,9 +14,10 @@ const ERROR_KEYS: Record<string, string> = {
   invalid:       "changeEmailInvalid",
 };
 
-export function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
+export function ChangeEmailForm({ currentEmail, locale }: { currentEmail: string; locale: string }) {
   const t = useTranslations("Account");
-  const [state, formAction, pending] = useActionState(changeEmailAction, initialState);
+  const boundAction = changeEmailAction.bind(null, locale);
+  const [state, formAction, pending] = useActionState(boundAction, initialState);
 
   return (
     <section>

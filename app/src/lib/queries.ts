@@ -165,6 +165,29 @@ export function getEventForRegistration(slug: string, year: number) {
   });
 }
 
+export function getKitPickupListBySlug(slug: string, year: number) {
+  return prisma.event.findFirst({
+    where: { year, race: { slug } },
+    select: {
+      id: true,
+      year: true,
+      race: { select: { name: true, slug: true } },
+      distances: { orderBy: { km: "asc" }, select: { id: true, name: true, km: true } },
+      registrations: {
+        where: { status: "PAID" },
+        select: {
+          id: true,
+          bibNumber: true,
+          kitPickedUpAt: true,
+          distance: { select: { id: true, name: true } },
+          user: { select: { firstName: true, lastName: true, phone: true } },
+        },
+        orderBy: [{ bibNumber: "asc" }, { createdAt: "asc" }],
+      },
+    },
+  });
+}
+
 export function getUsersForAdmin() {
   return prisma.user.findMany({
     select: {

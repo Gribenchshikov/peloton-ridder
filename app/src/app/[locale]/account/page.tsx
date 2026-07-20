@@ -57,7 +57,7 @@ export default async function AccountPage({
         callbackUrl={callbackUrl}
         tshirtSizeGuideUrl={tshirtGuideUrl?.value}
       />
-      <ChangeEmailForm currentEmail={profile.email} />
+      <ChangeEmailForm currentEmail={profile.email} locale={locale} />
       <ChangePasswordForm />
       {(profile.isVolunteer || profile.isAdmin) && (
         <section>
@@ -150,15 +150,25 @@ function VolunteerSection({ applications }: { applications: VolunteerApp[] }) {
                     {s.label}
                   </p>
                 </div>
-                {app.status === "APPROVED" && app.event.volunteerChatUrl && (
-                  <a
-                    href={app.event.volunteerChatUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white hover:opacity-90"
-                  >
-                    Чат волонтёров →
-                  </a>
+                {app.status === "APPROVED" && (
+                  <div className="flex flex-wrap gap-2">
+                    {app.event.volunteerChatUrl && (
+                      <a
+                        href={app.event.volunteerChatUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                      >
+                        Чат волонтёров →
+                      </a>
+                    )}
+                    <Link
+                      href={`/admin/registrations/${app.event.race.slug}/${app.event.year}/kit`}
+                      className="rounded-[var(--radius-s)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+                    >
+                      Выдача наборов →
+                    </Link>
+                  </div>
                 )}
               </div>
             </li>

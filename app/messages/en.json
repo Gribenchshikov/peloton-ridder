@@ -489,6 +489,7 @@
     "regStatusPaid": "Paid",
     "regStatusReserved": "Reserved",
     "regStatusCancelled": "Declined",
+    "kitPickupCta": "Kit Pickup",
     "summaryCta": "Summary",
     "exportCsvCta": "Download CSV",
     "regChangeDistanceCta": "Change",

@@ -489,6 +489,7 @@
     "regStatusPaid": "Оплачено",
     "regStatusReserved": "Бронь",
     "regStatusCancelled": "Отклонено",
+    "kitPickupCta": "Выдача наборов",
     "summaryCta": "Сводка",
     "exportCsvCta": "Скачать CSV",
     "regChangeDistanceCta": "Сменить",

@@ -57,6 +57,12 @@ export function RegistrationsView({ event }: { event: EventData }) {
         </div>
         <div className="flex gap-2">
           <Link
+            href={`/admin/registrations/${event.race.slug}/${event.year}/kit`}
+            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {t("kitPickupCta")}
+          </Link>
+          <Link
             href={`/admin/registrations/${event.race.slug}/${event.year}/summary`}
             className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
           >
