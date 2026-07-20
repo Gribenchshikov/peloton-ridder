@@ -271,6 +271,7 @@ model Registration {
   cancelReason    CancelReason?
   cancelComment   String?
   transferUsedAt  DateTime?
+  kitPickedUpAt   DateTime?
   createdAt       DateTime           @default(now())
 
   result            Result?

@@ -57,6 +57,19 @@ export default async function AccountPage({
         tshirtSizeGuideUrl={tshirtGuideUrl?.value}
       />
       <ChangePasswordForm />
+      {(profile.isVolunteer || profile.isAdmin) && (
+        <section>
+          <h2 className="font-display text-lg font-bold text-ink">Инструменты волонтёра</h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link
+              href="/volunteer/scan"
+              className="rounded-[var(--radius-s)] border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              QR-сканер выдачи набора →
+            </Link>
+          </div>
+        </section>
+      )}
       {profile.isVolunteer && (
         <VolunteerProgress
           completed={completedVolunteerCount}
