@@ -32,13 +32,12 @@ export async function createPromoAction(locale: string, _p: ActionState, fd: For
   if ("error" in parsed) return parsed;
 
   try {
-    const promo = await prisma.promoCode.create({ data: parsed.data });
+    await prisma.promoCode.create({ data: parsed.data });
     revalidatePath("/[locale]/admin/promo-codes", "page");
-    redirect({ href: `/admin/promo-codes/${promo.id}`, locale });
+    return { success: true };
   } catch {
     return { error: "duplicate" };
   }
-  return {};
 }
 
 export async function updatePromoAction(promoId: string, _p: ActionState, fd: FormData): Promise<ActionState> {

@@ -276,6 +276,8 @@
     "promoEventAll": "Все забеги",
     "promoTypePercent": "Процент (%)",
     "promoTypeFixed": "Фиксированная сумма (₸)",
+    "promoCreatedSuccess": "Промокод создан",
+    "createAnotherPromoCta": "Создать ещё",
     "promoSaved": "Сохранено",
     "promoErrorDuplicate": "Промокод с таким кодом уже существует",
     "runningClubsAdminTitle": "Беговые клубы",

@@ -276,6 +276,8 @@
     "promoEventAll": "All events",
     "promoTypePercent": "Percent (%)",
     "promoTypeFixed": "Fixed amount (₸)",
+    "promoCreatedSuccess": "Promo code created",
+    "createAnotherPromoCta": "Create another",
     "promoSaved": "Saved",
     "promoErrorDuplicate": "A promo code with this code already exists",
     "runningClubsAdminTitle": "Running Clubs",

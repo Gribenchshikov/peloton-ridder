@@ -276,6 +276,8 @@
     "promoEventAll": "Барлық жарыстар",
     "promoTypePercent": "Пайыз (%)",
     "promoTypeFixed": "Тіркелген сома (₸)",
+    "promoCreatedSuccess": "Промокод жасалды",
+    "createAnotherPromoCta": "Тағы жасау",
     "promoSaved": "Сақталды",
     "promoErrorDuplicate": "Мұндай код бар промокод бұрыннан бар",
     "runningClubsAdminTitle": "Жүгіру клубтары",

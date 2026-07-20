@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { createPromoAction, updatePromoAction, type ActionState } from "./actions";
 
 type Event = { id: string; race: { name: string }; year: number };
@@ -37,6 +38,31 @@ export function PromoForm({ mode, locale, promoId, events, defaults }: Props) {
     ? updatePromoAction.bind(null, promoId)
     : createPromoAction.bind(null, locale);
   const [state, dispatch] = useActionState(action, initial);
+
+  if (mode === "create" && state.success) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 px-6 py-5">
+          <p className="font-semibold text-spruce">{t("promoCreatedSuccess")}</p>
+        </div>
+        <div className="flex gap-3">
+          <Link
+            href="/admin/promo-codes"
+            className="rounded-[var(--radius-s)] bg-ember px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+          >
+            {t("backToPromosCta")}
+          </Link>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-[var(--radius-s)] border border-border px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {t("createAnotherPromoCta")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form action={dispatch} className="flex flex-col gap-5">
