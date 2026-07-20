@@ -598,3 +598,125 @@ export async function updateDistanceEquipmentAction(
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
   return { success: true };
 }
+
+// ── Results ────────────────────────────────────────────────────────────────────
+
+export async function importResultsCsvAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState & { count?: number }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+
+  const text = await file.text();
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return { error: "empty_file" };
+
+  // Parse CSV: skip header, expect bibNumber,name,place,time,category
+  const rows: { bibNumber: number; name: string; place: number | null; time: string | null; category: string | null }[] = [];
+  for (const line of lines.slice(1)) {
+    const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+    const bibNumber = Number(cols[0]);
+    if (!bibNumber || isNaN(bibNumber)) continue;
+    const name = cols[1] ?? "";
+    const place = cols[2] ? Number(cols[2]) || null : null;
+    const time = cols[3] || null;
+    const category = cols[4] || null;
+    rows.push({ bibNumber, name, place, time, category });
+  }
+  if (rows.length === 0) return { error: "no_rows" };
+
+  await prisma.$transaction([
+    prisma.result.deleteMany({ where: { eventId, source: "EXCEL" } }),
+    prisma.result.createMany({
+      data: rows.map((r) => ({ eventId, source: "EXCEL", ...r })),
+      skipDuplicates: true,
+    }),
+  ]);
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true, count: rows.length };
+}
+
+export async function fetchMyraceResultsAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState & { count?: number }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const url = formData.get("url");
+  if (typeof url !== "string" || !url.startsWith("http")) return { error: "invalid_url" };
+
+  let xml: string;
+  try {
+    const res = await fetch(url, { next: { revalidate: 0 } });
+    if (!res.ok) return { error: "fetch_failed" };
+    xml = await res.text();
+  } catch {
+    return { error: "fetch_failed" };
+  }
+
+  // Parse XML: look for <Result> or <result> elements with BibNumber/Name/Place/Time
+  const rows: { bibNumber: number; name: string; place: number | null; time: string | null; category: string | null }[] = [];
+  const resultRegex = /<(?:Result|result|Participant|participant)([^>]*)>/g;
+  const attrRegex = /(\w+)="([^"]*)"/g;
+
+  function getAttr(attrs: string, ...keys: string[]): string {
+    const m: Record<string, string> = {};
+    let a: RegExpExecArray | null;
+    const rx = /(\w+)="([^"]*)"/g;
+    while ((a = rx.exec(attrs)) !== null) m[a[1].toLowerCase()] = a[2];
+    for (const k of keys) if (m[k]) return m[k];
+    return "";
+  }
+
+  let match: RegExpExecArray | null;
+  while ((match = resultRegex.exec(xml)) !== null) {
+    const attrs = match[1];
+    const bib = Number(getAttr(attrs, "bibnumber", "bib", "number", "startno"));
+    if (!bib || isNaN(bib)) continue;
+    const name = getAttr(attrs, "name", "fullname", "athlete");
+    const place = Number(getAttr(attrs, "place", "rank", "position")) || null;
+    const time = getAttr(attrs, "time", "chiptime", "guntime", "resulttime") || null;
+    const category = getAttr(attrs, "category", "class", "agegroup") || null;
+    rows.push({ bibNumber: bib, name, place, time, category });
+  }
+
+  if (rows.length === 0) return { error: "no_results_in_xml" };
+
+  await prisma.$transaction([
+    prisma.result.deleteMany({ where: { eventId, source: "MYRACE" } }),
+    prisma.result.createMany({
+      data: rows.map((r) => ({ eventId, source: "MYRACE", ...r })),
+      skipDuplicates: true,
+    }),
+  ]);
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true, count: rows.length };
+}
+
+export async function clearResultsAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const source = formData.get("source");
+  if (source === "EXCEL" || source === "MYRACE") {
+    await prisma.result.deleteMany({ where: { eventId, source } });
+  } else {
+    await prisma.result.deleteMany({ where: { eventId } });
+  }
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}

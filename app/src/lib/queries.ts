@@ -191,6 +191,7 @@ export function getEventForAdmin(id: string) {
         select: { id: true, name: true, requiresSize: true, order: true },
       },
       eventPartners: { include: { partner: true } },
+      results: { orderBy: [{ place: "asc" }, { time: "asc" }] },
     },
   });
 }
@@ -267,6 +268,7 @@ export function getEventDetail(slug: string, year: number) {
         include: { user: true, distance: true },
         orderBy: { createdAt: "asc" },
       },
+      results: { orderBy: [{ place: "asc" }, { time: "asc" }] },
     },
   });
 }

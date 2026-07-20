@@ -13,8 +13,9 @@ import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock, RegulationLocale } from "@/types/regulation";
 import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
 import { EQUIPMENT_ITEMS } from "@/types/eventContent";
+import type { Result } from "@/generated/prisma/client";
 
-type Tab = "about" | "regulation" | "participants" | "profile" | "dayprogram" | "howtoget" | "equipment";
+type Tab = "about" | "regulation" | "results" | "participants" | "profile" | "dayprogram" | "howtoget" | "equipment";
 
 type Registration = {
   id: string;
@@ -45,6 +46,7 @@ type Props = {
   regulationFiles: RegulationFile[];
   regulationBlocks: RegulationBlock[];
   waiverFiles: RegulationFile[];
+  results: Result[];
   registrations: Registration[];
   distances?: DistanceWithProfile[];
   allDistances?: DistanceBasic[];
@@ -60,6 +62,7 @@ export function DetailTabs({
   regulationFiles,
   regulationBlocks,
   waiverFiles,
+  results,
   registrations,
   distances = [],
   allDistances = [],
@@ -81,6 +84,7 @@ export function DetailTabs({
   const tabs: { id: Tab; label: string; hidden?: boolean }[] = [
     { id: "about", label: t("aboutTitle") },
     { id: "regulation", label: t("regulationTitle") },
+    { id: "results", label: t("resultsTabTitle"), hidden: results.length === 0 },
     { id: "dayprogram", label: t("dayProgramTitle"), hidden: dayProgram.length === 0 },
     { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet },
     { id: "equipment", label: t("equipmentTitle"), hidden: !hasEquipment },
@@ -231,6 +235,40 @@ export function DetailTabs({
                       </div>
                     );
                   })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Результаты ── */}
+        {tab === "results" && (
+          <div>
+            {results.length === 0 ? (
+              <p className="text-sm text-ink-faint">{t("resultsEmpty")}</p>
+            ) : (
+              <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
+                <table className="w-full min-w-[360px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-surface-2">
+                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsPlace")}</th>
+                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsBib")}</th>
+                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">{t("resultsName")}</th>
+                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsTime")}</th>
+                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">{t("resultsCategory")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((r) => (
+                      <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
+                        <td className="px-4 py-2.5 font-bold tabular-nums text-ink">{r.place ?? "—"}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-ink-soft">{r.bibNumber}</td>
+                        <td className="px-4 py-2.5 text-ink">{r.name}</td>
+                        <td className="px-4 py-2.5 tabular-nums text-ink-soft">{r.time ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-ink-faint">{r.category ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

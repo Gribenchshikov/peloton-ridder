@@ -11,9 +11,10 @@ import { AboutSection } from "./AboutSection";
 import { DayProgramSection } from "./DayProgramSection";
 import { HowToGetSection } from "./HowToGetSection";
 import { EquipmentSection } from "./EquipmentSection";
+import { ResultsSection } from "./ResultsSection";
 import { DeleteEventButton } from "./DeleteEventButton";
 import { deleteEventAction } from "../actions";
-import type { Partner } from "@/generated/prisma/client";
+import type { Partner, Result } from "@/generated/prisma/client";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
@@ -187,6 +188,11 @@ export function EventEditView({ event, allPartners, wizard, locale }: { event: E
           initialEquipment={(event.distanceEquipment as DistanceEquipment | null) ?? {}}
         />
       </section>
+
+      <ResultsSection
+        eventId={event.id}
+        initialResults={(event.results ?? []) as Result[]}
+      />
 
       <div className="border-t border-danger/20 pt-6">
         <div className="text-xs font-bold uppercase tracking-wide text-danger/60 mb-3">Опасная зона</div>
