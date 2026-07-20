@@ -4,10 +4,14 @@ import type { getEventForRegistration, getUserContactInfo } from "@/lib/queries"
 import { fullName } from "@/lib/user";
 import { DistanceSelect } from "./DistanceSelect";
 
-type EventWithDistances = NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
+type BaseEvent = NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
 type UserContactInfo = NonNullable<Awaited<ReturnType<typeof getUserContactInfo>>>;
 
 type RunningClub = { id: string; name: string; city: string | null };
+
+type EventWithSlots = Omit<BaseEvent, "distances"> & {
+  distances: (BaseEvent["distances"][number] & { capacity: number; taken: number })[];
+};
 
 export function RegisterView({
   event,
@@ -16,7 +20,7 @@ export function RegisterView({
   clubs,
   callbackPath,
 }: {
-  event: EventWithDistances;
+  event: EventWithSlots;
   profile: UserContactInfo;
   locale: string;
   clubs: RunningClub[];

@@ -209,6 +209,8 @@
     "submitting": "Бір сәт…",
     "errorRegistrationsClosed": "Тіркеу уақытша тоқтатылды.",
     "errorFull": "Бұл дистанцияда бос орын қалмады.",
+    "slotsFull": "Толған",
+    "slotsLeft": "{count} орын қалды",
     "errorClosed": "Бұл старттка тіркелу жабылған.",
     "errorInvalid": "Тізімнен дистанцияны таңдаңыз.",
     "errorEmailUnverified": "Орынды брондамас бұрын email-ды растаңыз.",

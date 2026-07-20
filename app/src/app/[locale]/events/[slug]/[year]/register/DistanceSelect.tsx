@@ -18,6 +18,8 @@ type DistanceOption = {
   price: number;
   minAge: number | null;
   maxAge: number | null;
+  capacity: number;
+  taken: number;
 };
 
 type MerchItem = {
@@ -242,13 +244,29 @@ function DistanceOptionRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTranslations("Registration");
+  const remaining = distance.capacity - distance.taken;
+  const isFull = remaining <= 0;
+
   return (
     <label
       className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-s)] border px-3 py-2.5 transition-colors ${
-        selected ? "border-ember bg-ember/5" : "border-border bg-surface-2"
+        isFull
+          ? "cursor-not-allowed border-border bg-surface-2 opacity-50"
+          : selected
+          ? "border-ember bg-ember/5"
+          : "border-border bg-surface-2"
       }`}
     >
-      <input type="radio" name="distanceId" value={distance.id} checked={selected} onChange={onSelect} className="accent-ember" />
+      <input
+        type="radio"
+        name="distanceId"
+        value={distance.id}
+        checked={selected}
+        onChange={onSelect}
+        disabled={isFull}
+        className="accent-ember"
+      />
       <DistanceInfo
         name={distance.name}
         km={distance.km}
@@ -256,6 +274,13 @@ function DistanceOptionRow({
         minAge={distance.minAge}
         maxAge={distance.maxAge}
       />
+      <div className="ml-auto shrink-0 text-right">
+        {isFull ? (
+          <span className="text-xs font-bold uppercase tracking-wide text-danger">{t("slotsFull")}</span>
+        ) : remaining <= 10 ? (
+          <span className="text-xs font-semibold text-warn">{t("slotsLeft", { count: remaining })}</span>
+        ) : null}
+      </div>
     </label>
   );
 }

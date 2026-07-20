@@ -209,6 +209,8 @@
     "submitting": "Секунду…",
     "errorRegistrationsClosed": "Регистрация на сайте временно приостановлена.",
     "errorFull": "Мест по этой дистанции больше нет.",
+    "slotsFull": "Мест нет",
+    "slotsLeft": "Осталось {count} мест",
     "errorClosed": "Регистрация на этот старт уже закрыта.",
     "errorInvalid": "Выберите дистанцию из списка.",
     "errorEmailUnverified": "Подтвердите email, прежде чем бронировать место.",

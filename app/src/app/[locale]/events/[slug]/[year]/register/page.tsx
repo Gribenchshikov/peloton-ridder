@@ -27,11 +27,28 @@ export default async function EventRegisterPage({
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }
 
-  const [existing, profile, clubs] = await Promise.all([
+  const now = new Date();
+  const [existing, profile, clubs, slotCounts] = await Promise.all([
     getActiveRegistration(session.user.id, event.id),
     getUserContactInfo(session.user.id),
     prisma.runningClub.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, city: true } }),
+    prisma.registration.groupBy({
+      by: ["distanceId"],
+      where: {
+        eventId: event.id,
+        OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: now } }],
+      },
+      _count: { id: true },
+    }),
   ]);
+
+  const slotCountMap = Object.fromEntries(slotCounts.map((s) => [s.distanceId, s._count.id]));
+  const distancesWithSlots = event.distances.map((d) => {
+    const bibCapacity = d.bibRangeEnd - d.bibRangeStart + 1;
+    const capacity = d.maxSlots !== null ? Math.min(d.maxSlots, bibCapacity) : bibCapacity;
+    const taken = slotCountMap[d.id] ?? 0;
+    return { ...d, capacity, taken };
+  });
   if (existing) {
     return redirect({ href: `/pay/${existing.id}`, locale });
   }
@@ -42,7 +59,7 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={event} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} />;
+  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} />;
 }
 
 function EmailConfirmationRequired({ email }: { email: string }) {
