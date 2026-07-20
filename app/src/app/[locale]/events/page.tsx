@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { EventCard } from "@/components/EventCard";
-import { getHomeEvents } from "@/lib/queries";
+import { getHomeEvents, getArchiveEvents } from "@/lib/queries";
 
 export default async function EventsPage({
   searchParams,
@@ -10,8 +10,7 @@ export default async function EventsPage({
 }) {
   const { tab } = await searchParams;
   const isArchive = tab === "archive";
-  const events = await getHomeEvents();
-  const filtered = events.filter((e) => (isArchive ? e.status === "COMPLETED" : e.status !== "COMPLETED"));
+  const filtered = isArchive ? await getArchiveEvents() : await getHomeEvents();
 
   return <EventsView isArchive={isArchive} events={filtered} />;
 }
@@ -21,7 +20,7 @@ function EventsView({
   events,
 }: {
   isArchive: boolean;
-  events: Awaited<ReturnType<typeof getHomeEvents>>;
+  events: Awaited<ReturnType<typeof getArchiveEvents>>;
 }) {
   const t = useTranslations("Events");
 

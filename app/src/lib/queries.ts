@@ -17,6 +17,14 @@ export function getHomeEvents() {
   });
 }
 
+export function getArchiveEvents() {
+  return prisma.event.findMany({
+    where: { status: "COMPLETED" },
+    include: { race: true, distances: true },
+    orderBy: { dateISO: "desc" },
+  });
+}
+
 export async function getNextEvent() {
   const featured = await prisma.event.findFirst({
     where: { isFeatured: true, status: "OPEN" },
