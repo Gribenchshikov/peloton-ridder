@@ -255,6 +255,7 @@
     "includedLabel": "Включено",
     "selectSizeLabel": "Выберите размер",
     "sizeGuideLink": "Таблица размеров",
+    "sizeFromProfile": "Размер из профиля · можно изменить",
     "errorMissingSize": "Выберите размер для всех позиций мерча.",
     "clubLabel": "Беговой клуб",
     "clubOptional": "необязательно",

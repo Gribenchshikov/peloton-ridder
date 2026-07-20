@@ -111,7 +111,7 @@ export function getUserProfile(userId: string) {
 export function getUserContactInfo(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true, birthDate: true },
+    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true, birthDate: true, tshirtSize: true },
   });
 }
 

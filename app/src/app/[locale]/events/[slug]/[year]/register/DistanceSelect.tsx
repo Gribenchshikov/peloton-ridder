@@ -41,6 +41,7 @@ export function DistanceSelect({
   clubs,
   tshirtSizeGuideUrl,
   hasBirthDate,
+  defaultTshirtSize,
 }: {
   eventId: string;
   locale: string;
@@ -49,12 +50,19 @@ export function DistanceSelect({
   clubs: RunningClub[];
   tshirtSizeGuideUrl?: string | null;
   hasBirthDate: boolean;
+  defaultTshirtSize?: string | null;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
   const [state, formAction, pending] = useActionState(boundAction, initialState);
   const [selected, setSelected] = useState<string | null>(null);
-  const [sizes, setSizes] = useState<Record<string, Size>>({});
+  const [sizes, setSizes] = useState<Record<string, Size>>(() => {
+    const valid = SIZES.find((s) => s === defaultTshirtSize);
+    if (!valid) return {};
+    return Object.fromEntries(
+      merchItems.filter((m) => m.requiresSize).map((m) => [m.id, valid])
+    );
+  });
   const [promoInput, setPromoInput] = useState("");
   const [promoResult, setPromoResult] = useState<{ valid: boolean; label: string } | null>(null);
   const [promoChecking, startPromoCheck] = useTransition();
@@ -167,6 +175,9 @@ export function DistanceSelect({
                   </label>
                 ))}
               </div>
+              {defaultTshirtSize && sizes[item.id] === defaultTshirtSize && (
+                <p className="text-xs text-ink-faint">{t("sizeFromProfile")}</p>
+              )}
             </div>
           ))}
         </div>

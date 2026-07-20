@@ -255,6 +255,7 @@
     "includedLabel": "Қосылған",
     "selectSizeLabel": "Өлшемді таңдаңыз",
     "sizeGuideLink": "Өлшем кестесі",
+    "sizeFromProfile": "Өлшем профильден алынды · өзгертуге болады",
     "errorMissingSize": "Барлық мерч позицияларына өлшем таңдаңыз.",
     "clubLabel": "Жүгіру клубы",
     "clubOptional": "міндетті емес",

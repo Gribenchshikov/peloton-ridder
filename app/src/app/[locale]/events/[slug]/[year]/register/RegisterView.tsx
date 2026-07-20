@@ -21,6 +21,7 @@ export function RegisterView({
   callbackPath,
   tshirtSizeGuideUrl,
   hasBirthDate,
+  defaultTshirtSize,
 }: {
   event: EventWithSlots;
   profile: UserContactInfo;
@@ -29,6 +30,7 @@ export function RegisterView({
   callbackPath: string;
   tshirtSizeGuideUrl?: string | null;
   hasBirthDate: boolean;
+  defaultTshirtSize?: string | null;
 }) {
   const t = useTranslations("Registration");
 
@@ -41,7 +43,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} tshirtSizeGuideUrl={tshirtSizeGuideUrl} hasBirthDate={hasBirthDate} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} tshirtSizeGuideUrl={tshirtSizeGuideUrl} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} />
     </main>
   );
 }
