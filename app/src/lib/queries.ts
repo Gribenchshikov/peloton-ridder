@@ -217,6 +217,8 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
         include: {
           user: { select: { firstName: true, lastName: true, email: true, phone: true } },
           distance: { select: { id: true, name: true, km: true } },
+          runningClub: { select: { name: true } },
+          promoCode: { select: { code: true } },
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },

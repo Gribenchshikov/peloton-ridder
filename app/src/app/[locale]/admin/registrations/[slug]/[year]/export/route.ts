@@ -26,7 +26,7 @@ export async function GET(
   }
 
   const rows = [
-    ["№", "Имя", "Фамилия", "Email", "Телефон", "Дистанция", "Км", "Статус", "Стартовый номер", "Дата регистрации"],
+    ["№", "Имя", "Фамилия", "Email", "Телефон", "Дистанция", "Км", "Статус", "Стартовый номер", "Дата регистрации", "Беговой клуб", "Промокод", "Скидка (₸)"],
     ...event.registrations.map((r) => [
       r.bibNumber ?? "",
       r.user.firstName ?? "",
@@ -35,9 +35,12 @@ export async function GET(
       r.user.phone ?? "",
       r.distance.name,
       r.distance.km,
-      r.status === "PAID" ? "Оплачено" : "Бронь",
+      r.status === "PAID" ? "Оплачено" : r.status === "CANCELLED" ? "Отменено" : "Бронь",
       r.bibNumber ?? "",
       new Date(r.createdAt).toLocaleDateString("ru-RU"),
+      r.runningClub?.name ?? "",
+      r.promoCode?.code ?? "",
+      r.discountAmount ?? 0,
     ]),
   ];
 
