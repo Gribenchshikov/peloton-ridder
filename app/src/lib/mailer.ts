@@ -40,6 +40,20 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   await sendMail(to, "Сброс пароля — Peloton Ridder", text, html);
 }
 
+export async function sendAdminAlertEmail(
+  adminEmails: string[],
+  event: string,
+  targetUser: string,
+  actor: string,
+  timestamp: Date,
+) {
+  if (adminEmails.length === 0) return;
+  const ts = new Intl.DateTimeFormat("ru", { dateStyle: "short", timeStyle: "medium", timeZone: "Asia/Almaty" }).format(timestamp);
+  const text = `Административное событие — Peloton Ridder\n\nСобытие: ${event}\nПользователь: ${targetUser}\nКем выполнено: ${actor}\nВремя: ${ts}`;
+  const html = `<h3 style="margin:0 0 12px">Административное событие</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Событие</td><td style="font-weight:600">${event}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Пользователь</td><td>${targetUser}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Кем выполнено</td><td>${actor}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Время</td><td>${ts}</td></tr></table><p style="color:#888;font-size:12px;margin-top:16px">Peloton Ridder</p>`;
+  await Promise.all(adminEmails.map((to) => sendMail(to, `[Ridder Admin] ${event}`, text, html)));
+}
+
 export async function sendRegistrationConfirmationEmail(
   to: string,
   name: string,

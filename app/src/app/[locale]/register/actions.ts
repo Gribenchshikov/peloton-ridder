@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, passwordFieldSchema } from "@/lib/password";
 import { createVerificationToken } from "@/lib/verification-token";
-import { sendVerificationEmail } from "@/lib/mailer";
+import { sendVerificationEmail, sendAdminAlertEmail } from "@/lib/mailer";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { buildAppUrl } from "@/lib/url";
 
@@ -53,7 +53,14 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   });
 
   const token = await createVerificationToken(email);
-  await sendVerificationEmail(email, buildAppUrl(`/verify?token=${token}`));
+  const adminEmails = (
+    await prisma.user.findMany({ where: { isAdmin: true }, select: { email: true } })
+  ).map((u) => u.email);
+
+  await Promise.all([
+    sendVerificationEmail(email, buildAppUrl(`/verify?token=${token}`)),
+    sendAdminAlertEmail(adminEmails, "Регистрация нового пользователя", `${firstName} ${lastName} <${email}>`, "система", new Date()),
+  ]);
 
   return { success: true };
 }

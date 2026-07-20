@@ -479,6 +479,7 @@
     "usersEditFieldsRequired": "Заполните имя, фамилию и email.",
     "usersEmailTaken": "Этот email уже используется.",
     "usersActionFailed": "Действие не выполнено. Проверьте данные и попробуйте снова.",
+    "usersActionSuccess": "Действие выполнено. Уведомление отправлено администраторам.",
     "usersBannedUntil": "Бан до {date}",
     "errorInvalidTwoFaCode": "Неверный код 2FA",
     "errorCannotDemoteSelf": "Нельзя снять права с себя",

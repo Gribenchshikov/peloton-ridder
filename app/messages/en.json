@@ -479,6 +479,7 @@
     "usersEditFieldsRequired": "Fill in first name, last name and email.",
     "usersEmailTaken": "Email is already in use.",
     "usersActionFailed": "Action failed. Check the data and try again.",
+    "usersActionSuccess": "Action completed. Admins have been notified.",
     "usersBannedUntil": "Banned until {date}",
     "errorInvalidTwoFaCode": "Invalid 2FA code",
     "errorCannotDemoteSelf": "Cannot revoke your own admin rights",

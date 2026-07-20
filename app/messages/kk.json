@@ -479,6 +479,7 @@
     "usersEditFieldsRequired": "Аты, фамилиясы және email толтырыңыз.",
     "usersEmailTaken": "Бұл email қолданыста.",
     "usersActionFailed": "Әрекет орындалмады. Деректерді тексеріп, қайтадан көріңіз.",
+    "usersActionSuccess": "Әрекет орындалды. Әкімшілерге хабарлама жіберілді.",
     "usersBannedUntil": "Бан аяқталатын уақыт: {date}",
     "errorInvalidTwoFaCode": "Қате 2FA коды",
     "errorCannotDemoteSelf": "Өзіңіздің құқықтарыңызды ала алмайсыз",

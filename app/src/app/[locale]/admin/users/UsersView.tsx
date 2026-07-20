@@ -32,6 +32,7 @@ export function UsersView({
   const [editLastName, setEditLastName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const admins = users.filter((u) => u.isAdmin);
@@ -123,12 +124,19 @@ export function UsersView({
       }
       if (res.ok) {
         resetAction();
+        setToast(t("usersActionSuccess"));
+        setTimeout(() => setToast(null), 3000);
       }
     });
   }
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-16">
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-[var(--radius-s)] bg-ink px-4 py-3 text-sm font-semibold text-white shadow-lg">
+          {toast}
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link
