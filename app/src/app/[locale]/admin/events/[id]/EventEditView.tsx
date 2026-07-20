@@ -13,6 +13,7 @@ import { HowToGetSection } from "./HowToGetSection";
 import { EquipmentSection } from "./EquipmentSection";
 import { ResultsSection } from "./ResultsSection";
 import { NotifySection } from "./NotifySection";
+import { PublishToggle } from "./PublishToggle";
 import { DeleteEventButton } from "./DeleteEventButton";
 import { deleteEventAction } from "../actions";
 import type { Partner, Result } from "@/generated/prisma/client";
@@ -39,7 +40,7 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
   );
 }
 
-export function EventEditView({ event, allPartners, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null }) {
+export function EventEditView({ event, allPartners, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; }) {
   const t = useTranslations("Admin");
 
   if (wizard === "2") {
@@ -194,6 +195,10 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
         eventId={event.id}
         initialResults={(event.results ?? []) as Result[]}
       />
+
+      <div className="border-t border-border pt-6">
+        <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
+      </div>
 
       <div className="border-t border-border pt-6">
         <NotifySection eventId={event.id} lastNotification={lastNotification} />

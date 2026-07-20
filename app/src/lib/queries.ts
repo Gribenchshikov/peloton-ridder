@@ -10,7 +10,7 @@ export function upsertSiteSetting(key: string, value: string) {
 
 export function getHomeEvents() {
   return prisma.event.findMany({
-    where: { status: { in: ["OPEN", "DRAFT"] } },
+    where: { isPublished: true, status: { in: ["OPEN", "DRAFT"] } },
     include: { race: true, distances: true },
     orderBy: { dateISO: "asc" },
     take: 4,
@@ -19,7 +19,7 @@ export function getHomeEvents() {
 
 export function getArchiveEvents() {
   return prisma.event.findMany({
-    where: { status: "COMPLETED" },
+    where: { isPublished: true, status: "COMPLETED" },
     include: { race: true, distances: true },
     orderBy: { dateISO: "desc" },
   });
@@ -27,12 +27,12 @@ export function getArchiveEvents() {
 
 export async function getNextEvent() {
   const featured = await prisma.event.findFirst({
-    where: { isFeatured: true, status: "OPEN" },
+    where: { isPublished: true, isFeatured: true, status: "OPEN" },
     include: { race: true, distances: true },
   });
   if (featured) return featured;
   return prisma.event.findFirst({
-    where: { dateISO: { gte: new Date() }, status: "OPEN" },
+    where: { isPublished: true, dateISO: { gte: new Date() }, status: "OPEN" },
     include: { race: true, distances: true },
     orderBy: { dateISO: "asc" },
   });
@@ -147,7 +147,7 @@ export function getRegistrationForPayment(id: string) {
 // и без registrations (там полный User на каждую запись), которые эта страница не показывает.
 export function getEventForRegistration(slug: string, year: number) {
   return prisma.event.findFirst({
-    where: { year, race: { slug } },
+    where: { year, race: { slug }, isPublished: true },
     select: {
       id: true,
       year: true,
@@ -356,7 +356,7 @@ export function getEventWithRegistrations(id: string) {
 
 export function getEventDetail(slug: string, year: number) {
   return prisma.event.findFirst({
-    where: { year, race: { slug } },
+    where: { year, race: { slug }, isPublished: true },
     include: {
       race: true,
       distances: { orderBy: { km: "asc" } },
