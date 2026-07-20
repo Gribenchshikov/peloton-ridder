@@ -112,6 +112,7 @@ model VolunteerApplication {
   reviewedById String?
   reviewedBy   User?           @relation("Reviewer", fields: [reviewedById], references: [id])
   reviewedAt   DateTime?
+  creditedAt   DateTime? // admin вручную зачисляет в прогресс волонтёра
 }
 
 // "Ridder Race Series" — реальный бренд клуба (@ridderraceseries), не наша выдумка.

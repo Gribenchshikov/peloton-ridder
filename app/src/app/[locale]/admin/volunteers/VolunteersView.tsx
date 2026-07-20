@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { reviewVolunteerAction, revokeVolunteerAction } from "./actions";
+import {
+  reviewVolunteerAction,
+  revokeVolunteerAction,
+  toggleVolunteerCreditAction,
+  resetVolunteerProgressAction,
+  sendVolunteerRewardEmailAction,
+} from "./actions";
 
 type Application = {
   id: string;
@@ -11,6 +17,7 @@ type Application = {
   stravaUrl: string | null;
   availability: string;
   createdAt: Date;
+  creditedAt: Date | null;
   user: { id: string; firstName: string; lastName: string; email: string; phone: string | null };
   event: {
     id: string;
@@ -30,28 +37,23 @@ export function VolunteersView({ applications }: { applications: Application[] }
   const approved = applications.filter((a) => a.status === "APPROVED");
   const rejected = applications.filter((a) => a.status === "REJECTED");
   const reviewed = [...approved, ...rejected].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 
-  // Group approved by event for volunteers tab
-  const now = new Date();
-  const upcomingEvents = new Map<string, { eventLabel: string; chatUrl: string | null; volunteers: Application[] }>();
-  const pastEvents = new Map<string, { eventLabel: string; chatUrl: string | null; volunteers: Application[] }>();
-
+  // Group approved by user for volunteers tab
+  const byUser = new Map<
+    string,
+    { user: Application["user"]; apps: Application[] }
+  >();
   for (const app of approved) {
-    const key = app.event.id;
-    const label = `${app.event.race.name} ${app.event.year}`;
-    const isUpcoming = new Date(app.event.dateISO) >= now;
-    const map = isUpcoming ? upcomingEvents : pastEvents;
-    if (!map.has(key)) {
-      map.set(key, { eventLabel: label, chatUrl: app.event.volunteerChatUrl, volunteers: [] });
+    if (!byUser.has(app.user.id)) {
+      byUser.set(app.user.id, { user: app.user, apps: [] });
     }
-    map.get(key)!.volunteers.push(app);
+    byUser.get(app.user.id)!.apps.push(app);
   }
 
   return (
     <div>
-      {/* Tabs */}
       <div className="mb-6 flex gap-2 border-b border-border">
         <TabButton active={tab === "applications"} onClick={() => setTab("applications")} badge={pending.length}>
           Заявки
@@ -65,7 +67,7 @@ export function VolunteersView({ applications }: { applications: Application[] }
         <ApplicationsTab pending={pending} reviewed={reviewed} />
       )}
       {tab === "volunteers" && (
-        <VolunteersTab upcomingEvents={upcomingEvents} pastEvents={pastEvents} />
+        <VolunteersTab byUser={byUser} />
       )}
     </div>
   );
@@ -73,17 +75,10 @@ export function VolunteersView({ applications }: { applications: Application[] }
 
 // ─── Tab: Заявки ─────────────────────────────────────────────────────────────
 
-function ApplicationsTab({
-  pending,
-  reviewed,
-}: {
-  pending: Application[];
-  reviewed: Application[];
-}) {
+function ApplicationsTab({ pending, reviewed }: { pending: Application[]; reviewed: Application[] }) {
   if (pending.length === 0 && reviewed.length === 0) {
     return <p className="text-sm text-ink-faint">Заявок пока нет.</p>;
   }
-
   return (
     <div className="flex flex-col gap-8">
       {pending.length > 0 && (
@@ -92,22 +87,17 @@ function ApplicationsTab({
             На рассмотрении · {pending.length}
           </h2>
           <div className="flex flex-col gap-3">
-            {pending.map((app) => (
-              <PendingCard key={app.id} app={app} />
-            ))}
+            {pending.map((app) => <PendingCard key={app.id} app={app} />)}
           </div>
         </section>
       )}
-
       {reviewed.length > 0 && (
         <section>
           <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-ink-faint">
             Рассмотренные · {reviewed.length}
           </h2>
           <div className="flex flex-col gap-2">
-            {reviewed.map((app) => (
-              <ReviewedRow key={app.id} app={app} />
-            ))}
+            {reviewed.map((app) => <ReviewedRow key={app.id} app={app} />)}
           </div>
         </section>
       )}
@@ -126,11 +116,7 @@ function PendingCard({ app }: { app: Application }) {
         <span className="text-sm font-medium text-ink">
           {app.user.firstName} {app.user.lastName} · {app.event.race.name} {app.event.year}
         </span>
-        <span
-          className={`text-xs font-bold uppercase tracking-wide ${
-            decision === "APPROVED" ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"
-          }`}
-        >
+        <span className={`text-xs font-bold uppercase tracking-wide ${decision === "APPROVED" ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
           {decision === "APPROVED" ? "Одобрено ✓" : "Отклонено ✗"}
         </span>
       </div>
@@ -146,16 +132,13 @@ function PendingCard({ app }: { app: Application }) {
 
   return (
     <div className="rounded-[var(--radius-m)] border border-border bg-surface">
-      {/* Header — always visible, click to expand/collapse */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
       >
         <div>
-          <span className="font-semibold text-ink">
-            {app.user.firstName} {app.user.lastName}
-          </span>
+          <span className="font-semibold text-ink">{app.user.firstName} {app.user.lastName}</span>
           <span className="ml-2 text-sm text-ink-soft">{app.event.race.name} {app.event.year}</span>
         </div>
         <div className="flex items-center gap-3">
@@ -165,46 +148,30 @@ function PendingCard({ app }: { app: Application }) {
           <span className="text-ink-faint">{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
-
       {expanded && (
         <div className="border-t border-border px-4 pb-4 pt-3">
-          <p className="mb-1 text-xs text-ink-faint">
-            {app.user.email}
-            {app.user.phone ? ` · ${app.user.phone}` : ""}
+          <p className="mb-3 text-xs text-ink-faint">
+            {app.user.email}{app.user.phone ? ` · ${app.user.phone}` : ""}
           </p>
-          <div className="mt-3 flex flex-col gap-3 text-sm">
+          <div className="flex flex-col gap-3 text-sm">
             <Field label="Мотивация" value={app.motivation} />
             <Field label="Опыт" value={app.experience} />
             <Field label="Доступность" value={app.availability} />
             {app.stravaUrl && (
               <div>
                 <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Strava</span>
-                <a
-                  href={app.stravaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-0.5 block truncate text-ember hover:underline"
-                >
-                  {app.stravaUrl}
-                </a>
+                <a href={app.stravaUrl} target="_blank" rel="noopener noreferrer"
+                  className="mt-0.5 block truncate text-ember hover:underline">{app.stravaUrl}</a>
               </div>
             )}
           </div>
           <div className="mt-4 flex gap-3">
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => handle("APPROVED")}
-              className="rounded-[var(--radius-s)] bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
-            >
+            <button type="button" disabled={isPending} onClick={() => handle("APPROVED")}
+              className="rounded-[var(--radius-s)] bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50">
               {isPending ? "…" : "Одобрить"}
             </button>
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => handle("REJECTED")}
-              className="rounded-[var(--radius-s)] border border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-2 disabled:opacity-50"
-            >
+            <button type="button" disabled={isPending} onClick={() => handle("REJECTED")}
+              className="rounded-[var(--radius-s)] border border-border bg-transparent px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-2 disabled:opacity-50">
               {isPending ? "…" : "Отклонить"}
             </button>
           </div>
@@ -219,18 +186,10 @@ function ReviewedRow({ app }: { app: Application }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-[var(--radius-s)] border border-border px-4 py-2.5">
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-ink">
-          {app.user.firstName} {app.user.lastName}
-        </span>
-        <span className="text-xs text-ink-faint">
-          {app.event.race.name} {app.event.year}
-        </span>
+        <span className="text-sm font-medium text-ink">{app.user.firstName} {app.user.lastName}</span>
+        <span className="text-xs text-ink-faint">{app.event.race.name} {app.event.year}</span>
       </div>
-      <span
-        className={`text-xs font-bold uppercase tracking-wide ${
-          isApproved ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"
-        }`}
-      >
+      <span className={`text-xs font-bold uppercase tracking-wide ${isApproved ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
         {isApproved ? "Одобрено" : "Отклонено"}
       </span>
     </div>
@@ -240,159 +199,266 @@ function ReviewedRow({ app }: { app: Application }) {
 // ─── Tab: Волонтёры ──────────────────────────────────────────────────────────
 
 function VolunteersTab({
-  upcomingEvents,
-  pastEvents,
+  byUser,
 }: {
-  upcomingEvents: Map<string, { eventLabel: string; chatUrl: string | null; volunteers: Application[] }>;
-  pastEvents: Map<string, { eventLabel: string; chatUrl: string | null; volunteers: Application[] }>;
+  byUser: Map<string, { user: Application["user"]; apps: Application[] }>;
 }) {
-  if (upcomingEvents.size === 0 && pastEvents.size === 0) {
+  if (byUser.size === 0) {
     return <p className="text-sm text-ink-faint">Одобренных волонтёров пока нет.</p>;
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      {upcomingEvents.size > 0 && (
-        <section>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-ink-faint">
-            Предстоящие забеги
-          </h2>
-          <div className="flex flex-col gap-6">
-            {[...upcomingEvents.entries()].map(([eventId, { eventLabel, chatUrl, volunteers }]) => (
-              <EventVolunteerGroup
-                key={eventId}
-                eventLabel={eventLabel}
-                chatUrl={chatUrl}
-                volunteers={volunteers}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {pastEvents.size > 0 && (
-        <section>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wide text-ink-faint">
-            Прошедшие забеги
-          </h2>
-          <div className="flex flex-col gap-6">
-            {[...pastEvents.entries()].map(([eventId, { eventLabel, chatUrl, volunteers }]) => (
-              <EventVolunteerGroup
-                key={eventId}
-                eventLabel={eventLabel}
-                chatUrl={chatUrl}
-                volunteers={volunteers}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+    <div className="flex flex-col gap-4">
+      {[...byUser.entries()].map(([userId, { user, apps }]) => (
+        <VolunteerRow key={userId} user={user} apps={apps} />
+      ))}
     </div>
   );
 }
 
-function EventVolunteerGroup({
-  eventLabel,
-  chatUrl,
-  volunteers,
+function VolunteerRow({
+  user,
+  apps,
 }: {
-  eventLabel: string;
-  chatUrl: string | null;
-  volunteers: Application[];
+  user: Application["user"];
+  apps: Application[];
 }) {
-  return (
-    <div className="rounded-[var(--radius-m)] border border-border bg-surface">
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <div>
-          <span className="font-semibold text-ink">{eventLabel}</span>
-          <span className="ml-2 text-xs text-ink-faint">{volunteers.length} чел.</span>
-        </div>
-        {chatUrl && (
-          <a
-            href={chatUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-semibold text-ember hover:underline"
-          >
-            Чат волонтёров →
-          </a>
-        )}
-      </div>
-      <ul className="divide-y divide-border">
-        {volunteers.map((v) => (
-          <VolunteerRow key={v.id} app={v} />
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function VolunteerRow({ app }: { app: Application }) {
+  const [expanded, setExpanded] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [revoked, setRevoked] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
-  if (revoked) {
-    return (
-      <li className="flex items-center gap-3 px-4 py-3 opacity-40">
-        <span className="text-sm text-ink line-through">
-          {app.user.firstName} {app.user.lastName}
-        </span>
-        <span className="text-xs text-ink-faint">Удалён</span>
-      </li>
-    );
-  }
+  const creditedCount = apps.filter((a) => a.creditedAt).length;
+  const total = apps.length;
 
-  function handleRevoke() {
+  function handleReset() {
+    if (!confirm(`Сбросить прогресс волонтёра ${user.firstName} ${user.lastName}? Это снимет все зачёты.`)) return;
     startTransition(async () => {
-      const res = await revokeVolunteerAction(app.id);
-      if (res.ok) setRevoked(true);
+      await resetVolunteerProgressAction(user.id);
+      setResetDone(true);
+      setTimeout(() => setResetDone(false), 2000);
     });
   }
 
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-3">
-      <div>
-        <span className="text-sm font-medium text-ink">
-          {app.user.firstName} {app.user.lastName}
+    <div className="rounded-[var(--radius-m)] border border-border bg-surface">
+      {/* Header row */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex flex-1 items-center gap-4 text-left"
+        >
+          <div className="flex-1">
+            <span className="font-semibold text-ink">{user.firstName} {user.lastName}</span>
+            <span className="ml-2 text-xs text-ink-faint">{user.email}</span>
+            {user.phone && <span className="ml-2 text-xs text-ink-faint">{user.phone}</span>}
+          </div>
+          {/* Progress pill */}
+          <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
+            creditedCount >= total && total > 0
+              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+              : "bg-surface-2 text-ink-soft"
+          }`}>
+            {creditedCount} / {total}
+          </span>
+          <span className="text-ink-faint">{expanded ? "▲" : "▼"}</span>
+        </button>
+
+        {/* Actions */}
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowEmailModal(true)}
+            className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            ✉ Письмо
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={handleReset}
+            className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-red-300 hover:text-red-600 disabled:opacity-40"
+          >
+            {isPending ? "…" : resetDone ? "Сброшено ✓" : "Сброс"}
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded: list of events with credit toggle */}
+      {expanded && (
+        <div className="border-t border-border">
+          {apps.map((app) => (
+            <CreditRow key={app.id} app={app} />
+          ))}
+        </div>
+      )}
+
+      {/* Email modal */}
+      {showEmailModal && (
+        <EmailModal
+          user={user}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function CreditRow({ app }: { app: Application }) {
+  const [credited, setCredited] = useState(!!app.creditedAt);
+  const [isPending, startTransition] = useTransition();
+
+  function handleToggle() {
+    const next = !credited;
+    setCredited(next);
+    startTransition(async () => {
+      const res = await toggleVolunteerCreditAction(app.id, next);
+      if (res.error) setCredited(!next); // rollback on error
+    });
+  }
+
+  return (
+    <label className="flex cursor-pointer items-center gap-4 px-4 py-3 hover:bg-surface-2">
+      <input
+        type="checkbox"
+        checked={credited}
+        disabled={isPending}
+        onChange={handleToggle}
+        className="h-4 w-4 cursor-pointer accent-amber-500"
+      />
+      <div className="flex-1">
+        <span className="text-sm font-medium text-ink">{app.event.race.name} {app.event.year}</span>
+        <span className="ml-2 text-xs text-ink-faint">
+          {new Date(app.event.dateISO).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
         </span>
-        <span className="ml-2 text-xs text-ink-faint">{app.user.email}</span>
-        {app.user.phone && (
-          <span className="ml-2 text-xs text-ink-faint">{app.user.phone}</span>
+      </div>
+      <span className={`text-xs font-bold ${credited ? "text-amber-600 dark:text-amber-400" : "text-ink-faint"}`}>
+        {isPending ? "…" : credited ? "В зачёте ✓" : "Не в зачёте"}
+      </span>
+    </label>
+  );
+}
+
+// ─── Email Modal ─────────────────────────────────────────────────────────────
+
+function EmailModal({
+  user,
+  onClose,
+}: {
+  user: Application["user"];
+  onClose: () => void;
+}) {
+  const [textRu, setTextRu] = useState("");
+  const [textKk, setTextKk] = useState("");
+  const [textEn, setTextEn] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSend() {
+    if (!promoCode.trim()) { setError("Введите промокод"); return; }
+    if (!textRu.trim() && !textKk.trim() && !textEn.trim()) { setError("Введите текст хотя бы на одном языке"); return; }
+    setError(null);
+    startTransition(async () => {
+      const res = await sendVolunteerRewardEmailAction(
+        user.id, textRu, textKk, textEn, promoCode.trim()
+      );
+      if (res.ok) setSent(true);
+      else setError("Ошибка отправки. Проверьте SMTP-настройки.");
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-[var(--radius-m)] border border-border bg-surface p-6 shadow-xl">
+        {sent ? (
+          <div className="text-center">
+            <p className="text-lg font-bold text-emerald-600">Письмо отправлено ✓</p>
+            <p className="mt-1 text-sm text-ink-soft">{user.email}</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 rounded-[var(--radius-s)] bg-ember px-6 py-2 text-sm font-bold text-white hover:bg-ember-strong"
+            >
+              Закрыть
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-5 flex items-start justify-between">
+              <div>
+                <h3 className="font-display text-lg font-bold text-ink">Письмо волонтёру</h3>
+                <p className="text-sm text-ink-soft">{user.firstName} {user.lastName} · {user.email}</p>
+              </div>
+              <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink">✕</button>
+            </div>
+
+            {/* Promo code */}
+            <label className="mb-4 flex flex-col gap-1.5 text-sm">
+              <span className="font-semibold text-ink">Промокод *</span>
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="RIDDER100"
+                className="rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-2 font-mono text-ink focus:border-ember focus:outline-none"
+              />
+            </label>
+
+            {/* Text in 3 languages */}
+            {(["RU", "KK", "EN"] as const).map((lang) => {
+              const value = lang === "RU" ? textRu : lang === "KK" ? textKk : textEn;
+              const setter = lang === "RU" ? setTextRu : lang === "KK" ? setTextKk : setTextEn;
+              const placeholder =
+                lang === "RU"
+                  ? "Поздравляем! Вы отволонтёрили на 3 стартах…"
+                  : lang === "KK"
+                  ? "Құттықтаймыз! Сіз 3 жарыста еріктілік жасадыңыз…"
+                  : "Congratulations! You volunteered at 3 events…";
+              return (
+                <label key={lang} className="mb-3 flex flex-col gap-1.5 text-sm">
+                  <span className="font-semibold text-ink-soft">{lang}</span>
+                  <textarea
+                    value={value}
+                    onChange={(e) => setter(e.target.value)}
+                    placeholder={placeholder}
+                    rows={3}
+                    className="resize-y rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-2 text-ink focus:border-ember focus:outline-none"
+                  />
+                </label>
+              );
+            })}
+
+            {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+            <div className="flex justify-end gap-3">
+              <button type="button" onClick={onClose}
+                className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-2">
+                Отмена
+              </button>
+              <button type="button" disabled={isPending} onClick={handleSend}
+                className="rounded-[var(--radius-s)] bg-ember px-5 py-2 text-sm font-bold text-white hover:bg-ember-strong disabled:opacity-50">
+                {isPending ? "Отправляем…" : "Отправить письмо"}
+              </button>
+            </div>
+          </>
         )}
       </div>
-      <button
-        type="button"
-        disabled={isPending}
-        onClick={handleRevoke}
-        className="rounded-[var(--radius-s)] border border-border px-3 py-1 text-xs font-semibold text-ink-soft transition-colors hover:border-red-300 hover:text-red-600 disabled:opacity-40"
-      >
-        {isPending ? "…" : "Удалить"}
-      </button>
-    </li>
+    </div>
   );
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function TabButton({
-  active,
-  onClick,
-  badge,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  badge: number;
-  children: React.ReactNode;
+function TabButton({ active, onClick, badge, children }: {
+  active: boolean; onClick: () => void; badge: number; children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <button type="button" onClick={onClick}
       className={`relative -mb-px flex items-center gap-1.5 border-b-2 pb-3 pr-2 text-sm font-semibold transition-colors ${
-        active
-          ? "border-ember text-ember"
-          : "border-transparent text-ink-soft hover:text-ink"
+        active ? "border-ember text-ember" : "border-transparent text-ink-soft hover:text-ink"
       }`}
     >
       {children}

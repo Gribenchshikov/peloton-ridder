@@ -32,8 +32,9 @@ export default async function AccountPage({
   }
 
   const volunteerThreshold = Number(thresholdSetting?.value ?? 3);
+  // Считаем только те, которые admin вручную зачислил (creditedAt != null)
   const completedVolunteerCount = profile.volunteerApplications.filter(
-    (a) => a.status === "APPROVED",
+    (a) => a.creditedAt,
   ).length;
 
   return (
@@ -54,7 +55,6 @@ export default async function AccountPage({
         <VolunteerProgress
           completed={completedVolunteerCount}
           threshold={volunteerThreshold}
-          alreadyClaimed={!!profile.volunteerRewardClaimedAt}
         />
       )}
       {profile.volunteerApplications.length > 0 && (

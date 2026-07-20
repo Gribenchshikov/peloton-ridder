@@ -21,6 +21,7 @@ export default async function AdminVolunteersPage({
       stravaUrl: true,
       availability: true,
       createdAt: true,
+      creditedAt: true,
       user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
       event: {
         select: {

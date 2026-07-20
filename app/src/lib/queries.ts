@@ -80,6 +80,7 @@ export function getUserProfile(userId: string) {
         select: {
           id: true,
           status: true,
+          creditedAt: true,
           event: {
             select: {
               year: true,
