@@ -31,6 +31,15 @@ export function RegisterForm() {
       <FormField label={t("email")} name="email" type="email" required />
       <FormField label={t("city")} name="city" type="text" />
       <FormField label={t("phone")} name="phone" type="tel" />
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-semibold text-ink-soft">{t("birthDate")}</span>
+        <input
+          type="date"
+          name="birthDate"
+          max={new Date().toISOString().slice(0, 10)}
+          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
+        />
+      </label>
       <FormField label={t("password")} name="password" type="password" required minLength={8} />
       <FormField label={t("confirmPassword")} name="confirmPassword" type="password" required minLength={8} />
 

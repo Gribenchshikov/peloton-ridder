@@ -114,6 +114,7 @@
     "email": "Email",
     "city": "Город",
     "phone": "Телефон",
+    "birthDate": "Дата рождения",
     "password": "Пароль",
     "confirmPassword": "Повторите пароль",
     "errorPasswordMismatch": "Пароли не совпадают.",

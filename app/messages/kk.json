@@ -114,6 +114,7 @@
     "email": "Email",
     "city": "Қала",
     "phone": "Телефон",
+    "birthDate": "Туған күні",
     "password": "Құпия сөз",
     "confirmPassword": "Құпия сөзді қайталаңыз",
     "errorPasswordMismatch": "Құпия сөздер сәйкес келмейді.",

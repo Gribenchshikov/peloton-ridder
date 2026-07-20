@@ -14,6 +14,7 @@ const RegisterSchema = z
     lastName: z.string().trim().min(2).max(100),
     email: z.string().trim().toLowerCase().email(),
     phone: z.string().trim().max(30).optional(),
+    birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     password: passwordFieldSchema,
     confirmPassword: z.string(),
     city: z.string().trim().max(100).optional(),
@@ -34,6 +35,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
     lastName: formData.get("lastName"),
     email: formData.get("email"),
     phone: formData.get("phone") || undefined,
+    birthDate: formData.get("birthDate") || undefined,
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
     city: formData.get("city") || undefined,
@@ -44,7 +46,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
     return { error: isMismatch ? "password_mismatch" : "invalid" };
   }
 
-  const { firstName, lastName, email, phone, password, city } = parsed.data;
+  const { firstName, lastName, email, phone, birthDate, password, city } = parsed.data;
 
   const [turnstileOk, existing] = await Promise.all([
     verifyTurnstileToken(formData.get("cf-turnstile-response") as string | null),
@@ -59,7 +61,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
 
   const passwordHash = await hashPassword(password);
   await prisma.user.create({
-    data: { firstName, lastName, email, passwordHash, city, phone },
+    data: { firstName, lastName, email, passwordHash, city, phone, birthDate: birthDate ? new Date(birthDate) : undefined },
   });
 
   const token = await createVerificationToken(email);

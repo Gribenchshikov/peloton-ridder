@@ -114,6 +114,7 @@
     "email": "Email",
     "city": "City",
     "phone": "Phone",
+    "birthDate": "Date of birth",
     "password": "Password",
     "confirmPassword": "Confirm password",
     "errorPasswordMismatch": "Passwords do not match.",
