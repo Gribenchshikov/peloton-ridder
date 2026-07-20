@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { getEventForRegistration, getActiveRegistration, getUserContactInfo } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { RegisterView } from "./RegisterView";
+import { ContactOrganizerButton } from "./ContactOrganizerButton";
 
 export default async function EventRegisterPage({
   params,
@@ -87,6 +88,7 @@ function AlreadyRegistered({
         <p className="mt-3 text-sm leading-6 text-ink-soft">
           {t("alreadyRegisteredText", { race: `${event.race.name} ${event.year}` })}
         </p>
+        <p className="mt-1 text-sm text-ink-faint">{t("contactOrganizerNote")}</p>
         <div className="mt-4 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3">
           <p className="text-xs text-ink-faint">{registration.distance.name} · {registration.distance.km} км</p>
           {registration.bibNumber && (
@@ -95,7 +97,7 @@ function AlreadyRegistered({
             </p>
           )}
         </div>
-        <div className="mt-5 flex gap-3">
+        <div className="mt-5 flex flex-wrap gap-3">
           <Link
             href={`/tickets/${registration.id}`}
             className="rounded-[var(--radius-s)] bg-ember px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
@@ -108,6 +110,7 @@ function AlreadyRegistered({
           >
             {t("backToEventCta")}
           </Link>
+          <ContactOrganizerButton eventId={event.id} />
         </div>
       </section>
     </main>
