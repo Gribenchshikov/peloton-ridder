@@ -26,6 +26,12 @@ export async function createRegistrationAction(
   _prevState: CreateRegistrationState,
   formData: FormData,
 ): Promise<CreateRegistrationState> {
+  // Check global registrations toggle before anything else
+  const regOpenSetting = await prisma.siteSetting.findUnique({ where: { key: "registrations_open" } });
+  if (regOpenSetting?.value === "false") {
+    return { error: "registrations_closed" };
+  }
+
   const userId = await requireUserId();
   if (!userId) {
     return { error: "unauthorized" };

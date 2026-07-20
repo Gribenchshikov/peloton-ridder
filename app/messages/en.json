@@ -192,6 +192,7 @@
     "title": "{race}",
     "submitCta": "Reserve a spot",
     "submitting": "One second…",
+    "errorRegistrationsClosed": "Registrations are temporarily suspended.",
     "errorFull": "No spots left for this distance.",
     "errorClosed": "Registration for this race is closed.",
     "errorInvalid": "Pick a distance from the list.",

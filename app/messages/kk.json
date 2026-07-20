@@ -192,6 +192,7 @@
     "title": "{race}",
     "submitCta": "Орынды брондау",
     "submitting": "Бір сәт…",
+    "errorRegistrationsClosed": "Тіркеу уақытша тоқтатылды.",
     "errorFull": "Бұл дистанцияда бос орын қалмады.",
     "errorClosed": "Бұл старттка тіркелу жабылған.",
     "errorInvalid": "Тізімнен дистанцияны таңдаңыз.",

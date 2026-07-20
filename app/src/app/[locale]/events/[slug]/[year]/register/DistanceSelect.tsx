@@ -211,6 +211,7 @@ export function DistanceSelect({
       )}
 
       {/* Errors */}
+      {state.error === "registrations_closed" && <p className="text-sm text-danger">{t("errorRegistrationsClosed")}</p>}
       {state.error === "full" && <p className="text-sm text-danger">{t("errorFull")}</p>}
       {state.error === "closed" && <p className="text-sm text-danger">{t("errorClosed")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
