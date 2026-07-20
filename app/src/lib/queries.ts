@@ -54,6 +54,7 @@ export function getUserProfile(userId: string) {
       email: true,
       city: true,
       phone: true,
+      tshirtSize: true,
       isAdmin: true,
       isVolunteer: true,
       volunteerRewardClaimedAt: true,

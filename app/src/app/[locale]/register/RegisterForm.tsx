@@ -13,6 +13,7 @@ const ERROR_KEYS: Record<string, string> = {
   email_taken: "errorEmailTaken",
   invalid: "errorInvalid",
   bot_check: "errorBotCheck",
+  password_mismatch: "errorPasswordMismatch",
 };
 
 export function RegisterForm() {
@@ -29,7 +30,9 @@ export function RegisterForm() {
       <FormField label={t("surname")} name="lastName" type="text" required />
       <FormField label={t("email")} name="email" type="email" required />
       <FormField label={t("city")} name="city" type="text" />
+      <FormField label={t("phone")} name="phone" type="tel" />
       <FormField label={t("password")} name="password" type="password" required minLength={8} />
+      <FormField label={t("confirmPassword")} name="confirmPassword" type="password" required minLength={8} />
 
       <TurnstileWidget error={state.error} />
 

@@ -7,12 +7,14 @@ import { updateProfileAction, type ProfileState } from "./actions";
 
 const initialState: ProfileState = {};
 
+const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+
 export function ProfileForm({
   user,
   locale,
   callbackUrl,
 }: {
-  user: { firstName: string; lastName: string; email: string; city: string; phone: string };
+  user: { firstName: string; lastName: string; email: string; city: string; phone: string; tshirtSize?: string | null };
   locale: string;
   callbackUrl?: string;
 }) {
@@ -38,6 +40,19 @@ export function ProfileForm({
         <FormField label={tAuth("surname")} name="lastName" type="text" required defaultValue={user.lastName} />
         <FormField label={tAuth("city")} name="city" type="text" defaultValue={user.city} />
         <FormField label={t("phone")} name="phone" type="tel" defaultValue={user.phone} />
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-semibold text-ink-soft">{t("tshirtSize")}</span>
+          <select
+            name="tshirtSize"
+            defaultValue={user.tshirtSize ?? ""}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
+          >
+            <option value="">{t("tshirtSizeEmpty")}</option>
+            {TSHIRT_SIZES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
 
         {state.success && <p className="text-sm text-spruce">{t("profileSaved")}</p>}
         {state.error === "invalid" && <p className="text-sm text-danger">{tAuth("errorInvalid")}</p>}

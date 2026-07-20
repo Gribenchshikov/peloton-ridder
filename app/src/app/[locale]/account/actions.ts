@@ -8,11 +8,14 @@ import { redirect } from "@/i18n/navigation";
 import { safeRelativePath } from "@/lib/safeRedirect";
 import { CancelReason } from "@/generated/prisma/client";
 
+const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+
 const ProfileSchema = z.object({
   firstName: z.string().trim().min(2).max(100),
   lastName: z.string().trim().min(2).max(100),
   city: z.string().trim().max(100).optional(),
   phone: z.string().trim().max(30).optional(),
+  tshirtSize: z.enum(TSHIRT_SIZES).optional(),
 });
 
 export type ProfileState = {
@@ -35,6 +38,7 @@ export async function updateProfileAction(
     lastName: formData.get("lastName"),
     city: formData.get("city") || undefined,
     phone: formData.get("phone") || undefined,
+    tshirtSize: formData.get("tshirtSize") || undefined,
   });
 
   if (!parsed.success) {

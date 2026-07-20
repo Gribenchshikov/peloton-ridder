@@ -8,13 +8,20 @@ import { sendVerificationEmail, sendAdminAlertEmail } from "@/lib/mailer";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { buildAppUrl } from "@/lib/url";
 
-const RegisterSchema = z.object({
-  firstName: z.string().trim().min(2).max(100),
-  lastName: z.string().trim().min(2).max(100),
-  email: z.string().trim().toLowerCase().email(),
-  password: passwordFieldSchema,
-  city: z.string().trim().max(100).optional(),
-});
+const RegisterSchema = z
+  .object({
+    firstName: z.string().trim().min(2).max(100),
+    lastName: z.string().trim().min(2).max(100),
+    email: z.string().trim().toLowerCase().email(),
+    phone: z.string().trim().max(30).optional(),
+    password: passwordFieldSchema,
+    confirmPassword: z.string(),
+    city: z.string().trim().max(100).optional(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "password_mismatch",
+    path: ["confirmPassword"],
+  });
 
 export type RegisterState = {
   error?: string;
@@ -26,15 +33,18 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     email: formData.get("email"),
+    phone: formData.get("phone") || undefined,
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
     city: formData.get("city") || undefined,
   });
 
   if (!parsed.success) {
-    return { error: "invalid" };
+    const isMismatch = parsed.error.issues.some((i) => i.message === "password_mismatch");
+    return { error: isMismatch ? "password_mismatch" : "invalid" };
   }
 
-  const { firstName, lastName, email, password, city } = parsed.data;
+  const { firstName, lastName, email, phone, password, city } = parsed.data;
 
   const [turnstileOk, existing] = await Promise.all([
     verifyTurnstileToken(formData.get("cf-turnstile-response") as string | null),
@@ -49,7 +59,7 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
 
   const passwordHash = await hashPassword(password);
   await prisma.user.create({
-    data: { firstName, lastName, email, passwordHash, city },
+    data: { firstName, lastName, email, passwordHash, city, phone },
   });
 
   const token = await createVerificationToken(email);
