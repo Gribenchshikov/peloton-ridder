@@ -200,7 +200,18 @@
     "paidTitle": "Оплата подтверждена",
     "paidText": "Ваш стартовый номер: {bib}",
     "cancelledTitle": "Регистрация отменена",
-    "toAccountCta": "В личный кабинет"
+    "toAccountCta": "В личный кабинет",
+    "viewTicketCta": "Открыть билет"
+  },
+  "Ticket": {
+    "eyebrow": "Цифровой билет",
+    "qrHint": "Покажите QR-код на регистрации",
+    "fieldBib": "Стартовый номер",
+    "fieldName": "Участник",
+    "fieldDistance": "Дистанция",
+    "fieldDate": "Дата",
+    "fieldLocation": "Место старта",
+    "footer": "ID: {id} · Peloton Ridder"
   },
   "Admin": {
     "eyebrow": "Админка",

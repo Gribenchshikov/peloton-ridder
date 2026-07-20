@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import QRCode from "qrcode";
 
 // Без настоящего SMTP (AUTH_EMAIL_SERVER не задан или дефолтный плейсхолдер из .env.example)
 // письмо просто печатается в консоль сервера — чтобы можно было тестировать регистрацию
@@ -47,7 +48,11 @@ export async function sendRegistrationConfirmationEmail(
   bibNumber: number,
   dateISO: Date,
   location: string,
+  registrationId: string,
 ) {
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const ticketUrl = `${appUrl}/ru/tickets/${registrationId}`;
+
   const dateStr = new Intl.DateTimeFormat("ru", {
     day: "numeric",
     month: "long",
@@ -55,6 +60,8 @@ export async function sendRegistrationConfirmationEmail(
   }).format(dateISO);
 
   const subject = `Вы зарегистрированы — ${raceName} · №${bibNumber}`;
+
+  const qrDataUrl = await QRCode.toDataURL(`RIDDER:${registrationId}`, { width: 160, margin: 1 });
 
   const text = [
     `Здравствуйте, ${name}!`,
@@ -66,6 +73,8 @@ export async function sendRegistrationConfirmationEmail(
     `Стартовый номер: №${bibNumber}`,
     `Дата: ${dateStr}`,
     `Место: ${location}`,
+    ``,
+    `Цифровой билет: ${ticketUrl}`,
     ``,
     `С уважением,`,
     `Peloton Ridder`,
@@ -81,6 +90,13 @@ export async function sendRegistrationConfirmationEmail(
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Дата</td><td>${dateStr}</td></tr>
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Место</td><td>${location}</td></tr>
 </table>
+<p style="margin:20px 0 8px;font-weight:600">QR-код для регистрации на старте:</p>
+<img src="${qrDataUrl}" alt="QR-код" style="width:160px;height:160px;display:block" />
+<p style="margin:16px 0">
+  <a href="${ticketUrl}" style="display:inline-block;padding:10px 20px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
+    Открыть цифровой билет
+  </a>
+</p>
 <p style="color:#888;font-size:13px">С уважением,<br>Peloton Ridder</p>
 `.trim();
 

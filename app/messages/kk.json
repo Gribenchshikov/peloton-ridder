@@ -200,7 +200,18 @@
     "paidTitle": "Төлем расталды",
     "paidText": "Сіздің старт нөміріңіз: {bib}",
     "cancelledTitle": "Тіркелу бас тартылды",
-    "toAccountCta": "Жеке кабинетке"
+    "toAccountCta": "Жеке кабинетке",
+    "viewTicketCta": "Билетті ашу"
+  },
+  "Ticket": {
+    "eyebrow": "Цифрлық билет",
+    "qrHint": "Тіркелу кезінде QR-кодты көрсетіңіз",
+    "fieldBib": "Стартты нөмір",
+    "fieldName": "Қатысушы",
+    "fieldDistance": "Қашықтық",
+    "fieldDate": "Күні",
+    "fieldLocation": "Старт орны",
+    "footer": "ID: {id} · Peloton Ridder"
   },
   "Admin": {
     "eyebrow": "Әкімшілік",

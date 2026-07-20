@@ -95,5 +95,6 @@ async function sendConfirmationEmail(registrationId: string) {
     reg.bibNumber,
     reg.event.dateISO,
     reg.event.location,
+    registrationId,
   );
 }

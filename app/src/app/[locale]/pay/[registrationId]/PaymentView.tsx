@@ -20,7 +20,24 @@ export function PaymentView({
 
   if (registration.status === "PAID") {
     return (
-      <StatusMessage title={t("paidTitle")} text={t("paidText", { bib: registration.bibNumber ?? "—" })} />
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-4 px-6 py-20 text-center">
+        <h1 className="font-display text-2xl font-bold text-ink">{t("paidTitle")}</h1>
+        <p className="text-ink-soft">{t("paidText", { bib: registration.bibNumber ?? "—" })}</p>
+        <div className="mt-2 flex gap-3">
+          <Link
+            href={`/tickets/${registration.id}`}
+            className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+          >
+            {t("viewTicketCta")}
+          </Link>
+          <Link
+            href="/account"
+            className="rounded-[var(--radius-s)] border border-border px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            {t("toAccountCta")}
+          </Link>
+        </div>
+      </main>
     );
   }
 

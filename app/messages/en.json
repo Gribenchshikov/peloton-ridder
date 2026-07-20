@@ -200,7 +200,18 @@
     "paidTitle": "Payment confirmed",
     "paidText": "Your bib number: {bib}",
     "cancelledTitle": "Registration cancelled",
-    "toAccountCta": "Go to account"
+    "toAccountCta": "Go to account",
+    "viewTicketCta": "Open ticket"
+  },
+  "Ticket": {
+    "eyebrow": "Digital Ticket",
+    "qrHint": "Show this QR code at registration",
+    "fieldBib": "Bib number",
+    "fieldName": "Participant",
+    "fieldDistance": "Distance",
+    "fieldDate": "Date",
+    "fieldLocation": "Start location",
+    "footer": "ID: {id} · Peloton Ridder"
   },
   "Admin": {
     "eyebrow": "Admin panel",
