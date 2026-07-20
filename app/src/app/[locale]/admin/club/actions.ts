@@ -72,3 +72,51 @@ export async function deleteMemberAction(locale: string, id: string): Promise<vo
   revalidatePath("/[locale]/admin/club", "page");
   redirect({ href: "/admin/club", locale });
 }
+
+const TrainingGroupSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  schedule: z.string().trim().min(1).max(500),
+  description: z.string().trim().min(1).max(2000),
+  order: z.coerce.number().int().min(0).max(9999),
+});
+
+export async function createTrainingGroupAction(
+  locale: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const parsed = TrainingGroupSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "invalid" };
+
+  await prisma.trainingGroup.create({ data: parsed.data });
+  revalidatePath("/[locale]/admin/club", "page");
+  return redirect({ href: "/admin/club", locale });
+}
+
+export async function updateTrainingGroupAction(
+  locale: string,
+  id: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const parsed = TrainingGroupSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "invalid" };
+
+  await prisma.trainingGroup.update({ where: { id }, data: parsed.data });
+  revalidatePath("/[locale]/admin/club", "page");
+  return { success: true };
+}
+
+export async function deleteTrainingGroupAction(locale: string, id: string): Promise<void> {
+  const adminId = await requireAdminId();
+  if (!adminId) return;
+  await prisma.trainingGroup.delete({ where: { id } });
+  revalidatePath("/[locale]/admin/club", "page");
+  redirect({ href: "/admin/club", locale });
+}

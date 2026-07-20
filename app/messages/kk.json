@@ -284,7 +284,8 @@
     "contactOrganizerSentText": "Ұйымдастырушы жақын арада email-ге жауап береді.",
     "contactOrganizerError": "Жіберу мүмкін болмады. Қайта көріңіз.",
     "birthDateLabel": "Туған күні",
-    "birthDateHint": "Профиліңізге сақталады"
+    "birthDateHint": "Профиліңізге сақталады",
+    "qualificationRequired": "Біліктілік талап етіледі:"
   },
   "Payment": {
     "eyebrow": "Төлем",
@@ -471,6 +472,14 @@
     "fieldMemberOrder": "Реті",
     "memberTypeTeam": "Команда",
     "memberTypeVolunteer": "Волонтерлер",
+    "trainingGroupsTitle": "Жаттығу топтары",
+    "addTrainingGroupCta": "Топ қосу",
+    "newTrainingGroupTitle": "Жаңа топ",
+    "trainingGroupsEmpty": "Жаттығу топтары әлі қосылмаған.",
+    "fieldGroupTitle": "Топ атауы",
+    "fieldGroupSchedule": "Кесте",
+    "fieldGroupSchedulePlaceholder": "Сс, Бс, Сн — 7:00 / Дс, Ср, Жм — 18:00",
+    "fieldGroupDescription": "Сипаттама",
     "registrationsTitle": "Қатысушылар",
     "registrationsEmpty": "Әзірше тіркелгендер жоқ.",
     "waitlistTitle": "Күту тізімі",

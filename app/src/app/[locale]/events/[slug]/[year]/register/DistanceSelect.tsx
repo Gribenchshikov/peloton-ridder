@@ -21,6 +21,8 @@ type DistanceOption = {
   maxAge: number | null;
   capacity: number;
   taken: number;
+  requiresQualification: boolean;
+  qualificationNote: string | null;
 };
 
 type MerchItem = {
@@ -353,6 +355,12 @@ function DistanceOptionRow({
           ) : null}
         </div>
       </label>
+      {distance.requiresQualification && distance.qualificationNote && (
+        <p className="ml-9 text-xs text-warn">
+          {t("qualificationRequired")}{" "}
+          <span className="text-ink-soft">{distance.qualificationNote}</span>
+        </p>
+      )}
       {isFull && (
         <a
           href={waitlistHref}

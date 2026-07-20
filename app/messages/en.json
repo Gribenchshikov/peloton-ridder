@@ -284,7 +284,8 @@
     "contactOrganizerSentText": "The organizer will reply to your email shortly.",
     "contactOrganizerError": "Could not send. Please try again.",
     "birthDateLabel": "Date of birth",
-    "birthDateHint": "Will be saved to your profile"
+    "birthDateHint": "Will be saved to your profile",
+    "qualificationRequired": "Qualification required:"
   },
   "Payment": {
     "eyebrow": "Payment",
@@ -471,6 +472,14 @@
     "fieldMemberOrder": "Order",
     "memberTypeTeam": "Team",
     "memberTypeVolunteer": "Volunteers",
+    "trainingGroupsTitle": "Training Groups",
+    "addTrainingGroupCta": "Add group",
+    "newTrainingGroupTitle": "New group",
+    "trainingGroupsEmpty": "No training groups added yet.",
+    "fieldGroupTitle": "Group name",
+    "fieldGroupSchedule": "Schedule",
+    "fieldGroupSchedulePlaceholder": "Tue, Thu, Sat — 7:00 / Mon, Wed, Fri — 18:00",
+    "fieldGroupDescription": "Description",
     "registrationsTitle": "Participants",
     "registrationsEmpty": "No registrations yet.",
     "waitlistTitle": "Waitlist",

@@ -284,7 +284,8 @@
     "contactOrganizerSentText": "Организатор ответит вам по email в ближайшее время.",
     "contactOrganizerError": "Не удалось отправить. Попробуйте ещё раз.",
     "birthDateLabel": "Дата рождения",
-    "birthDateHint": "Будет сохранена в вашем профиле"
+    "birthDateHint": "Будет сохранена в вашем профиле",
+    "qualificationRequired": "Требуется квалификация:"
   },
   "Payment": {
     "eyebrow": "Оплата",
@@ -471,6 +472,14 @@
     "fieldMemberOrder": "Порядок",
     "memberTypeTeam": "Команда",
     "memberTypeVolunteer": "Волонтёры",
+    "trainingGroupsTitle": "Тренировочные группы",
+    "addTrainingGroupCta": "Добавить группу",
+    "newTrainingGroupTitle": "Новая группа",
+    "trainingGroupsEmpty": "Тренировочные группы пока не добавлены.",
+    "fieldGroupTitle": "Название группы",
+    "fieldGroupSchedule": "Расписание",
+    "fieldGroupSchedulePlaceholder": "Вт, Чт, Сб — 7:00 / Пн, Ср, Пт — 18:00",
+    "fieldGroupDescription": "Описание",
     "registrationsTitle": "Участники",
     "registrationsEmpty": "Пока никто не зарегистрировался.",
     "waitlistTitle": "Лист ожидания",
