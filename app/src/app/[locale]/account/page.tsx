@@ -5,6 +5,7 @@ import { getUserProfile } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
+import { ChangePasswordForm } from "./ChangePasswordForm";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { VolunteerProgress } from "./VolunteerProgress";
 import { logoutAction } from "@/lib/authActions";
@@ -52,6 +53,7 @@ export default async function AccountPage({
         locale={locale}
         callbackUrl={callbackUrl}
       />
+      <ChangePasswordForm />
       {profile.isVolunteer && (
         <VolunteerProgress
           completed={completedVolunteerCount}
