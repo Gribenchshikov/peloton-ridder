@@ -239,6 +239,8 @@ model Registration {
   disqualified    Boolean            @default(false)
   kaspiOrderId    String?
   kaspiPaymentUrl String?
+  runningClubId   String?
+  runningClub     RunningClub?       @relation(fields: [runningClubId], references: [id])
   createdAt       DateTime           @default(now())
 
   result            Result?
@@ -332,6 +334,16 @@ model Notification {
   sentAt   DateTime @default(now())
   sentById String
   sentBy   User     @relation(fields: [sentById], references: [id])
+}
+
+// Беговой клуб — справочник для выбора при регистрации на забег (T88).
+model RunningClub {
+  id        String   @id @default(cuid())
+  name      String
+  city      String?
+  createdAt DateTime @default(now())
+
+  registrations Registration[]
 }
 
 // Глобальные настройки сайта — KV-хранилище. Текущие ключи: hero_bg_url.

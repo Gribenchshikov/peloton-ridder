@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { getEventForRegistration, getActiveRegistration, getUserContactInfo } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
 import { RegisterView } from "./RegisterView";
 
 export default async function EventRegisterPage({
@@ -26,9 +27,10 @@ export default async function EventRegisterPage({
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }
 
-  const [existing, profile] = await Promise.all([
+  const [existing, profile, clubs] = await Promise.all([
     getActiveRegistration(session.user.id, event.id),
     getUserContactInfo(session.user.id),
+    prisma.runningClub.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, city: true } }),
   ]);
   if (existing) {
     return redirect({ href: `/pay/${existing.id}`, locale });
@@ -40,7 +42,7 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={event} profile={profile} locale={locale} callbackPath={`/events/${slug}/${year}/register`} />;
+  return <RegisterView event={event} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} />;
 }
 
 function EmailConfirmationRequired({ email }: { email: string }) {

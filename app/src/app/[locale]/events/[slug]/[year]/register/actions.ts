@@ -8,9 +8,12 @@ import { redirect } from "@/i18n/navigation";
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
 const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
 
+const emptyToNull = (v: unknown) => (v === "" || v == null ? null : v);
+
 const CreateRegistrationSchema = z.object({
   eventId: z.string().min(1),
   distanceId: z.string().min(1),
+  runningClubId: z.preprocess(emptyToNull, z.string().cuid().nullable()),
 });
 
 export type CreateRegistrationState = {
@@ -30,11 +33,12 @@ export async function createRegistrationAction(
   const parsed = CreateRegistrationSchema.safeParse({
     eventId: formData.get("eventId"),
     distanceId: formData.get("distanceId"),
+    runningClubId: formData.get("runningClubId"),
   });
   if (!parsed.success) {
     return { error: "invalid" };
   }
-  const { eventId, distanceId } = parsed.data;
+  const { eventId, distanceId, runningClubId } = parsed.data;
 
   const now = new Date();
   const outcome = await prisma.$transaction(async (tx) => {
@@ -109,6 +113,7 @@ export async function createRegistrationAction(
       reservedUntil: new Date(now.getTime() + RESERVATION_TTL_MS),
       adminComment: null,
       allowReregistration: false,
+      runningClubId,
     };
     const registration = cancelled
       ? await tx.registration.update({ where: { id: cancelled.id }, data: reservationData })

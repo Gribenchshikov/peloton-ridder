@@ -7,15 +7,19 @@ import { DistanceSelect } from "./DistanceSelect";
 type EventWithDistances = NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
 type UserContactInfo = NonNullable<Awaited<ReturnType<typeof getUserContactInfo>>>;
 
+type RunningClub = { id: string; name: string; city: string | null };
+
 export function RegisterView({
   event,
   profile,
   locale,
+  clubs,
   callbackPath,
 }: {
   event: EventWithDistances;
   profile: UserContactInfo;
   locale: string;
+  clubs: RunningClub[];
   callbackPath: string;
 }) {
   const t = useTranslations("Registration");
@@ -29,7 +33,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} />
     </main>
   );
 }

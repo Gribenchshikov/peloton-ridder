@@ -25,6 +25,8 @@ type MerchItem = {
   requiresSize: boolean;
 };
 
+type RunningClub = { id: string; name: string; city: string | null };
+
 const initialState: CreateRegistrationState = {};
 
 export function DistanceSelect({
@@ -32,11 +34,13 @@ export function DistanceSelect({
   locale,
   distances,
   merchItems,
+  clubs,
 }: {
   eventId: string;
   locale: string;
   distances: DistanceOption[];
   merchItems: MerchItem[];
+  clubs: RunningClub[];
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
@@ -133,6 +137,27 @@ export function DistanceSelect({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Running club (optional) */}
+      {clubs.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-ink-soft">
+            {t("clubLabel")}
+            <span className="ml-1.5 text-xs font-normal text-ink-faint">{t("clubOptional")}</span>
+          </label>
+          <select
+            name="runningClubId"
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          >
+            <option value="">{t("clubNone")}</option>
+            {clubs.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}{c.city ? ` (${c.city})` : ""}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
