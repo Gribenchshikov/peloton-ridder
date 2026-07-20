@@ -153,6 +153,8 @@ export async function createRegistrationAction(
       await tx.promoCode.update({ where: { id: promo.id }, data: { usedCount: { increment: 1 } } });
     }
 
+    const includesTransfer = formData.get("includesTransfer") === "true";
+
     const reservationData = {
       distanceId,
       status: "RESERVED" as const,
@@ -163,6 +165,7 @@ export async function createRegistrationAction(
       runningClubId,
       promoCodeId,
       discountAmount,
+      includesTransfer,
     };
     const registration = cancelled
       ? await tx.registration.update({ where: { id: cancelled.id }, data: reservationData })

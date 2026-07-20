@@ -89,7 +89,7 @@
     "volunteerCtaApply": "Apply",
     "volunteerCtaLearnMore": "Learn more",
     "transferOrder": "Book transfer",
-    "transferRoute": "Ridder → start line and back",
+    "transferRoute": "{location} → start line and back",
     "transferPerPerson": "/ person",
     "statsDistances": "{count, plural, one {# distance} other {# distances}}",
     "statsParticipants": "{count, plural, one {# participant} other {# participants}}",

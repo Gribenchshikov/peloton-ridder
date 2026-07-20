@@ -42,6 +42,8 @@ export function DistanceSelect({
   tshirtSizeGuideUrl,
   hasBirthDate,
   defaultTshirtSize,
+  transferPrice,
+  location,
 }: {
   eventId: string;
   locale: string;
@@ -51,6 +53,8 @@ export function DistanceSelect({
   tshirtSizeGuideUrl?: string | null;
   hasBirthDate: boolean;
   defaultTshirtSize?: string | null;
+  transferPrice?: number | null;
+  location?: string | null;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
@@ -181,6 +185,25 @@ export function DistanceSelect({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Transfer option */}
+      {transferPrice && location && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3 transition-colors has-[:checked]:border-ember has-[:checked]:bg-ember/5">
+          <input
+            type="checkbox"
+            name="includesTransfer"
+            value="true"
+            className="mt-0.5 accent-ember"
+          />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-ink">{t("transferTitle")}</span>
+            <span className="text-xs text-ink-soft">{t("transferRoute", { location })}</span>
+          </div>
+          <span className="ml-auto shrink-0 text-sm font-bold text-ink">
+            {transferPrice.toLocaleString("ru-KZ")} ₸
+          </span>
+        </label>
       )}
 
       {/* Promo code */}

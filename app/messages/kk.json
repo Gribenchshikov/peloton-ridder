@@ -89,7 +89,7 @@
     "volunteerCtaApply": "Өтінім беру",
     "volunteerCtaLearnMore": "Толығырақ",
     "transferOrder": "Трансфер тапсырысы",
-    "transferRoute": "Риддер → старт орны және кері",
+    "transferRoute": "{location} → старт орны және кері",
     "transferPerPerson": "/ адам",
     "statsDistances": "{count, plural, other {# дистанция}}",
     "statsParticipants": "{count, plural, other {# қатысушы}}",

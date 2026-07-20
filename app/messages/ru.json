@@ -89,7 +89,7 @@
     "volunteerCtaApply": "Подать заявку",
     "volunteerCtaLearnMore": "Узнать подробнее",
     "transferOrder": "Заказать трансфер",
-    "transferRoute": "Риддер → место старта и обратно",
+    "transferRoute": "{location} → место старта и обратно",
     "transferPerPerson": "/ человек",
     "statsDistances": "{count, plural, one {# дистанция} few {# дистанции} many {# дистанций} other {# дистанций}}",
     "statsParticipants": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}",

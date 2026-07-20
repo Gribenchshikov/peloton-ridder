@@ -43,7 +43,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} tshirtSizeGuideUrl={tshirtSizeGuideUrl} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} tshirtSizeGuideUrl={tshirtSizeGuideUrl} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} transferPrice={event.transferPrice} location={event.location} />
     </main>
   );
 }

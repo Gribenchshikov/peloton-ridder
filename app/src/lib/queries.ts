@@ -153,6 +153,8 @@ export function getEventForRegistration(slug: string, year: number) {
       year: true,
       status: true,
       registrationDeadline: true,
+      location: true,
+      transferPrice: true,
       race: { select: { name: true, slug: true } },
       distances: { orderBy: { km: "asc" } },
       merchItems: {
