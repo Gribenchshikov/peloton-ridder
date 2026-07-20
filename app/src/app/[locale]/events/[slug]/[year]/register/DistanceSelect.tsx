@@ -220,6 +220,9 @@ export function DistanceSelect({
       {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
       {state.error === "registration_blocked" && <p className="text-sm text-danger">{t("errorRegistrationBlocked")}</p>}
       {state.error === "missing_size" && <p className="text-sm text-danger">{t("errorMissingSize")}</p>}
+      {state.error === "age_required" && <p className="text-sm text-danger">{t("errorAgeRequired")}</p>}
+      {state.error === "age_too_young" && <p className="text-sm text-danger">{t("errorAgeTooYoung")}</p>}
+      {state.error === "age_too_old" && <p className="text-sm text-danger">{t("errorAgeTooOld")}</p>}
       {state.error === "promo_invalid" && <p className="text-sm text-danger">{t("promoError_not_found")}</p>}
       {state.error === "promo_expired" && <p className="text-sm text-danger">{t("promoError_expired")}</p>}
       {state.error === "promo_exhausted" && <p className="text-sm text-danger">{t("promoError_exhausted")}</p>}

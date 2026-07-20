@@ -49,6 +49,7 @@ export default async function AccountPage({
           city: profile.city ?? "",
           phone: profile.phone ?? "",
           tshirtSize: profile.tshirtSize,
+          birthDate: profile.birthDate,
         }}
         locale={locale}
         callbackUrl={callbackUrl}

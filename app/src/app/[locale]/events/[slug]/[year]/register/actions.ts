@@ -54,7 +54,7 @@ export async function createRegistrationAction(
     // событие. Блокировка пользователя сериализует одновременные запросы в
     // разные дистанции одного события.
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
-    const user = await tx.user.findUnique({ where: { id: userId }, select: { emailVerified: true } });
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { emailVerified: true, birthDate: true } });
     if (!user) return { kind: "error" as const, error: "unauthorized" };
     // Проверяем здесь, а не только на странице: Server Action доступен по сети
     // и не должен полагаться на то, какой интерфейс показал браузер.
@@ -73,6 +73,16 @@ export async function createRegistrationAction(
     }
     if (!distance || distance.eventId !== eventId) {
       return { kind: "error" as const, error: "invalid" };
+    }
+
+    // Проверка возраста: считается на дату старта события
+    if (distance.minAge !== null || distance.maxAge !== null) {
+      if (!user.birthDate) return { kind: "error" as const, error: "age_required" };
+      const raceDate = event.dateISO;
+      const ageMs = raceDate.getTime() - user.birthDate.getTime();
+      const age = Math.floor(ageMs / (365.25 * 24 * 60 * 60 * 1000));
+      if (distance.minAge !== null && age < distance.minAge) return { kind: "error" as const, error: "age_too_young" };
+      if (distance.maxAge !== null && age > distance.maxAge) return { kind: "error" as const, error: "age_too_old" };
     }
 
     // Фоновая задача для этого не нужна: перед каждой новой регистрацией на

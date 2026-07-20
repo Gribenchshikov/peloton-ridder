@@ -14,7 +14,7 @@ export function ProfileForm({
   locale,
   callbackUrl,
 }: {
-  user: { firstName: string; lastName: string; email: string; city: string; phone: string; tshirtSize?: string | null };
+  user: { firstName: string; lastName: string; email: string; city: string; phone: string; tshirtSize?: string | null; birthDate?: Date | null };
   locale: string;
   callbackUrl?: string;
 }) {
@@ -40,6 +40,16 @@ export function ProfileForm({
         <FormField label={tAuth("surname")} name="lastName" type="text" required defaultValue={user.lastName} />
         <FormField label={tAuth("city")} name="city" type="text" defaultValue={user.city} />
         <FormField label={t("phone")} name="phone" type="tel" defaultValue={user.phone} />
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-semibold text-ink-soft">{t("birthDate")}</span>
+          <input
+            type="date"
+            name="birthDate"
+            defaultValue={user.birthDate ? user.birthDate.toISOString().slice(0, 10) : ""}
+            max={new Date().toISOString().slice(0, 10)}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
+          />
+        </label>
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-semibold text-ink-soft">{t("tshirtSize")}</span>
           <select

@@ -16,6 +16,7 @@ const ProfileSchema = z.object({
   city: z.string().trim().max(100).optional(),
   phone: z.string().trim().max(30).optional(),
   tshirtSize: z.enum(TSHIRT_SIZES).optional(),
+  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export type ProfileState = {
@@ -39,15 +40,20 @@ export async function updateProfileAction(
     city: formData.get("city") || undefined,
     phone: formData.get("phone") || undefined,
     tshirtSize: formData.get("tshirtSize") || undefined,
+    birthDate: formData.get("birthDate") || undefined,
   });
 
   if (!parsed.success) {
     return { error: "invalid" };
   }
 
+  const { birthDate, ...rest } = parsed.data;
   await prisma.user.update({
     where: { id: userId },
-    data: parsed.data,
+    data: {
+      ...rest,
+      birthDate: birthDate ? new Date(birthDate) : undefined,
+    },
   });
 
   // Если сюда пришли по ссылке «Изменить» с другой страницы (например, со страницы

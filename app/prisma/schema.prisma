@@ -62,6 +62,8 @@ model User {
   firstName     String
   lastName      String
   city          String?
+  tshirtSize    String?
+  birthDate     DateTime?
   isAdmin       Boolean   @default(false)
   isVolunteer              Boolean   @default(false)
   volunteerRewardClaimedAt DateTime?
