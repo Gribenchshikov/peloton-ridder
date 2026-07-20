@@ -154,6 +154,21 @@ export function AdminView({ events }: { events: EventRow[] }) {
             </Link>
           </div>
         </div>
+
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-bold text-ink">{t("reportsTitle")}</h2>
+              <p className="mt-1 text-sm text-ink-soft">{t("reportsSubtitle")}</p>
+            </div>
+            <Link
+              href="/admin/reports"
+              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {t("reportsCta")}
+            </Link>
+          </div>
+        </div>
       </section>
 
       <section className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
