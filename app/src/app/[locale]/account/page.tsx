@@ -9,6 +9,7 @@ import { ChangePasswordForm } from "./ChangePasswordForm";
 import { ChangeEmailForm } from "./ChangeEmailForm";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { VolunteerProgress } from "./VolunteerProgress";
+import { AvatarUpload } from "./AvatarUpload";
 import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
@@ -42,7 +43,7 @@ export default async function AccountPage({
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
-      <AccountHeader name={profile.firstName} isAdmin={profile.isAdmin} />
+      <AccountHeader name={`${profile.firstName} ${profile.lastName}`} isAdmin={profile.isAdmin} avatarUrl={profile.avatarUrl} />
       <ProfileForm
         user={{
           firstName: profile.firstName,
@@ -86,13 +87,16 @@ export default async function AccountPage({
   );
 }
 
-function AccountHeader({ name, isAdmin }: { name: string; isAdmin: boolean }) {
+function AccountHeader({ name, isAdmin, avatarUrl }: { name: string; isAdmin: boolean; avatarUrl: string | null }) {
   const t = useTranslations("Account");
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
-        <h1 className="mt-2 font-display text-2xl font-bold text-ink">{t("title", { name })}</h1>
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center gap-4">
+        <AvatarUpload initialUrl={avatarUrl} name={name} />
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
+          <h1 className="mt-1 font-display text-2xl font-bold text-ink">{name}</h1>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         {isAdmin && (

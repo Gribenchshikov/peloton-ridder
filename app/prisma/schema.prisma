@@ -70,6 +70,7 @@ model User {
   bannedUntil              DateTime?
   totpSecret               String?
   totpEnabledAt            DateTime?
+  avatarUrl                String?
   createdAt     DateTime  @default(now())
 
   registrations          Registration[]

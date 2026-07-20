@@ -51,6 +51,9 @@ export function RegisterView({
 function ParticipantCard({ profile, callbackPath }: { profile: UserContactInfo; callbackPath: string }) {
   const t = useTranslations("Registration");
 
+  const name = fullName(profile);
+  const initials = name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
   return (
     <section className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
       <div className="flex items-center justify-between">
@@ -62,9 +65,20 @@ function ParticipantCard({ profile, callbackPath }: { profile: UserContactInfo; 
           {t("editCta")}
         </Link>
       </div>
-      <p className="mt-2 text-sm text-ink-soft">{t("participantHint")}</p>
+      <div className="mt-3 flex items-center gap-3">
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full">
+          {profile.avatarUrl ? (
+            <img src={profile.avatarUrl} alt={name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-ember text-sm font-bold text-white">
+              {initials}
+            </div>
+          )}
+        </div>
+        <p className="text-sm text-ink-soft">{t("participantHint")}</p>
+      </div>
       <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-        <Field label={t("participantName")} value={fullName(profile)} />
+        <Field label={t("participantName")} value={name} />
         <Field label={t("participantEmail")} value={profile.email} />
         {profile.city && <Field label={t("participantCity")} value={profile.city} />}
         {profile.phone && <Field label={t("participantPhone")} value={profile.phone} />}
