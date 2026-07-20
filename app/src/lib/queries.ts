@@ -75,9 +75,9 @@ export function getUserProfile(userId: string) {
         take: REGISTRATION_HISTORY_LIMIT,
       },
       volunteerApplications: {
-        where: { status: "APPROVED" },
         select: {
           id: true,
+          status: true,
           event: {
             select: {
               year: true,

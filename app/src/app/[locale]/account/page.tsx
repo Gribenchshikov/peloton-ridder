@@ -82,35 +82,50 @@ type UserProfile = NonNullable<Awaited<ReturnType<typeof getUserProfile>>>;
 type RegistrationRow = UserProfile["registrations"][number];
 type VolunteerApp = UserProfile["volunteerApplications"][number];
 
+const VOLUNTEER_STATUS_STYLES: Record<string, { badge: string; label: string }> = {
+  PENDING:  { badge: "text-amber-600 dark:text-amber-400",  label: "На рассмотрении" },
+  APPROVED: { badge: "text-emerald-600 dark:text-emerald-400", label: "Одобрена ✓" },
+  REJECTED: { badge: "text-red-500",                        label: "Отклонена" },
+};
+
 function VolunteerSection({ applications }: { applications: VolunteerApp[] }) {
   return (
     <section>
-      <h2 className="font-display text-lg font-bold text-ink">Я волонтёр</h2>
+      <h2 className="font-display text-lg font-bold text-ink">Волонтёрство</h2>
       <ul className="mt-3 flex flex-col gap-3">
-        {applications.map((app) => (
-          <li key={app.id} className="rounded-[var(--radius-m)] border border-ember/30 bg-ember/5 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="font-semibold text-ink">
-                  {app.event.race.name} {app.event.year}
-                </p>
-                <p className="mt-0.5 text-xs font-bold uppercase tracking-wide text-ember">
-                  Заявка одобрена ✓
-                </p>
+        {applications.map((app) => {
+          const s = VOLUNTEER_STATUS_STYLES[app.status] ?? VOLUNTEER_STATUS_STYLES.PENDING;
+          const borderColor =
+            app.status === "APPROVED"
+              ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30"
+              : app.status === "REJECTED"
+              ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20"
+              : "border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20";
+          return (
+            <li key={app.id} className={`rounded-[var(--radius-m)] border p-4 ${borderColor}`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-ink">
+                    {app.event.race.name} {app.event.year}
+                  </p>
+                  <p className={`mt-0.5 text-xs font-bold uppercase tracking-wide ${s.badge}`}>
+                    {s.label}
+                  </p>
+                </div>
+                {app.status === "APPROVED" && app.event.volunteerChatUrl && (
+                  <a
+                    href={app.event.volunteerChatUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                  >
+                    Чат волонтёров →
+                  </a>
+                )}
               </div>
-              {app.event.volunteerChatUrl && (
-                <a
-                  href={app.event.volunteerChatUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white hover:opacity-90"
-                >
-                  Чат волонтёров →
-                </a>
-              )}
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
