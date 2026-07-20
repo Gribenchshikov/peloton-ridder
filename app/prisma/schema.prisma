@@ -271,6 +271,7 @@ model Registration {
   discountAmount  Int                @default(0)
   cancelReason    CancelReason?
   cancelComment   String?
+  includesTransfer Boolean            @default(false)
   transferUsedAt  DateTime?
   kitPickedUpAt   DateTime?
   createdAt       DateTime           @default(now())
