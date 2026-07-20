@@ -266,6 +266,7 @@ model Registration {
   discountAmount  Int                @default(0)
   cancelReason    CancelReason?
   cancelComment   String?
+  transferUsedAt  DateTime?
   createdAt       DateTime           @default(now())
 
   result            Result?
