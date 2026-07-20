@@ -12,6 +12,7 @@ export function MobileMenu({
   isAdmin,
   profileLabel,
   signInLabel,
+  registerLabel,
   adminLabel,
 }: {
   locale: string;
@@ -20,6 +21,7 @@ export function MobileMenu({
   isAdmin: boolean;
   profileLabel: string;
   signInLabel: string;
+  registerLabel: string;
   adminLabel: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -58,10 +60,12 @@ export function MobileMenu({
               </Link>
             ))}
           </nav>
+
           <div className="mt-3 border-t border-border pt-3">
-            <LocaleSwitcher className="mb-3" />
+            <LocaleSwitcher />
           </div>
-          <div className="flex flex-col gap-2">
+
+          <div className="mt-3 flex flex-col gap-2">
             {isAdmin && (
               <Link
                 href="/admin"
@@ -78,12 +82,20 @@ export function MobileMenu({
                 {profileLabel}
               </Link>
             ) : (
-              <Link
-                href="/login"
-                className="rounded-[var(--radius-s)] bg-ember px-3 py-2.5 text-center text-sm font-semibold text-white"
-              >
-                {signInLabel}
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-[var(--radius-s)] border border-border px-3 py-2.5 text-center text-sm font-semibold text-ink"
+                >
+                  {signInLabel}
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-[var(--radius-s)] bg-ember px-3 py-2.5 text-center text-sm font-bold text-white"
+                >
+                  {registerLabel}
+                </Link>
+              </>
             )}
           </div>
         </div>

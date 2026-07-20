@@ -18,7 +18,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6">
         {/* Logo */}
-        <Link href="/" className="shrink-0 font-display text-base font-bold text-ink hover:text-ember transition-colors">
+        <Link href="/" className="shrink-0 font-display text-base font-bold text-ink transition-colors hover:text-ember">
           Peloton Ridder
         </Link>
 
@@ -41,6 +41,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
         {/* Desktop right side */}
         <div className="hidden items-center gap-2 md:flex">
           <LocaleSwitcher />
+
           {isAdmin && (
             <Link
               href="/admin"
@@ -49,6 +50,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
               {t("adminPanel")}
             </Link>
           )}
+
           {isLoggedIn ? (
             <Link
               href="/account"
@@ -57,12 +59,20 @@ export async function SiteHeader({ locale }: { locale: string }) {
               {t("profile")}
             </Link>
           ) : (
-            <Link
-              href="/login"
-              className="rounded-[var(--radius-s)] bg-ember px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
-            >
-              {t("signIn")}
-            </Link>
+            <>
+              <Link
+                href="/login"
+                className="rounded-[var(--radius-s)] border border-border px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+              >
+                {t("signIn")}
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-[var(--radius-s)] bg-ember px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-ember-strong"
+              >
+                {t("register")}
+              </Link>
+            </>
           )}
         </div>
 
@@ -74,6 +84,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
           isAdmin={isAdmin}
           profileLabel={t("profile")}
           signInLabel={t("signIn")}
+          registerLabel={t("register")}
           adminLabel={t("adminPanel")}
         />
       </div>
