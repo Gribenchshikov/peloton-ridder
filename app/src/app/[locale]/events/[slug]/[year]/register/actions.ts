@@ -14,6 +14,7 @@ const CreateRegistrationSchema = z.object({
   eventId: z.string().min(1),
   distanceId: z.string().min(1),
   runningClubId: z.preprocess(emptyToNull, z.string().cuid().nullable()),
+  promoCode: z.preprocess(emptyToNull, z.string().max(50).nullable()),
 });
 
 export type CreateRegistrationState = {
@@ -34,11 +35,12 @@ export async function createRegistrationAction(
     eventId: formData.get("eventId"),
     distanceId: formData.get("distanceId"),
     runningClubId: formData.get("runningClubId"),
+    promoCode: formData.get("promoCode"),
   });
   if (!parsed.success) {
     return { error: "invalid" };
   }
-  const { eventId, distanceId, runningClubId } = parsed.data;
+  const { eventId, distanceId, runningClubId, promoCode } = parsed.data;
 
   const now = new Date();
   const outcome = await prisma.$transaction(async (tx) => {
@@ -106,6 +108,25 @@ export async function createRegistrationAction(
     const capacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
     if (activeCount >= capacity) return { kind: "error" as const, error: "full" };
 
+    // Validate and apply promo code
+    let promoCodeId: string | null = null;
+    let discountAmount = 0;
+    if (promoCode) {
+      const promo = await tx.promoCode.findUnique({ where: { code: promoCode.toUpperCase() } });
+      if (!promo || !promo.active) return { kind: "error" as const, error: "promo_invalid" };
+      if (promo.expiresAt && promo.expiresAt < now) return { kind: "error" as const, error: "promo_expired" };
+      if (promo.maxUses !== null && promo.usedCount >= promo.maxUses) return { kind: "error" as const, error: "promo_exhausted" };
+      if (promo.eventId !== null && promo.eventId !== eventId) return { kind: "error" as const, error: "promo_invalid" };
+
+      promoCodeId = promo.id;
+      discountAmount =
+        promo.discountType === "PERCENT"
+          ? Math.round((distance.price * promo.discountValue) / 100)
+          : Math.min(promo.discountValue, distance.price);
+
+      await tx.promoCode.update({ where: { id: promo.id }, data: { usedCount: { increment: 1 } } });
+    }
+
     const reservationData = {
       distanceId,
       status: "RESERVED" as const,
@@ -114,6 +135,8 @@ export async function createRegistrationAction(
       adminComment: null,
       allowReregistration: false,
       runningClubId,
+      promoCodeId,
+      discountAmount,
     };
     const registration = cancelled
       ? await tx.registration.update({ where: { id: cancelled.id }, data: reservationData })

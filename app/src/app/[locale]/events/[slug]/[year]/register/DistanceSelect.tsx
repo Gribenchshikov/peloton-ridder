@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
+import { checkPromoAction } from "@/lib/promoActions";
 import { useTranslations } from "next-intl";
 import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { DistanceInfo } from "@/components/DistanceInfo";
@@ -47,8 +48,25 @@ export function DistanceSelect({
   const [state, formAction, pending] = useActionState(boundAction, initialState);
   const [selected, setSelected] = useState<string | null>(null);
   const [sizes, setSizes] = useState<Record<string, Size>>({});
+  const [promoInput, setPromoInput] = useState("");
+  const [promoResult, setPromoResult] = useState<{ valid: boolean; label: string } | null>(null);
+  const [promoChecking, startPromoCheck] = useTransition();
 
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(distances);
+
+  function handlePromoCheck() {
+    startPromoCheck(async () => {
+      const result = await checkPromoAction(promoInput, eventId);
+      if (result.valid) {
+        const label = result.discountType === "PERCENT"
+          ? `−${result.discountValue}%`
+          : `−${result.discountValue} ₸`;
+        setPromoResult({ valid: true, label });
+      } else {
+        setPromoResult({ valid: false, label: result.error });
+      }
+    });
+  }
 
   const sizeItems = merchItems.filter((m) => m.requiresSize);
   const autoItems = merchItems.filter((m) => !m.requiresSize);
@@ -140,6 +158,37 @@ export function DistanceSelect({
         </div>
       )}
 
+      {/* Promo code */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-ink-soft">
+          {t("promoLabel")}
+          <span className="ml-1.5 text-xs font-normal text-ink-faint">{t("clubOptional")}</span>
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            name="promoCode"
+            value={promoInput}
+            onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoResult(null); }}
+            placeholder="RIDDER2026"
+            className="flex-1 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 font-mono text-sm uppercase text-ink focus:border-ember focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={handlePromoCheck}
+            disabled={promoChecking || !promoInput.trim()}
+            className="rounded-[var(--radius-s)] border border-border px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+          >
+            {t("promoApply")}
+          </button>
+        </div>
+        {promoResult && (
+          <p className={`text-sm font-semibold ${promoResult.valid ? "text-spruce" : "text-danger"}`}>
+            {promoResult.valid ? `✓ ${promoResult.label}` : t(`promoError_${promoResult.label}`)}
+          </p>
+        )}
+      </div>
+
       {/* Running club (optional) */}
       {clubs.length > 0 && (
         <div className="flex flex-col gap-1.5">
@@ -168,6 +217,9 @@ export function DistanceSelect({
       {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
       {state.error === "registration_blocked" && <p className="text-sm text-danger">{t("errorRegistrationBlocked")}</p>}
       {state.error === "missing_size" && <p className="text-sm text-danger">{t("errorMissingSize")}</p>}
+      {state.error === "promo_invalid" && <p className="text-sm text-danger">{t("promoError_not_found")}</p>}
+      {state.error === "promo_expired" && <p className="text-sm text-danger">{t("promoError_expired")}</p>}
+      {state.error === "promo_exhausted" && <p className="text-sm text-danger">{t("promoError_exhausted")}</p>}
 
       <button
         type="submit"

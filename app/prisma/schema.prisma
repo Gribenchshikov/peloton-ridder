@@ -9,6 +9,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
 enum VolunteerStatus {
   PENDING
   APPROVED
@@ -164,6 +169,7 @@ model Event {
   notifications          Notification[]
   volunteerApplications  VolunteerApplication[]
   merchItems             MerchItem[]
+  promoCodes             PromoCode[]
 
   @@unique([raceId, year])
 }
@@ -241,6 +247,9 @@ model Registration {
   kaspiPaymentUrl String?
   runningClubId   String?
   runningClub     RunningClub?       @relation(fields: [runningClubId], references: [id])
+  promoCodeId     String?
+  promoCode       PromoCode?         @relation(fields: [promoCodeId], references: [id])
+  discountAmount  Int                @default(0)
   createdAt       DateTime           @default(now())
 
   result            Result?
@@ -334,6 +343,24 @@ model Notification {
   sentAt   DateTime @default(now())
   sentById String
   sentBy   User     @relation(fields: [sentById], references: [id])
+}
+
+// Промокод — скидка в % или фиксированная сумма в тенге (T85).
+// eventId=null означает «на любой забег».
+model PromoCode {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Int
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  expiresAt     DateTime?
+  eventId       String?
+  event         Event?       @relation(fields: [eventId], references: [id])
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  registrations Registration[]
 }
 
 // Беговой клуб — справочник для выбора при регистрации на забег (T88).
