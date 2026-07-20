@@ -411,6 +411,59 @@ export async function removeRegulationFileAction(
   return { success: true };
 }
 
+// ── Waiver files ─────────────────────────────────────────────────────────────
+
+export async function uploadWaiverFileAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("file");
+  const locale = formData.get("locale");
+  const name = formData.get("name");
+
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+  if (typeof locale !== "string" || !["ru", "kk", "en"].includes(locale)) return { error: "invalid" };
+
+  const saved = await saveFile(file, "waivers");
+  if ("error" in saved) return { error: saved.error };
+
+  const displayName = typeof name === "string" && name.trim() ? name.trim() : file.name;
+
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { waiverFiles: true } });
+  const existing = (event?.waiverFiles ?? []) as RegulationFile[];
+  const updated = [...existing, { locale, name: displayName, url: saved.url } as RegulationFile];
+
+  await prisma.event.update({ where: { id: eventId }, data: { waiverFiles: updated } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+export async function removeWaiverFileAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const url = formData.get("url");
+  if (typeof url !== "string") return { error: "invalid" };
+
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { waiverFiles: true } });
+  const existing = (event?.waiverFiles ?? []) as RegulationFile[];
+  const updated = existing.filter((f) => f.url !== url);
+
+  await prisma.event.update({ where: { id: eventId }, data: { waiverFiles: updated } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
 // ── Regulation blocks ─────────────────────────────────────────────────────────
 
 export async function updateRegulationBlocksAction(

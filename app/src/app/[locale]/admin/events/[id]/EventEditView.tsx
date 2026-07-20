@@ -151,6 +151,7 @@ export function EventEditView({ event, allPartners, wizard, locale }: { event: E
         eventId={event.id}
         initialFiles={(event.regulationFiles as RegulationFile[] | null) ?? []}
         initialBlocks={(event.regulationBlocks as RegulationBlock[] | null) ?? []}
+        initialWaiverFiles={(event.waiverFiles as RegulationFile[] | null) ?? []}
       />
 
       <section>

@@ -39,6 +39,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
   const regulationFiles = (event.regulationFiles as RegulationFile[] | null) ?? [];
   const regulationBlocks = (event.regulationBlocks as RegulationBlock[] | null) ?? [];
+  const waiverFiles = (event.waiverFiles as RegulationFile[] | null) ?? [];
   const photoLinks = (event.photoLinks as PhotoLink[] | null) ?? [];
   const dayProgram = (event.dayProgram as DayProgramItem[] | null) ?? [];
   const distanceEquipment = (event.distanceEquipment as DistanceEquipment | null) ?? {};
@@ -157,6 +158,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               distanceEquipment={distanceEquipment}
               regulationFiles={regulationFiles}
               regulationBlocks={regulationBlocks}
+              waiverFiles={waiverFiles}
               registrations={event.registrations}
               distances={distancesWithProfile}
               allDistances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}

@@ -44,6 +44,7 @@ type Props = {
   distanceEquipment: DistanceEquipment;
   regulationFiles: RegulationFile[];
   regulationBlocks: RegulationBlock[];
+  waiverFiles: RegulationFile[];
   registrations: Registration[];
   distances?: DistanceWithProfile[];
   allDistances?: DistanceBasic[];
@@ -58,6 +59,7 @@ export function DetailTabs({
   distanceEquipment,
   regulationFiles,
   regulationBlocks,
+  waiverFiles,
   registrations,
   distances = [],
   allDistances = [],
@@ -71,7 +73,8 @@ export function DetailTabs({
   const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
 
   const filesForLocale = regulationFiles.filter((f) => f.locale === locale);
-  const hasRegulation = filesForLocale.length > 0 || regulationBlocks.length > 0;
+  const waiverFilesForLocale = waiverFiles.filter((f) => f.locale === locale);
+  const hasRegulation = filesForLocale.length > 0 || regulationBlocks.length > 0 || waiverFilesForLocale.length > 0;
   const aboutBody = aboutText || courseIntro;
   const hasEquipment = Object.keys(distanceEquipment).length > 0;
 
@@ -147,7 +150,7 @@ export function DetailTabs({
           </div>
         )}
 
-        {/* ── Регламент ── */}
+        {/* ── Документы ── */}
         {tab === "regulation" && (
           <div className="flex flex-col gap-6">
             {!hasRegulation && (
@@ -161,6 +164,33 @@ export function DetailTabs({
                 </div>
                 <div className="flex flex-col gap-2">
                   {filesForLocale.map((f, i) => (
+                    <a
+                      key={i}
+                      href={f.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                        <path d="M9 1v4h4" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                        <path d="M8 10V7M6.5 8.5 8 10l1.5-1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="flex-1">{f.name}</span>
+                      <span className="shrink-0 text-xs text-ember">{t("regulationDownloadLabel")}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {waiverFilesForLocale.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">
+                  {t("waiverFilesLabel")}
+                </div>
+                <div className="flex flex-col gap-2">
+                  {waiverFilesForLocale.map((f, i) => (
                     <a
                       key={i}
                       href={f.url}

@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import {
   uploadRegulationFileAction,
   removeRegulationFileAction,
+  uploadWaiverFileAction,
+  removeWaiverFileAction,
   updateRegulationBlocksAction,
 } from "../actions";
 import type { RegulationFile, RegulationBlock, RegulationLocale } from "@/types/regulation";
@@ -20,6 +22,7 @@ type Props = {
   eventId: string;
   initialFiles: RegulationFile[];
   initialBlocks: RegulationBlock[];
+  initialWaiverFiles: RegulationFile[];
 };
 
 function emptyBlock(): RegulationBlock {
@@ -118,6 +121,116 @@ function FilesEditor({ eventId, initialFiles }: { eventId: string; initialFiles:
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Регламент 2026"
+            className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm focus:border-ember focus:outline-none"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-ink-faint">Файл (PDF, DOCX)</label>
+          <label className={`cursor-pointer rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft ${uploadPending ? "opacity-50" : ""}`}>
+            {uploadPending ? "Загружается…" : "Выбрать файл"}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="sr-only"
+              onChange={handleUpload}
+              disabled={uploadPending}
+            />
+          </label>
+        </div>
+        {status.success && <span className="self-end text-sm text-spruce">Загружено ✓</span>}
+        {status.error && <span className="self-end text-sm text-danger">Ошибка: {status.error}</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── Waiver Files ─────────────────────────────────────────────────────────────
+
+function WaiverFilesEditor({ eventId, initialFiles }: { eventId: string; initialFiles: RegulationFile[] }) {
+  const [files, setFiles] = useState<RegulationFile[]>(initialFiles);
+  const [locale, setLocale] = useState<RegulationLocale>("ru");
+  const [name, setName] = useState("");
+  const [status, setStatus] = useState<{ error?: string; success?: boolean }>({});
+  const [uploadPending, startUpload] = useTransition();
+  const [removePending, startRemove] = useTransition();
+
+  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.set("file", file);
+    fd.set("locale", locale);
+    fd.set("name", name || file.name);
+    setStatus({});
+    startUpload(async () => {
+      const result = await uploadWaiverFileAction(eventId, {}, fd);
+      setStatus(result);
+      if (result.success) {
+        setFiles((prev) => [...prev, { locale, name: name || file.name, url: "" }]);
+        setName("");
+      }
+    });
+    e.target.value = "";
+  }
+
+  function handleRemove(url: string) {
+    const fd = new FormData();
+    fd.set("url", url);
+    startRemove(async () => {
+      await removeWaiverFileAction(eventId, {}, fd);
+      setFiles((prev) => prev.filter((f) => f.url !== url));
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">Файлы расписки</div>
+
+      {files.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {files.map((f, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-[var(--radius-s)] border border-border px-3 py-2 text-sm">
+              <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-bold uppercase text-ink-faint">
+                {f.locale}
+              </span>
+              {f.url ? (
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate font-medium text-ember hover:underline">
+                  {f.name}
+                </a>
+              ) : (
+                <span className="flex-1 truncate font-medium text-ink">{f.name}</span>
+              )}
+              <button
+                type="button"
+                onClick={() => handleRemove(f.url)}
+                disabled={removePending}
+                className="shrink-0 text-xs text-danger hover:underline disabled:opacity-50"
+              >
+                Удалить
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-end gap-2 rounded-[var(--radius-s)] border border-dashed border-border p-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-ink-faint">Язык</label>
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as RegulationLocale)}
+            className="rounded border border-border bg-surface px-2 py-1.5 text-sm focus:border-ember focus:outline-none"
+          >
+            {LOCALES.map((l) => <option key={l.value} value={l.value}>{l.label} — {LOCALE_LABELS[l.value]}</option>)}
+          </select>
+        </div>
+        <div className="flex min-w-40 flex-1 flex-col gap-1">
+          <label className="text-xs text-ink-faint">Название (необязательно)</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Расписка 2026"
             className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm focus:border-ember focus:outline-none"
           />
         </div>
@@ -294,12 +407,19 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
 
 // ── Main section ──────────────────────────────────────────────────────────────
 
-export function RegulationsSection({ eventId, initialFiles, initialBlocks }: Props) {
+export function RegulationsSection({ eventId, initialFiles, initialBlocks, initialWaiverFiles }: Props) {
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="font-display text-lg font-bold text-ink">Регламент</h2>
-      <FilesEditor eventId={eventId} initialFiles={initialFiles} />
-      <BlocksEditor eventId={eventId} initialBlocks={initialBlocks} />
+      <h2 className="font-display text-lg font-bold text-ink">Документы</h2>
+      <div className="flex flex-col gap-2">
+        <div className="text-sm font-semibold text-ink">Положение</div>
+        <FilesEditor eventId={eventId} initialFiles={initialFiles} />
+        <BlocksEditor eventId={eventId} initialBlocks={initialBlocks} />
+      </div>
+      <div className="flex flex-col gap-2 border-t border-border pt-6">
+        <div className="text-sm font-semibold text-ink">Расписка</div>
+        <WaiverFilesEditor eventId={eventId} initialFiles={initialWaiverFiles} />
+      </div>
     </section>
   );
 }
