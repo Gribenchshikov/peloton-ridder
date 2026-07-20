@@ -4,6 +4,7 @@ import { redirect } from "@/i18n/navigation";
 import { getUserProfile } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
+import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
@@ -106,9 +107,13 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                   {reg.bibNumber && ` · №${reg.bibNumber}`}
                 </p>
               </div>
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col items-end gap-1.5">
                 <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">{tStatus(reg.status)}</span>
                 <span className="text-xs text-ink-faint">{format.dateTime(reg.createdAt, { day: "numeric", month: "short", year: "numeric" })}</span>
+                {(reg.status === "RESERVED" || reg.status === "PAID") &&
+                  new Date() <= new Date(reg.event.cancellationDeadline) && (
+                    <CancelRegistrationButton registrationId={reg.id} />
+                  )}
               </div>
             </li>
           ))}

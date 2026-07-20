@@ -61,7 +61,14 @@ export function getUserProfile(userId: string) {
           status: true,
           bibNumber: true,
           createdAt: true,
-          event: { select: { year: true, race: { select: { name: true, slug: true } } } },
+          cancelReason: true,
+          event: {
+            select: {
+              year: true,
+              cancellationDeadline: true,
+              race: { select: { name: true, slug: true } },
+            },
+          },
           distance: { select: { name: true, km: true } },
         },
         orderBy: { createdAt: "desc" },

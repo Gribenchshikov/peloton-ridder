@@ -38,6 +38,17 @@ enum ResultSource {
   EXCEL
 }
 
+enum CancelReason {
+  INJURY
+  CANT_ATTEND
+  FINANCIAL
+  FAMILY
+  CONFLICT
+  NOT_READY
+  DEFER
+  OTHER
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -251,6 +262,8 @@ model Registration {
   promoCodeId     String?
   promoCode       PromoCode?         @relation(fields: [promoCodeId], references: [id])
   discountAmount  Int                @default(0)
+  cancelReason    CancelReason?
+  cancelComment   String?
   createdAt       DateTime           @default(now())
 
   result            Result?
