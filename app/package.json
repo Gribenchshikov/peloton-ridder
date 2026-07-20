@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "admin:grant": "tsx scripts/grant-admin.ts"
+    "admin:grant": "tsx scripts/grant-admin.ts",
+    "smoke": "tsx scripts/smoke-test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1090.0",
