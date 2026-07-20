@@ -1,12 +1,8 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import type { getAdminEvents } from "@/lib/queries";
 import { logoutAction } from "@/lib/authActions";
-import { AdminEventsTable } from "./AdminEventsTable";
 
-type EventRow = Awaited<ReturnType<typeof getAdminEvents>>[number];
-
-export function AdminView({ events }: { events: EventRow[] }) {
+export function AdminView() {
   const t = useTranslations("Admin");
 
   return (
@@ -35,175 +31,102 @@ export function AdminView({ events }: { events: EventRow[] }) {
       </div>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("usersTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("usersSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/users"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("manageUsersCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("clubTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("clubSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/club"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("manageClubCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("racesTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("racesSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/races"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("manageRacesCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("partnersTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("partnersSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/partners"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("managePartnersCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("promoCodesAdminTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("promoCodesAdminSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/promo-codes"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("managePromoCodesCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("runningClubsAdminTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("runningClubsAdminSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/clubs"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("manageRunningClubsCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("seriesAdminTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("seriesAdminSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/series"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("manageSeriesCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("settingsTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("settingsSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/settings"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("manageSettingsCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("reportsTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("reportsSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/reports"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("reportsCta")}
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-bold text-ink">{t("volunteersTitle")}</h2>
-              <p className="mt-1 text-sm text-ink-soft">{t("volunteersSubtitle")}</p>
-            </div>
-            <Link
-              href="/admin/volunteers"
-              className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              {t("volunteersCta")}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-display text-lg font-bold text-ink">{t("eventsTitle")}</h2>
-            <p className="mt-1 text-sm text-ink-soft">{t("eventsSubtitle")}</p>
-          </div>
-          <Link
-            href="/admin/events/new"
-            className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
-          >
-            {t("createEventCta")}
-          </Link>
-        </div>
-      </section>
-
-      <section>
-        <AdminEventsTable events={events} />
+        <AdminCard
+          title={t("eventsTitle")}
+          subtitle={t("eventsSubtitle")}
+          href="/admin/events"
+          cta={t("manageEventsCta")}
+        />
+        <AdminCard
+          title={t("usersTitle")}
+          subtitle={t("usersSubtitle")}
+          href="/admin/users"
+          cta={t("manageUsersCta")}
+        />
+        <AdminCard
+          title={t("clubTitle")}
+          subtitle={t("clubSubtitle")}
+          href="/admin/club"
+          cta={t("manageClubCta")}
+        />
+        <AdminCard
+          title={t("racesTitle")}
+          subtitle={t("racesSubtitle")}
+          href="/admin/races"
+          cta={t("manageRacesCta")}
+        />
+        <AdminCard
+          title={t("partnersTitle")}
+          subtitle={t("partnersSubtitle")}
+          href="/admin/partners"
+          cta={t("managePartnersCta")}
+        />
+        <AdminCard
+          title={t("promoCodesAdminTitle")}
+          subtitle={t("promoCodesAdminSubtitle")}
+          href="/admin/promo-codes"
+          cta={t("managePromoCodesCta")}
+        />
+        <AdminCard
+          title={t("runningClubsAdminTitle")}
+          subtitle={t("runningClubsAdminSubtitle")}
+          href="/admin/clubs"
+          cta={t("manageRunningClubsCta")}
+        />
+        <AdminCard
+          title={t("seriesAdminTitle")}
+          subtitle={t("seriesAdminSubtitle")}
+          href="/admin/series"
+          cta={t("manageSeriesCta")}
+        />
+        <AdminCard
+          title={t("settingsTitle")}
+          subtitle={t("settingsSubtitle")}
+          href="/admin/settings"
+          cta={t("manageSettingsCta")}
+        />
+        <AdminCard
+          title={t("reportsTitle")}
+          subtitle={t("reportsSubtitle")}
+          href="/admin/reports"
+          cta={t("reportsCta")}
+        />
+        <AdminCard
+          title={t("volunteersTitle")}
+          subtitle={t("volunteersSubtitle")}
+          href="/admin/volunteers"
+          cta={t("volunteersCta")}
+        />
       </section>
     </main>
+  );
+}
+
+function AdminCard({
+  title,
+  subtitle,
+  href,
+  cta,
+}: {
+  title: string;
+  subtitle: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-bold text-ink">{title}</h2>
+          <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>
+        </div>
+        <Link
+          href={href}
+          className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+        >
+          {cta}
+        </Link>
+      </div>
+    </div>
   );
 }

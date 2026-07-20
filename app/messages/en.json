@@ -324,6 +324,7 @@
     "settingsHeroCurrent": "Current photo",
     "settingsHeroRemove": "Remove photo",
     "eventsSubtitle": "Create and manage event editions.",
+    "manageEventsCta": "Manage",
     "editCta": "Edit",
     "newEventTitle": "New race",
     "editEventTitle": "{name}",

@@ -324,6 +324,7 @@
     "settingsHeroCurrent": "Текущее фото",
     "settingsHeroRemove": "Удалить фото",
     "eventsSubtitle": "Создание и управление годовыми изданиями.",
+    "manageEventsCta": "Управлять",
     "editCta": "Редактировать",
     "newEventTitle": "Новый забег",
     "editEventTitle": "{name}",
