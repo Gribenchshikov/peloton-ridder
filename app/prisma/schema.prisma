@@ -65,6 +65,8 @@ model User {
   isAdmin       Boolean   @default(false)
   isVolunteer   Boolean   @default(false)
   bannedUntil   DateTime?
+  totpSecret    String?
+  totpEnabledAt DateTime?
   createdAt     DateTime  @default(now())
 
   registrations          Registration[]
