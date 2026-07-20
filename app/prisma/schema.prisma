@@ -332,3 +332,10 @@ model Notification {
   sentById String
   sentBy   User     @relation(fields: [sentById], references: [id])
 }
+
+// Глобальные настройки сайта — KV-хранилище. Текущие ключи: hero_bg_url.
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -3,18 +3,19 @@ import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { Countdown } from "@/components/Countdown";
 import { EventCard } from "@/components/EventCard";
-import { getHomeEvents, getNextEvent, getSeriesWithRaces } from "@/lib/queries";
+import { getHomeEvents, getNextEvent, getSeriesWithRaces, getSiteSetting } from "@/lib/queries";
 
 export default async function Home() {
-  const [events, nextEvent, series] = await Promise.all([
+  const [events, nextEvent, series, heroBgUrl] = await Promise.all([
     getHomeEvents(),
     getNextEvent(),
     getSeriesWithRaces(),
+    getSiteSetting("hero_bg_url"),
   ]);
 
   return (
     <main className="flex flex-1 flex-col">
-      <Hero nextEvent={nextEvent} />
+      <Hero nextEvent={nextEvent} heroBgUrl={heroBgUrl} />
       <StatsStrip />
       <EventsSection events={events} />
       {series && <SeriesSection series={series} />}
@@ -23,26 +24,42 @@ export default async function Home() {
   );
 }
 
-function Hero({ nextEvent }: { nextEvent: Awaited<ReturnType<typeof getNextEvent>> }) {
+function Hero({
+  nextEvent,
+  heroBgUrl,
+}: {
+  nextEvent: Awaited<ReturnType<typeof getNextEvent>>;
+  heroBgUrl: string | null;
+}) {
   const t = useTranslations("Home");
   const format = useFormatter();
+
+  const heroStyle = heroBgUrl
+    ? {
+        backgroundImage: `linear-gradient(180deg, rgba(12,16,11,.0) 0%, rgba(12,16,11,.18) 55%, rgba(12,16,11,.72) 100%), url(${heroBgUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : {
+        background:
+          "linear-gradient(180deg, rgba(12,16,11,.0) 0%, rgba(12,16,11,.18) 55%, rgba(12,16,11,.72) 100%), var(--stone-900, #0e1410)",
+      };
 
   return (
     <section
       className="relative flex min-h-[560px] items-end overflow-hidden border-b border-border pb-16 pt-[120px]"
-      style={{
-        background:
-          "linear-gradient(180deg, rgba(12,16,11,.0) 0%, rgba(12,16,11,.18) 55%, rgba(12,16,11,.72) 100%), var(--stone-900, #0e1410)",
-      }}
+      style={heroStyle}
     >
       {/* subtle mountain silhouette gradient */}
-      <div
-        className="absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 60% at 60% 110%, rgba(42,64,38,.55) 0%, transparent 70%), #0f1610",
-        }}
-      />
+      {!heroBgUrl && (
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 60% at 60% 110%, rgba(42,64,38,.55) 0%, transparent 70%), #0f1610",
+          }}
+        />
+      )}
 
       <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-12 px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-end">
         {/* Left: headline */}

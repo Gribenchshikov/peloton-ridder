@@ -1,5 +1,13 @@
 import { prisma } from "@/lib/prisma";
 
+export function getSiteSetting(key: string) {
+  return prisma.siteSetting.findUnique({ where: { key } }).then((r) => r?.value ?? null);
+}
+
+export function upsertSiteSetting(key: string, value: string) {
+  return prisma.siteSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
+}
+
 export function getHomeEvents() {
   return prisma.event.findMany({
     where: { status: { in: ["OPEN", "DRAFT"] } },
