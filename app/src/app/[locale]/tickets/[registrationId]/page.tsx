@@ -48,6 +48,9 @@ export default async function TicketPage({
   const qrData = `RIDDER:${registrationId}`;
   const qrDataUrl = await QRCode.toDataURL(qrData, { width: 240, margin: 1 });
 
+  const rawCode = reg.id.slice(-6).toUpperCase();
+  const shortCode = `${rawCode.slice(0, 3)}-${rawCode.slice(3)}`;
+
   const dateStr = new Intl.DateTimeFormat("ru", {
     day: "numeric", month: "long", year: "numeric",
   }).format(reg.event.dateISO);
@@ -66,6 +69,11 @@ export default async function TicketPage({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qrDataUrl} alt="QR-код билета" className="h-48 w-48" />
           <p className="text-xs text-ink-faint">{t("qrHint")}</p>
+          <div className="mt-1 flex flex-col items-center gap-0.5">
+            <span className="text-[0.68rem] font-bold uppercase tracking-wide text-ink-faint">{t("shortCodeLabel")}</span>
+            <span className="font-mono text-2xl font-extrabold tracking-widest text-ink">{shortCode}</span>
+            <span className="text-[0.65rem] text-ink-faint">{t("shortCodeHint")}</span>
+          </div>
         </div>
 
         {/* Details */}

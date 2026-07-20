@@ -2,6 +2,7 @@ import { requireAdminPage } from "@/lib/session";
 import { getRacesListForAdmin } from "@/lib/queries";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { Icon } from "@/components/IconSprite";
 
 export default async function RacesAdminPage({
   params,
@@ -47,7 +48,7 @@ export default async function RacesAdminPage({
               {races.map((race) => (
                 <tr key={race.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                   <td className="px-4 py-2.5">
-                    <span className="mr-2">{race.icon}</span>
+                    <Icon name={race.icon} className="mr-2 inline-block h-4 w-4" />
                     <span className="font-semibold text-ink">{race.name}</span>
                   </td>
                   <td className="px-4 py-2.5 font-mono text-xs text-ink-soft">{race.slug}</td>

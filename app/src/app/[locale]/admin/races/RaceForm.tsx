@@ -86,11 +86,11 @@ export function RaceForm(props: Props) {
           <label className="text-sm font-semibold text-ink">{t("raceFieldIcon")}</label>
           <select
             name="icon"
-            defaultValue={defaults?.icon ?? "mountain"}
+            defaultValue={defaults?.icon ?? "i-mountain"}
             className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ember focus:ring-1 focus:ring-ember"
           >
-            {["mountain", "drop", "leaf", "ski", "route", "pin", "clock", "arrow", "user", "check"].map((name) => (
-              <option key={name} value={name}>{name}</option>
+            {["i-mountain", "i-drop", "i-leaf", "i-ski", "i-route", "i-pin", "i-clock", "i-arrow", "i-user", "i-check"].map((name) => (
+              <option key={name} value={name}>{name.replace("i-", "")}</option>
             ))}
           </select>
           <p className="text-xs text-ink-faint">Иконка отображается на карточке забега</p>

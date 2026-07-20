@@ -291,6 +291,8 @@
   "Ticket": {
     "eyebrow": "Digital Ticket",
     "qrHint": "Show this QR code at registration",
+    "shortCodeLabel": "Manual entry code",
+    "shortCodeHint": "If the camera fails — the volunteer can type this code",
     "fieldBib": "Bib number",
     "fieldName": "Participant",
     "fieldDistance": "Distance",
