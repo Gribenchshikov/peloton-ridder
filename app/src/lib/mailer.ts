@@ -73,6 +73,13 @@ export async function sendOrganizerMessageEmail(
   await sendMail(to, subject, text, html);
 }
 
+export async function sendBroadcastEmail(to: string, name: string, subject: string, body: string) {
+  const safeBody = body.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+  const html = `<p>Здравствуйте, ${name}!</p><div style="margin:16px 0;line-height:1.6">${safeBody}</div><p style="color:#888;font-size:12px;margin-top:24px">С уважением,<br>Peloton Ridder</p>`;
+  const text = `Здравствуйте, ${name}!\n\n${body}\n\nС уважением,\nPeloton Ridder`;
+  await sendMail(to, subject, text, html);
+}
+
 export async function sendRegistrationConfirmationEmail(
   to: string,
   name: string,

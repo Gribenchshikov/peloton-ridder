@@ -12,6 +12,7 @@ import { DayProgramSection } from "./DayProgramSection";
 import { HowToGetSection } from "./HowToGetSection";
 import { EquipmentSection } from "./EquipmentSection";
 import { ResultsSection } from "./ResultsSection";
+import { NotifySection } from "./NotifySection";
 import { DeleteEventButton } from "./DeleteEventButton";
 import { deleteEventAction } from "../actions";
 import type { Partner, Result } from "@/generated/prisma/client";
@@ -38,7 +39,7 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
   );
 }
 
-export function EventEditView({ event, allPartners, wizard, locale }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3"; locale: string }) {
+export function EventEditView({ event, allPartners, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null }) {
   const t = useTranslations("Admin");
 
   if (wizard === "2") {
@@ -193,6 +194,10 @@ export function EventEditView({ event, allPartners, wizard, locale }: { event: E
         eventId={event.id}
         initialResults={(event.results ?? []) as Result[]}
       />
+
+      <div className="border-t border-border pt-6">
+        <NotifySection eventId={event.id} lastNotification={lastNotification} />
+      </div>
 
       <div className="border-t border-danger/20 pt-6">
         <div className="text-xs font-bold uppercase tracking-wide text-danger/60 mb-3">Опасная зона</div>
