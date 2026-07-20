@@ -230,6 +230,7 @@
     "fieldTransferPrice": "Цена трансфера, ₸",
     "fieldResultsUrl": "Ссылка на результаты",
     "fieldCoverImage": "Обложка забега",
+    "fieldIsFeatured": "Выделить как «Ближайший старт» на главной",
     "fieldVolunteerChatUrl": "Ссылка на чат волонтёров",
     "createSubmitCta": "Создать",
     "saveSubmitCta": "Сохранить",

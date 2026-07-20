@@ -23,6 +23,7 @@ type EventDefaults = {
   cancellationDeadline: Date;
   medicalCancellationDeadline: Date;
   transferPrice: number | null;
+  isFeatured: boolean;
   resultsUrl: string | null;
   coverImageUrl: string | null;
   volunteerChatUrl: string | null;
@@ -130,6 +131,16 @@ export function EventForm(props: EventFormProps) {
         )}
         {!transferEnabled && <input type="hidden" name="transferPrice" value="" />}
       </div>
+      <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+        <input
+          type="checkbox"
+          name="isFeatured"
+          defaultChecked={d?.isFeatured ?? false}
+          className="h-4 w-4 cursor-pointer accent-ember"
+        />
+        <span className="font-semibold text-ink-soft">{t("fieldIsFeatured")}</span>
+      </label>
+
       <FormField label={t("fieldResultsUrl")} name="resultsUrl" type="url" optional defaultValue={d?.resultsUrl ?? undefined} />
 
       {/* Обложка забега — file upload */}

@@ -17,7 +17,12 @@ export function getHomeEvents() {
   });
 }
 
-export function getNextEvent() {
+export async function getNextEvent() {
+  const featured = await prisma.event.findFirst({
+    where: { isFeatured: true, status: "OPEN" },
+    include: { race: true, distances: true },
+  });
+  if (featured) return featured;
   return prisma.event.findFirst({
     where: { dateISO: { gte: new Date() }, status: "OPEN" },
     include: { race: true, distances: true },

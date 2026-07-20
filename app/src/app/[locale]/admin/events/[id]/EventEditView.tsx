@@ -121,6 +121,7 @@ export function EventEditView({ event, allPartners, wizard, locale }: { event: E
           dateISO: event.dateISO,
           location: event.location,
           status: event.status,
+          isFeatured: event.isFeatured,
           registrationDeadline: event.registrationDeadline,
           cancellationDeadline: event.cancellationDeadline,
           medicalCancellationDeadline: event.medicalCancellationDeadline,

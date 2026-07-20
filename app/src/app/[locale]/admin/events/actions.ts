@@ -32,6 +32,7 @@ const EventFieldsSchema = z.object({
   dateISO: z.coerce.date(),
   location: z.string().trim().min(1).max(200),
   status: z.enum(["DRAFT", "OPEN", "CLOSED", "COMPLETED"]),
+  isFeatured: z.preprocess((v) => v === "on", z.boolean()),
   registrationDeadline: z.coerce.date(),
   cancellationDeadline: z.coerce.date(),
   medicalCancellationDeadline: z.coerce.date(),

@@ -143,6 +143,7 @@ model Event {
   registrationDeadline         DateTime
   cancellationDeadline         DateTime
   medicalCancellationDeadline  DateTime
+  isFeatured                   Boolean     @default(false)
   resultsUrl                   String?
   coverImageUrl                String?
   volunteerChatUrl             String?
