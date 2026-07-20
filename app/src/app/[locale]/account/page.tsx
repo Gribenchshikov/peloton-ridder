@@ -40,6 +40,9 @@ export default async function AccountPage({
         locale={locale}
         callbackUrl={callbackUrl}
       />
+      {profile.volunteerApplications.length > 0 && (
+        <VolunteerSection applications={profile.volunteerApplications} />
+      )}
       <RegistrationHistory registrations={profile.registrations} />
     </main>
   );
@@ -77,6 +80,41 @@ function AccountHeader({ name, isAdmin }: { name: string; isAdmin: boolean }) {
 
 type UserProfile = NonNullable<Awaited<ReturnType<typeof getUserProfile>>>;
 type RegistrationRow = UserProfile["registrations"][number];
+type VolunteerApp = UserProfile["volunteerApplications"][number];
+
+function VolunteerSection({ applications }: { applications: VolunteerApp[] }) {
+  return (
+    <section>
+      <h2 className="font-display text-lg font-bold text-ink">Я волонтёр</h2>
+      <ul className="mt-3 flex flex-col gap-3">
+        {applications.map((app) => (
+          <li key={app.id} className="rounded-[var(--radius-m)] border border-ember/30 bg-ember/5 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-ink">
+                  {app.event.race.name} {app.event.year}
+                </p>
+                <p className="mt-0.5 text-xs font-bold uppercase tracking-wide text-ember">
+                  Заявка одобрена ✓
+                </p>
+              </div>
+              {app.event.volunteerChatUrl && (
+                <a
+                  href={app.event.volunteerChatUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                >
+                  Чат волонтёров →
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function RegistrationHistory({ registrations }: { registrations: RegistrationRow[] }) {
   const t = useTranslations("Account");

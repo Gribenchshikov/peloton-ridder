@@ -74,6 +74,20 @@ export function getUserProfile(userId: string) {
         orderBy: { createdAt: "desc" },
         take: REGISTRATION_HISTORY_LIMIT,
       },
+      volunteerApplications: {
+        where: { status: "APPROVED" },
+        select: {
+          id: true,
+          event: {
+            select: {
+              year: true,
+              volunteerChatUrl: true,
+              race: { select: { name: true, slug: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 }

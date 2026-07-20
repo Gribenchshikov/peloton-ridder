@@ -244,9 +244,12 @@ function VolunteerSection() {
           <h2 className="mt-2 font-display text-xl font-bold text-ink">{t("volunteerTitle")}</h2>
           <p className="mt-2 max-w-lg text-sm text-ink-soft">{t("volunteerText")}</p>
         </div>
-        <button className="shrink-0 rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong">
+        <Link
+          href="/volunteer/apply"
+          className="shrink-0 rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+        >
           {t("volunteerCta")}
-        </button>
+        </Link>
       </div>
     </section>
   );
