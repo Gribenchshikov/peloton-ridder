@@ -249,6 +249,13 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
+      waitlist: {
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true, phone: true } },
+          distance: { select: { id: true, name: true, km: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 }

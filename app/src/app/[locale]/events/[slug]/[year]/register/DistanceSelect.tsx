@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { checkPromoAction } from "@/lib/promoActions";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
 import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { DistanceInfo } from "@/components/DistanceInfo";
 import { createRegistrationAction, type CreateRegistrationState } from "./actions";
@@ -248,42 +249,55 @@ function DistanceOptionRow({
   onSelect: () => void;
 }) {
   const t = useTranslations("Registration");
+  const tW = useTranslations("Waitlist");
+  const params = useParams<{ locale: string; slug: string; year: string }>();
   const remaining = distance.capacity - distance.taken;
   const isFull = remaining <= 0;
+  const waitlistHref = `/${params.locale}/events/${params.slug}/${params.year}/waitlist?distanceId=${distance.id}`;
 
   return (
-    <label
-      className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-s)] border px-3 py-2.5 transition-colors ${
-        isFull
-          ? "cursor-not-allowed border-border bg-surface-2 opacity-50"
-          : selected
-          ? "border-ember bg-ember/5"
-          : "border-border bg-surface-2"
-      }`}
-    >
-      <input
-        type="radio"
-        name="distanceId"
-        value={distance.id}
-        checked={selected}
-        onChange={onSelect}
-        disabled={isFull}
-        className="accent-ember"
-      />
-      <DistanceInfo
-        name={distance.name}
-        km={distance.km}
-        price={distance.price}
-        minAge={distance.minAge}
-        maxAge={distance.maxAge}
-      />
-      <div className="ml-auto shrink-0 text-right">
-        {isFull ? (
-          <span className="text-xs font-bold uppercase tracking-wide text-danger">{t("slotsFull")}</span>
-        ) : remaining <= 10 ? (
-          <span className="text-xs font-semibold text-warn">{t("slotsLeft", { count: remaining })}</span>
-        ) : null}
-      </div>
-    </label>
+    <div className="flex flex-col gap-1">
+      <label
+        className={`flex cursor-pointer items-center gap-3 rounded-[var(--radius-s)] border px-3 py-2.5 transition-colors ${
+          isFull
+            ? "cursor-not-allowed border-border bg-surface-2 opacity-50"
+            : selected
+            ? "border-ember bg-ember/5"
+            : "border-border bg-surface-2"
+        }`}
+      >
+        <input
+          type="radio"
+          name="distanceId"
+          value={distance.id}
+          checked={selected}
+          onChange={onSelect}
+          disabled={isFull}
+          className="accent-ember"
+        />
+        <DistanceInfo
+          name={distance.name}
+          km={distance.km}
+          price={distance.price}
+          minAge={distance.minAge}
+          maxAge={distance.maxAge}
+        />
+        <div className="ml-auto shrink-0 text-right">
+          {isFull ? (
+            <span className="text-xs font-bold uppercase tracking-wide text-danger">{t("slotsFull")}</span>
+          ) : remaining <= 10 ? (
+            <span className="text-xs font-semibold text-warn">{t("slotsLeft", { count: remaining })}</span>
+          ) : null}
+        </div>
+      </label>
+      {isFull && (
+        <a
+          href={waitlistHref}
+          className="ml-9 text-xs font-semibold text-ember hover:underline"
+        >
+          {tW("joinCta")} →
+        </a>
+      )}
+    </div>
   );
 }

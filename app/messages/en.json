@@ -429,6 +429,8 @@
     "memberTypeVolunteer": "Volunteers",
     "registrationsTitle": "Participants",
     "registrationsEmpty": "No registrations yet.",
+    "waitlistTitle": "Waitlist",
+    "waitlistNote": "Note",
     "viewRegistrationsCta": "Participants →",
     "regColName": "Name",
     "regColEmail": "Email",
@@ -580,5 +582,22 @@
     "consentTitle": "Personal Data Collection Consent",
     "updatedAt": "This document is being updated — final version will be published before launch",
     "draftNotice": "This document is under development. The final text will be published before registration opens."
+  },
+  "Waitlist": {
+    "title": "Join the waitlist",
+    "subtitle": "Spots are full, but you can join the waitlist. Organizers will contact you if a spot opens up.",
+    "distanceLabel": "Distance",
+    "noteLabel": "Note",
+    "noteOptional": "optional",
+    "notePlaceholder": "e.g. I'm flexible on distance…",
+    "submitCta": "Join waitlist",
+    "submitting": "One second…",
+    "successTitle": "You're on the waitlist",
+    "successText": "We'll reach out if a spot becomes available.",
+    "alreadyOnList": "You're already on the waitlist for this race.",
+    "joinCta": "Join waitlist",
+    "errorAlreadyRegistered": "You already have an active registration for this race.",
+    "errorAlreadyOnList": "You're already on the waitlist for this distance.",
+    "errorInvalid": "Please check your details and try again."
   }
 }

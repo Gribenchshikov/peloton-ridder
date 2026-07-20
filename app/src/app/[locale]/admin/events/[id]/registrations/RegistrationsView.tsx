@@ -114,6 +114,41 @@ export function RegistrationsView({ event }: { event: EventData }) {
         </div>
       )}
 
+      {/* Waitlist */}
+      {"waitlist" in event && Array.isArray(event.waitlist) && event.waitlist.length > 0 && (
+        <div>
+          <h2 className="font-display text-base font-bold text-ink">{t("waitlistTitle")} ({event.waitlist.length})</h2>
+          <div className="mt-3 overflow-x-auto rounded-[var(--radius-m)] border border-border">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-2">
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColName")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColEmail")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColPhone")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColDistance")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("waitlistNote")}</th>
+                  <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {event.waitlist.map((w) => (
+                  <tr key={w.id} className="border-b border-border last:border-0 hover:bg-surface-2">
+                    <td className="px-4 py-2.5 font-medium text-ink">{w.user.firstName} {w.user.lastName}</td>
+                    <td className="px-4 py-2.5 text-ink-soft">{w.user.email}</td>
+                    <td className="px-4 py-2.5 text-ink-soft">{w.user.phone ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-ink-soft">{w.distance.name}</td>
+                    <td className="max-w-56 px-4 py-2.5 text-xs text-ink-soft">{w.contactNote || "—"}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
+                      {format.dateTime(w.createdAt, { day: "numeric", month: "short" })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Registrations table */}
       {event.registrations.length === 0 ? (
         <p className="text-sm text-ink-faint">{t("registrationsEmpty")}</p>
