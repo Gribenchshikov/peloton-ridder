@@ -445,6 +445,7 @@
     "regStatusPaid": "Төленді",
     "regStatusReserved": "Брон",
     "regStatusCancelled": "Қабылданбады",
+    "summaryCta": "Қорытынды",
     "exportCsvCta": "CSV жүктеу",
     "regChangeDistanceCta": "Ауыстыру",
     "regCancelCta": "Тіркеуден бас тарту",

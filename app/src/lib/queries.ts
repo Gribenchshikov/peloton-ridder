@@ -260,6 +260,31 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
   });
 }
 
+export function getEventSummary(slug: string, year: number) {
+  return prisma.event.findFirst({
+    where: { year, race: { slug } },
+    select: {
+      id: true,
+      year: true,
+      dateISO: true,
+      transferPrice: true,
+      race: { select: { name: true, slug: true } },
+      distances: { orderBy: { km: "asc" }, select: { id: true, name: true, km: true, bibRangeStart: true, bibRangeEnd: true, maxSlots: true } },
+      registrations: {
+        where: { OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: new Date() } }] },
+        select: {
+          id: true,
+          status: true,
+          distanceId: true,
+          transferUsedAt: true,
+          user: { select: { birthDate: true, tshirtSize: true, city: true } },
+          registrationMerch: { select: { size: true, merchItem: { select: { requiresSize: true } } } },
+        },
+      },
+    },
+  });
+}
+
 export function getEventWithRegistrations(id: string) {
   return prisma.event.findUnique({
     where: { id },

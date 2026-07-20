@@ -445,6 +445,7 @@
     "regStatusPaid": "Оплачено",
     "regStatusReserved": "Бронь",
     "regStatusCancelled": "Отклонено",
+    "summaryCta": "Сводка",
     "exportCsvCta": "Скачать CSV",
     "regChangeDistanceCta": "Сменить",
     "regCancelCta": "Отменить регистрацию",
