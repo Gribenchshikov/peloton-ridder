@@ -2,9 +2,11 @@ import { useTranslations, useFormatter } from "next-intl";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { getUserProfile } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
+import { VolunteerProgress } from "./VolunteerProgress";
 import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
@@ -21,10 +23,18 @@ export default async function AccountPage({
     return redirect({ href: "/login", locale });
   }
 
-  const profile = await getUserProfile(session.user.id);
+  const [profile, thresholdSetting] = await Promise.all([
+    getUserProfile(session.user.id),
+    prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
+  ]);
   if (!profile) {
     return redirect({ href: "/login", locale });
   }
+
+  const volunteerThreshold = Number(thresholdSetting?.value ?? 3);
+  const completedVolunteerCount = profile.volunteerApplications.filter(
+    (a) => a.status === "APPROVED",
+  ).length;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
@@ -40,6 +50,13 @@ export default async function AccountPage({
         locale={locale}
         callbackUrl={callbackUrl}
       />
+      {profile.isVolunteer && (
+        <VolunteerProgress
+          completed={completedVolunteerCount}
+          threshold={volunteerThreshold}
+          alreadyClaimed={!!profile.volunteerRewardClaimedAt}
+        />
+      )}
       {profile.volunteerApplications.length > 0 && (
         <VolunteerSection applications={profile.volunteerApplications} />
       )}

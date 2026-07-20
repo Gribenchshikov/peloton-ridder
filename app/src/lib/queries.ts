@@ -55,6 +55,8 @@ export function getUserProfile(userId: string) {
       city: true,
       phone: true,
       isAdmin: true,
+      isVolunteer: true,
+      volunteerRewardClaimedAt: true,
       registrations: {
         select: {
           id: true,

@@ -63,10 +63,11 @@ model User {
   lastName      String
   city          String?
   isAdmin       Boolean   @default(false)
-  isVolunteer   Boolean   @default(false)
-  bannedUntil   DateTime?
-  totpSecret    String?
-  totpEnabledAt DateTime?
+  isVolunteer              Boolean   @default(false)
+  volunteerRewardClaimedAt DateTime?
+  bannedUntil              DateTime?
+  totpSecret               String?
+  totpEnabledAt            DateTime?
   createdAt     DateTime  @default(now())
 
   registrations          Registration[]
