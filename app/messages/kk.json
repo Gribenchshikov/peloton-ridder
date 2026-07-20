@@ -159,6 +159,7 @@
     "phone": "Телефон",
     "birthDate": "Туған күні",
     "tshirtSize": "Футболка өлшемі",
+    "tshirtSizeGuide": "Өлшем кестесі",
     "tshirtSizeEmpty": "Таңдалмаған",
     "saveCta": "Сақтау",
     "changePwdTitle": "Құпия сөзді өзгерту",
@@ -553,6 +554,7 @@
     "membersEmpty": "Ақпарат жақында пайда болады."
   },
   "Nav": {
+    "home": "Басты бет",
     "races": "Жарыстар",
     "about": "Біз туралы",
     "profile": "Профиль",

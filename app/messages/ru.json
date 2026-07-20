@@ -159,6 +159,7 @@
     "phone": "Телефон",
     "birthDate": "Дата рождения",
     "tshirtSize": "Размер футболки",
+    "tshirtSizeGuide": "Таблица размеров",
     "tshirtSizeEmpty": "Не выбран",
     "saveCta": "Сохранить",
     "changePwdTitle": "Смена пароля",
@@ -553,6 +554,7 @@
     "membersEmpty": "Информация скоро появится."
   },
   "Nav": {
+    "home": "Главная",
     "races": "Забеги",
     "about": "О нас",
     "profile": "Профиль",

@@ -159,6 +159,7 @@
     "phone": "Phone",
     "birthDate": "Date of birth",
     "tshirtSize": "T-shirt size",
+    "tshirtSizeGuide": "Size guide",
     "tshirtSizeEmpty": "Not selected",
     "saveCta": "Save",
     "changePwdTitle": "Change password",
@@ -553,6 +554,7 @@
     "membersEmpty": "Information coming soon."
   },
   "Nav": {
+    "home": "Home",
     "races": "Races",
     "about": "About",
     "profile": "Profile",

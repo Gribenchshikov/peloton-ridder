@@ -24,9 +24,10 @@ export default async function AccountPage({
     return redirect({ href: "/login", locale });
   }
 
-  const [profile, thresholdSetting] = await Promise.all([
+  const [profile, thresholdSetting, tshirtGuideUrl] = await Promise.all([
     getUserProfile(session.user.id),
     prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
+    prisma.siteSetting.findUnique({ where: { key: "tshirt_size_guide_url" } }),
   ]);
   if (!profile) {
     return redirect({ href: "/login", locale });
@@ -53,6 +54,7 @@ export default async function AccountPage({
         }}
         locale={locale}
         callbackUrl={callbackUrl}
+        tshirtSizeGuideUrl={tshirtGuideUrl?.value}
       />
       <ChangePasswordForm />
       {profile.isVolunteer && (

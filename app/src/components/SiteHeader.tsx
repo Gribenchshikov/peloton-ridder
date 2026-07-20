@@ -10,6 +10,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const isLoggedIn = Boolean(session?.user);
 
   const navLinks = [
+    { href: "/", label: t("home") },
     { href: "/events", label: t("races") },
     { href: "/about", label: t("about") },
   ];
