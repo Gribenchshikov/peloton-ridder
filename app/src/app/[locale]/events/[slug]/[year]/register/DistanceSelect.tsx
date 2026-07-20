@@ -39,12 +39,14 @@ export function DistanceSelect({
   distances,
   merchItems,
   clubs,
+  tshirtSizeGuideUrl,
 }: {
   eventId: string;
   locale: string;
   distances: DistanceOption[];
   merchItems: MerchItem[];
   clubs: RunningClub[];
+  tshirtSizeGuideUrl?: string | null;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
@@ -131,7 +133,14 @@ export function DistanceSelect({
           {sizeItems.map((item) => (
             <div key={item.id} className="flex flex-col gap-2">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-semibold text-ink">{item.name}</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-semibold text-ink">{item.name}</span>
+                  {tshirtSizeGuideUrl && (
+                    <a href={tshirtSizeGuideUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-ember hover:underline">
+                      {t("sizeGuideLink")} →
+                    </a>
+                  )}
+                </div>
                 {!sizes[item.id] && <span className="text-xs text-warn">{t("selectSizeLabel")}</span>}
               </div>
               <div className="flex flex-wrap gap-1.5">

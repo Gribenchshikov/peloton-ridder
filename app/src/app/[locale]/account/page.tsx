@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
 import { ChangePasswordForm } from "./ChangePasswordForm";
+import { ChangeEmailForm } from "./ChangeEmailForm";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { VolunteerProgress } from "./VolunteerProgress";
 import { logoutAction } from "@/lib/authActions";
@@ -56,6 +57,7 @@ export default async function AccountPage({
         callbackUrl={callbackUrl}
         tshirtSizeGuideUrl={tshirtGuideUrl?.value}
       />
+      <ChangeEmailForm currentEmail={profile.email} />
       <ChangePasswordForm />
       {(profile.isVolunteer || profile.isAdmin) && (
         <section>

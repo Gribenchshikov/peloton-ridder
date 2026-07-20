@@ -19,12 +19,14 @@ export function RegisterView({
   locale,
   clubs,
   callbackPath,
+  tshirtSizeGuideUrl,
 }: {
   event: EventWithSlots;
   profile: UserContactInfo;
   locale: string;
   clubs: RunningClub[];
   callbackPath: string;
+  tshirtSizeGuideUrl?: string | null;
 }) {
   const t = useTranslations("Registration");
 
@@ -37,7 +39,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} tshirtSizeGuideUrl={tshirtSizeGuideUrl} />
     </main>
   );
 }

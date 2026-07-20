@@ -34,6 +34,12 @@ export async function sendVerificationEmail(to: string, verifyUrl: string) {
   await sendMail(to, "Подтвердите регистрацию — Peloton Ridder", text, html);
 }
 
+export async function sendEmailChangeEmail(to: string, confirmUrl: string) {
+  const text = `Перейдите по ссылке, чтобы подтвердить новый адрес: ${confirmUrl}\n\nСсылка действует 24 часа. Если вы не запрашивали смену email, просто проигнорируйте это письмо.`;
+  const html = `<p>Перейдите по ссылке, чтобы подтвердить новый адрес электронной почты:</p><p><a href="${confirmUrl}">${confirmUrl}</a></p><p>Ссылка действует 24 часа.</p>`;
+  await sendMail(to, "Подтвердите новый email — Peloton Ridder", text, html);
+}
+
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const text = `Перейдите по ссылке, чтобы задать новый пароль: ${resetUrl}\n\nСсылка действует 24 часа. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.`;
   const html = `<p>Перейдите по ссылке, чтобы задать новый пароль:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Ссылка действует 24 часа. Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>`;

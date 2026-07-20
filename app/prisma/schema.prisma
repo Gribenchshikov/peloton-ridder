@@ -84,6 +84,7 @@ model User {
 enum TokenPurpose {
   EMAIL_VERIFY
   PASSWORD_RESET
+  EMAIL_CHANGE
 }
 
 // purpose нужен, чтобы ссылку подтверждения email нельзя было случайно (или намеренно)

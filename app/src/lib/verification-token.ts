@@ -30,6 +30,20 @@ export async function peekVerificationToken(token: string, purpose: TokenPurpose
  * значит, токен не был выпущен под этот purpose, и его нельзя тратить на чужой флоу).
  * Если purpose совпал, токен удаляется сразу — одноразовость гарантирована независимо
  * от того, истёк он или нет (истёкший тоже удаляется, просто вернёт null). */
+/** Создаёт токен смены email. email-поле хранит `userId:newEmail`. */
+export async function createEmailChangeToken(userId: string, newEmail: string): Promise<string> {
+  const token = randomBytes(32).toString("hex");
+  await prisma.verificationToken.create({
+    data: {
+      email: `${userId}:${newEmail}`,
+      token,
+      purpose: "EMAIL_CHANGE",
+      expiresAt: new Date(Date.now() + TOKEN_TTL_MS),
+    },
+  });
+  return token;
+}
+
 export async function consumeVerificationToken(token: string, purpose: TokenPurpose): Promise<string | null> {
   const record = await findMatchingToken(token, purpose);
   if (!record) return null;

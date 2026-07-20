@@ -28,10 +28,11 @@ export default async function EventRegisterPage({
   }
 
   const now = new Date();
-  const [existing, profile, clubs, slotCounts] = await Promise.all([
+  const [existing, profile, clubs, tshirtGuide, slotCounts] = await Promise.all([
     getActiveRegistration(session.user.id, event.id),
     getUserContactInfo(session.user.id),
     prisma.runningClub.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, city: true } }),
+    prisma.siteSetting.findUnique({ where: { key: "tshirt_size_guide_url" } }),
     prisma.registration.groupBy({
       by: ["distanceId"],
       where: {
@@ -59,7 +60,7 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} />;
+  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} tshirtSizeGuideUrl={tshirtGuide?.value} />;
 }
 
 function EmailConfirmationRequired({ email }: { email: string }) {
