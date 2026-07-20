@@ -67,9 +67,6 @@ export default async function ReportsPage({
           <select
             name="eventId"
             defaultValue={eventId ?? ""}
-            onChange={(e) => {
-              // handled via ReportsView client wrapper
-            }}
             className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
           >
             <option value="">Все события</option>

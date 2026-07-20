@@ -292,7 +292,7 @@ export function UsersView({
                       activeAction.type === "menu" ? (
                         <tr className="bg-surface-2" key={`${user.id}-menu`}>
                           <td colSpan={7} className="px-4 py-4">
-                            <div className="flex flex-col gap-2 rounded-[var(--radius-m)] border border-border bg-white p-4 shadow-sm">
+                            <div className="flex flex-col gap-2 rounded-[var(--radius-m)] border border-border bg-surface p-4 shadow-sm">
                               <div className="grid gap-2 sm:grid-cols-4">
                                 <button
                                   type="button"
@@ -340,7 +340,7 @@ export function UsersView({
                       ) : (
                         <tr className="bg-surface-2" key={`${user.id}-action`}>
                           <td colSpan={7} className="px-4 py-4">
-                            <div className="rounded-[var(--radius-m)] border border-border bg-white p-4 shadow-sm">
+                            <div className="rounded-[var(--radius-m)] border border-border bg-surface p-4 shadow-sm">
                               <div className="mb-3 text-sm text-ink-soft">
                                 {activeAction.type === "toggleAdmin" &&
                                   t(user.isAdmin ? "usersConfirmDemote" : "usersConfirmPromote")}
