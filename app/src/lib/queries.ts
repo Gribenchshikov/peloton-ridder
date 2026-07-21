@@ -51,6 +51,78 @@ export function getSeriesWithRaces() {
   });
 }
 
+// Все годы, в которых есть хотя бы один Event для гонок данной серии
+export async function getSeriesAvailableYears(seriesId: string): Promise<number[]> {
+  const rows = await prisma.event.findMany({
+    where: { race: { seriesRaces: { some: { seriesId } } } },
+    select: { year: true },
+    distinct: ["year"],
+    orderBy: { year: "desc" },
+  });
+  return rows.map((r) => r.year);
+}
+
+// Полные данные сезона: этапы + результаты для лидерборда
+export async function getSeriesSeason(seriesId: string, year: number) {
+  const series = await prisma.series.findUnique({
+    where: { id: seriesId },
+    include: {
+      seriesRaces: {
+        orderBy: { stageOrder: "asc" },
+        include: {
+          race: {
+            include: {
+              events: {
+                where: { year },
+                take: 1,
+                include: {
+                  results: {
+                    orderBy: [{ place: "asc" }, { time: "asc" }],
+                    include: {
+                      registration: { select: { userId: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  return series;
+}
+
+// Прогресс серии конкретного пользователя (для кабинета / медальонов)
+export async function getUserSeriesProgress(userId: string, seriesId: string, year: number) {
+  const series = await prisma.series.findUnique({
+    where: { id: seriesId },
+    include: {
+      seriesRaces: {
+        orderBy: { stageOrder: "asc" },
+        include: {
+          race: {
+            include: {
+              events: {
+                where: { year },
+                take: 1,
+                include: {
+                  results: {
+                    where: { registration: { userId } },
+                    take: 1,
+                    select: { place: true, time: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  return series;
+}
+
 const REGISTRATION_HISTORY_LIMIT = 20;
 
 export function getUserProfile(userId: string) {

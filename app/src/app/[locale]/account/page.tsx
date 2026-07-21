@@ -1,7 +1,7 @@
 import { useTranslations, useFormatter } from "next-intl";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
-import { getUserProfile } from "@/lib/queries";
+import { getUserProfile, getSeriesWithRaces, getUserSeriesProgress } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/navigation";
 import { ProfileForm } from "./ProfileForm";
@@ -11,6 +11,7 @@ import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { VolunteerProgress } from "./VolunteerProgress";
 import { AvatarUpload } from "./AvatarUpload";
 import { ClubSection } from "./ClubSection";
+import { SeriesMedals } from "./SeriesMedals";
 import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
@@ -27,11 +28,16 @@ export default async function AccountPage({
     return redirect({ href: "/login", locale });
   }
 
-  const [profile, thresholdSetting, tshirtGuideUrl] = await Promise.all([
+  const currentYear = new Date().getFullYear();
+  const [profile, thresholdSetting, tshirtGuideUrl, series] = await Promise.all([
     getUserProfile(session.user.id),
     prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
     prisma.siteSetting.findUnique({ where: { key: "tshirt_size_guide_url" } }),
+    getSeriesWithRaces(),
   ]);
+  const seriesProgress = series
+    ? await getUserSeriesProgress(session.user.id, series.id, currentYear)
+    : null;
   if (!profile) {
     return redirect({ href: "/login", locale });
   }
@@ -88,6 +94,9 @@ export default async function AccountPage({
       )}
       {profile.volunteerApplications.length > 0 && (
         <VolunteerSection applications={profile.volunteerApplications} />
+      )}
+      {seriesProgress && seriesProgress.seriesRaces.length > 0 && (
+        <SeriesMedals progress={seriesProgress} year={currentYear} />
       )}
       <RegistrationHistory registrations={profile.registrations} />
     </main>

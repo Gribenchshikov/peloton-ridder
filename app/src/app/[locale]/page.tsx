@@ -221,9 +221,9 @@ function SeriesSection({
           </span>
           <h2 className="mt-3 font-display text-2xl font-bold text-white sm:text-3xl">{t("seriesTitle")}</h2>
           <p className="mt-3 text-[rgba(203,214,204,.85)]">{t("seriesText", { races: raceNames })}</p>
-          <button className="mt-6 rounded-[var(--radius-s)] bg-white px-5 py-3 text-sm font-bold text-spruce transition-opacity hover:opacity-90">
+          <Link href="/series" className="mt-6 inline-block rounded-[var(--radius-s)] bg-white px-5 py-3 text-sm font-bold text-spruce transition-opacity hover:opacity-90">
             {t("seriesCta")}
-          </button>
+          </Link>
         </div>
       </div>
       </div>
