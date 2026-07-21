@@ -6,7 +6,7 @@ import { requireAdminId } from "@/lib/session";
 import { sendAdminAlertEmail } from "@/lib/mailer";
 import { revalidatePath } from "next/cache";
 
-type UserActionType = "toggleAdmin" | "ban" | "unban" | "forceReset" | "edit";
+type UserActionType = "toggleAdmin" | "ban" | "unban" | "freeze" | "unfreeze" | "forceReset" | "edit";
 
 export async function updateUserAction(
   userId: string,
@@ -63,6 +63,16 @@ export async function updateUserAction(
   if (action === "unban") {
     await prisma.user.update({ where: { id: userId }, data: { bannedUntil: null } });
     await sendAdminAlertEmail(adminEmails, "Снятие бана пользователя", targetLabel, actorLabel, new Date());
+  }
+
+  if (action === "freeze") {
+    await prisma.user.update({ where: { id: userId }, data: { isFrozen: true } });
+    await sendAdminAlertEmail(adminEmails, "Заморозка аккаунта (навсегда)", targetLabel, actorLabel, new Date());
+  }
+
+  if (action === "unfreeze") {
+    await prisma.user.update({ where: { id: userId }, data: { isFrozen: false } });
+    await sendAdminAlertEmail(adminEmails, "Разморозка аккаунта", targetLabel, actorLabel, new Date());
   }
 
   if (action === "forceReset") {

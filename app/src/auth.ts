@@ -30,6 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!valid) return null;
 
         if (user.bannedUntil && user.bannedUntil > new Date()) return null;
+        if (user.isFrozen) return null;
 
         // name намеренно не передаём — jwt-колбэк ниже копирует в токен только id,
         // так что имя всё равно не долетело бы до сессии (см. callbacks.jwt).

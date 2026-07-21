@@ -8,7 +8,7 @@ import { updateUserAction } from "./actions";
 
 type User = Awaited<ReturnType<typeof getUsersForAdmin>>[number];
 
-type UserActionType = "menu" | "toggleAdmin" | "ban" | "unban" | "forceReset" | "edit";
+type UserActionType = "menu" | "toggleAdmin" | "ban" | "unban" | "freeze" | "unfreeze" | "forceReset" | "edit";
 
 type ActiveAction = {
   userId: string;
@@ -249,6 +249,7 @@ export function UsersView({
             ) : (
               visibleUsers.map((user) => {
                 const isBanned = user.bannedUntil && new Date(user.bannedUntil) > new Date();
+                const isFrozen = user.isFrozen;
                 const isActiveAction = activeAction?.userId === user.id;
                 return (
                   <Fragment key={user.id}>
@@ -265,7 +266,11 @@ export function UsersView({
                         ) : (
                           <span className="text-xs text-ink-faint">{t("usersRoleUser")}</span>
                         )}
-                        {isBanned ? (
+                        {isFrozen ? (
+                          <div className="mt-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                            ❄ Заморожен
+                          </div>
+                        ) : isBanned ? (
                           <div className="mt-1 text-[11px] font-semibold text-red-600">
                             {t("usersBannedUntil", {
                               date: new Intl.DateTimeFormat("ru-RU", {
@@ -335,6 +340,14 @@ export function UsersView({
                                 </button>
                                 <button
                                   type="button"
+                                  onClick={() => openAction(user, isFrozen ? "unfreeze" : "freeze")}
+                                  disabled={pending}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {isFrozen ? "Разморозить" : "Заморозить"}
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => openAction(user, "forceReset")}
                                   disabled={pending}
                                   className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
@@ -370,6 +383,8 @@ export function UsersView({
                                 {activeAction.type === "ban" &&
                                   t("usersConfirmBan", { days: banDays })}
                                 {activeAction.type === "unban" && t("usersConfirmUnban")}
+                                {activeAction.type === "freeze" && "Аккаунт будет заморожен навсегда. Пользователь не сможет войти."}
+                                {activeAction.type === "unfreeze" && "Аккаунт будет разморожен. Пользователь сможет снова войти."}
                                 {activeAction.type === "forceReset" && t("usersConfirmForceReset")}
                                 {activeAction.type === "edit" && t("usersConfirmEdit")}
                               </div>

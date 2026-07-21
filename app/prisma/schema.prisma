@@ -68,6 +68,7 @@ model User {
   isVolunteer              Boolean   @default(false)
   volunteerRewardClaimedAt DateTime?
   bannedUntil              DateTime?
+  isFrozen                 Boolean   @default(false)
   totpSecret               String?
   totpEnabledAt            DateTime?
   avatarUrl                String?
