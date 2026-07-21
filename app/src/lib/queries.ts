@@ -132,6 +132,7 @@ export function getActiveRegistration(userId: string, eventId: string) {
       id: true,
       status: true,
       bibNumber: true,
+      includesTransfer: true,
       distance: { select: { name: true, km: true } },
     },
   });

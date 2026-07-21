@@ -7,6 +7,7 @@ import { getEventForRegistration, getActiveRegistration, getUserContactInfo } fr
 import { prisma } from "@/lib/prisma";
 import { RegisterView } from "./RegisterView";
 import { ContactOrganizerButton } from "./ContactOrganizerButton";
+import { BuyTransferButton } from "./BuyTransferButton";
 
 export default async function EventRegisterPage({
   params,
@@ -112,6 +113,18 @@ function AlreadyRegistered({
           </Link>
           <ContactOrganizerButton eventId={event.id} />
         </div>
+        {!registration.includesTransfer && event.transferPrice && event.location && (
+          <BuyTransferButton
+            registrationId={registration.id}
+            price={event.transferPrice}
+            location={event.location}
+          />
+        )}
+        {registration.includesTransfer && (
+          <div className="mt-4 rounded-[var(--radius-s)] border border-spruce/30 bg-spruce/5 px-4 py-3 text-sm font-semibold text-spruce">
+            ✓ {t("transferIncluded")}
+          </div>
+        )}
       </section>
     </main>
   );
