@@ -3,16 +3,27 @@ import { redirect } from "@/i18n/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
+import { ClubRequestsSection } from "./ClubRequestsSection";
 
 export default async function ClubsListPage() {
   const adminId = await requireAdminId();
   if (!adminId) redirect({ href: "/", locale: await getLocale() });
 
-  const [t, clubs] = await Promise.all([
+  const [t, clubs, pendingRequests] = await Promise.all([
     getTranslations("Admin"),
     prisma.runningClub.findMany({
       orderBy: { name: "asc" },
       include: { _count: { select: { registrations: true } } },
+    }),
+    prisma.clubMembershipRequest.findMany({
+      where: { status: "PENDING" },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        clubName: true,
+        createdAt: true,
+        user: { select: { firstName: true, lastName: true, email: true } },
+      },
     }),
   ]);
 
@@ -32,6 +43,11 @@ export default async function ClubsListPage() {
           {t("createClubCta")}
         </Link>
       </div>
+
+      <ClubRequestsSection
+        requests={pendingRequests}
+        clubs={clubs.map((c) => ({ id: c.id, name: c.name }))}
+      />
 
       {clubs.length === 0 ? (
         <p className="text-sm text-ink-faint">{t("runningClubsEmpty")}</p>

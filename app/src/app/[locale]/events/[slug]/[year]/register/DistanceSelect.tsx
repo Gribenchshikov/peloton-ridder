@@ -46,6 +46,7 @@ export function DistanceSelect({
   defaultTshirtSize,
   transferPrice,
   location,
+  defaultClubId,
 }: {
   eventId: string;
   locale: string;
@@ -57,6 +58,7 @@ export function DistanceSelect({
   defaultTshirtSize?: string | null;
   transferPrice?: number | null;
   location?: string | null;
+  defaultClubId?: string | null;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
@@ -248,6 +250,7 @@ export function DistanceSelect({
           </label>
           <select
             name="runningClubId"
+            defaultValue={defaultClubId ?? ""}
             className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
           >
             <option value="">{t("clubNone")}</option>

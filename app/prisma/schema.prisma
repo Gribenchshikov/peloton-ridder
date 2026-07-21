@@ -38,6 +38,12 @@ enum ResultSource {
   EXCEL
 }
 
+enum ClubMembershipStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum CancelReason {
   INJURY
   CANT_ATTEND
@@ -73,6 +79,8 @@ model User {
   totpSecret               String?
   totpEnabledAt            DateTime?
   avatarUrl                String?
+  runningClubId            String?
+  runningClub              RunningClub?            @relation("UserClub", fields: [runningClubId], references: [id])
   createdAt     DateTime  @default(now())
 
   registrations          Registration[]
@@ -80,6 +88,7 @@ model User {
   volunteerApplications  VolunteerApplication[] @relation("Applicant")
   reviewedApplications   VolunteerApplication[] @relation("Reviewer")
   notificationsSent      Notification[]
+  clubRequests           ClubMembershipRequest[]
 }
 
 // Логин — email + пароль. Токен нужен только чтобы подтвердить, что email реальный
@@ -398,7 +407,22 @@ model RunningClub {
   city      String?
   createdAt DateTime @default(now())
 
-  registrations Registration[]
+  registrations      Registration[]
+  memberUsers        User[]                  @relation("UserClub")
+  membershipRequests ClubMembershipRequest[]
+}
+
+model ClubMembershipRequest {
+  id            String               @id @default(cuid())
+  userId        String
+  user          User                 @relation(fields: [userId], references: [id])
+  clubName      String
+  status        ClubMembershipStatus @default(PENDING)
+  runningClubId String?
+  runningClub   RunningClub?         @relation(fields: [runningClubId], references: [id])
+  adminNote     String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 }
 
 // Глобальные настройки сайта — KV-хранилище. Текущие ключи: hero_bg_url.

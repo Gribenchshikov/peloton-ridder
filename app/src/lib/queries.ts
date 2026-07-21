@@ -65,10 +65,17 @@ export function getUserProfile(userId: string) {
       tshirtSize: true,
       birthDate: true,
       avatarUrl: true,
+      runningClubId: true,
+      runningClub: { select: { id: true, name: true } },
       isAdmin: true,
       isVolunteer: true,
       volunteerRewardClaimedAt: true,
       volunteerPromoCode: true,
+      clubRequests: {
+        select: { id: true, clubName: true, status: true, adminNote: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
       registrations: {
         select: {
           id: true,
@@ -113,7 +120,7 @@ export function getUserProfile(userId: string) {
 export function getUserContactInfo(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true, birthDate: true, tshirtSize: true, avatarUrl: true },
+    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true, birthDate: true, tshirtSize: true, avatarUrl: true, runningClubId: true },
   });
 }
 

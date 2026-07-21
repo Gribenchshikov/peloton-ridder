@@ -66,7 +66,7 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} tshirtSizeGuideUrl={tshirtGuide?.value} hasBirthDate={!!profile.birthDate} defaultTshirtSize={profile.tshirtSize} />;
+  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} tshirtSizeGuideUrl={tshirtGuide?.value} hasBirthDate={!!profile.birthDate} defaultTshirtSize={profile.tshirtSize} defaultClubId={profile.runningClubId} />;
 }
 
 type ActiveReg = NonNullable<Awaited<ReturnType<typeof getActiveRegistration>>>;

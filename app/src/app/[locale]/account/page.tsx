@@ -10,6 +10,7 @@ import { ChangeEmailForm } from "./ChangeEmailForm";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { VolunteerProgress } from "./VolunteerProgress";
 import { AvatarUpload } from "./AvatarUpload";
+import { ClubSection } from "./ClubSection";
 import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
@@ -60,6 +61,10 @@ export default async function AccountPage({
       />
       <ChangeEmailForm currentEmail={profile.email} locale={locale} />
       <ChangePasswordForm />
+      <ClubSection
+        currentClub={profile.runningClub}
+        latestRequest={profile.clubRequests[0] ?? null}
+      />
       {(profile.isVolunteer || profile.isAdmin) && (
         <section>
           <h2 className="font-display text-lg font-bold text-ink">Инструменты волонтёра</h2>
