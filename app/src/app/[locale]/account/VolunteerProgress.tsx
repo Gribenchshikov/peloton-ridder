@@ -1,14 +1,29 @@
 "use client";
 
+import { useActionState } from "react";
+import { claimVolunteerRewardAction, type ClaimRewardState } from "./claimRewardAction";
+
 export function VolunteerProgress({
   completed,
   threshold,
+  rewardClaimedAt,
+  savedPromoCode,
 }: {
   completed: number;
   threshold: number;
+  rewardClaimedAt: Date | null;
+  savedPromoCode: string | null;
 }) {
+  const boundAction = claimVolunteerRewardAction.bind(null, threshold);
+  const [state, formAction, pending] = useActionState<ClaimRewardState, FormData>(
+    boundAction,
+    {},
+  );
+
   const pct = Math.min(Math.round((completed / threshold) * 100), 100);
   const reached = completed >= threshold;
+  const promoCode = state.code ?? savedPromoCode;
+  const claimed = !!rewardClaimedAt || !!promoCode;
 
   return (
     <section className="rounded-[var(--radius-m)] border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950/20">
@@ -26,11 +41,52 @@ export function VolunteerProgress({
         />
       </div>
 
-      <p className="mt-2 text-sm text-ink-soft">
-        {reached
-          ? "Поздравляем! Вы выполнили норму — организаторы свяжутся с вами по поводу награды."
-          : `Ещё ${threshold - completed} ${plural(threshold - completed, "этап", "этапа", "этапов")} — и вы получите бесплатный слот на забег.`}
-      </p>
+      {reached ? (
+        claimed ? (
+          <div className="mt-3 flex flex-col gap-2">
+            <p className="text-sm font-semibold text-spruce">
+              Награда получена — промокод на бесплатный слот:
+            </p>
+            <div className="flex items-center gap-3">
+              <code className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-1.5 font-mono text-sm font-bold tracking-widest text-ink">
+                {promoCode}
+              </code>
+              <button
+                type="button"
+                onClick={() => promoCode && navigator.clipboard.writeText(promoCode)}
+                className="text-xs font-semibold text-ember hover:underline"
+              >
+                Копировать
+              </button>
+            </div>
+            <p className="text-xs text-ink-faint">
+              Введите этот код при регистрации на любой забег — и участие будет бесплатным.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-col gap-2">
+            <p className="text-sm text-ink-soft">
+              Поздравляем! Вы выполнили норму — забирайте бесплатный слот на забег.
+            </p>
+            <form action={formAction}>
+              <button
+                type="submit"
+                disabled={pending}
+                className="rounded-[var(--radius-s)] bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+              >
+                {pending ? "Оформляем…" : "Забрать промокод"}
+              </button>
+            </form>
+            {state.error && (
+              <p className="text-xs text-danger">Не удалось оформить. Попробуйте снова.</p>
+            )}
+          </div>
+        )
+      ) : (
+        <p className="mt-2 text-sm text-ink-soft">
+          {`Ещё ${threshold - completed} ${plural(threshold - completed, "этап", "этапа", "этапов")} — и вы получите бесплатный слот на забег.`}
+        </p>
+      )}
     </section>
   );
 }

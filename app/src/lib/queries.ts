@@ -68,6 +68,7 @@ export function getUserProfile(userId: string) {
       isAdmin: true,
       isVolunteer: true,
       volunteerRewardClaimedAt: true,
+      volunteerPromoCode: true,
       registrations: {
         select: {
           id: true,

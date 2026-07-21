@@ -77,6 +77,8 @@ export default async function AccountPage({
         <VolunteerProgress
           completed={completedVolunteerCount}
           threshold={volunteerThreshold}
+          rewardClaimedAt={profile.volunteerRewardClaimedAt}
+          savedPromoCode={profile.volunteerPromoCode}
         />
       )}
       {profile.volunteerApplications.length > 0 && (
