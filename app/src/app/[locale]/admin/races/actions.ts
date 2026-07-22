@@ -23,7 +23,7 @@ const RaceSchema = z.object({
     .max(80)
     .regex(/^[a-z0-9-]+$/, "Только строчные латинские буквы, цифры и дефис"),
   courseIntro: z.string().max(2000).optional().default(""),
-  icon: z.string().max(20).optional().default("mountain"),
+  icon: z.string().max(20).optional().default("i-mountain"),
   color: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
@@ -44,7 +44,7 @@ export async function createRaceAction(
     name: formData.get("name"),
     slug: formData.get("slug") || slugify(String(formData.get("name") ?? "")),
     courseIntro: formData.get("courseIntro"),
-    icon: formData.get("icon") || "mountain",
+    icon: formData.get("icon") || "i-mountain",
     color: formData.get("color") || "#e87040",
   };
 
@@ -74,7 +74,7 @@ export async function updateRaceAction(
     name: formData.get("name"),
     slug: formData.get("slug"),
     courseIntro: formData.get("courseIntro"),
-    icon: formData.get("icon") || "mountain",
+    icon: formData.get("icon") || "i-mountain",
     color: formData.get("color") || "#e87040",
   };
 

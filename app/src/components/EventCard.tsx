@@ -1,5 +1,6 @@
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { Icon } from "@/components/IconSprite";
 import type { Event, Race, Distance } from "@/generated/prisma/client";
 
 type EventWithRelations = Event & { race: Race; distances: Distance[] };
@@ -47,6 +48,9 @@ export function EventCard({ event }: { event: EventWithRelations }) {
         <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-wide text-white backdrop-blur-sm">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[event.status]}`} />
           {t(STATUS_LABEL_KEY[event.status] as "OPEN" | "DRAFT" | "CLOSED" | "COMPLETED")}
+        </span>
+        <span className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
+          <Icon name={event.race.icon} className="h-4 w-4" />
         </span>
       </div>
 
