@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { checkPromoAction } from "@/lib/promoActions";
+import { parseParticipantRules } from "@/types/participantRules";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
@@ -14,6 +15,8 @@ import { SizeGuideModal } from "./SizeGuideModal";
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 type Size = (typeof SIZES)[number];
 
+type ParticipantRule = { label: string; minAge: number | null; maxAge: number | null };
+
 type DistanceOption = {
   id: string;
   discipline: string | null;
@@ -22,6 +25,8 @@ type DistanceOption = {
   price: number;
   minAge: number | null;
   maxAge: number | null;
+  participantsPerSlot: number;
+  participantRules: unknown;
   capacity: number;
   taken: number;
   requiresQualification: boolean;
@@ -78,6 +83,20 @@ export function DistanceSelect({
   const [promoResult, setPromoResult] = useState<{ valid: boolean; label: string } | null>(null);
   const [promoChecking, startPromoCheck] = useTransition();
 
+  const selectedDistance = distances.find((d) => d.id === selected);
+  const extraCount = selectedDistance ? (selectedDistance.participantsPerSlot ?? 1) - 1 : 0;
+  const extraRules = parseParticipantRules(selectedDistance?.participantRules);
+  type ExtraParticipant = { firstName: string; lastName: string; birthDate: string };
+  const [extraParticipants, setExtraParticipants] = useState<ExtraParticipant[]>([]);
+
+  function ensureExtraLength(count: number) {
+    setExtraParticipants((prev) => {
+      if (prev.length === count) return prev;
+      if (prev.length < count) return [...prev, ...Array.from({ length: count - prev.length }, () => ({ firstName: "", lastName: "", birthDate: "" }))];
+      return prev.slice(0, count);
+    });
+  }
+
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(distances);
 
   function handlePromoCheck() {
@@ -116,7 +135,7 @@ export function DistanceSelect({
                     key={d.id}
                     distance={d}
                     selected={selected === d.id}
-                    onSelect={() => setSelected(d.id)}
+                    onSelect={() => { setSelected(d.id); ensureExtraLength((d.participantsPerSlot ?? 1) - 1); }}
                   />
                 ))}
             </div>
@@ -129,7 +148,7 @@ export function DistanceSelect({
                 key={d.id}
                 distance={d}
                 selected={selected === d.id}
-                onSelect={() => setSelected(d.id)}
+                onSelect={() => { setSelected(d.id); ensureExtraLength((d.participantsPerSlot ?? 1) - 1); }}
               />
             ))}
           </div>
@@ -189,6 +208,61 @@ export function DistanceSelect({
           ))}
         </div>
       )}
+
+      {/* Дополнительные участники — только для семейных/командных дистанций */}
+      {selected !== null && extraCount > 0 && extraParticipants.map((p, idx) => {
+        const rule = extraRules?.[idx + 1] ?? null;
+        const label = rule?.label ?? `Участник ${idx + 2}`;
+        const ageHint = rule
+          ? [rule.minAge != null ? `от ${rule.minAge} лет` : null, rule.maxAge != null ? `до ${rule.maxAge} лет` : null].filter(Boolean).join(", ")
+          : null;
+        return (
+          <div key={idx} className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-soft">
+                {label}
+                {ageHint && <span className="ml-2 font-normal normal-case tracking-normal text-ink-faint">({ageHint})</span>}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-ink-soft">Имя *</label>
+                <input
+                  type="text"
+                  name={`extra_firstName_${idx}`}
+                  required
+                  value={p.firstName}
+                  onChange={(e) => setExtraParticipants((prev) => prev.map((x, i) => i === idx ? { ...x, firstName: e.target.value } : x))}
+                  className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-ink-soft">Фамилия *</label>
+                <input
+                  type="text"
+                  name={`extra_lastName_${idx}`}
+                  required
+                  value={p.lastName}
+                  onChange={(e) => setExtraParticipants((prev) => prev.map((x, i) => i === idx ? { ...x, lastName: e.target.value } : x))}
+                  className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-ink-soft">Дата рождения *</label>
+              <input
+                type="date"
+                name={`extra_birthDate_${idx}`}
+                required
+                max={new Date().toISOString().slice(0, 10)}
+                value={p.birthDate}
+                onChange={(e) => setExtraParticipants((prev) => prev.map((x, i) => i === idx ? { ...x, birthDate: e.target.value } : x))}
+                className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+              />
+            </div>
+          </div>
+        );
+      })}
 
       {/* Promo code */}
       <div className="flex flex-col gap-1.5">
@@ -282,6 +356,9 @@ export function DistanceSelect({
       {state.error === "age_required" && <p className="text-sm text-danger">{t("errorAgeRequired")}</p>}
       {state.error === "age_too_young" && <p className="text-sm text-danger">{t("errorAgeTooYoung")}</p>}
       {state.error === "age_too_old" && <p className="text-sm text-danger">{t("errorAgeTooOld")}</p>}
+      {state.error === "extra_age_required" && <p className="text-sm text-danger">Укажите дату рождения для всех участников слота.</p>}
+      {state.error === "extra_age_too_young" && <p className="text-sm text-danger">Один из дополнительных участников не соответствует минимальному возрасту для этой дистанции.</p>}
+      {state.error === "extra_age_too_old" && <p className="text-sm text-danger">Один из дополнительных участников превышает максимальный возраст для этой дистанции.</p>}
       {state.error === "promo_invalid" && <p className="text-sm text-danger">{t("promoError_not_found")}</p>}
       {state.error === "promo_expired" && <p className="text-sm text-danger">{t("promoError_expired")}</p>}
       {state.error === "promo_exhausted" && <p className="text-sm text-danger">{t("promoError_exhausted")}</p>}

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { createDistanceAction, updateDistanceAction, type ActionState } from "./actions";
+import { parseParticipantRules, type ParticipantRule } from "@/types/participantRules";
 
 const initialState: ActionState = {};
 
@@ -14,6 +15,8 @@ export type DistanceDefaults = {
   gain: number | null;
   price: number;
   maxSlots: number | null;
+  participantsPerSlot: number;
+  participantRules: unknown;
   minAge: number | null;
   maxAge: number | null;
   cutoffMinutes: number | null;
@@ -28,12 +31,27 @@ type DistanceFormProps =
   | { mode: "create"; eventId: string; onSuccess?: () => void }
   | { mode: "edit"; distanceId: string; defaults: DistanceDefaults; onSuccess?: () => void };
 
+function defaultRules(n: number): ParticipantRule[] {
+  if (n === 2) return [
+    { label: "Взрослый", minAge: 18, maxAge: null },
+    { label: "Ребёнок", minAge: 10, maxAge: 17 },
+  ];
+  return Array.from({ length: n }, (_, i) => ({ label: `Участник ${i + 1}`, minAge: null, maxAge: null }));
+}
+
 export function DistanceForm(props: DistanceFormProps) {
   const t = useTranslations("Admin");
   const tAuth = useTranslations("Auth");
 
   const d = props.mode === "edit" ? props.defaults : undefined;
   const [needsQual, setNeedsQual] = useState(d?.requiresQualification ?? false);
+  const [slots, setSlots] = useState<number>(d?.participantsPerSlot ?? 1);
+  const [rules, setRules] = useState<ParticipantRule[]>(() => {
+    const parsed = parseParticipantRules(d?.participantRules);
+    if (parsed) return parsed;
+    if (d?.participantsPerSlot && d.participantsPerSlot > 1) return defaultRules(d.participantsPerSlot);
+    return [];
+  });
 
   const boundAction =
     props.mode === "create"
@@ -47,6 +65,26 @@ export function DistanceForm(props: DistanceFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   const inv = state.invalidFields;
+  const isFamily = slots > 1;
+
+  function handleSlotsChange(n: number) {
+    const clamped = Math.max(1, Math.min(10, n));
+    setSlots(clamped);
+    if (clamped > 1) {
+      if (rules.length !== clamped) setRules(defaultRules(clamped));
+    } else {
+      setRules([]);
+    }
+  }
+
+  function updateRule(idx: number, field: keyof ParticipantRule, value: string) {
+    setRules((prev) => prev.map((r, i) => {
+      if (i !== idx) return r;
+      if (field === "label") return { ...r, label: value };
+      const num = value === "" ? null : parseInt(value, 10);
+      return { ...r, [field]: isNaN(num as number) ? null : num };
+    }));
+  }
 
   return (
     <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -56,8 +94,78 @@ export function DistanceForm(props: DistanceFormProps) {
       <FormField label={t("fieldGain")} name="gain" type="number" optional placeholder="например: 800" defaultValue={d?.gain != null ? String(d.gain) : undefined} error={inv?.includes("gain")} />
       <FormField label={t("fieldPrice")} name="price" type="number" required placeholder="например: 5000" defaultValue={d ? String(d.price) : undefined} error={inv?.includes("price")} />
       <FormField label={t("fieldMaxSlots")} name="maxSlots" type="number" optional placeholder="например: 100" defaultValue={d?.maxSlots != null ? String(d.maxSlots) : undefined} error={inv?.includes("maxSlots")} />
-      <FormField label={t("fieldMinAge")} name="minAge" type="number" optional placeholder="например: 18" defaultValue={d?.minAge != null ? String(d.minAge) : undefined} error={inv?.includes("minAge")} />
-      <FormField label={t("fieldMaxAge")} name="maxAge" type="number" optional placeholder="например: 65" defaultValue={d?.maxAge != null ? String(d.maxAge) : undefined} error={inv?.includes("maxAge")} />
+
+      {/* Участники на слот */}
+      <div className="flex flex-col gap-1.5 sm:col-span-2">
+        <label className="text-sm font-semibold text-ink">
+          Участников в слоте
+          <span className="ml-1.5 text-xs font-normal text-ink-faint">1 = обычная, 2+ = семейная/командная</span>
+        </label>
+        <input
+          type="number"
+          name="participantsPerSlot"
+          min={1}
+          max={10}
+          value={slots}
+          onChange={(e) => handleSlotsChange(parseInt(e.target.value, 10) || 1)}
+          className="w-24 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ember focus:ring-1 focus:ring-ember"
+        />
+        <input type="hidden" name="participantRulesJson" value={isFamily ? JSON.stringify(rules) : ""} />
+      </div>
+
+      {/* Возрастные правила — по одному на каждого участника в слоте */}
+      {isFamily && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-ember/30 bg-ember/5 p-4 sm:col-span-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-ember">Правила для участников слота</p>
+          {rules.map((rule, idx) => (
+            <div key={idx} className="grid grid-cols-[1fr_80px_80px] gap-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-ink-soft">Подпись</label>
+                <input
+                  type="text"
+                  placeholder={idx === 0 ? "Взрослый" : "Ребёнок"}
+                  value={rule.label}
+                  onChange={(e) => updateRule(idx, "label", e.target.value)}
+                  className="rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-ember"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-ink-soft">Мин. возраст</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  placeholder="—"
+                  value={rule.minAge ?? ""}
+                  onChange={(e) => updateRule(idx, "minAge", e.target.value)}
+                  className="rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-ember"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-ink-soft">Макс. возраст</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  placeholder="—"
+                  value={rule.maxAge ?? ""}
+                  onChange={(e) => updateRule(idx, "maxAge", e.target.value)}
+                  className="rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-ember"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Возрастные лимиты — только для одиночных дистанций */}
+      {!isFamily && (
+        <>
+          <FormField label={t("fieldMinAge")} name="minAge" type="number" optional placeholder="например: 18" defaultValue={d?.minAge != null ? String(d.minAge) : undefined} error={inv?.includes("minAge")} />
+          <FormField label={t("fieldMaxAge")} name="maxAge" type="number" optional placeholder="например: 65" defaultValue={d?.maxAge != null ? String(d.maxAge) : undefined} error={inv?.includes("maxAge")} />
+        </>
+      )}
+
       <FormField
         label={t("fieldCutoffMinutes")}
         name="cutoffMinutes"

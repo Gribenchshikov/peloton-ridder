@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
+import { parseParticipantRules, calcAge } from "@/types/participantRules";
 
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
 const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
@@ -84,11 +85,21 @@ export async function createRegistrationAction(
     }
 
     // Проверка возраста: считается на дату старта события
-    if (distance.minAge !== null || distance.maxAge !== null) {
+    const raceDate = event.dateISO;
+    const rules = parseParticipantRules(distance.participantRules);
+
+    if (rules && distance.participantsPerSlot > 1) {
+      // Семейная/командная дистанция: проверяем по participantRules[0] для primary
+      const primaryRule = rules[0];
+      if (primaryRule.minAge !== null || primaryRule.maxAge !== null) {
+        if (!user.birthDate) return { kind: "error" as const, error: "age_required" };
+        const age = calcAge(user.birthDate, raceDate);
+        if (primaryRule.minAge !== null && age < primaryRule.minAge) return { kind: "error" as const, error: "age_too_young" };
+        if (primaryRule.maxAge !== null && age > primaryRule.maxAge) return { kind: "error" as const, error: "age_too_old" };
+      }
+    } else if (distance.minAge !== null || distance.maxAge !== null) {
       if (!user.birthDate) return { kind: "error" as const, error: "age_required" };
-      const raceDate = event.dateISO;
-      const ageMs = raceDate.getTime() - user.birthDate.getTime();
-      const age = Math.floor(ageMs / (365.25 * 24 * 60 * 60 * 1000));
+      const age = calcAge(user.birthDate, raceDate);
       if (distance.minAge !== null && age < distance.minAge) return { kind: "error" as const, error: "age_too_young" };
       if (distance.maxAge !== null && age > distance.maxAge) return { kind: "error" as const, error: "age_too_old" };
     }
@@ -155,6 +166,31 @@ export async function createRegistrationAction(
 
     const includesTransfer = formData.get("includesTransfer") === "true";
 
+    // Парсим доп. участников для семейных/командных дистанций
+    type ExtraParticipant = { firstName: string; lastName: string; birthDate: string };
+    let additionalParticipants: ExtraParticipant[] | null = null;
+    const extraCount = (distance.participantsPerSlot ?? 1) - 1;
+    if (extraCount > 0 && rules) {
+      const extras: ExtraParticipant[] = [];
+      for (let i = 0; i < extraCount; i++) {
+        const firstName = String(formData.get(`extra_firstName_${i}`) ?? "").trim();
+        const lastName = String(formData.get(`extra_lastName_${i}`) ?? "").trim();
+        const birthDateStr = String(formData.get(`extra_birthDate_${i}`) ?? "").trim();
+        const birthDate = new Date(birthDateStr);
+        if (!firstName || !lastName || !birthDateStr || isNaN(birthDate.getTime())) {
+          return { kind: "error" as const, error: "extra_age_required" };
+        }
+        const rule = rules[i + 1];
+        if (rule) {
+          const age = calcAge(birthDate, raceDate);
+          if (rule.minAge !== null && age < rule.minAge) return { kind: "error" as const, error: "extra_age_too_young" };
+          if (rule.maxAge !== null && age > rule.maxAge) return { kind: "error" as const, error: "extra_age_too_old" };
+        }
+        extras.push({ firstName, lastName, birthDate: birthDateStr });
+      }
+      additionalParticipants = extras;
+    }
+
     const reservationData = {
       distanceId,
       status: "RESERVED" as const,
@@ -166,6 +202,7 @@ export async function createRegistrationAction(
       promoCodeId,
       discountAmount,
       includesTransfer,
+      additionalParticipants: additionalParticipants ?? undefined,
     };
     const registration = cancelled
       ? await tx.registration.update({ where: { id: cancelled.id }, data: { ...reservationData, reregistrationCount: { increment: 1 } } })

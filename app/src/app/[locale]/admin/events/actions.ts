@@ -54,6 +54,8 @@ const DistanceFieldsSchema = z
     gain: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
     price: z.coerce.number().int().min(0),
     maxSlots: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional()),
+    participantsPerSlot: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).max(10).optional().default(1)),
+    participantRulesJson: z.preprocess(emptyToUndefined, z.string().optional()),
     minAge: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).max(120).optional()),
     maxAge: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).max(120).optional()),
     cutoffMinutes: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
@@ -136,6 +138,15 @@ export async function updateEventAction(eventId: string, _prevState: ActionState
   return { success: true };
 }
 
+function extractParticipantRules(data: Record<string, unknown> & { participantRulesJson?: string; participantsPerSlot?: number }) {
+  const { participantRulesJson, participantsPerSlot, ...rest } = data;
+  let participantRules: Prisma.InputJsonValue | typeof Prisma.DbNull = Prisma.DbNull;
+  if (participantsPerSlot && participantsPerSlot > 1 && participantRulesJson) {
+    try { participantRules = JSON.parse(participantRulesJson); } catch { /* ignore */ }
+  }
+  return { ...rest, participantsPerSlot: participantsPerSlot ?? 1, participantRules };
+}
+
 export async function createDistanceAction(eventId: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
@@ -143,7 +154,8 @@ export async function createDistanceAction(eventId: string, _prevState: ActionSt
   const parsed = parseFormData(DistanceFieldsSchema, formData);
   if ("error" in parsed) return parsed;
 
-  await prisma.distance.create({ data: { ...parsed.data, eventId } });
+  const distanceData = extractParticipantRules(parsed.data);
+  await prisma.distance.create({ data: { ...(distanceData as Prisma.DistanceUncheckedCreateInput), eventId } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   return { success: true };
 }
@@ -159,7 +171,8 @@ export async function updateDistanceAction(
   const parsed = parseFormData(DistanceFieldsSchema, formData);
   if ("error" in parsed) return parsed;
 
-  await prisma.distance.update({ where: { id: distanceId }, data: parsed.data });
+  const distanceData = extractParticipantRules(parsed.data);
+  await prisma.distance.update({ where: { id: distanceId }, data: distanceData as Prisma.DistanceUncheckedUpdateInput });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   return { success: true };
 }

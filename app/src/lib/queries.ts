@@ -322,6 +322,8 @@ export function getEventForAdmin(id: string) {
           gain: true,
           price: true,
           maxSlots: true,
+          participantsPerSlot: true,
+          participantRules: true,
           minAge: true,
           maxAge: true,
           cutoffMinutes: true,

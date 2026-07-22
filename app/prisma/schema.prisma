@@ -219,6 +219,8 @@ model Distance {
   gain                  Int?
   price                 Int
   maxSlots              Int?
+  participantsPerSlot   Int   @default(1)
+  participantRules      Json?
   minAge                Int?
   maxAge                Int?
   cutoffMinutes         Int?
@@ -290,6 +292,7 @@ model Registration {
   includesTransfer Boolean            @default(false)
   transferUsedAt  DateTime?
   kitPickedUpAt   DateTime?
+  additionalParticipants Json?
   createdAt       DateTime           @default(now())
 
   result            Result?

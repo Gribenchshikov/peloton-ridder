@@ -26,7 +26,8 @@ export default async function TicketPage({
         userId: true,
         status: true,
         bibNumber: true,
-        distance: { select: { name: true, km: true } },
+        additionalParticipants: true,
+        distance: { select: { name: true, km: true, participantsPerSlot: true } },
         event: {
           select: {
             year: true,
@@ -80,7 +81,15 @@ export default async function TicketPage({
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 px-6 py-6">
           <div>
             <dt className="text-xs text-ink-faint">{t("fieldBib")}</dt>
-            <dd className="mt-0.5 font-display text-3xl font-extrabold text-ember">#{reg.bibNumber}</dd>
+            {reg.bibNumber && (reg.distance?.participantsPerSlot ?? 1) > 1 ? (
+              <dd className="mt-0.5 flex flex-wrap gap-1">
+                {Array.from({ length: reg.distance!.participantsPerSlot }, (_, i) => (
+                  <span key={i} className="font-display text-2xl font-extrabold text-ember">#{reg.bibNumber}-{i + 1}</span>
+                ))}
+              </dd>
+            ) : (
+              <dd className="mt-0.5 font-display text-3xl font-extrabold text-ember">#{reg.bibNumber}</dd>
+            )}
           </div>
           <div>
             <dt className="text-xs text-ink-faint">{t("fieldName")}</dt>
@@ -99,6 +108,20 @@ export default async function TicketPage({
             <dd className="mt-0.5 font-semibold text-ink">{reg.event.location}</dd>
           </div>
         </dl>
+
+        {Array.isArray(reg.additionalParticipants) && reg.additionalParticipants.length > 0 && (
+          <div className="border-t border-border px-6 py-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-ink-faint">Дополнительные участники</p>
+            <ul className="mt-2 flex flex-col gap-1.5">
+              {(reg.additionalParticipants as { firstName: string; lastName: string; birthDate: string }[]).map((p, i) => (
+                <li key={i} className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-ink">{p.firstName} {p.lastName}</span>
+                  {reg.bibNumber && <span className="font-mono text-ink-faint">#{reg.bibNumber}-{i + 2}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="border-t border-border px-6 py-4 text-center text-xs text-ink-faint">
           {t("footer", { id: reg.id.slice(-8).toUpperCase() })}
