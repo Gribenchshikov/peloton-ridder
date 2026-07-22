@@ -132,7 +132,6 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
           transferPrice: event.transferPrice,
           resultsUrl: event.resultsUrl,
           coverImageUrl: event.coverImageUrl,
-          volunteerChatUrl: event.volunteerChatUrl,
         }}
       />
 

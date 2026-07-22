@@ -26,7 +26,6 @@ type EventDefaults = {
   isFeatured: boolean;
   resultsUrl: string | null;
   coverImageUrl: string | null;
-  volunteerChatUrl: string | null;
 };
 
 type EventFormProps =
@@ -173,14 +172,6 @@ export function EventForm(props: EventFormProps) {
           </p>
         )}
       </div>
-
-      <FormField
-        label={t("fieldVolunteerChatUrl")}
-        name="volunteerChatUrl"
-        type="url"
-        optional
-        defaultValue={d?.volunteerChatUrl ?? undefined}
-      />
 
       {state.success && <p className="text-sm text-spruce">{t("eventSaved")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
