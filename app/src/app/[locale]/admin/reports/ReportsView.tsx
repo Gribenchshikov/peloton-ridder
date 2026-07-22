@@ -9,7 +9,7 @@ type Reg = {
   createdAt: Date;
   discountAmount: number;
   cancelReason: CancelReason | null;
-  distance: { price: number; name: string; km: number; maxSlots: number | null; id: string };
+  distance: { price: number; name: string; km: number; maxSlots: number | null; id: string } | null;
   event: { id: string; year: number; race: { name: string } };
 };
 
@@ -53,17 +53,17 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
   const reserved = useMemo(() => registrations.filter((r) => r.status === "RESERVED"), [registrations]);
   const cancelled = useMemo(() => registrations.filter((r) => r.status === "CANCELLED"), [registrations]);
 
-  const grossRevenue = useMemo(() => paid.reduce((s, r) => s + r.distance.price, 0), [paid]);
+  const grossRevenue = useMemo(() => paid.reduce((s, r) => s + (r.distance?.price ?? 0), 0), [paid]);
   const totalDiscounts = useMemo(() => paid.reduce((s, r) => s + r.discountAmount, 0), [paid]);
   const netRevenue = grossRevenue - totalDiscounts;
 
-  // By distance breakdown
+  // By distance breakdown (transfer-only registrations have no distance — use a sentinel key)
   const byDistance = useMemo(() => {
     const map = new Map<string, { name: string; km: number; paid: number; reserved: number; gross: number; discounts: number }>();
     for (const r of registrations) {
-      const key = r.distance.id;
-      const existing = map.get(key) ?? { name: r.distance.name, km: r.distance.km, paid: 0, reserved: 0, gross: 0, discounts: 0 };
-      if (r.status === "PAID") { existing.paid++; existing.gross += r.distance.price; existing.discounts += r.discountAmount; }
+      const key = r.distance?.id ?? "__transfer__";
+      const existing = map.get(key) ?? { name: r.distance?.name ?? "Трансфер", km: r.distance?.km ?? 0, paid: 0, reserved: 0, gross: 0, discounts: 0 };
+      if (r.status === "PAID") { existing.paid++; existing.gross += r.distance?.price ?? 0; existing.discounts += r.discountAmount; }
       if (r.status === "RESERVED") existing.reserved++;
       map.set(key, existing);
     }

@@ -2,7 +2,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { getRegistrationForPayment } from "@/lib/queries";
 import { formatKzt } from "@/lib/currency";
-import { simulatePaymentAction } from "./actions";
+import { simulatePaymentAction, cancelReservationAction } from "./actions";
 
 type Registration = NonNullable<Awaited<ReturnType<typeof getRegistrationForPayment>>>;
 
@@ -50,10 +50,10 @@ export function PaymentView({
       <div>
         <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
         <h1 className="mt-2 font-display text-2xl font-bold text-ink">
-          {registration.event.race.name} {registration.event.year} · {registration.distance.name}
+          {registration.event.race.name} {registration.event.year} · {registration.distance?.name ?? "Трансфер"}
         </h1>
         <p className="mt-2 text-2xl font-bold text-ink">
-          {formatKzt(format, registration.distance.price)}
+          {formatKzt(format, registration.isTransferOnly ? (registration.event.transferPrice ?? 0) : (registration.distance?.price ?? 0))}
         </p>
       </div>
 
@@ -68,6 +68,15 @@ export function PaymentView({
           {t("optionManual")}
         </div>
       </div>
+
+      <form action={cancelReservationAction.bind(null, locale, registration.id)}>
+        <button
+          type="submit"
+          className="w-full rounded-[var(--radius-s)] border border-border px-5 py-3 text-sm font-semibold text-ink-soft transition-colors hover:border-danger hover:text-danger"
+        >
+          {t("cancelReservationCta")}
+        </button>
+      </form>
 
       {testMode && (
         <div className="rounded-[var(--radius-m)] border border-dashed border-warn bg-warn-tint p-5">

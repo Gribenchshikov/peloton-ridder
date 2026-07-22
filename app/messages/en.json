@@ -241,7 +241,7 @@
     "errorClosed": "Registration for this race is closed.",
     "errorInvalid": "Pick a distance from the list.",
     "errorEmailUnverified": "Confirm your email before reserving a spot.",
-    "errorRegistrationBlocked": "Re-registration for this race is currently unavailable. Contact the organizer.",
+    "errorRegistrationBlocked": "You have reached the re-registration limit for this race. Write to the organizer if you'd like to participate.",
     "emailVerificationTitle": "Confirm your email",
     "emailVerificationText": "To register for a race, follow the link in the email we sent to {email}.",
     "participantTitle": "Participant details",
@@ -255,10 +255,19 @@
     "includedLabel": "Included",
     "selectSizeLabel": "Pick a size",
     "sizeGuideLink": "Size guide",
+    "sizeGuideTitle": "Size guide",
+    "sizeGuideNote": "All measurements are in centimeters. Measure over underwear.",
+    "sizeGuideColSize": "Size",
+    "sizeGuideColChest": "Chest",
+    "sizeGuideColWaist": "Waist",
+    "sizeGuideColHip": "Hips",
+    "sizeGuideCm": "Unit: centimeters (cm)",
+    "sizeGuideExternal": "Full size chart on website",
     "sizeFromProfile": "Size from your profile · you can change it",
     "errorMissingSize": "Pick a size for all merch items.",
     "clubLabel": "Running club",
     "clubOptional": "optional",
+    "clubRegisterCta": "Submit club registration",
     "clubNone": "Not specified",
     "promoLabel": "Promo code",
     "promoApply": "Apply",
@@ -272,6 +281,8 @@
     "showQrCta": "Open ticket",
     "backToEventCta": "Back to event",
     "transferIncluded": "Transfer included",
+    "transferTitle": "Transfer",
+    "transferRoute": "{location} → start line and back",
     "contactOrganizerNote": "Have a question? Write to the organizer.",
     "contactOrganizerCta": "Contact organizer",
     "contactOrganizerTitle": "Message to organizer",
@@ -298,6 +309,7 @@
     "simulateCta": "Simulate payment (test)",
     "paidTitle": "Payment confirmed",
     "paidText": "Your bib number: {bib}",
+    "cancelReservationCta": "Cancel reservation",
     "cancelledTitle": "Registration cancelled",
     "toAccountCta": "Go to account",
     "viewTicketCta": "Open ticket"
@@ -680,5 +692,32 @@
     "eventsSubtitle": "Apply for a volunteer spot — we'll reach out closer to the event.",
     "applyCta": "Apply",
     "noEvents": "No open races right now. Stay tuned for announcements."
+  },
+  "HallOfFame": {
+    "title": "Hall of Fame",
+    "subtitle": "Top finishers from all Ridder Race Series events",
+    "empty": "Results will appear after the first completed races."
+  },
+  "Clubs": {
+    "title": "Running Clubs",
+    "subtitle": "Club rankings by number of Ridder Race Series participants",
+    "colClub": "Club",
+    "colParticipants": "Participants",
+    "colEvents": "Races",
+    "colMembers": "Members",
+    "empty": "No data yet.",
+    "joinPrompt": "Want your club in the rankings? Register for a race and add your club during sign-up.",
+    "joinCta": "Register"
+  },
+  "Certificate": {
+    "eyebrow": "Finisher Certificate",
+    "completedText": "successfully finished",
+    "timeLabel": "Time",
+    "placeLabel": "Place",
+    "bibLabel": "Bib",
+    "categoryLabel": "Category",
+    "printCta": "Save as PDF",
+    "backCta": "My account",
+    "downloadCta": "Finisher certificate"
   }
 }

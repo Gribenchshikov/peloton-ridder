@@ -116,7 +116,7 @@ export async function createRegistrationAction(
       where: { userId, eventId, status: "CANCELLED" },
       orderBy: { createdAt: "desc" },
     });
-    if (cancelled && !cancelled.allowReregistration) {
+    if (cancelled && cancelled.reregistrationCount >= 3) {
       return { kind: "error" as const, error: "registration_blocked" as const };
     }
 
@@ -168,7 +168,7 @@ export async function createRegistrationAction(
       includesTransfer,
     };
     const registration = cancelled
-      ? await tx.registration.update({ where: { id: cancelled.id }, data: reservationData })
+      ? await tx.registration.update({ where: { id: cancelled.id }, data: { ...reservationData, reregistrationCount: { increment: 1 } } })
       : await tx.registration.create({ data: { userId, eventId, ...reservationData } });
 
     // Create RegistrationMerch entries for this event's merch items

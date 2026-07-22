@@ -267,13 +267,15 @@ model Registration {
   user            User               @relation(fields: [userId], references: [id])
   eventId         String
   event           Event              @relation(fields: [eventId], references: [id])
-  distanceId      String
-  distance        Distance           @relation(fields: [distanceId], references: [id])
+  distanceId      String?
+  distance        Distance?          @relation(fields: [distanceId], references: [id])
+  isTransferOnly  Boolean            @default(false)
   status          RegistrationStatus @default(RESERVED)
   bibNumber       Int?
   reservedUntil   DateTime?
   adminComment    String?
-  allowReregistration Boolean        @default(false)
+  allowReregistration   Boolean      @default(false)
+  reregistrationCount  Int          @default(0)
   disqualified    Boolean            @default(false)
   kaspiOrderId    String?
   kaspiPaymentUrl String?

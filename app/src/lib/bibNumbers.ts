@@ -22,6 +22,7 @@ export async function reassignPaidBibNumbers(
 
   const nextByDistance = new Map<string, number>();
   for (const registration of registrations) {
+    if (!registration.distanceId || !registration.distance) continue;
     const next = nextByDistance.get(registration.distanceId) ?? registration.distance.bibRangeStart;
     if (next > registration.distance.bibRangeEnd) {
       throw new Error(`Bib range exhausted for distance ${registration.distanceId}`);

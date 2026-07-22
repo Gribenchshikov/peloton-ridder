@@ -39,19 +39,22 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
       return { reg: registration, justPaid: false };
     }
 
-    const taken = await tx.registration.findMany({
-      where: { distanceId: registration.distanceId, status: "PAID" },
-      select: { bibNumber: true },
-    });
-    const takenNumbers = new Set(taken.map((r) => r.bibNumber));
-    let bibNumber = registration.distance.bibRangeStart;
-    while (takenNumbers.has(bibNumber) && bibNumber <= registration.distance.bibRangeEnd) {
-      bibNumber++;
+    let bibNumber: number | undefined;
+    if (registration.distance && registration.distanceId) {
+      const taken = await tx.registration.findMany({
+        where: { distanceId: registration.distanceId, status: "PAID" },
+        select: { bibNumber: true },
+      });
+      const takenNumbers = new Set(taken.map((r) => r.bibNumber));
+      bibNumber = registration.distance.bibRangeStart;
+      while (takenNumbers.has(bibNumber) && bibNumber <= registration.distance.bibRangeEnd) {
+        bibNumber++;
+      }
     }
 
     const updated = await tx.registration.update({
       where: { id: registrationId },
-      data: { status: "PAID", bibNumber },
+      data: { status: "PAID", ...(bibNumber !== undefined ? { bibNumber } : {}) },
     });
     return { reg: updated, justPaid: true };
   });
@@ -91,7 +94,7 @@ async function sendConfirmationEmail(registrationId: string) {
     reg.user.email,
     name,
     raceName,
-    reg.distance.name,
+    reg.distance?.name ?? "Трансфер",
     reg.bibNumber,
     reg.event.dateISO,
     reg.event.location,

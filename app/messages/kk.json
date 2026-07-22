@@ -241,7 +241,7 @@
     "errorClosed": "Бұл старттка тіркелу жабылған.",
     "errorInvalid": "Тізімнен дистанцияны таңдаңыз.",
     "errorEmailUnverified": "Орынды брондамас бұрын email-ды растаңыз.",
-    "errorRegistrationBlocked": "Бұл жарысқа қайта тіркелу әзірге қолжетімсіз. Ұйымдастырушыға хабарласыңыз.",
+    "errorRegistrationBlocked": "Бұл жарысқа қайта тіркелу лимиті сарқылды. Қатысқыңыз келсе, ұйымдастырушыға жазыңыз.",
     "emailVerificationTitle": "Email-ды растаңыз",
     "emailVerificationText": "Жарысқа тіркелу үшін {email} мекенжайына жіберілген хаттағы сілтемеге өтіңіз.",
     "participantTitle": "Қатысушы деректері",
@@ -255,10 +255,19 @@
     "includedLabel": "Қосылған",
     "selectSizeLabel": "Өлшемді таңдаңыз",
     "sizeGuideLink": "Өлшем кестесі",
+    "sizeGuideTitle": "Өлшем кестесі",
+    "sizeGuideNote": "Барлық өлшемдер сантиметрмен. Іш киіммен өлшеңіз.",
+    "sizeGuideColSize": "Өлшем",
+    "sizeGuideColChest": "Кеуде",
+    "sizeGuideColWaist": "Бел",
+    "sizeGuideColHip": "Жамбас",
+    "sizeGuideCm": "Бірлік: сантиметр (см)",
+    "sizeGuideExternal": "Сайттағы толық кесте",
     "sizeFromProfile": "Өлшем профильден алынды · өзгертуге болады",
     "errorMissingSize": "Барлық мерч позицияларына өлшем таңдаңыз.",
     "clubLabel": "Жүгіру клубы",
     "clubOptional": "міндетті емес",
+    "clubRegisterCta": "Клубты тіркеуге өтінім беру",
     "clubNone": "Көрсетілмеген",
     "promoLabel": "Промокод",
     "promoApply": "Қолдану",
@@ -272,6 +281,8 @@
     "showQrCta": "Билетті ашу",
     "backToEventCta": "Жарыс бетіне оралу",
     "transferIncluded": "Трансфер қосылған",
+    "transferTitle": "Трансфер",
+    "transferRoute": "{location} → старт орны және кері",
     "contactOrganizerNote": "Сұрағыңыз болса — ұйымдастырушыға жазыңыз.",
     "contactOrganizerCta": "Ұйымдастырушыға жазу",
     "contactOrganizerTitle": "Ұйымдастырушыға хабарлама",
@@ -298,6 +309,7 @@
     "simulateCta": "Төлемді сынау",
     "paidTitle": "Төлем расталды",
     "paidText": "Сіздің старт нөміріңіз: {bib}",
+    "cancelReservationCta": "Брондауды болдырмау",
     "cancelledTitle": "Тіркелу бас тартылды",
     "toAccountCta": "Жеке кабинетке",
     "viewTicketCta": "Билетті ашу"
@@ -680,5 +692,32 @@
     "eventsSubtitle": "Еріктілікке өтінім беріңіз — іс-шараға жақын хабарласамыз.",
     "applyCta": "Өтінім беру",
     "noEvents": "Қазір ашық жарыстар жоқ. Хабарландыруларды қадағалаңыз."
+  },
+  "HallOfFame": {
+    "title": "Даңқ залы",
+    "subtitle": "Ridder Race Series барлық кезеңдерінің үздік финишерлері",
+    "empty": "Нәтижелер алғашқы аяқталған жарыстардан кейін пайда болады."
+  },
+  "Clubs": {
+    "title": "Жүгіру клубтары",
+    "subtitle": "Ridder Race Series қатысушылары бойынша клубтар рейтингі",
+    "colClub": "Клуб",
+    "colParticipants": "Қатысушылар",
+    "colEvents": "Стартар",
+    "colMembers": "Мүшелер",
+    "empty": "Деректер жоқ.",
+    "joinPrompt": "Клубыңызды рейтингте көргіңіз келе ме? Жарысқа тіркеліп, тіркелу кезінде клубыңызды көрсетіңіз.",
+    "joinCta": "Тіркелу"
+  },
+  "Certificate": {
+    "eyebrow": "Финишер сертификаты",
+    "completedText": "жарысты сәтті аяқтады",
+    "timeLabel": "Уақыт",
+    "placeLabel": "Орын",
+    "bibLabel": "Нөмір",
+    "categoryLabel": "Санат",
+    "printCta": "PDF сақтау",
+    "backCta": "Жеке кабинет",
+    "downloadCta": "Финишер сертификаты"
   }
 }

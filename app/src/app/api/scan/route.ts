@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       tshirtSize: reg.user.tshirtSize,
     },
     event: `${reg.event.race.name} ${reg.event.year}`,
-    distance: `${reg.distance.name} (${reg.distance.km} км)`,
+    distance: reg.distance ? `${reg.distance.name} (${reg.distance.km} км)` : "Трансфер",
     merch: reg.registrationMerch.map((m) => ({
       name: m.merchItem.name,
       size: m.merchItem.requiresSize ? m.size : null,

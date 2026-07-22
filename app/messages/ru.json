@@ -241,7 +241,7 @@
     "errorClosed": "Регистрация на этот старт уже закрыта.",
     "errorInvalid": "Выберите дистанцию из списка.",
     "errorEmailUnverified": "Подтвердите email, прежде чем бронировать место.",
-    "errorRegistrationBlocked": "Повторная регистрация для этого забега пока недоступна. Свяжитесь с организатором.",
+    "errorRegistrationBlocked": "Вы исчерпали лимит повторных регистраций на этот забег. Напишите организатору, если хотите участвовать.",
     "emailVerificationTitle": "Подтвердите email",
     "emailVerificationText": "Для регистрации на забег перейдите по ссылке в письме, которое мы отправили на {email}.",
     "participantTitle": "Данные участника",
@@ -255,10 +255,19 @@
     "includedLabel": "Включено",
     "selectSizeLabel": "Выберите размер",
     "sizeGuideLink": "Таблица размеров",
+    "sizeGuideTitle": "Таблица размеров",
+    "sizeGuideNote": "Все размеры — обхват в сантиметрах. Снимайте мерки на нижнем белье.",
+    "sizeGuideColSize": "Размер",
+    "sizeGuideColChest": "Грудь",
+    "sizeGuideColWaist": "Талия",
+    "sizeGuideColHip": "Бёдра",
+    "sizeGuideCm": "Единицы: сантиметры (см)",
+    "sizeGuideExternal": "Подробная таблица на сайте",
     "sizeFromProfile": "Размер из профиля · можно изменить",
     "errorMissingSize": "Выберите размер для всех позиций мерча.",
     "clubLabel": "Беговой клуб",
     "clubOptional": "необязательно",
+    "clubRegisterCta": "Подать заявку на регистрацию клуба",
     "clubNone": "Не указан",
     "promoLabel": "Промокод",
     "promoApply": "Применить",
@@ -272,6 +281,8 @@
     "showQrCta": "Открыть билет",
     "backToEventCta": "К странице забега",
     "transferIncluded": "Трансфер включён",
+    "transferTitle": "Трансфер",
+    "transferRoute": "{location} → место старта и обратно",
     "contactOrganizerNote": "Если у вас вопрос — напишите организатору.",
     "contactOrganizerCta": "Написать организатору",
     "contactOrganizerTitle": "Сообщение организатору",
@@ -298,6 +309,7 @@
     "simulateCta": "Симулировать оплату (тест)",
     "paidTitle": "Оплата подтверждена",
     "paidText": "Ваш стартовый номер: {bib}",
+    "cancelReservationCta": "Отменить бронирование",
     "cancelledTitle": "Регистрация отменена",
     "toAccountCta": "В личный кабинет",
     "viewTicketCta": "Открыть билет"
@@ -680,5 +692,32 @@
     "eventsSubtitle": "Подайте заявку на волонтёрство — мы свяжемся с вами ближе к событию.",
     "applyCta": "Подать заявку",
     "noEvents": "Сейчас нет открытых забегов. Следите за анонсами."
+  },
+  "HallOfFame": {
+    "title": "Зал славы",
+    "subtitle": "Лучшие финишёры всех этапов Ridder Race Series",
+    "empty": "Результаты появятся после первых завершённых забегов."
+  },
+  "Clubs": {
+    "title": "Беговые клубы",
+    "subtitle": "Рейтинг клубов по числу участников Ridder Race Series",
+    "colClub": "Клуб",
+    "colParticipants": "Участников",
+    "colEvents": "Стартов",
+    "colMembers": "Членов",
+    "empty": "Пока нет данных.",
+    "joinPrompt": "Хотите видеть свой клуб в рейтинге? Зарегистрируйтесь на забег и укажите клуб при регистрации.",
+    "joinCta": "Зарегистрироваться"
+  },
+  "Certificate": {
+    "eyebrow": "Сертификат финишёра",
+    "completedText": "успешно финишировал в",
+    "timeLabel": "Время",
+    "placeLabel": "Место",
+    "bibLabel": "Номер",
+    "categoryLabel": "Категория",
+    "printCta": "Сохранить PDF",
+    "backCta": "Личный кабинет",
+    "downloadCta": "Сертификат финишёра"
   }
 }

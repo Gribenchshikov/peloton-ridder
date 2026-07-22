@@ -63,13 +63,16 @@ export async function sendAdminAlertEmail(
 export async function sendOrganizerMessageEmail(
   userName: string,
   userEmail: string,
+  userPhone: string | null,
   raceName: string,
   message: string,
 ) {
   const to = process.env.ORGANIZER_EMAIL ?? process.env.AUTH_EMAIL_FROM ?? "info@ridder.run";
   const subject = `[Ridder] Сообщение от участника — ${raceName}`;
-  const text = `Сообщение от участника\n\nИмя: ${userName}\nEmail: ${userEmail}\nЗабег: ${raceName}\n\n${message}`;
-  const html = `<h3 style="margin:0 0 12px">Сообщение от участника</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Имя</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr></table><p style="margin:16px 0;white-space:pre-wrap">${message}</p><p style="color:#888;font-size:12px">Peloton Ridder</p>`;
+  const phoneRow = userPhone ? `\nТелефон: ${userPhone}` : "";
+  const phoneHtmlRow = userPhone ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Телефон</td><td><a href="tel:${userPhone}">${userPhone}</a></td></tr>` : "";
+  const text = `Сообщение от участника\n\nИмя: ${userName}\nEmail: ${userEmail}${phoneRow}\nЗабег: ${raceName}\n\n${message}`;
+  const html = `<h3 style="margin:0 0 12px">Сообщение от участника</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Имя</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr>${phoneHtmlRow}<tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr></table><p style="margin:16px 0;white-space:pre-wrap">${message}</p><p style="color:#888;font-size:12px">Peloton Ridder</p>`;
   await sendMail(to, subject, text, html);
 }
 

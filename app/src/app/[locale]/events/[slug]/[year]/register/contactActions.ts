@@ -18,7 +18,7 @@ export async function sendMessageToOrganizerAction(
   const [user, event] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { firstName: true, lastName: true, email: true },
+      select: { firstName: true, lastName: true, email: true, phone: true },
     }),
     prisma.event.findUnique({
       where: { id: eventId },
@@ -32,6 +32,7 @@ export async function sendMessageToOrganizerAction(
   await sendOrganizerMessageEmail(
     `${user.firstName} ${user.lastName}`,
     user.email,
+    user.phone ?? null,
     raceName,
     trimmed,
   );

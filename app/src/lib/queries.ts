@@ -164,6 +164,7 @@ export function getUserProfile(userId: string) {
             },
           },
           distance: { select: { name: true, km: true } },
+          result: { select: { id: true, place: true, time: true } },
         },
         orderBy: { createdAt: "desc" },
         take: REGISTRATION_HISTORY_LIMIT,

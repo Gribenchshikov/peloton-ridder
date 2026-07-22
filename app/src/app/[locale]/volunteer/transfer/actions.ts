@@ -39,7 +39,7 @@ export async function lookupTransferAction(registrationId: string): Promise<Scan
     kind: "ok",
     registrationId: reg.id,
     name: `${reg.user.firstName} ${reg.user.lastName}`,
-    distance: `${reg.distance.name} · ${reg.distance.km} км`,
+    distance: `${reg.distance?.name ?? "Трансфер"}${reg.distance ? ` · ${reg.distance.km} км` : ""}`,
     race: `${reg.event.race.name} ${reg.event.year}`,
     bibNumber: reg.bibNumber,
     transferUsedAt: reg.transferUsedAt,

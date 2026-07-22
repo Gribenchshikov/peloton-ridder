@@ -91,7 +91,9 @@ function AlreadyRegistered({
         </p>
         <p className="mt-1 text-sm text-ink-faint">{t("contactOrganizerNote")}</p>
         <div className="mt-4 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3">
-          <p className="text-xs text-ink-faint">{registration.distance.name} · {registration.distance.km} км</p>
+          <p className="text-xs text-ink-faint">
+            {registration.distance ? `${registration.distance.name} · ${registration.distance.km} км` : "Трансфер"}
+          </p>
           {registration.bibNumber && (
             <p className="mt-1 font-display text-3xl font-bold text-ink">
               #{registration.bibNumber}

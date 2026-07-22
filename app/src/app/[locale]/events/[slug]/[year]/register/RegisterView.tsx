@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { Icon } from "@/components/IconSprite";
 import type { getEventForRegistration, getUserContactInfo } from "@/lib/queries";
 import { fullName } from "@/lib/user";
 import { DistanceSelect } from "./DistanceSelect";
@@ -39,7 +40,14 @@ export function RegisterView({
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
       <div>
-        <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
+        <Link
+          href={`/events/${event.race.slug}/${event.year}`}
+          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-ink-faint transition-colors hover:text-ink"
+        >
+          <Icon name="i-arrow" className="h-4 w-4 rotate-180" />
+          {event.race.name} {event.year}
+        </Link>
+        <span className="block text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
         <h1 className="mt-2 font-display text-2xl font-bold text-ink">
           {t("title", { race: `${event.race.name} ${event.year}` })}
         </h1>

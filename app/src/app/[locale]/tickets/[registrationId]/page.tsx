@@ -88,7 +88,7 @@ export default async function TicketPage({
           </div>
           <div>
             <dt className="text-xs text-ink-faint">{t("fieldDistance")}</dt>
-            <dd className="mt-0.5 font-semibold text-ink">{reg.distance.name} · {reg.distance.km} km</dd>
+            <dd className="mt-0.5 font-semibold text-ink">{reg.distance?.name ?? "Трансфер"}{reg.distance ? ` · ${reg.distance.km} km` : ""}</dd>
           </div>
           <div>
             <dt className="text-xs text-ink-faint">{t("fieldDate")}</dt>

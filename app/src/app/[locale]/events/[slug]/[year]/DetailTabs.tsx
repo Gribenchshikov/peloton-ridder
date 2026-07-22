@@ -20,7 +20,7 @@ type Tab = "about" | "regulation" | "results" | "participants" | "profile" | "da
 type Registration = {
   id: string;
   user: { firstName: string; lastName: string };
-  distance: { name: string };
+  distance: { name: string } | null;
   bibNumber: number | null;
 };
 
@@ -449,7 +449,7 @@ export function DetailTabs({
                       {registrations.map((r) => (
                         <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                           <td className="px-4 py-2.5 font-semibold text-ink">{fullName(r.user)}</td>
-                          <td className="px-4 py-2.5 text-ink-soft">{r.distance.name}</td>
+                          <td className="px-4 py-2.5 text-ink-soft">{r.distance?.name ?? "Трансфер"}</td>
                           <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
                             {r.bibNumber != null ? `#${r.bibNumber}` : "—"}
                           </td>

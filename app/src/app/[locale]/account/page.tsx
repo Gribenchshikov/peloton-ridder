@@ -203,6 +203,7 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
   const t = useTranslations("Account");
   const tCommon = useTranslations("Common");
   const tStatus = useTranslations("RegistrationStatus");
+  const tCert = useTranslations("Certificate");
   const format = useFormatter();
 
   return (
@@ -224,7 +225,7 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                   {reg.event.race.name} {reg.event.year}
                 </Link>
                 <p className="mt-0.5 text-sm text-ink-soft">
-                  {reg.distance.name} · {reg.distance.km} {tCommon("km")}
+                  {reg.distance ? `${reg.distance.name} · ${reg.distance.km} ${tCommon("km")}` : "Трансфер"}
                   {reg.bibNumber && ` · №${reg.bibNumber}`}
                 </p>
               </div>
@@ -237,6 +238,14 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                     className="text-xs font-semibold text-ember hover:underline"
                   >
                     {t("showQrCta")}
+                  </Link>
+                )}
+                {reg.result && (
+                  <Link
+                    href={`/certificate/${reg.result.id}`}
+                    className="text-xs font-semibold text-spruce hover:underline"
+                  >
+                    🏅 {tCert("downloadCta")}
                   </Link>
                 )}
                 {(reg.status === "RESERVED" || reg.status === "PAID") &&

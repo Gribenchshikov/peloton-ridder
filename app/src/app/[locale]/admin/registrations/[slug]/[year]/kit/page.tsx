@@ -103,7 +103,7 @@ export default async function KitPickupListPage({
                           {reg.user.firstName} {reg.user.lastName}
                         </td>
                         <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
-                        <td className="px-4 py-2.5 text-ink-soft">{reg.distance.name}</td>
+                        <td className="px-4 py-2.5 text-ink-soft">{reg.distance?.name ?? "Трансфер"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -139,7 +139,7 @@ export default async function KitPickupListPage({
                           {reg.user.firstName} {reg.user.lastName}
                         </td>
                         <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
-                        <td className="px-4 py-2.5 text-ink-soft">{reg.distance.name}</td>
+                        <td className="px-4 py-2.5 text-ink-soft">{reg.distance?.name ?? "Трансфер"}</td>
                         <td className="px-4 py-2.5 text-right">
                           <span className="text-xs font-semibold text-spruce">
                             ✓{" "}

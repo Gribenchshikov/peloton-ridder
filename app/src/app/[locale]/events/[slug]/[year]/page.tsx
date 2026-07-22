@@ -169,7 +169,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
           {/* RIGHT: sticky sidebar */}
           <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
-            {/* Distances + CTA */}
+            {/* 1. Distances + Register CTA */}
             <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
               <h3 className="mb-4 font-display text-base font-bold text-ink">{t("distancesTitle")}</h3>
               <div className="flex flex-col gap-3">
@@ -205,31 +205,6 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
                     {t("registerCta")}
                   </Link>
                   <p className="mt-2 text-center text-[0.74rem] text-ink-faint">{t("paymentHint")}</p>
-
-                  {/* Volunteer CTA */}
-                  <div className="mt-4 rounded-[var(--radius-s)] border border-dashed border-border bg-surface-2 p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-ink">{t("volunteerCtaTitle")}</p>
-                      <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-ink-faint">
-                        {t("volunteerCtaBadge")}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-xs leading-5 text-ink-soft">{t("volunteerCtaText")}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <Link
-                        href={`/volunteer/apply?eventId=${event.id}`}
-                        className="rounded-[var(--radius-s)] border border-border bg-surface px-4 py-2 text-xs font-bold text-ink transition-colors hover:bg-surface-2"
-                      >
-                        {t("volunteerCtaApply")}
-                      </Link>
-                      <Link
-                        href="/volunteer"
-                        className="text-xs font-semibold text-ember hover:underline"
-                      >
-                        {t("volunteerCtaLearnMore")} →
-                      </Link>
-                    </div>
-                  </div>
                 </>
               ) : (
                 <div className="mt-5 w-full rounded-[var(--radius-s)] bg-surface-2 px-5 py-3 text-center text-sm font-bold text-ink-faint">
@@ -238,7 +213,28 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               )}
             </div>
 
-            {/* Key dates */}
+            {/* 2. Transfer block */}
+            {event.transferPrice != null && event.status === "OPEN" && (
+              <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+                <h3 className="mb-1 font-display text-base font-bold text-ink">{t("transferTitle")}</h3>
+                <p className="text-sm text-ink-soft">
+                  {event.location
+                    ? t("transferRoute", { location: event.location })
+                    : t("transferText", { price: formatKzt(format, event.transferPrice) })}
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-ink">
+                  {t("transferText", { price: formatKzt(format, event.transferPrice) })}
+                </p>
+                <Link
+                  href={`/events/${event.race.slug}/${event.year}/transfer`}
+                  className="mt-4 flex w-full items-center justify-center rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+                >
+                  {t("transferOrder")}
+                </Link>
+              </div>
+            )}
+
+            {/* 3. Key dates */}
             <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
               <h3 className="mb-4 font-display text-base font-bold text-ink">{t("keyDatesTitle")}</h3>
               <dl className="flex flex-col gap-3 text-sm">
@@ -263,13 +259,30 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               </dl>
             </div>
 
-            {/* Transfer */}
-            {event.transferPrice != null && (
+            {/* 4. Volunteer block */}
+            {event.status === "OPEN" && (
               <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
-                <h3 className="mb-2 font-display text-base font-bold text-ink">{t("transferTitle")}</h3>
-                <p className="text-sm text-ink-soft">
-                  {t("transferText", { price: formatKzt(format, event.transferPrice) })}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-display text-base font-bold text-ink">{t("volunteerCtaTitle")}</h3>
+                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-ink-faint">
+                    {t("volunteerCtaBadge")}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-5 text-ink-soft">{t("volunteerCtaText")}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <Link
+                    href={`/volunteer/apply?eventId=${event.id}`}
+                    className="rounded-[var(--radius-s)] bg-ember px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+                  >
+                    {t("volunteerCtaApply")}
+                  </Link>
+                  <Link
+                    href="/volunteer"
+                    className="text-sm font-semibold text-ink-faint transition-colors hover:text-ink"
+                  >
+                    {t("volunteerCtaLearnMore")} →
+                  </Link>
+                </div>
               </div>
             )}
 

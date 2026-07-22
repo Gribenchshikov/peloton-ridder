@@ -64,7 +64,7 @@ export async function cancelRegistrationAction(
     });
     if (!registration || registration.eventId !== eventId) return { error: "not_found" as const };
 
-    await lockDistances(tx, [registration.distanceId]);
+    if (registration.distanceId) await lockDistances(tx, [registration.distanceId]);
     const hasResults = await tx.result.findFirst({ where: { eventId }, select: { id: true } });
     if (hasResults) return { error: "has_results" as const };
     if (!isActiveStatus(registration.status)) return { error: "inactive" as const };
@@ -112,19 +112,22 @@ export async function restoreRegistrationAction(
     });
     if (!registration || registration.eventId !== eventId) return { error: "not_found" as const };
 
-    await lockDistances(tx, [registration.distanceId]);
+    if (registration.distanceId) await lockDistances(tx, [registration.distanceId]);
     const hasResults = await tx.result.findFirst({ where: { eventId }, select: { id: true } });
     if (hasResults) return { error: "has_results" as const };
     if (registration.status !== "CANCELLED") return { error: "inactive" as const };
 
     const paid = parsed.data.paid === true;
-    const distance = await tx.distance.findUnique({
-      where: { id: registration.distanceId },
-      select: { bibRangeStart: true, bibRangeEnd: true },
-    });
-    if (!distance) return { error: "invalid" as const };
+    const distance = registration.distanceId
+      ? await tx.distance.findUnique({
+          where: { id: registration.distanceId },
+          select: { bibRangeStart: true, bibRangeEnd: true },
+        })
+      : null;
 
-    const activeCount = await tx.registration.count({
+    if (registration.distanceId && !distance) return { error: "invalid" as const };
+
+    const activeCount = registration.distanceId ? await tx.registration.count({
       where: {
         distanceId: registration.distanceId,
         id: { not: registrationId },
@@ -133,9 +136,11 @@ export async function restoreRegistrationAction(
           { status: "RESERVED", reservedUntil: { gt: new Date() } },
         ],
       },
-    });
-    const capacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
-    if (activeCount >= capacity) return { error: "full" as const };
+    }) : 0;
+    if (distance) {
+      const capacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
+      if (activeCount >= capacity) return { error: "full" as const };
+    }
 
     await tx.registration.update({
       where: { id: registrationId },
@@ -182,7 +187,7 @@ export async function changeRegistrationDistanceAction(
     if (!registration || registration.eventId !== eventId) return { error: "not_found" as const };
     if (registration.distanceId === parsed.data.distanceId) return { success: "distance_changed" as const };
 
-    await lockDistances(tx, [registration.distanceId, parsed.data.distanceId]);
+    await lockDistances(tx, [registration.distanceId, parsed.data.distanceId].filter(Boolean) as string[]);
     const [targetDistance, hasResults] = await Promise.all([
       tx.distance.findUnique({
         where: { id: parsed.data.distanceId },

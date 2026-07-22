@@ -4,9 +4,12 @@ import { useActionState, useState, useTransition } from "react";
 import { checkPromoAction } from "@/lib/promoActions";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { Link } from "@/i18n/navigation";
 import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { DistanceInfo } from "@/components/DistanceInfo";
 import { createRegistrationAction, type CreateRegistrationState } from "./actions";
+import { ContactOrganizerButton } from "./ContactOrganizerButton";
+import { SizeGuideModal } from "./SizeGuideModal";
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 type Size = (typeof SIZES)[number];
@@ -153,11 +156,7 @@ export function DistanceSelect({
               <div className="flex items-baseline justify-between">
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-semibold text-ink">{item.name}</span>
-                  {tshirtSizeGuideUrl && (
-                    <a href={tshirtSizeGuideUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-ember hover:underline">
-                      {t("sizeGuideLink")} →
-                    </a>
-                  )}
+                  <SizeGuideModal externalUrl={tshirtSizeGuideUrl} />
                 </div>
                 {!sizes[item.id] && <span className="text-xs text-warn">{t("selectSizeLabel")}</span>}
               </div>
@@ -189,25 +188,6 @@ export function DistanceSelect({
             </div>
           ))}
         </div>
-      )}
-
-      {/* Transfer option */}
-      {transferPrice && location && (
-        <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3 transition-colors has-[:checked]:border-ember has-[:checked]:bg-ember/5">
-          <input
-            type="checkbox"
-            name="includesTransfer"
-            value="true"
-            className="mt-0.5 accent-ember"
-          />
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-semibold text-ink">{t("transferTitle")}</span>
-            <span className="text-xs text-ink-soft">{t("transferRoute", { location })}</span>
-          </div>
-          <span className="ml-auto shrink-0 text-sm font-bold text-ink">
-            {transferPrice.toLocaleString("ru-KZ")} ₸
-          </span>
-        </label>
       )}
 
       {/* Promo code */}
@@ -247,6 +227,9 @@ export function DistanceSelect({
           <label className="text-sm font-semibold text-ink-soft">
             {t("clubLabel")}
             <span className="ml-1.5 text-xs font-normal text-ink-faint">{t("clubOptional")}</span>
+            <Link href="/account" className="ml-2 text-xs font-normal text-ember hover:underline">
+              {t("clubRegisterCta")}
+            </Link>
           </label>
           <select
             name="runningClubId"
@@ -287,7 +270,14 @@ export function DistanceSelect({
       {state.error === "closed" && <p className="text-sm text-danger">{t("errorClosed")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
       {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
-      {state.error === "registration_blocked" && <p className="text-sm text-danger">{t("errorRegistrationBlocked")}</p>}
+      {state.error === "registration_blocked" && (
+        <div className="rounded-[var(--radius-s)] border border-danger/30 bg-danger/5 p-4">
+          <p className="text-sm text-danger">{t("errorRegistrationBlocked")}</p>
+          <div className="mt-3">
+            <ContactOrganizerButton eventId={eventId} />
+          </div>
+        </div>
+      )}
       {state.error === "missing_size" && <p className="text-sm text-danger">{t("errorMissingSize")}</p>}
       {state.error === "age_required" && <p className="text-sm text-danger">{t("errorAgeRequired")}</p>}
       {state.error === "age_too_young" && <p className="text-sm text-danger">{t("errorAgeTooYoung")}</p>}
@@ -303,6 +293,25 @@ export function DistanceSelect({
       >
         {pending ? t("submitting") : t("submitCta")}
       </button>
+
+      {/* Transfer option — below submit, orange accent */}
+      {transferPrice && location && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-s)] border border-ember/30 bg-ember/5 px-4 py-3 transition-colors has-[:checked]:border-ember has-[:checked]:bg-ember/10">
+          <input
+            type="checkbox"
+            name="includesTransfer"
+            value="true"
+            className="mt-0.5 accent-ember"
+          />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-ember">{t("transferTitle")}</span>
+            <span className="text-xs text-ink-soft">{t("transferRoute", { location })}</span>
+          </div>
+          <span className="ml-auto shrink-0 text-sm font-bold text-ember">
+            +{transferPrice.toLocaleString("ru-KZ")} ₸
+          </span>
+        </label>
+      )}
     </form>
   );
 }

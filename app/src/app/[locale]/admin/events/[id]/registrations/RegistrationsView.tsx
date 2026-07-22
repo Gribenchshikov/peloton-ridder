@@ -37,7 +37,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
     event.distances.map((d) => [d.id, d.bibRangeEnd - d.bibRangeStart + 1])
   );
   const paidByDistance = Object.fromEntries(
-    event.distances.map((d) => [d.id, paid.filter((r) => r.distance.id === d.id).length])
+    event.distances.map((d) => [d.id, paid.filter((r) => r.distance?.id === d.id).length])
   );
 
   return (
@@ -194,7 +194,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                   <td className="px-4 py-2.5 text-ink-soft">{reg.user.email}</td>
                   <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
                   <td className="px-4 py-2.5 text-ink-soft">
-                    {reg.distance.name}
+                    {reg.distance?.name ?? "Трансфер"}
                   </td>
                   <td className="px-4 py-2.5">
                     <StatusBadge status={reg.status} />
@@ -209,7 +209,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                     <RegistrationActions
                       registrationId={reg.id}
                       eventId={event.id}
-                      distanceId={reg.distance.id}
+                      distanceId={reg.distance?.id ?? ""}
                       status={reg.status}
                       allowReregistration={reg.allowReregistration}
                       distances={event.distances}
