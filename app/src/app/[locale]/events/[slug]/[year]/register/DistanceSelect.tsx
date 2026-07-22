@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { checkPromoAction } from "@/lib/promoActions";
 import { parseParticipantRules } from "@/types/participantRules";
+import { type SizeRow } from "@/types/sizeTable";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
@@ -49,7 +50,7 @@ export function DistanceSelect({
   distances,
   merchItems,
   clubs,
-  tshirtSizeGuideUrl,
+  sizeTableRows,
   hasBirthDate,
   defaultTshirtSize,
   transferPrice,
@@ -61,7 +62,7 @@ export function DistanceSelect({
   distances: DistanceOption[];
   merchItems: MerchItem[];
   clubs: RunningClub[];
-  tshirtSizeGuideUrl?: string | null;
+  sizeTableRows?: SizeRow[];
   hasBirthDate: boolean;
   defaultTshirtSize?: string | null;
   transferPrice?: number | null;
@@ -175,7 +176,7 @@ export function DistanceSelect({
               <div className="flex items-baseline justify-between">
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-semibold text-ink">{item.name}</span>
-                  <SizeGuideModal externalUrl={tshirtSizeGuideUrl} />
+                  <SizeGuideModal rows={sizeTableRows} />
                 </div>
                 {!sizes[item.id] && <span className="text-xs text-warn">{t("selectSizeLabel")}</span>}
               </div>

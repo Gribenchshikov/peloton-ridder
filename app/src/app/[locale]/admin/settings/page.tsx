@@ -2,8 +2,10 @@ import { requireAdminPage } from "@/lib/session";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getSiteSetting } from "@/lib/queries";
+import { parseSizeTable } from "@/types/sizeTable";
 import { SettingsView } from "./SettingsView";
 import { RegistrationToggle } from "./RegistrationToggle";
+import { SizeTableEditor } from "./SizeTableEditor";
 
 export default async function SettingsPage({
   params,
@@ -13,13 +15,15 @@ export default async function SettingsPage({
   const { locale } = await params;
   await requireAdminPage(locale, "/admin/settings");
 
-  const [t, heroBgUrl, registrationsOpen] = await Promise.all([
+  const [t, heroBgUrl, registrationsOpen, sizeTableRaw] = await Promise.all([
     getTranslations("Admin"),
     getSiteSetting("hero_bg_url"),
     getSiteSetting("registrations_open"),
+    getSiteSetting("tshirt_size_table"),
   ]);
 
   const isOpen = registrationsOpen !== "false";
+  const sizeRows = parseSizeTable(sizeTableRaw);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
@@ -32,6 +36,8 @@ export default async function SettingsPage({
 
       <div className="flex flex-col gap-6">
         <RegistrationToggle initialOpen={isOpen} />
+
+        <SizeTableEditor initialRows={sizeRows} />
 
         <SettingsView
           currentUrl={heroBgUrl || null}

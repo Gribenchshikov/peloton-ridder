@@ -32,3 +32,10 @@ export async function getHeroBgAction() {
   if (!adminId) throw new Error("Unauthorized");
   return getSiteSetting("hero_bg_url");
 }
+
+export async function saveSizeTableAction(json: string) {
+  const adminId = await requireAdminId();
+  if (!adminId) throw new Error("Unauthorized");
+  await upsertSiteSetting("tshirt_size_table", json);
+  return { ok: true };
+}

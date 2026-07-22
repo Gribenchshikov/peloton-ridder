@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import type { getEventForRegistration, getUserContactInfo } from "@/lib/queries";
 import { fullName } from "@/lib/user";
+import { type SizeRow } from "@/types/sizeTable";
 import { DistanceSelect } from "./DistanceSelect";
 
 type BaseEvent = NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
@@ -20,7 +21,7 @@ export function RegisterView({
   locale,
   clubs,
   callbackPath,
-  tshirtSizeGuideUrl,
+  sizeTableRows,
   hasBirthDate,
   defaultTshirtSize,
   defaultClubId,
@@ -30,7 +31,7 @@ export function RegisterView({
   locale: string;
   clubs: RunningClub[];
   callbackPath: string;
-  tshirtSizeGuideUrl?: string | null;
+  sizeTableRows?: SizeRow[];
   hasBirthDate: boolean;
   defaultTshirtSize?: string | null;
   defaultClubId?: string | null;
@@ -53,7 +54,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} tshirtSizeGuideUrl={tshirtSizeGuideUrl} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} transferPrice={event.transferPrice} location={event.location} defaultClubId={defaultClubId} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} sizeTableRows={sizeTableRows} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} transferPrice={event.transferPrice} location={event.location} defaultClubId={defaultClubId} />
     </main>
   );
 }

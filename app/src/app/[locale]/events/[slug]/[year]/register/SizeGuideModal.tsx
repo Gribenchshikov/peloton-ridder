@@ -2,19 +2,12 @@
 
 import { useRef } from "react";
 import { useTranslations } from "next-intl";
+import { type SizeRow, DEFAULT_SIZE_ROWS } from "@/types/sizeTable";
 
-const ROWS = [
-  { size: "XS",  chest: "80–84", waist: "62–66", hip: "86–90"  },
-  { size: "S",   chest: "84–88", waist: "66–70", hip: "90–94"  },
-  { size: "M",   chest: "88–92", waist: "70–74", hip: "94–98"  },
-  { size: "L",   chest: "92–96", waist: "74–78", hip: "98–102" },
-  { size: "XL",  chest: "96–100", waist: "78–82", hip: "102–106" },
-  { size: "XXL", chest: "100–108", waist: "82–90", hip: "106–114" },
-];
-
-export function SizeGuideModal({ externalUrl }: { externalUrl?: string | null }) {
+export function SizeGuideModal({ rows }: { rows?: SizeRow[] }) {
   const t = useTranslations("Registration");
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const data = rows && rows.length > 0 ? rows : DEFAULT_SIZE_ROWS;
 
   return (
     <>
@@ -55,7 +48,7 @@ export function SizeGuideModal({ externalUrl }: { externalUrl?: string | null })
               </tr>
             </thead>
             <tbody>
-              {ROWS.map((row) => (
+              {data.map((row) => (
                 <tr key={row.size} className="border-b border-border last:border-0">
                   <td className="py-2 pr-4 font-bold text-ink">{row.size}</td>
                   <td className="py-2 pr-4 tabular-nums text-ink-soft">{row.chest}</td>
@@ -67,19 +60,6 @@ export function SizeGuideModal({ externalUrl }: { externalUrl?: string | null })
           </table>
           <p className="mt-3 text-xs text-ink-faint">{t("sizeGuideCm")}</p>
         </div>
-
-        {externalUrl && (
-          <div className="border-t border-border px-5 py-3">
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-semibold text-ember hover:underline"
-            >
-              {t("sizeGuideExternal")} →
-            </a>
-          </div>
-        )}
       </dialog>
     </>
   );

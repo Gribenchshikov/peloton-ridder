@@ -13,12 +13,10 @@ export function ProfileForm({
   user,
   locale,
   callbackUrl,
-  tshirtSizeGuideUrl,
 }: {
   user: { firstName: string; lastName: string; email: string; city: string; phone: string; tshirtSize?: string | null; birthDate?: Date | null };
   locale: string;
   callbackUrl?: string;
-  tshirtSizeGuideUrl?: string | null;
 }) {
   const t = useTranslations("Account");
   const tAuth = useTranslations("Auth");
@@ -53,19 +51,7 @@ export function ProfileForm({
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm">
-          <span className="flex items-center justify-between">
-            <span className="font-semibold text-ink-soft">{t("tshirtSize")}</span>
-            {tshirtSizeGuideUrl && (
-              <a
-                href={tshirtSizeGuideUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-semibold text-ember hover:underline"
-              >
-                {t("tshirtSizeGuide")} →
-              </a>
-            )}
-          </span>
+          <span className="font-semibold text-ink-soft">{t("tshirtSize")}</span>
           <select
             name="tshirtSize"
             defaultValue={user.tshirtSize ?? ""}

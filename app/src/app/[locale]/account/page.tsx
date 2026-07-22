@@ -29,10 +29,9 @@ export default async function AccountPage({
   }
 
   const currentYear = new Date().getFullYear();
-  const [profile, thresholdSetting, tshirtGuideUrl, series] = await Promise.all([
+  const [profile, thresholdSetting, series] = await Promise.all([
     getUserProfile(session.user.id),
     prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
-    prisma.siteSetting.findUnique({ where: { key: "tshirt_size_guide_url" } }),
     getSeriesWithRaces(),
   ]);
   const seriesProgress = series
@@ -69,7 +68,6 @@ export default async function AccountPage({
           }}
           locale={locale}
           callbackUrl={callbackUrl}
-          tshirtSizeGuideUrl={tshirtGuideUrl?.value}
         />
         <div className="flex flex-col gap-4 border-t border-border pt-4">
           <ChangeEmailForm currentEmail={profile.email} locale={locale} />
