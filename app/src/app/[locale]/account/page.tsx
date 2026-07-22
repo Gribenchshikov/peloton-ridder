@@ -48,58 +48,90 @@ export default async function AccountPage({
     (a) => a.creditedAt,
   ).length;
 
+  const hasVolunteerBlock =
+    profile.isVolunteer || profile.isAdmin || profile.volunteerApplications.length > 0;
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 py-16">
       <AccountHeader name={`${profile.firstName} ${profile.lastName}`} isAdmin={profile.isAdmin} avatarUrl={profile.avatarUrl} />
-      <ProfileForm
-        user={{
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          email: profile.email,
-          city: profile.city ?? "",
-          phone: profile.phone ?? "",
-          tshirtSize: profile.tshirtSize,
-          birthDate: profile.birthDate,
-        }}
-        locale={locale}
-        callbackUrl={callbackUrl}
-        tshirtSizeGuideUrl={tshirtGuideUrl?.value}
-      />
-      <ChangeEmailForm currentEmail={profile.email} locale={locale} />
-      <ChangePasswordForm />
-      <ClubSection
-        currentClub={profile.runningClub}
-        latestRequest={profile.clubRequests[0] ?? null}
-      />
-      {(profile.isVolunteer || profile.isAdmin) && (
-        <section>
-          <h2 className="font-display text-lg font-bold text-ink">Инструменты волонтёра</h2>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Link
-              href="/volunteer/scan"
-              className="rounded-[var(--radius-s)] border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
-            >
-              QR-сканер выдачи набора →
-            </Link>
-          </div>
-        </section>
-      )}
-      {profile.isVolunteer && (
-        <VolunteerProgress
-          completed={completedVolunteerCount}
-          threshold={volunteerThreshold}
-          rewardClaimedAt={profile.volunteerRewardClaimedAt}
-          savedPromoCode={profile.volunteerPromoCode}
+
+      {/* Профиль + безопасность */}
+      <div className="mt-10 flex flex-col gap-6">
+        <ProfileForm
+          user={{
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            email: profile.email,
+            city: profile.city ?? "",
+            phone: profile.phone ?? "",
+            tshirtSize: profile.tshirtSize,
+            birthDate: profile.birthDate,
+          }}
+          locale={locale}
+          callbackUrl={callbackUrl}
+          tshirtSizeGuideUrl={tshirtGuideUrl?.value}
         />
+        <div className="flex flex-col gap-4 border-t border-border pt-4">
+          <ChangeEmailForm currentEmail={profile.email} locale={locale} />
+          <ChangePasswordForm />
+        </div>
+      </div>
+
+      {/* Беговой клуб */}
+      <div className="mt-10 flex flex-col gap-4 border-t border-border pt-10">
+        <SectionLabel>Беговой клуб</SectionLabel>
+        <ClubSection
+          currentClub={profile.runningClub}
+          latestRequest={profile.clubRequests[0] ?? null}
+        />
+      </div>
+
+      {/* Волонтёрство */}
+      {hasVolunteerBlock && (
+        <div className="mt-10 flex flex-col gap-6 border-t border-border pt-10">
+          <SectionLabel>Волонтёрство</SectionLabel>
+          {(profile.isVolunteer || profile.isAdmin) && (
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/volunteer/scan"
+                className="rounded-[var(--radius-s)] border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+              >
+                QR-сканер выдачи набора →
+              </Link>
+            </div>
+          )}
+          {profile.isVolunteer && (
+            <VolunteerProgress
+              completed={completedVolunteerCount}
+              threshold={volunteerThreshold}
+              rewardClaimedAt={profile.volunteerRewardClaimedAt}
+              savedPromoCode={profile.volunteerPromoCode}
+            />
+          )}
+          {profile.volunteerApplications.length > 0 && (
+            <VolunteerSection applications={profile.volunteerApplications} />
+          )}
+        </div>
       )}
-      {profile.volunteerApplications.length > 0 && (
-        <VolunteerSection applications={profile.volunteerApplications} />
-      )}
+
+      {/* Ridder Race Series */}
       {seriesProgress && seriesProgress.seriesRaces.length > 0 && (
-        <SeriesMedals progress={seriesProgress} year={currentYear} />
+        <div className="mt-10 border-t border-border pt-10">
+          <SeriesMedals progress={seriesProgress} year={currentYear} />
+        </div>
       )}
-      <RegistrationHistory registrations={profile.registrations} />
+
+      {/* История регистраций */}
+      <div className="mt-10 flex flex-col gap-4 border-t border-border pt-10">
+        <RegistrationHistory registrations={profile.registrations} />
+      </div>
     </main>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-xs font-bold uppercase tracking-widest text-ink-faint">{children}</div>
   );
 }
 
@@ -107,14 +139,14 @@ function AccountHeader({ name, isAdmin, avatarUrl }: { name: string; isAdmin: bo
   const t = useTranslations("Account");
   return (
     <div className="flex items-start justify-between gap-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-5">
         <AvatarUpload initialUrl={avatarUrl} name={name} />
         <div>
-          <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
-          <h1 className="mt-1 font-display text-2xl font-bold text-ink">{name}</h1>
+          <span className="text-xs font-bold uppercase tracking-widest text-ember">{t("eyebrow")}</span>
+          <h1 className="mt-1 font-display text-3xl font-bold leading-tight text-ink">{name}</h1>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 pt-1">
         {isAdmin && (
           <Link
             href="/admin"
@@ -148,9 +180,8 @@ const VOLUNTEER_STATUS_STYLES: Record<string, { badge: string; label: string }> 
 
 function VolunteerSection({ applications }: { applications: VolunteerApp[] }) {
   return (
-    <section>
-      <h2 className="font-display text-lg font-bold text-ink">Волонтёрство</h2>
-      <ul className="mt-3 flex flex-col gap-3">
+    <div>
+      <ul className="flex flex-col gap-3">
         {applications.map((app) => {
           const s = VOLUNTEER_STATUS_STYLES[app.status] ?? VOLUNTEER_STATUS_STYLES.PENDING;
           const borderColor =
@@ -195,7 +226,7 @@ function VolunteerSection({ applications }: { applications: VolunteerApp[] }) {
           );
         })}
       </ul>
-    </section>
+    </div>
   );
 }
 
@@ -207,14 +238,14 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
   const format = useFormatter();
 
   return (
-    <section>
-      <h2 className="font-display text-lg font-bold text-ink">{t("historyTitle")}</h2>
+    <section className="flex flex-col gap-4">
+      <div className="text-xs font-bold uppercase tracking-widest text-ink-faint">{t("historyTitle")}</div>
       {registrations.length === 0 ? (
-        <p className="mt-3 rounded-[var(--radius-m)] border border-dashed border-border p-6 text-center text-sm text-ink-faint">
+        <p className="rounded-[var(--radius-m)] border border-dashed border-border p-6 text-center text-sm text-ink-faint">
           {t("historyEmpty")}
         </p>
       ) : (
-        <ul className="mt-3 flex flex-col gap-3">
+        <ul className="flex flex-col gap-3">
           {registrations.map((reg) => (
             <li
               key={reg.id}

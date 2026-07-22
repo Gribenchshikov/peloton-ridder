@@ -25,40 +25,30 @@ export function AvatarUpload({ initialUrl, name }: { initialUrl: string | null; 
   }
 
   return (
-    <form action={formAction} className="flex items-center gap-4">
+    <form action={formAction} className="flex flex-col items-center gap-1.5">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={pending}
-        className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-full focus:outline-none"
+        className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-full focus:outline-none"
         title="Изменить фото"
       >
         {currentUrl ? (
           <img src={currentUrl} alt={name} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-ember text-lg font-bold text-white">
+          <div className="flex h-full w-full items-center justify-center bg-ember text-xl font-bold text-white">
             {initials}
           </div>
         )}
-        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 group-disabled:opacity-0">
-          <span className="text-xs font-bold text-white">{pending ? "…" : "✎"}</span>
+        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 group-disabled:opacity-0">
+          <span className="text-sm font-bold text-white">{pending ? "…" : "✎"}</span>
         </div>
       </button>
-
-      <div className="flex flex-col gap-0.5">
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={pending}
-          className="text-sm font-semibold text-ember hover:underline disabled:opacity-50 text-left"
-        >
-          {pending ? "Загружаем…" : "Изменить фото"}
-        </button>
-        <span className="text-xs text-ink-faint">JPEG, PNG или WebP · макс. 5 МБ</span>
-        {state.error === "tooLarge" && <p className="text-xs text-danger">Файл слишком большой (макс. 5 МБ)</p>}
-        {state.error === "invalidType" && <p className="text-xs text-danger">Только JPEG, PNG или WebP</p>}
-      </div>
-
+      {(state.error === "tooLarge" || state.error === "invalidType") && (
+        <p className="text-xs text-danger">
+          {state.error === "tooLarge" ? "Макс. 5 МБ" : "JPEG / PNG / WebP"}
+        </p>
+      )}
       <input
         ref={inputRef}
         name="avatar"

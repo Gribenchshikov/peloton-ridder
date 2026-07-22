@@ -31,7 +31,8 @@ export function MobileMenu({
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Меню"
-        className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-s)] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+        aria-expanded={open}
+        className="flex h-11 w-11 touch-manipulation items-center justify-center rounded-[var(--radius-s)] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
       >
         {open ? (
           <svg width="18" height="18" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={2}>
@@ -47,7 +48,6 @@ export function MobileMenu({
       {open && (
         <div
           className="absolute left-0 right-0 top-14 z-50 border-b border-border bg-surface px-6 py-4 shadow-[var(--shadow)]"
-          onClick={() => setOpen(false)}
         >
           <nav className="flex flex-col gap-1">
             {navLinks.map((link) => (
