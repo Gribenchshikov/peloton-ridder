@@ -49,6 +49,9 @@ services:
     build:
       context: ./app
       target: runner
+      args:
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+        NEXT_PUBLIC_MAPTILER_KEY: ${NEXT_PUBLIC_MAPTILER_KEY}
     restart: unless-stopped
     environment:
       NODE_ENV: production
