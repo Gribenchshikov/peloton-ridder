@@ -105,6 +105,33 @@ export async function resetVolunteerProgressAction(
   return { ok: true };
 }
 
+// Рассылка в Telegram-канал волонтёров
+export async function sendVolunteerBroadcastAction(
+  message: string
+): Promise<{ ok?: boolean; error?: string }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+  if (!message.trim()) return { error: "empty" };
+
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.VOLUNTEER_TG_CHAT_ID;
+  if (!token || !chatId) return { error: "not_configured" };
+
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text: message.trim(), parse_mode: "HTML" }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    console.error("Telegram sendMessage error", body);
+    return { error: "telegram_error" };
+  }
+
+  return { ok: true };
+}
+
 // Отправить письмо волонтёру с промокодом
 export async function sendVolunteerRewardEmailAction(
   userId: string,

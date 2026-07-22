@@ -7,6 +7,7 @@ import {
   toggleVolunteerCreditAction,
   resetVolunteerProgressAction,
   sendVolunteerRewardEmailAction,
+  sendVolunteerBroadcastAction,
 } from "./actions";
 
 type Application = {
@@ -223,15 +224,30 @@ function VolunteersTab({
 }: {
   byUser: Map<string, { user: Application["user"]; apps: Application[] }>;
 }) {
-  if (byUser.size === 0) {
-    return <p className="text-sm text-ink-faint">Одобренных волонтёров пока нет.</p>;
-  }
+  const [showBroadcast, setShowBroadcast] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
-      {[...byUser.entries()].map(([userId, { user, apps }]) => (
-        <VolunteerRow key={userId} user={user} apps={apps} />
-      ))}
+      {/* Broadcast button */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowBroadcast(true)}
+          className="rounded-[var(--radius-s)] bg-[#229ED9] px-4 py-2 text-sm font-bold text-white hover:bg-[#1a8bbf]"
+        >
+          📣 Рассылка в Telegram
+        </button>
+      </div>
+
+      {byUser.size === 0 ? (
+        <p className="text-sm text-ink-faint">Одобренных волонтёров пока нет.</p>
+      ) : (
+        [...byUser.entries()].map(([userId, { user, apps }]) => (
+          <VolunteerRow key={userId} user={user} apps={apps} />
+        ))
+      )}
+
+      {showBroadcast && <BroadcastModal onClose={() => setShowBroadcast(false)} />}
     </div>
   );
 }
@@ -463,6 +479,82 @@ function EmailModal({
                 {isPending ? "Отправляем…" : "Отправить письмо"}
               </button>
             </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Broadcast Modal ─────────────────────────────────────────────────────────
+
+function BroadcastModal({ onClose }: { onClose: () => void }) {
+  const [message, setMessage] = useState("");
+  const [isPending, startTransition] = useTransition();
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
+
+  function handleTelegram() {
+    if (!message.trim()) { setError("Введите текст сообщения"); return; }
+    setError(null);
+    startTransition(async () => {
+      const res = await sendVolunteerBroadcastAction(message);
+      if (res.ok) setSent(true);
+      else if (res.error === "not_configured") setError("TELEGRAM_BOT_TOKEN или VOLUNTEER_TG_CHAT_ID не настроены в .env");
+      else setError("Ошибка отправки в Telegram");
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-[var(--radius-m)] border border-border bg-surface p-6 shadow-xl">
+        {sent ? (
+          <div className="text-center">
+            <p className="text-lg font-bold text-emerald-600">Сообщение отправлено ✓</p>
+            <p className="mt-1 text-sm text-ink-soft">Сообщение опубликовано в Telegram-канале волонтёров</p>
+            <button type="button" onClick={onClose}
+              className="mt-6 rounded-[var(--radius-s)] bg-ember px-6 py-2 text-sm font-bold text-white hover:bg-ember-strong">
+              Закрыть
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mb-5 flex items-start justify-between">
+              <h3 className="font-display text-lg font-bold text-ink">Рассылка волонтёрам</h3>
+              <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink">✕</button>
+            </div>
+
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Текст сообщения для волонтёров…"
+              rows={6}
+              className="w-full resize-y rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+            />
+
+            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                disabled={isPending || !message.trim()}
+                onClick={handleTelegram}
+                className="flex-1 rounded-[var(--radius-s)] bg-[#229ED9] py-2.5 text-sm font-bold text-white hover:bg-[#1a8bbf] disabled:opacity-50"
+              >
+                {isPending ? "Отправляем…" : "📨 Отправить в Telegram"}
+              </button>
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex-1 rounded-[var(--radius-s)] bg-[#25D366] py-2.5 text-center text-sm font-bold text-white hover:bg-[#1db954] ${!message.trim() ? "pointer-events-none opacity-50" : ""}`}
+              >
+                💬 Открыть в WhatsApp
+              </a>
+            </div>
+            <p className="mt-2 text-xs text-ink-faint">WhatsApp открывает браузер с предзаполненным текстом — отправку подтвердите вручную</p>
           </>
         )}
       </div>
