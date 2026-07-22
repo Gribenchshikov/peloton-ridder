@@ -494,8 +494,6 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
-
   function handleTelegram() {
     if (!message.trim()) { setError("Введите текст сообщения"); return; }
     setError(null);
@@ -545,16 +543,15 @@ function BroadcastModal({ onClose }: { onClose: () => void }) {
               >
                 {isPending ? "Отправляем…" : "📨 Отправить в Telegram"}
               </button>
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`flex-1 rounded-[var(--radius-s)] bg-[#25D366] py-2.5 text-center text-sm font-bold text-white hover:bg-[#1db954] ${!message.trim() ? "pointer-events-none opacity-50" : ""}`}
+              <button
+                type="button"
+                disabled
+                title="WhatsApp Business API — планируется"
+                className="flex-1 cursor-not-allowed rounded-[var(--radius-s)] bg-surface-2 py-2.5 text-sm font-bold text-ink-faint"
               >
-                💬 Открыть в WhatsApp
-              </a>
+                💬 WhatsApp (скоро)
+              </button>
             </div>
-            <p className="mt-2 text-xs text-ink-faint">WhatsApp открывает браузер с предзаполненным текстом — отправку подтвердите вручную</p>
           </>
         )}
       </div>
