@@ -13,6 +13,7 @@ import { HowToGetSection } from "./HowToGetSection";
 import { EquipmentSection } from "./EquipmentSection";
 import { ResultsSection } from "./ResultsSection";
 import { NotifySection } from "./NotifySection";
+import { TelegramTopicSection } from "./TelegramTopicSection";
 import { PublishToggle } from "./PublishToggle";
 import { DeleteEventButton } from "./DeleteEventButton";
 import { deleteEventAction } from "../actions";
@@ -202,6 +203,14 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
 
       <div className="border-t border-border pt-6">
         <NotifySection eventId={event.id} lastNotification={lastNotification} />
+      </div>
+
+      <div className="border-t border-border pt-6">
+        <TelegramTopicSection
+          eventId={event.id}
+          initialTopicId={event.volunteerTgTopicId ?? null}
+          initialChatUrl={event.volunteerChatUrl ?? null}
+        />
       </div>
 
       <div className="border-t border-danger/20 pt-6">

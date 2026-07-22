@@ -183,6 +183,7 @@ model Event {
   resultsUrl                   String?
   coverImageUrl                String?
   volunteerChatUrl             String?
+  volunteerTgTopicId           Int?
   regulationFiles              Json?
   regulationBlocks             Json?
   waiverFiles                  Json?    // { locale: "ru"|"kk"|"en"; name: string; url: string }[]
