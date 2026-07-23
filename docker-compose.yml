@@ -46,6 +46,7 @@ services:
 
   # ── Next.js application ───────────────────────────────────────────────────────
   app:
+    image: peloton-ridder:${APP_TAG:-latest}
     build:
       context: ./app
       target: runner
