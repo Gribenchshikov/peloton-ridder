@@ -13,7 +13,7 @@ export default async function ClubsListPage() {
     getTranslations("Admin"),
     prisma.runningClub.findMany({
       orderBy: { name: "asc" },
-      include: { _count: { select: { registrations: true } } },
+      include: { _count: { select: { memberUsers: true } } },
     }),
     prisma.clubMembershipRequest.findMany({
       where: { status: "PENDING" },
@@ -44,23 +44,28 @@ export default async function ClubsListPage() {
         </Link>
       </div>
 
-      <ClubRequestsSection
-        requests={pendingRequests}
-        clubs={clubs.map((c) => ({ id: c.id, name: c.name }))}
-      />
+      <ClubRequestsSection requests={pendingRequests} />
 
       {clubs.length === 0 ? (
         <p className="text-sm text-ink-faint">{t("runningClubsEmpty")}</p>
       ) : (
         <div className="overflow-hidden rounded-[var(--radius-m)] border border-border">
+          {/* Header */}
+          <div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-border bg-surface-2 px-4 py-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-ink-faint">Клуб</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-ink-faint">Бегунов</span>
+            <span className="w-12" />
+          </div>
           {clubs.map((c) => (
-            <div key={c.id} className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-0">
-              <div className="flex-1">
+            <div key={c.id} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-border px-4 py-3 last:border-0">
+              <div>
                 <span className="font-semibold text-ink">{c.name}</span>
                 {c.city && <span className="ml-2 text-sm text-ink-faint">{c.city}</span>}
               </div>
-              <span className="text-xs text-ink-faint">{c._count.registrations} рег.</span>
-              <Link href={`/admin/clubs/${c.id}`} className="text-sm font-semibold text-ink-soft hover:text-ink">
+              <span className="min-w-[4rem] text-right font-variant-numeric text-sm font-semibold text-ink tabular-nums">
+                {c._count.memberUsers}
+              </span>
+              <Link href={`/admin/clubs/${c.id}`} className="w-12 text-right text-sm font-semibold text-ink-soft hover:text-ink">
                 {t("editCta")}
               </Link>
             </div>

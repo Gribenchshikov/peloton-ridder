@@ -6,6 +6,20 @@ import { revalidatePath } from "next/cache";
 
 export type ClubRequestState = { error?: string; ok?: boolean };
 
+export async function joinClubAction(clubId: string): Promise<{ error?: string; ok?: boolean }> {
+  const userId = await requireUserId();
+  if (!userId) return { error: "unauthorized" };
+  if (!clubId) return { error: "invalid" };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { runningClubId: clubId },
+  });
+
+  revalidatePath("/[locale]/account", "page");
+  return { ok: true };
+}
+
 export async function submitClubRequestAction(
   _prev: ClubRequestState,
   formData: FormData,
@@ -17,7 +31,6 @@ export async function submitClubRequestAction(
   if (!clubName || clubName.length < 2) return { error: "too_short" };
   if (clubName.length > 100) return { error: "too_long" };
 
-  // Не разрешаем отправить новую заявку пока есть активная PENDING
   const pending = await prisma.clubMembershipRequest.findFirst({
     where: { userId, status: "PENDING" },
   });

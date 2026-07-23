@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  approveClubRequestAction,
-  approveClubRequestNewAction,
-  rejectClubRequestAction,
-} from "./clubApprovalActions";
+import { approveClubRequestAction, rejectClubRequestAction } from "./clubApprovalActions";
 
 type PendingRequest = {
   id: string;
@@ -14,31 +10,21 @@ type PendingRequest = {
   user: { firstName: string; lastName: string; email: string };
 };
 
-type Club = { id: string; name: string };
-
-export function ClubRequestsSection({
-  requests,
-  clubs,
-}: {
-  requests: PendingRequest[];
-  clubs: Club[];
-}) {
+export function ClubRequestsSection({ requests }: { requests: PendingRequest[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"approve-existing" | "approve-new" | "reject" | null>(null);
-  const [selectedClubId, setSelectedClubId] = useState("");
-  const [newClubName, setNewClubName] = useState("");
+  const [mode, setMode] = useState<"approve" | "reject" | null>(null);
+  const [clubName, setClubName] = useState("");
   const [rejectNote, setRejectNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   if (requests.length === 0) return null;
 
-  function openAction(id: string, m: typeof mode, req: PendingRequest) {
+  function openAction(id: string, m: "approve" | "reject", req: PendingRequest) {
     setActiveId(id);
     setMode(m);
     setError(null);
-    setSelectedClubId(clubs[0]?.id ?? "");
-    setNewClubName(req.clubName);
+    setClubName(req.clubName);
     setRejectNote("");
   }
 
@@ -51,14 +37,10 @@ export function ClubRequestsSection({
   async function handleSubmit(req: PendingRequest) {
     setError(null);
     startTransition(async () => {
-      let res: { error?: string; ok?: boolean };
-      if (mode === "approve-existing") {
-        res = await approveClubRequestAction(req.id, selectedClubId);
-      } else if (mode === "approve-new") {
-        res = await approveClubRequestNewAction(req.id, newClubName);
-      } else {
-        res = await rejectClubRequestAction(req.id, rejectNote);
-      }
+      const res =
+        mode === "approve"
+          ? await approveClubRequestAction(req.id, clubName)
+          : await rejectClubRequestAction(req.id, rejectNote);
       if (res.error) {
         setError("Не удалось выполнить действие.");
       } else {
@@ -70,7 +52,7 @@ export function ClubRequestsSection({
   return (
     <section className="mb-10">
       <h2 className="mb-4 font-display text-lg font-bold text-ink">
-        Заявки на клуб
+        Заявки на новый клуб
         <span className="ml-2 rounded-full bg-ember/10 px-2 py-0.5 text-xs font-bold text-ember">
           {requests.length}
         </span>
@@ -97,7 +79,7 @@ export function ClubRequestsSection({
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => openAction(req.id, "approve-existing", req)}
+                      onClick={() => openAction(req.id, "approve", req)}
                       disabled={pending}
                       className="rounded-[var(--radius-s)] bg-spruce px-3 py-1.5 text-xs font-bold text-white transition-colors hover:opacity-90 disabled:opacity-50"
                     >
@@ -117,56 +99,22 @@ export function ClubRequestsSection({
 
               {isActive && (
                 <div className="mt-4 border-t border-border pt-4">
-                  {/* Approve: existing club */}
-                  {mode === "approve-existing" && (
-                    <div className="flex flex-col gap-3">
-                      <p className="text-sm text-ink-soft">Привязать к существующему клубу:</p>
-                      <select
-                        value={selectedClubId}
-                        onChange={(e) => setSelectedClubId(e.target.value)}
-                        className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink"
-                      >
-                        {clubs.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => setMode("approve-new")}
-                        className="self-start text-xs font-semibold text-ember hover:underline"
-                      >
-                        Создать новый клуб →
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Approve: new club */}
-                  {mode === "approve-new" && (
-                    <div className="flex flex-col gap-3">
-                      <p className="text-sm text-ink-soft">Создать новый клуб:</p>
+                  {mode === "approve" && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm text-ink-soft">
+                        Будет создан новый клуб. Можно скорректировать название:
+                      </p>
                       <input
                         type="text"
-                        value={newClubName}
-                        onChange={(e) => setNewClubName(e.target.value)}
+                        value={clubName}
+                        onChange={(e) => setClubName(e.target.value)}
                         className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink"
                       />
-                      {clubs.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setMode("approve-existing")}
-                          className="self-start text-xs font-semibold text-ember hover:underline"
-                        >
-                          ← Выбрать существующий
-                        </button>
-                      )}
                     </div>
                   )}
 
-                  {/* Reject */}
                   {mode === "reject" && (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                       <p className="text-sm text-ink-soft">Причина отклонения (необязательно):</p>
                       <input
                         type="text"
@@ -178,7 +126,7 @@ export function ClubRequestsSection({
                     </div>
                   )}
 
-                  {error && <p className="text-xs text-danger">{error}</p>}
+                  {error && <p className="mt-2 text-xs text-danger">{error}</p>}
 
                   <div className="mt-3 flex gap-2">
                     <button
@@ -191,16 +139,12 @@ export function ClubRequestsSection({
                     <button
                       type="button"
                       onClick={() => handleSubmit(req)}
-                      disabled={
-                        pending ||
-                        (mode === "approve-existing" && !selectedClubId) ||
-                        (mode === "approve-new" && !newClubName.trim())
-                      }
+                      disabled={pending || (mode === "approve" && !clubName.trim())}
                       className={`rounded-[var(--radius-s)] px-3 py-1.5 text-xs font-bold text-white transition-colors disabled:opacity-50 ${
                         mode === "reject" ? "bg-red-500 hover:bg-red-600" : "bg-spruce hover:opacity-90"
                       }`}
                     >
-                      {pending ? "…" : mode === "reject" ? "Отклонить" : "Одобрить"}
+                      {pending ? "…" : mode === "reject" ? "Отклонить" : "Одобрить и создать клуб"}
                     </button>
                   </div>
                 </div>

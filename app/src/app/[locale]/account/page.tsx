@@ -29,10 +29,11 @@ export default async function AccountPage({
   }
 
   const currentYear = new Date().getFullYear();
-  const [profile, thresholdSetting, series] = await Promise.all([
+  const [profile, thresholdSetting, series, clubs] = await Promise.all([
     getUserProfile(session.user.id),
     prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
     getSeriesWithRaces(),
+    prisma.runningClub.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   const seriesProgress = series
     ? await getUserSeriesProgress(session.user.id, series.id, currentYear)
@@ -81,6 +82,7 @@ export default async function AccountPage({
         <ClubSection
           currentClub={profile.runningClub}
           latestRequest={profile.clubRequests[0] ?? null}
+          clubs={clubs}
         />
       </div>
 

@@ -6,35 +6,6 @@ import { revalidatePath } from "next/cache";
 
 export async function approveClubRequestAction(
   requestId: string,
-  clubId: string,
-): Promise<{ error?: string; ok?: boolean }> {
-  const adminId = await requireAdminId();
-  if (!adminId) return { error: "unauthorized" };
-
-  const req = await prisma.clubMembershipRequest.findUnique({
-    where: { id: requestId },
-    select: { userId: true, status: true },
-  });
-  if (!req) return { error: "not_found" };
-  if (req.status !== "PENDING") return { error: "not_pending" };
-
-  await prisma.$transaction([
-    prisma.clubMembershipRequest.update({
-      where: { id: requestId },
-      data: { status: "APPROVED", runningClubId: clubId },
-    }),
-    prisma.user.update({
-      where: { id: req.userId },
-      data: { runningClubId: clubId },
-    }),
-  ]);
-
-  revalidatePath("/[locale]/admin/clubs", "page");
-  return { ok: true };
-}
-
-export async function approveClubRequestNewAction(
-  requestId: string,
   clubName: string,
 ): Promise<{ error?: string; ok?: boolean }> {
   const adminId = await requireAdminId();
@@ -47,7 +18,7 @@ export async function approveClubRequestNewAction(
   if (!req) return { error: "not_found" };
   if (req.status !== "PENDING") return { error: "not_pending" };
 
-  const name = clubName.trim() || req.clubName;
+  const name = (clubName ?? "").trim() || req.clubName;
 
   await prisma.$transaction(async (tx) => {
     const club = await tx.runningClub.create({ data: { name } });
@@ -62,6 +33,7 @@ export async function approveClubRequestNewAction(
   });
 
   revalidatePath("/[locale]/admin/clubs", "page");
+  revalidatePath("/[locale]/account", "page");
   return { ok: true };
 }
 
