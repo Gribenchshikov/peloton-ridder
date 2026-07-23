@@ -26,6 +26,8 @@ export async function lookupTransferAction(registrationId: string): Promise<Scan
       bibNumber: true,
       transferUsedAt: true,
       status: true,
+      includesTransfer: true,
+      isTransferOnly: true,
       user: { select: { firstName: true, lastName: true } },
       distance: { select: { name: true, km: true } },
       event: { select: { race: { select: { name: true } }, year: true } },
@@ -33,13 +35,18 @@ export async function lookupTransferAction(registrationId: string): Promise<Scan
   });
 
   if (!reg) return { kind: "error", message: "Регистрация не найдена" };
-  if (reg.status !== "PAID") return { kind: "error", message: "Трансфер доступен только для оплаченных регистраций" };
+  if (reg.status !== "PAID") return { kind: "error", message: "Регистрация не оплачена" };
+  if (!reg.includesTransfer && !reg.isTransferOnly) {
+    return { kind: "error", message: "Трансфер не включён в эту регистрацию" };
+  }
 
   return {
     kind: "ok",
     registrationId: reg.id,
     name: `${reg.user.firstName} ${reg.user.lastName}`,
-    distance: `${reg.distance?.name ?? "Трансфер"}${reg.distance ? ` · ${reg.distance.km} км` : ""}`,
+    distance: reg.isTransferOnly
+      ? "Только трансфер"
+      : `${reg.distance?.name ?? "—"}${reg.distance ? ` · ${reg.distance.km} км` : ""}`,
     race: `${reg.event.race.name} ${reg.event.year}`,
     bibNumber: reg.bibNumber,
     transferUsedAt: reg.transferUsedAt,

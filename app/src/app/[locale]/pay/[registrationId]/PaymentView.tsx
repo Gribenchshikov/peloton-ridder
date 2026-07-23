@@ -19,6 +19,38 @@ export function PaymentView({
   const format = useFormatter();
 
   if (registration.status === "PAID") {
+    // Transfer-only payment — send user back to their event registration page
+    // where the slot ticket (with transfer badge) is shown.
+    if (registration.isTransferOnly) {
+      const slug = registration.event.race.slug;
+      const year = registration.event.year;
+      return (
+        <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-4 px-6 py-20 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-spruce/10 text-3xl">✓</div>
+          <h1 className="font-display text-2xl font-bold text-ink">Трансфер оплачен!</h1>
+          <p className="text-ink-soft">
+            Трансфер добавлен к вашей регистрации на{" "}
+            <span className="font-semibold">{registration.event.race.name} {year}</span>.
+            QR-код для посадки — в вашем билете.
+          </p>
+          <div className="mt-2 flex gap-3">
+            <Link
+              href={`/events/${slug}/${year}/register`}
+              className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+            >
+              Открыть билет
+            </Link>
+            <Link
+              href="/account"
+              className="rounded-[var(--radius-s)] border border-border px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+            >
+              {t("toAccountCta")}
+            </Link>
+          </div>
+        </main>
+      );
+    }
+
     return (
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-4 px-6 py-20 text-center">
         <h1 className="font-display text-2xl font-bold text-ink">{t("paidTitle")}</h1>
