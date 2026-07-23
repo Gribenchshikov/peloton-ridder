@@ -36,6 +36,8 @@ export async function GET(req: NextRequest) {
       bibNumber: true,
       kitPickedUpAt: true,
       transferUsedAt: true,
+      includesTransfer: true,
+      isTransferOnly: true,
       user: { select: { firstName: true, lastName: true, email: true, phone: true, tshirtSize: true } },
       event: { select: { year: true, race: { select: { name: true } } } },
       distance: { select: { name: true, km: true } },
@@ -53,6 +55,8 @@ export async function GET(req: NextRequest) {
     bibNumber: reg.bibNumber,
     kitPickedUpAt: reg.kitPickedUpAt,
     transferUsedAt: reg.transferUsedAt,
+    includesTransfer: reg.includesTransfer || reg.isTransferOnly,
+    isTransferOnly: reg.isTransferOnly,
     participant: {
       firstName: reg.user.firstName,
       lastName: reg.user.lastName,
@@ -61,7 +65,7 @@ export async function GET(req: NextRequest) {
       tshirtSize: reg.user.tshirtSize,
     },
     event: `${reg.event.race.name} ${reg.event.year}`,
-    distance: reg.distance ? `${reg.distance.name} (${reg.distance.km} км)` : "Трансфер",
+    distance: reg.isTransferOnly ? "Только трансфер" : reg.distance ? `${reg.distance.name} (${reg.distance.km} км)` : "—",
     merch: reg.registrationMerch.map((m) => ({
       name: m.merchItem.name,
       size: m.merchItem.requiresSize ? m.size : null,

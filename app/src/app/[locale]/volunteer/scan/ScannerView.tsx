@@ -9,6 +9,8 @@ type ScanResult = {
   bibNumber: number | null;
   kitPickedUpAt: string | null;
   transferUsedAt: string | null;
+  includesTransfer: boolean;
+  isTransferOnly: boolean;
   participant: {
     firstName: string;
     lastName: string;
@@ -21,7 +23,7 @@ type ScanResult = {
   merch: { name: string; size: string | null }[];
 };
 
-type ConfirmState = "idle" | "loading" | "done" | "error";
+type ActionState = "idle" | "loading" | "done" | "error";
 
 export function ScannerView() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,7 +35,8 @@ export function ScannerView() {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanning, setScanning] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [confirmState, setConfirmState] = useState<ConfirmState>("idle");
+  const [kitState, setKitState] = useState<ActionState>("idle");
+  const [transferState, setTransferState] = useState<ActionState>("idle");
 
   const stopCamera = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -59,7 +62,8 @@ export function ScannerView() {
   const startCamera = useCallback(async () => {
     setScanResult(null);
     setFetchError(null);
-    setConfirmState("idle");
+    setKitState("idle");
+    setTransferState("idle");
     setScanning(true);
     setCameraError(null);
 
@@ -110,20 +114,36 @@ export function ScannerView() {
 
   const confirmPickup = async () => {
     if (!scanResult) return;
-    setConfirmState("loading");
+    setKitState("loading");
     const res = await fetch("/api/scan/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ registrationId: scanResult.registrationId }),
     });
     if (res.ok) {
-      setConfirmState("done");
+      setKitState("done");
     } else {
-      setConfirmState("error");
+      setKitState("error");
+    }
+  };
+
+  const confirmTransfer = async () => {
+    if (!scanResult) return;
+    setTransferState("loading");
+    const res = await fetch("/api/scan/transfer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ registrationId: scanResult.registrationId }),
+    });
+    if (res.ok) {
+      setTransferState("done");
+    } else {
+      setTransferState("error");
     }
   };
 
   const alreadyPickedUp = scanResult?.kitPickedUpAt != null;
+  const alreadyBoarded = scanResult?.transferUsedAt != null;
   const notPaid = scanResult && scanResult.status !== "PAID";
 
   return (
@@ -209,12 +229,6 @@ export function ScannerView() {
                   <dd className="mt-0.5 font-semibold text-ink">{scanResult.participant.phone}</dd>
                 </div>
               )}
-              {scanResult.transferUsedAt && (
-                <div>
-                  <dt className="text-xs text-ink-faint">Трансфер</dt>
-                  <dd className="mt-0.5 font-semibold text-spruce">Да ✓</dd>
-                </div>
-              )}
               {scanResult.participant.tshirtSize && (
                 <div>
                   <dt className="text-xs text-ink-faint">Размер (профиль)</dt>
@@ -233,27 +247,70 @@ export function ScannerView() {
           {/* Actions */}
           {!notPaid && (
             <div className="flex flex-col gap-3">
-              {confirmState === "done" ? (
-                <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-4 text-center">
-                  <p className="font-bold text-spruce">Набор выдан ✓</p>
-                  <p className="mt-0.5 text-xs text-ink-soft">Можно сканировать следующего участника</p>
-                </div>
-              ) : confirmState === "error" ? (
-                <p className="text-sm text-danger">Ошибка при сохранении. Попробуйте ещё раз.</p>
-              ) : null}
+              {/* Kit pickup */}
+              {!scanResult.isTransferOnly && (
+                <>
+                  {kitState === "done" ? (
+                    <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-4 text-center">
+                      <p className="font-bold text-spruce">Набор выдан ✓</p>
+                    </div>
+                  ) : (
+                    <>
+                      {kitState === "error" && (
+                        <p className="text-sm text-danger">Ошибка при сохранении. Попробуйте ещё раз.</p>
+                      )}
+                      <button
+                        onClick={confirmPickup}
+                        disabled={kitState === "loading"}
+                        className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
+                      >
+                        {kitState === "loading"
+                          ? "Сохраняем..."
+                          : alreadyPickedUp
+                          ? "Набор уже выдан — отметить повторно"
+                          : "Выдать стартовый набор ✓"}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
 
-              {confirmState !== "done" && (
-                <button
-                  onClick={confirmPickup}
-                  disabled={confirmState === "loading"}
-                  className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
-                >
-                  {confirmState === "loading"
-                    ? "Сохраняем..."
-                    : alreadyPickedUp
-                    ? "Подтвердить повторно"
-                    : "Выдать стартовый набор ✓"}
-                </button>
+              {/* Transfer boarding */}
+              {scanResult.includesTransfer && (
+                <>
+                  {transferState === "done" ? (
+                    <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-4 text-center">
+                      <p className="font-bold text-spruce">Посадка отмечена 🚌</p>
+                    </div>
+                  ) : (
+                    <>
+                      {alreadyBoarded && transferState === "idle" && (
+                        <div className="rounded-[var(--radius-m)] border border-amber-300 bg-amber-50 px-4 py-2.5 dark:border-amber-700 dark:bg-amber-950/30">
+                          <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                            Посадка уже отмечена —{" "}
+                            {new Intl.DateTimeFormat("ru", { timeStyle: "short" }).format(
+                              new Date(scanResult.transferUsedAt!)
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      {transferState === "error" && (
+                        <p className="text-sm text-danger">Ошибка при сохранении. Попробуйте ещё раз.</p>
+                      )}
+                      <button
+                        onClick={confirmTransfer}
+                        disabled={transferState === "loading"}
+                        className="rounded-[var(--radius-s)] border border-spruce bg-spruce/5 px-5 py-3 text-sm font-bold text-spruce transition-colors hover:bg-spruce/10 disabled:opacity-60"
+                      >
+                        {transferState === "loading"
+                          ? "Сохраняем..."
+                          : alreadyBoarded
+                          ? "Отметить посадку повторно 🚌"
+                          : "Отметить посадку 🚌"}
+                      </button>
+                    </>
+                  )}
+                </>
               )}
             </div>
           )}

@@ -153,12 +153,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
           >
             {t("kitPickupCta")}
           </Link>
-          <Link
-            href="/volunteer/transfer"
-            className="rounded-[var(--radius-s)] border border-spruce/40 bg-spruce/5 px-4 py-2 text-sm font-semibold text-spruce transition-colors hover:bg-spruce/10"
-          >
-            Сканер трансфера
-          </Link>
+
           <Link
             href={`/admin/registrations/${event.race.slug}/${event.year}/summary`}
             className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
