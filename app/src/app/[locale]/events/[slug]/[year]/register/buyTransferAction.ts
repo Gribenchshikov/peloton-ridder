@@ -2,11 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { revalidatePath } from "next/cache";
+import { redirect } from "@/i18n/navigation";
 
-export type BuyTransferState = { error?: string; ok?: boolean };
+export type BuyTransferState = { error?: string };
 
 export async function buyTransferAction(
+  locale: string,
   registrationId: string,
   _prev: BuyTransferState,
   _formData: FormData,
@@ -20,6 +21,7 @@ export async function buyTransferAction(
       userId: true,
       status: true,
       includesTransfer: true,
+      eventId: true,
       event: { select: { transferPrice: true, location: true } },
     },
   });
@@ -29,11 +31,28 @@ export async function buyTransferAction(
   if (registration.includesTransfer) return { error: "already_included" };
   if (!registration.event.transferPrice || !registration.event.location) return { error: "not_available" };
 
-  await prisma.registration.update({
-    where: { id: registrationId },
-    data: { includesTransfer: true },
+  // Check for an existing pending transfer payment (don't create a duplicate)
+  const existing = await prisma.registration.findFirst({
+    where: { userId, eventId: registration.eventId, isTransferOnly: true, status: "RESERVED" },
+    select: { id: true },
   });
 
-  revalidatePath("/[locale]/events/[slug]/[year]/register", "page");
-  return { ok: true };
+  const transferRegId = existing
+    ? existing.id
+    : (
+        await prisma.registration.create({
+          data: {
+            userId,
+            eventId: registration.eventId,
+            status: "RESERVED",
+            isTransferOnly: true,
+            includesTransfer: true,
+            reservedUntil: new Date(Date.now() + 30 * 60 * 1000),
+          },
+          select: { id: true },
+        })
+      ).id;
+
+  redirect({ href: `/pay/${transferRegId}`, locale });
+  return {};
 }

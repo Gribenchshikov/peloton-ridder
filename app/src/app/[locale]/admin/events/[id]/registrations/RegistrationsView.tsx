@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { getEventWithRegistrations } from "@/lib/queries";
@@ -26,9 +29,56 @@ function StatusBadge({ status }: { status: Registration["status"] }) {
   );
 }
 
+type StatusFilter = "ALL" | "PAID" | "RESERVED" | "CANCELLED";
+type TransferFilter = "ALL" | "YES" | "NO";
+
+function FilterChips<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={[
+            "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+            value === o.value
+              ? "bg-ember text-white"
+              : "border border-border bg-surface-2 text-ink-soft hover:text-ink",
+          ].join(" ")}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const CANCEL_REASON_LABELS: Record<string, string> = {
+  INJURY: "Травма / болезнь",
+  CANT_ATTEND: "Не смогу приехать",
+  FINANCIAL: "Финансовые причины",
+  FAMILY: "Семейные обстоятельства",
+  CONFLICT: "Другое мероприятие",
+  NOT_READY: "Не готов физически",
+  DEFER: "Перенесу на след. год",
+  OTHER: "Другое",
+};
+
 export function RegistrationsView({ event }: { event: EventData }) {
   const t = useTranslations("Admin");
   const format = useFormatter();
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [distanceFilter, setDistanceFilter] = useState<string>("ALL");
+  const [transferFilter, setTransferFilter] = useState<TransferFilter>("ALL");
 
   const paid = event.registrations.filter((r) => r.status === "PAID");
   const reserved = event.registrations.filter((r) => r.status === "RESERVED");
@@ -39,6 +89,47 @@ export function RegistrationsView({ event }: { event: EventData }) {
   const paidByDistance = Object.fromEntries(
     event.distances.map((d) => [d.id, paid.filter((r) => r.distance?.id === d.id).length])
   );
+
+  const filtered = useMemo(() => {
+    return event.registrations.filter((r) => {
+      if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
+      if (distanceFilter !== "ALL") {
+        if (distanceFilter === "TRANSFER_ONLY") {
+          if (!r.isTransferOnly) return false;
+        } else {
+          if (r.distance?.id !== distanceFilter) return false;
+        }
+      }
+      if (transferFilter === "YES" && !r.includesTransfer && !r.isTransferOnly) return false;
+      if (transferFilter === "NO" && (r.includesTransfer || r.isTransferOnly)) return false;
+      return true;
+    });
+  }, [event.registrations, statusFilter, distanceFilter, transferFilter]);
+
+  const exportParams = new URLSearchParams();
+  if (statusFilter !== "ALL") exportParams.set("status", statusFilter);
+  if (distanceFilter !== "ALL") exportParams.set("distanceId", distanceFilter);
+  if (transferFilter !== "ALL") exportParams.set("transfer", transferFilter === "YES" ? "yes" : "no");
+  const exportHref = `/admin/registrations/${event.race.slug}/${event.year}/export${exportParams.size > 0 ? "?" + exportParams.toString() : ""}`;
+
+  const statusOptions: { value: StatusFilter; label: string }[] = [
+    { value: "ALL", label: "Все" },
+    { value: "PAID", label: t("regStatusPaid") },
+    { value: "RESERVED", label: t("regStatusReserved") },
+    { value: "CANCELLED", label: t("regStatusCancelled") },
+  ];
+
+  const distanceOptions: { value: string; label: string }[] = [
+    { value: "ALL", label: "Все" },
+    ...event.distances.map((d) => ({ value: d.id, label: `${d.name} (${d.km} км)` })),
+    { value: "TRANSFER_ONLY", label: "Только трансфер" },
+  ];
+
+  const transferOptions: { value: TransferFilter; label: string }[] = [
+    { value: "ALL", label: "Все" },
+    { value: "YES", label: "Да" },
+    { value: "NO", label: "Нет" },
+  ];
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-16">
@@ -69,7 +160,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
             {t("summaryCta")}
           </Link>
           <a
-            href={`/admin/registrations/${event.race.slug}/${event.year}/export`}
+            href={exportHref}
             className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
           >
             {t("exportCsvCta")}
@@ -90,6 +181,12 @@ export function RegistrationsView({ event }: { event: EventData }) {
         <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4">
           <div className="text-2xl font-bold text-ink">{event.registrations.length}</div>
           <div className="mt-0.5 text-xs text-ink-soft">{t("regColTotal")}</div>
+        </div>
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4">
+          <div className="text-2xl font-bold text-ink">
+            {paid.filter((r) => r.includesTransfer || r.isTransferOnly).length}
+          </div>
+          <div className="mt-0.5 text-xs text-ink-soft">С трансфером</div>
         </div>
       </div>
 
@@ -163,62 +260,114 @@ export function RegistrationsView({ event }: { event: EventData }) {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 p-4">
+        <div className="flex flex-wrap gap-6">
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Статус</span>
+            <FilterChips options={statusOptions} value={statusFilter} onChange={setStatusFilter} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Дистанция</span>
+            <FilterChips options={distanceOptions} value={distanceFilter} onChange={setDistanceFilter} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Трансфер</span>
+            <FilterChips options={transferOptions} value={transferFilter} onChange={setTransferFilter} />
+          </div>
+        </div>
+      </div>
+
       {/* Registrations table */}
-      {event.registrations.length === 0 ? (
-        <p className="text-sm text-ink-faint">{t("registrationsEmpty")}</p>
+      {filtered.length === 0 ? (
+        <p className="text-sm text-ink-faint">
+          {event.registrations.length === 0 ? t("registrationsEmpty") : "Нет участников по выбранным фильтрам."}
+        </p>
       ) : (
-        <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead>
-              <tr className="border-b border-border bg-surface-2">
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColBib")}</th>
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColName")}</th>
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColEmail")}</th>
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColPhone")}</th>
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColDistance")}</th>
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColComment")}</th>
-                <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
-                <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {event.registrations.map((reg) => (
-                <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
-                  <td className="px-4 py-2.5 tabular-nums text-ink-faint">
-                    {reg.bibNumber ?? "—"}
-                  </td>
-                  <td className="px-4 py-2.5 font-medium text-ink">
-                    {reg.user.firstName} {reg.user.lastName}
-                  </td>
-                  <td className="px-4 py-2.5 text-ink-soft">{reg.user.email}</td>
-                  <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-ink-soft">
-                    {reg.distance?.name ?? "Трансфер"}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <StatusBadge status={reg.status} />
-                  </td>
-                  <td className="max-w-56 px-4 py-2.5 text-xs text-ink-soft">
-                    {reg.adminComment ?? "—"}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
-                    {format.dateTime(reg.createdAt, { day: "numeric", month: "short" })}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <RegistrationActions
-                      registrationId={reg.id}
-                      eventId={event.id}
-                      distanceId={reg.distance?.id ?? ""}
-                      status={reg.status}
-                      allowReregistration={reg.allowReregistration}
-                      distances={event.distances}
-                    />
-                  </td>
+        <div>
+          <p className="mb-3 text-sm text-ink-faint">
+            Показано: <span className="font-semibold text-ink">{filtered.length}</span> из {event.registrations.length}
+          </p>
+          <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
+            <table className="w-full min-w-[1060px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface-2">
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColBib")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColName")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColEmail")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColPhone")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColDistance")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Трансфер</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColComment")}</th>
+                  <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
+                  <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((reg) => {
+                  const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
+                  return (
+                    <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
+                      <td className="px-4 py-2.5 tabular-nums text-ink-faint">
+                        {reg.bibNumber ?? "—"}
+                      </td>
+                      <td className="px-4 py-2.5 font-medium text-ink">
+                        {reg.user.firstName} {reg.user.lastName}
+                      </td>
+                      <td className="px-4 py-2.5 text-ink-soft">{reg.user.email}</td>
+                      <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-ink-soft">
+                        {reg.isTransferOnly ? "Только трансфер" : (reg.distance?.name ?? "—")}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {hasTransfer ? (
+                          <span className="inline-flex items-center rounded-full bg-spruce/10 px-2 py-0.5 text-xs font-semibold text-spruce">
+                            Да
+                          </span>
+                        ) : (
+                          <span className="text-xs text-ink-faint">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <StatusBadge status={reg.status} />
+                      </td>
+                      <td className="max-w-64 px-4 py-2.5 text-xs text-ink-soft">
+                        {reg.status === "CANCELLED" && reg.cancelReason ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-block w-fit rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-950 dark:text-red-300">
+                              {CANCEL_REASON_LABELS[reg.cancelReason] ?? reg.cancelReason}
+                            </span>
+                            {reg.cancelComment && (
+                              <span className="text-ink-faint">{reg.cancelComment}</span>
+                            )}
+                            {reg.adminComment && (
+                              <span className="text-ink-faint italic">{reg.adminComment}</span>
+                            )}
+                          </div>
+                        ) : (
+                          reg.adminComment ?? "—"
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
+                        {format.dateTime(reg.createdAt, { day: "numeric", month: "short" })}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <RegistrationActions
+                          registrationId={reg.id}
+                          eventId={event.id}
+                          distanceId={reg.distance?.id ?? ""}
+                          status={reg.status}
+                          allowReregistration={reg.allowReregistration}
+                          distances={event.distances}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </main>

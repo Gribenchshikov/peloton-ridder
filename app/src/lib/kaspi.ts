@@ -56,6 +56,21 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
       where: { id: registrationId },
       data: { status: "PAID", ...(bibNumber !== undefined ? { bibNumber } : {}) },
     });
+
+    // Если оплатили transfer-only регистрацию — проставляем includesTransfer на основной слот
+    if (registration.isTransferOnly) {
+      await tx.registration.updateMany({
+        where: {
+          userId: registration.userId,
+          eventId: registration.eventId,
+          isTransferOnly: false,
+          status: "PAID",
+          includesTransfer: false,
+        },
+        data: { includesTransfer: true },
+      });
+    }
+
     return { reg: updated, justPaid: true };
   });
 

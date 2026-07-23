@@ -7,21 +7,15 @@ export function BuyTransferButton({
   registrationId,
   price,
   location,
+  locale,
 }: {
   registrationId: string;
   price: number;
   location: string;
+  locale: string;
 }) {
-  const boundAction = buyTransferAction.bind(null, registrationId);
+  const boundAction = buyTransferAction.bind(null, locale, registrationId);
   const [state, formAction, pending] = useActionState(boundAction, {});
-
-  if (state.ok) {
-    return (
-      <div className="mt-4 rounded-[var(--radius-s)] border border-spruce/30 bg-spruce/5 px-4 py-3 text-sm font-semibold text-spruce">
-        ✓ Трансфер добавлен
-      </div>
-    );
-  }
 
   return (
     <div className="mt-4 rounded-[var(--radius-s)] border border-border bg-surface-2 p-4">

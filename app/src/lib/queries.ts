@@ -204,6 +204,7 @@ export function getActiveRegistration(userId: string, eventId: string) {
     where: {
       userId,
       eventId,
+      isTransferOnly: false,
       OR: [
         { status: "PAID" },
         { status: "RESERVED", reservedUntil: { gt: new Date() } },

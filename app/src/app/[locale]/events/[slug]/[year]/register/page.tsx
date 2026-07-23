@@ -57,7 +57,7 @@ export default async function EventRegisterPage({
   });
   if (existing) {
     if (existing.status === "PAID") {
-      return <AlreadyRegistered event={event} registration={existing} />;
+      return <AlreadyRegistered event={event} registration={existing} locale={locale} />;
     }
     return redirect({ href: `/pay/${existing.id}`, locale });
   }
@@ -76,9 +76,11 @@ type ActiveReg = NonNullable<Awaited<ReturnType<typeof getActiveRegistration>>>;
 function AlreadyRegistered({
   event,
   registration,
+  locale,
 }: {
   event: NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
   registration: ActiveReg;
+  locale: string;
 }) {
   const t = useTranslations("Registration");
   return (
@@ -122,6 +124,7 @@ function AlreadyRegistered({
             registrationId={registration.id}
             price={event.transferPrice}
             location={event.location}
+            locale={locale}
           />
         )}
         {registration.includesTransfer && (

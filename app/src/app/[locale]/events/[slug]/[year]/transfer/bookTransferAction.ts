@@ -35,13 +35,28 @@ export async function bookTransferAction(
     },
   });
   if (existing) {
-    // Если есть PAID-слот без трансфера — апдейтим его
+    // Если есть PAID-слот без трансфера — создаём отдельную transfer-регистрацию для оплаты
     if (existing.status === "PAID" && !existing.includesTransfer && !existing.isTransferOnly) {
-      await prisma.registration.update({
-        where: { id: existing.id },
-        data: { includesTransfer: true },
+      const pendingTransfer = await prisma.registration.findFirst({
+        where: { userId: session.user.id, eventId: event.id, isTransferOnly: true, status: "RESERVED" },
+        select: { id: true },
       });
-      redirect({ href: `/events/${event.race.slug}/${event.year}/register`, locale });
+      const transferRegId = pendingTransfer
+        ? pendingTransfer.id
+        : (
+            await prisma.registration.create({
+              data: {
+                userId: session.user.id,
+                eventId: event.id,
+                status: "RESERVED",
+                isTransferOnly: true,
+                includesTransfer: true,
+                reservedUntil: new Date(Date.now() + 30 * 60 * 1000),
+              },
+              select: { id: true },
+            })
+          ).id;
+      redirect({ href: `/pay/${transferRegId}`, locale });
     }
     return { error: "already_booked" };
   }
