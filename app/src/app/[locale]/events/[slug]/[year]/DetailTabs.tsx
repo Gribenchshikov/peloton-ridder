@@ -84,7 +84,7 @@ export function DetailTabs({
   const tabs: { id: Tab; label: string; hidden?: boolean }[] = [
     { id: "about", label: t("aboutTitle") },
     { id: "regulation", label: t("regulationTitle") },
-    { id: "results", label: t("resultsTabTitle"), hidden: results.length === 0 },
+    { id: "results", label: t("resultsTabTitle") },
     { id: "dayprogram", label: t("dayProgramTitle"), hidden: dayProgram.length === 0 },
     { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet },
     { id: "equipment", label: t("equipmentTitle"), hidden: !hasEquipment },
