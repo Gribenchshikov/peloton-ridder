@@ -176,12 +176,17 @@ export async function sendVolunteerRewardEmailAction(
     </div>
   `;
 
-  await transport.sendMail({
-    from: process.env.SMTP_FROM ?? "noreply@ridder.kz",
-    to: user.email,
-    subject: "Peloton Ridder — ваш промокод",
-    html,
-  });
+  try {
+    await transport.sendMail({
+      from: process.env.SMTP_FROM ?? "noreply@ridder.kz",
+      to: user.email,
+      subject: "Peloton Ridder — ваш промокод",
+      html,
+    });
+  } catch (err) {
+    console.error("[sendVolunteerRewardEmail] SMTP error:", err);
+    return { error: "smtp_error" };
+  }
 
   revalidatePath("/[locale]/admin/volunteers", "page");
   return { ok: true };
