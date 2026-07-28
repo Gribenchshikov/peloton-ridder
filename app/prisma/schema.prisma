@@ -237,6 +237,8 @@ model Distance {
   maxAge                Int?
   cutoffMinutes         Int?
   raceStartMinutes      Int?
+  certification         String?
+  certificationPoints   Int?
   requiresQualification Boolean  @default(false)
   qualificationNote     String?
   requiresInsurance     Boolean  @default(false)

@@ -335,6 +335,8 @@ export function getEventForAdmin(id: string) {
           minAge: true,
           maxAge: true,
           cutoffMinutes: true,
+          certification: true,
+          certificationPoints: true,
           requiresQualification: true,
           qualificationNote: true,
           requiresInsurance: true,

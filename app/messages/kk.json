@@ -460,6 +460,8 @@
     "fieldBibRangeStart": "Нөмірлер бастап",
     "fieldBibRangeEnd": "Нөмірлер дейін",
     "fieldMaxSlots": "Қатысушылар шегі",
+    "fieldCertification": "Трасса сертификациясы (ITRA, WMRA…)",
+    "fieldCertificationPoints": "Ұпайлар",
     "fieldRequiresInsurance": "Сақтандыру қажет",
     "fieldRequiresQualification": "Біліктілік қажет",
     "fieldQualificationNote": "Не қажет екені (міндетті емес)",

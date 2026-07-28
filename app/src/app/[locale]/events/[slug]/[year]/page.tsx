@@ -110,17 +110,16 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               </span>
               <span className="flex items-center gap-2">
                 <Icon name="i-pin" className="h-4 w-4" />
-                {event.locationUrl ? (
+                {event.location}
+                {event.locationUrl && (
                   <a
                     href={event.locationUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline"
+                    className="rounded-full border border-white/40 bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25"
                   >
-                    {event.location}
+                    на карте ↗
                   </a>
-                ) : (
-                  event.location
                 )}
               </span>
             </div>
@@ -371,6 +370,8 @@ function DistanceRow({ distance }: { distance: Distance }) {
         price={distance.price}
         minAge={distance.minAge}
         maxAge={distance.maxAge}
+        certification={distance.certification}
+        certificationPoints={distance.certificationPoints}
       />
     </div>
   );

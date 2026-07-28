@@ -460,6 +460,8 @@
     "fieldBibRangeStart": "Номера от",
     "fieldBibRangeEnd": "Номера до",
     "fieldMaxSlots": "Лимит участников",
+    "fieldCertification": "Сертификация трассы (ITRA, WMRA…)",
+    "fieldCertificationPoints": "Баллы",
     "fieldRequiresInsurance": "Требуется страховка",
     "fieldRequiresQualification": "Требуется квалификация",
     "fieldQualificationNote": "Что именно нужно (опционально)",

@@ -460,6 +460,8 @@
     "fieldBibRangeStart": "Bib numbers from",
     "fieldBibRangeEnd": "Bib numbers to",
     "fieldMaxSlots": "Slot limit",
+    "fieldCertification": "Course certification (ITRA, WMRA…)",
+    "fieldCertificationPoints": "Points",
     "fieldRequiresInsurance": "Insurance required",
     "fieldRequiresQualification": "Qualification required",
     "fieldQualificationNote": "What is required (optional)",

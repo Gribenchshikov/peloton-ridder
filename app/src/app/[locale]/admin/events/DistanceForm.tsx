@@ -20,6 +20,8 @@ export type DistanceDefaults = {
   minAge: number | null;
   maxAge: number | null;
   cutoffMinutes: number | null;
+  certification: string | null;
+  certificationPoints: number | null;
   requiresQualification: boolean;
   qualificationNote: string | null;
   requiresInsurance: boolean;
@@ -179,6 +181,10 @@ export function DistanceForm(props: DistanceFormProps) {
         <FormField label={t("fieldBibRangeStart")} name="bibRangeStart" type="number" required placeholder="1" defaultValue={d ? String(d.bibRangeStart) : undefined} error={inv?.includes("bibRangeStart")} />
         <FormField label={t("fieldBibRangeEnd")} name="bibRangeEnd" type="number" required placeholder="200" defaultValue={d ? String(d.bibRangeEnd) : undefined} error={inv?.includes("bibRangeEnd")} />
       </div>
+
+      {/* Сертификация */}
+      <FormField label={t("fieldCertification")} name="certification" type="text" optional placeholder="например: ITRA, WMRA" defaultValue={d?.certification ?? undefined} error={inv?.includes("certification")} />
+      <FormField label={t("fieldCertificationPoints")} name="certificationPoints" type="number" optional placeholder="например: 45" defaultValue={d?.certificationPoints != null ? String(d.certificationPoints) : undefined} error={inv?.includes("certificationPoints")} />
 
       {/* Требования */}
       <div className="flex flex-col gap-3 sm:col-span-2">

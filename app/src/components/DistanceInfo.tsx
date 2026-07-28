@@ -8,12 +8,16 @@ export function DistanceInfo({
   price,
   minAge,
   maxAge,
+  certification,
+  certificationPoints,
 }: {
   name: string;
   km: number;
   price: number;
   minAge: number | null;
   maxAge: number | null;
+  certification?: string | null;
+  certificationPoints?: number | null;
 }) {
   const t = useTranslations("EventDetail");
   const tCommon = useTranslations("Common");
@@ -27,6 +31,11 @@ export function DistanceInfo({
         <div className="text-sm font-semibold text-ink">
           {name} · {km} {tCommon("km")}
         </div>
+        {certification && (
+          <div className="mt-0.5 text-xs text-ink-faint">
+            Сертифицировано {certification}{certificationPoints != null ? ` · ${certificationPoints} баллов` : ""}
+          </div>
+        )}
         {ageLabel && <div className="text-xs text-ink-faint">{ageLabel}</div>}
       </div>
       <div className="shrink-0 text-sm font-bold text-ink">{formatKzt(format, price)}</div>

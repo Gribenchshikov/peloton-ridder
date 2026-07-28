@@ -60,6 +60,8 @@ const DistanceFieldsSchema = z
     minAge: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).max(120).optional()),
     maxAge: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).max(120).optional()),
     cutoffMinutes: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
+    certification: z.preprocess(emptyToUndefined, z.string().trim().max(50).optional()),
+    certificationPoints: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
     requiresQualification: z.preprocess((v) => v === "on", z.boolean()),
     qualificationNote: z.preprocess(emptyToUndefined, z.string().trim().max(500).optional()),
     requiresInsurance: z.preprocess((v) => v === "on", z.boolean()),
