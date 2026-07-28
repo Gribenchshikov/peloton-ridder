@@ -238,9 +238,15 @@ export async function uploadTrackAction(
   const profileData = parseGpx(text);
   if (!profileData) return { error: "invalidGpx" };
 
+  const saved = await saveFile(file, "gpx");
+  const gpxUrl = "error" in saved ? null : saved.url;
+
   await prisma.distance.update({
     where: { id: distanceId },
-    data: { profileData: profileData as object },
+    data: {
+      profileData: profileData as object,
+      ...(gpxUrl ? { gpxUrl } : {}),
+    },
   });
 
   revalidatePath("/[locale]/admin/events/[id]", "page");
