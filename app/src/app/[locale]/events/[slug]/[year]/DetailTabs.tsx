@@ -137,7 +137,7 @@ export function DetailTabs({
           onClick={() => goToTab(currentTabIndex - 1)}
           disabled={currentTabIndex === 0}
           aria-label="Предыдущая вкладка"
-          className="shrink-0 border-r border-border bg-surface-2 px-3 text-base font-bold text-ink transition-colors hover:bg-surface hover:text-ember disabled:pointer-events-none disabled:opacity-25"
+          className="shrink-0 rounded-tl-[var(--radius-m)] border-r border-border bg-surface-2 px-3 text-base font-bold text-ink transition-colors hover:bg-surface hover:text-ember disabled:pointer-events-none disabled:opacity-25"
         >
           ←
         </button>
@@ -161,7 +161,7 @@ export function DetailTabs({
           onClick={() => goToTab(currentTabIndex + 1)}
           disabled={currentTabIndex === visibleTabs.length - 1}
           aria-label="Следующая вкладка"
-          className="shrink-0 border-l border-border bg-surface-2 px-3 text-base font-bold text-ink transition-colors hover:bg-surface hover:text-ember disabled:pointer-events-none disabled:opacity-25"
+          className="shrink-0 rounded-tr-[var(--radius-m)] border-l border-border bg-surface-2 px-3 text-base font-bold text-ink transition-colors hover:bg-surface hover:text-ember disabled:pointer-events-none disabled:opacity-25"
         >
           →
         </button>
