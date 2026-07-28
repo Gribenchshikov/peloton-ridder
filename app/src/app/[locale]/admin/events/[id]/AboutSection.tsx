@@ -152,16 +152,7 @@ export function AboutSection({ eventId, initialAboutText, initialPhotoLinks }: P
         </div>
       </div>
 
-      <form
-        action={formAction}
-        onSubmit={(e) => {
-          const fd = new FormData(e.currentTarget);
-          fd.set("aboutText", aboutText);
-          fd.set("photoLinks", JSON.stringify(links));
-          e.preventDefault();
-          formAction(fd);
-        }}
-      >
+      <form action={formAction}>
         <input type="hidden" name="aboutText" value={aboutText} />
         <input type="hidden" name="photoLinks" value={JSON.stringify(links)} />
         <div className="flex items-center gap-3">
