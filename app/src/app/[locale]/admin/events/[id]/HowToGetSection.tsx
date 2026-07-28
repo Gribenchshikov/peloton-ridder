@@ -7,10 +7,12 @@ import type { ActionState } from "../actions";
 type Props = {
   eventId: string;
   initialText: string;
+  initialUrl: string | null;
 };
 
-export function HowToGetSection({ eventId, initialText }: Props) {
+export function HowToGetSection({ eventId, initialText, initialUrl }: Props) {
   const [text, setText] = useState(initialText);
+  const [url, setUrl] = useState(initialUrl ?? "");
   const action = updateHowToGetAction.bind(null, eventId);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
 
@@ -26,16 +28,20 @@ export function HowToGetSection({ eventId, initialText }: Props) {
       />
       <div className="text-right text-xs text-ink-faint">{text.length}/3000</div>
 
-      <form
-        action={formAction}
-        onSubmit={(e) => {
-          const fd = new FormData(e.currentTarget);
-          fd.set("howToGet", text);
-          e.preventDefault();
-          formAction(fd);
-        }}
-      >
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-semibold text-ink-soft">Ссылка «Как добраться» (карта, маршрут)</label>
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://yandex.ru/maps/… или 2GIS"
+          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-1 focus:ring-ember"
+        />
+      </div>
+
+      <form action={formAction}>
         <input type="hidden" name="howToGet" value={text} />
+        <input type="hidden" name="howToGetUrl" value={url} />
         <div className="flex items-center gap-3">
           <button
             type="submit"

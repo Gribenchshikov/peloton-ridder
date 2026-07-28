@@ -204,6 +204,7 @@ model Event {
   eventPhotos                  Json?    // string[] — URLs загруженных фото
   dayProgram                   Json?    // { time: string; description: string }[]
   howToGet                     String?
+  howToGetUrl                  String?
   distanceEquipment            Json?    // { [distanceId]: { required: string[]; recommended: string[] } }
   createdAt                    DateTime    @default(now())
 

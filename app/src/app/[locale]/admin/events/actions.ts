@@ -647,9 +647,13 @@ export async function updateHowToGetAction(
   if (!adminId) return { error: "unauthorized" };
 
   const text = formData.get("howToGet");
+  const url = formData.get("howToGetUrl");
   await prisma.event.update({
     where: { id: eventId },
-    data: { howToGet: typeof text === "string" ? text || null : null },
+    data: {
+      howToGet: typeof text === "string" ? text || null : null,
+      howToGetUrl: typeof url === "string" ? url || null : null,
+    },
   });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");

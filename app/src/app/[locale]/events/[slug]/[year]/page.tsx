@@ -168,6 +168,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               eventPhotos={eventPhotos}
               dayProgram={dayProgram}
               howToGet={event.howToGet ?? ""}
+              howToGetUrl={event.howToGetUrl}
               distanceEquipment={distanceEquipment}
               regulationFiles={regulationFiles}
               regulationBlocks={regulationBlocks}

@@ -43,6 +43,7 @@ type Props = {
   eventPhotos?: string[];
   dayProgram: DayProgramItem[];
   howToGet: string;
+  howToGetUrl?: string | null;
   distanceEquipment: DistanceEquipment;
   regulationFiles: RegulationFile[];
   regulationBlocks: RegulationBlock[];
@@ -61,6 +62,7 @@ export function DetailTabs({
   eventPhotos = [],
   dayProgram,
   howToGet,
+  howToGetUrl,
   distanceEquipment,
   regulationFiles,
   regulationBlocks,
@@ -95,7 +97,7 @@ export function DetailTabs({
     { id: "regulation", label: t("regulationTitle") },
     { id: "results", label: t("resultsTabTitle") },
     { id: "dayprogram", label: t("dayProgramTitle"), hidden: dayProgram.length === 0 },
-    { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet },
+    { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet && !howToGetUrl },
     { id: "equipment", label: t("equipmentTitle"), hidden: !hasEquipment },
     { id: "profile", label: t("courseProfileTitle"), hidden: !hasProfile },
     { id: "participants", label: t("participantsTitle") },
@@ -473,13 +475,27 @@ export function DetailTabs({
 
         {/* ── Как добраться ── */}
         {tab === "howtoget" && (
-          <div>
+          <div className="flex flex-col gap-4">
             {howToGet ? (
               <p className="max-w-2xl text-sm leading-relaxed text-ink-soft whitespace-pre-line break-words">
                 {howToGet}
               </p>
             ) : (
               <p className="text-sm text-ink-faint">{t("howToGetEmpty")}</p>
+            )}
+            {howToGetUrl && (
+              <a
+                href={howToGetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                  <circle cx="12" cy="9" r="2.5"/>
+                </svg>
+                {t("howToGetMapCta")}
+              </a>
             )}
           </div>
         )}

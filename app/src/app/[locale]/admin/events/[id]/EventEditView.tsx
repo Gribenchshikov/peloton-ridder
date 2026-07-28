@@ -187,6 +187,7 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
         <HowToGetSection
           eventId={event.id}
           initialText={event.howToGet ?? ""}
+          initialUrl={event.howToGetUrl ?? null}
         />
       </section>
 
