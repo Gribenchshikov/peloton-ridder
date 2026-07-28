@@ -85,7 +85,15 @@ export function PaymentView({
           {registration.event.race.name} {registration.event.year} · {registration.distance?.name ?? "Трансфер"}
         </h1>
         <p className="mt-2 text-2xl font-bold text-ink">
-          {formatKzt(format, registration.isTransferOnly ? (registration.event.transferPrice ?? 0) : (registration.distance?.price ?? 0))}
+          {formatKzt(format,
+            registration.isTransferOnly
+              ? (registration.event.transferPrice ?? 0)
+              : (
+                  (registration.distance?.price ?? 0)
+                  - (registration.discountAmount ?? 0)
+                  + (registration.includesTransfer ? (registration.event.transferPrice ?? 0) : 0)
+                )
+          )}
         </p>
       </div>
 

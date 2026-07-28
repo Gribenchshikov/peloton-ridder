@@ -115,6 +115,7 @@ export async function createRegistrationAction(
       where: {
         userId,
         eventId,
+        isTransferOnly: false,
         OR: [
           { status: "PAID" },
           { status: "RESERVED", reservedUntil: { gt: now } },
@@ -124,7 +125,7 @@ export async function createRegistrationAction(
     if (existing) return { kind: "existing" as const, registrationId: existing.id };
 
     const cancelled = await tx.registration.findFirst({
-      where: { userId, eventId, status: "CANCELLED" },
+      where: { userId, eventId, status: "CANCELLED", isTransferOnly: false },
       orderBy: { createdAt: "desc" },
     });
     if (cancelled && cancelled.reregistrationCount >= 3) {
@@ -192,6 +193,7 @@ export async function createRegistrationAction(
     }
 
     const reservationData = {
+      isTransferOnly: false,
       distanceId,
       status: "RESERVED" as const,
       bibNumber: null,
