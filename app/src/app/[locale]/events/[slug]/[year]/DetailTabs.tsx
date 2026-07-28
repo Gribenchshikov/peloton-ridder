@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useFormatter } from "next-intl";
 import { Icon } from "@/components/IconSprite";
@@ -77,6 +77,8 @@ export function DetailTabs({
   const [equipDistId, setEquipDistId] = useState(allDistances[0]?.id ?? "");
   const [resultsDistId, setResultsDistId] = useState<string>("all");
   const [resultsSearch, setResultsSearch] = useState("");
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
   const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
 
   const filesForLocale = regulationFiles.filter((f) => f.locale === locale);
@@ -99,25 +101,77 @@ export function DetailTabs({
   const equipDist = allDistances.find((d) => d.id === equipDistId) ?? allDistances[0];
   const equipForDist = equipDist ? (distanceEquipment[equipDist.id] ?? { required: [], recommended: [] }) : { required: [], recommended: [] };
 
+  const visibleTabs = tabs.filter((t) => !t.hidden);
+  const currentTabIndex = visibleTabs.findIndex((t) => t.id === tab);
+
+  function goToTab(index: number) {
+    const clamped = Math.max(0, Math.min(visibleTabs.length - 1, index));
+    setTab(visibleTabs[clamped].id);
+    // scroll active tab button into view
+    setTimeout(() => {
+      const bar = tabBarRef.current;
+      if (!bar) return;
+      const btn = bar.children[clamped] as HTMLElement | undefined;
+      btn?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }, 0);
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 40) return;
+    goToTab(currentTabIndex + (dx < 0 ? 1 : -1));
+  }
+
   return (
     <div className="rounded-[var(--radius-m)] border border-border bg-surface">
-      <div className="flex gap-0 overflow-x-auto border-b border-border px-4">
-        {tabs.filter((t) => !t.hidden).map(({ id, label }) => (
-          <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`shrink-0 border-b-2 px-4 py-3.5 text-sm font-semibold transition-colors ${
-              tab === id
-                ? "border-ember text-ember"
-                : "border-transparent text-ink-faint hover:text-ink"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {/* Tab bar with prev/next arrows */}
+      <div className="flex items-stretch border-b border-border">
+        <button
+          type="button"
+          onClick={() => goToTab(currentTabIndex - 1)}
+          disabled={currentTabIndex === 0}
+          aria-label="Предыдущая вкладка"
+          className="shrink-0 px-2 text-ink-faint transition-colors hover:text-ink disabled:opacity-20"
+        >
+          ‹
+        </button>
+        <div ref={tabBarRef} className="flex min-w-0 flex-1 gap-0 overflow-x-auto scroll-smooth">
+          {visibleTabs.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`shrink-0 border-b-2 px-4 py-3.5 text-sm font-semibold transition-colors ${
+                tab === id
+                  ? "border-ember text-ember"
+                  : "border-transparent text-ink-faint hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => goToTab(currentTabIndex + 1)}
+          disabled={currentTabIndex === visibleTabs.length - 1}
+          aria-label="Следующая вкладка"
+          className="shrink-0 px-2 text-ink-faint transition-colors hover:text-ink disabled:opacity-20"
+        >
+          ›
+        </button>
       </div>
 
-      <div className="overflow-hidden p-6">
+      <div
+        className="overflow-hidden p-6"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* ── О забеге ── */}
         {tab === "about" && (
           <div className="flex flex-col gap-6">
