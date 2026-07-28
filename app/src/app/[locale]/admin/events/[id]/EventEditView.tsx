@@ -124,6 +124,7 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
           year: event.year,
           dateISO: event.dateISO,
           location: event.location,
+          locationUrl: event.locationUrl ?? null,
           status: event.status,
           isFeatured: event.isFeatured,
           registrationDeadline: event.registrationDeadline,

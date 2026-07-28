@@ -429,6 +429,7 @@
     "fieldCancellationDeadline": "Қайтарыммен бас тарту мерзімі",
     "fieldMedicalCancellationDeadline": "Медициналық анықтама бойынша бас тарту мерзімі",
     "fieldTransferPrice": "Трансфер бағасы, ₸",
+    "fieldLocationUrl": "Картаға сілтеме (Яндекс.Карталар, 2GIS…)",
     "fieldResultsUrl": "Нәтижелер сілтемесі",
     "fieldCoverImage": "Мұқаба суреті",
     "fieldIsFeatured": "Бас беттегі «Келесі жарыс» ретінде белгілеу",

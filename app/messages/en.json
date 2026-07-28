@@ -429,6 +429,7 @@
     "fieldCancellationDeadline": "Refundable cancellation until",
     "fieldMedicalCancellationDeadline": "Medical cancellation until",
     "fieldTransferPrice": "Transfer price, KZT",
+    "fieldLocationUrl": "Map link (Yandex.Maps, 2GIS…)",
     "fieldResultsUrl": "Results link",
     "fieldCoverImage": "Cover image",
     "fieldIsFeatured": "Feature as «Next Race» on home page",

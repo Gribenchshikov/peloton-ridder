@@ -429,6 +429,7 @@
     "fieldCancellationDeadline": "Отмена с возвратом до",
     "fieldMedicalCancellationDeadline": "Отмена по медсправке до",
     "fieldTransferPrice": "Цена трансфера, ₸",
+    "fieldLocationUrl": "Ссылка на карту (Яндекс.Карты, 2GIS…)",
     "fieldResultsUrl": "Ссылка на результаты",
     "fieldCoverImage": "Обложка забега",
     "fieldIsFeatured": "Выделить как «Ближайший старт» на главной",

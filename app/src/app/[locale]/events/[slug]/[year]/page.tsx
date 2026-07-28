@@ -110,7 +110,18 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               </span>
               <span className="flex items-center gap-2">
                 <Icon name="i-pin" className="h-4 w-4" />
-                {event.location}
+                {event.locationUrl ? (
+                  <a
+                    href={event.locationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {event.location}
+                  </a>
+                ) : (
+                  event.location
+                )}
               </span>
             </div>
 

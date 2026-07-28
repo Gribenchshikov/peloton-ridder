@@ -31,6 +31,7 @@ const EventFieldsSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
   dateISO: z.coerce.date(),
   location: z.string().trim().min(1).max(200),
+  locationUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   status: z.enum(["DRAFT", "OPEN", "CLOSED", "COMPLETED"]),
   isFeatured: z.preprocess((v) => v === "on", z.boolean()),
   registrationDeadline: z.coerce.date(),

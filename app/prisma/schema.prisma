@@ -185,6 +185,7 @@ model Event {
   dateISO                      DateTime
   status                       EventStatus @default(DRAFT)
   location                     String
+  locationUrl                  String?
   transferPrice                Int?
   registrationDeadline         DateTime
   cancellationDeadline         DateTime

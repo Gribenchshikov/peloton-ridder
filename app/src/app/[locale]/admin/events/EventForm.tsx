@@ -18,6 +18,7 @@ type EventDefaults = {
   year: number;
   dateISO: Date;
   location: string;
+  locationUrl: string | null;
   status: string;
   registrationDeadline: Date;
   cancellationDeadline: Date;
@@ -82,6 +83,7 @@ export function EventForm(props: EventFormProps) {
         defaultValue={d ? toDateInputValue(d.dateISO) : undefined}
       />
       <FormField label={t("fieldLocation")} name="location" type="text" required defaultValue={d?.location} />
+      <FormField label={t("fieldLocationUrl")} name="locationUrl" type="url" optional defaultValue={d?.locationUrl ?? undefined} />
       <SelectField
         label={t("fieldStatus")}
         name="status"
