@@ -1,13 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
-import type { TeamMember } from "@/generated/prisma/client";
+import type { TeamMember, TrainingGroup } from "@/generated/prisma/client";
 
 export default async function AboutPage() {
   const t = await getTranslations("About");
 
-  const members = await prisma.teamMember.findMany({
-    orderBy: [{ type: "asc" }, { order: "asc" }],
-  });
+  const [members, trainingGroups] = await Promise.all([
+    prisma.teamMember.findMany({ orderBy: [{ type: "asc" }, { order: "asc" }] }),
+    prisma.trainingGroup.findMany({ orderBy: { order: "asc" } }),
+  ]);
 
   const team = members.filter((m) => m.type === "TEAM");
   const volunteers = members.filter((m) => m.type === "VOLUNTEER");
@@ -38,6 +39,19 @@ export default async function AboutPage() {
 
       {/* Volunteers */}
       <MemberSection title={t("volunteersTitle")} desc={t("volunteersDesc")} members={volunteers} emptyText={t("membersEmpty")} />
+
+      {/* Training groups */}
+      {trainingGroups.length > 0 && (
+        <section className="mt-14">
+          <h2 className="font-display text-xl font-bold text-ink">Тренировочные группы</h2>
+          <p className="mt-1 text-sm text-ink-soft">Присоединяйтесь к тренировкам клуба</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {trainingGroups.map((g) => (
+              <TrainingGroupCard key={g.id} group={g} />
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
@@ -76,6 +90,16 @@ function MemberSection({
         </div>
       )}
     </section>
+  );
+}
+
+function TrainingGroupCard({ group }: { group: TrainingGroup }) {
+  return (
+    <div className="flex flex-col rounded-[var(--radius-m)] border border-border bg-surface p-5">
+      <h3 className="font-bold text-ink">{group.title}</h3>
+      <p className="mt-1 text-xs font-semibold text-ember">{group.schedule}</p>
+      <p className="mt-2 text-sm leading-relaxed text-ink-soft">{group.description}</p>
+    </div>
   );
 }
 

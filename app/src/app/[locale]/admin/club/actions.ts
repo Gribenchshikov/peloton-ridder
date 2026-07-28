@@ -92,6 +92,7 @@ export async function createTrainingGroupAction(
   if (!parsed.success) return { error: "invalid" };
 
   await prisma.trainingGroup.create({ data: parsed.data });
+  revalidatePath("/[locale]/about", "page");
   revalidatePath("/[locale]/admin/club", "page");
   return redirect({ href: "/admin/club", locale });
 }
@@ -109,6 +110,7 @@ export async function updateTrainingGroupAction(
   if (!parsed.success) return { error: "invalid" };
 
   await prisma.trainingGroup.update({ where: { id }, data: parsed.data });
+  revalidatePath("/[locale]/about", "page");
   revalidatePath("/[locale]/admin/club", "page");
   return { success: true };
 }
@@ -117,6 +119,7 @@ export async function deleteTrainingGroupAction(locale: string, id: string): Pro
   const adminId = await requireAdminId();
   if (!adminId) return;
   await prisma.trainingGroup.delete({ where: { id } });
+  revalidatePath("/[locale]/about", "page");
   revalidatePath("/[locale]/admin/club", "page");
   redirect({ href: "/admin/club", locale });
 }
