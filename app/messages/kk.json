@@ -301,7 +301,11 @@
     "qualificationRequired": "Біліктілік талап етіледі:",
     "qualificationUrlLabel": "Біліктілікті растау",
     "qualificationUrlHint": "Жарыс нәтижесіне, сақтандыруға немесе басқа растаушы құжатқа сілтеме енгізіңіз",
-    "qualificationUrlRequired": "Біліктілікті растайтын сілтемені көрсетіңіз"
+    "qualificationUrlRequired": "Біліктілікті растайтын сілтемені көрсетіңіз",
+    "priceSummarySlot": "Слот",
+    "priceSummaryDiscount": "Промокод",
+    "priceSummaryTransfer": "Трансфер",
+    "priceSummaryTotal": "Барлығы"
   },
   "Payment": {
     "eyebrow": "Төлем",

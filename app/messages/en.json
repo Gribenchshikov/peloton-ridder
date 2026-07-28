@@ -301,7 +301,11 @@
     "qualificationRequired": "Qualification required:",
     "qualificationUrlLabel": "Qualification proof",
     "qualificationUrlHint": "Paste a link to your race result, insurance, or other supporting document",
-    "qualificationUrlRequired": "Please provide a link to your qualification proof"
+    "qualificationUrlRequired": "Please provide a link to your qualification proof",
+    "priceSummarySlot": "Slot",
+    "priceSummaryDiscount": "Promo code",
+    "priceSummaryTransfer": "Transfer",
+    "priceSummaryTotal": "Total"
   },
   "Payment": {
     "eyebrow": "Payment",

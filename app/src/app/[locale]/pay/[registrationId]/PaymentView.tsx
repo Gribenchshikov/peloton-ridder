@@ -84,17 +84,46 @@ export function PaymentView({
         <h1 className="mt-2 font-display text-2xl font-bold text-ink">
           {registration.event.race.name} {registration.event.year} · {registration.distance?.name ?? "Трансфер"}
         </h1>
-        <p className="mt-2 text-2xl font-bold text-ink">
-          {formatKzt(format,
-            registration.isTransferOnly
-              ? (registration.event.transferPrice ?? 0)
-              : (
-                  (registration.distance?.price ?? 0)
-                  - (registration.discountAmount ?? 0)
-                  + (registration.includesTransfer ? (registration.event.transferPrice ?? 0) : 0)
-                )
-          )}
-        </p>
+        {registration.isTransferOnly ? (
+          <p className="mt-2 text-2xl font-bold text-ink">
+            {formatKzt(format, registration.event.transferPrice ?? 0)}
+          </p>
+        ) : (() => {
+          const slotPrice = registration.distance?.price ?? 0;
+          const discount = registration.discountAmount ?? 0;
+          const transferAmt = registration.includesTransfer ? (registration.event.transferPrice ?? 0) : 0;
+          const total = slotPrice - discount + transferAmt;
+          const showBreakdown = discount > 0 || transferAmt > 0;
+          return (
+            <div className="mt-2 flex flex-col gap-1">
+              {showBreakdown ? (
+                <>
+                  <div className="flex flex-col gap-0.5 text-sm text-ink-soft">
+                    <div className="flex justify-between">
+                      <span>Слот</span>
+                      <span className="tabular-nums">{formatKzt(format, slotPrice)}</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-spruce">
+                        <span>Промокод</span>
+                        <span className="tabular-nums">−{formatKzt(format, discount)}</span>
+                      </div>
+                    )}
+                    {transferAmt > 0 && (
+                      <div className="flex justify-between">
+                        <span>Трансфер</span>
+                        <span className="tabular-nums">+{formatKzt(format, transferAmt)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-2xl font-bold text-ink">{formatKzt(format, total)}</p>
+                </>
+              ) : (
+                <p className="text-2xl font-bold text-ink">{formatKzt(format, total)}</p>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="flex flex-col gap-3">

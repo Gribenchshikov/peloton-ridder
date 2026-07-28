@@ -81,8 +81,14 @@ export function DistanceSelect({
     );
   });
   const [promoInput, setPromoInput] = useState("");
-  const [promoResult, setPromoResult] = useState<{ valid: boolean; label: string } | null>(null);
+  const [promoResult, setPromoResult] = useState<{
+    valid: boolean;
+    label: string;
+    discountType?: "PERCENT" | "FIXED";
+    discountValue?: number;
+  } | null>(null);
   const [promoChecking, startPromoCheck] = useTransition();
+  const [transferChecked, setTransferChecked] = useState(false);
 
   const selectedDistance = distances.find((d) => d.id === selected);
   const extraCount = selectedDistance ? (selectedDistance.participantsPerSlot ?? 1) - 1 : 0;
@@ -107,7 +113,7 @@ export function DistanceSelect({
         const label = result.discountType === "PERCENT"
           ? `−${result.discountValue}%`
           : `−${result.discountValue} ₸`;
-        setPromoResult({ valid: true, label });
+        setPromoResult({ valid: true, label, discountType: result.discountType, discountValue: result.discountValue });
       } else {
         setPromoResult({ valid: false, label: result.error });
       }
@@ -118,6 +124,16 @@ export function DistanceSelect({
   const autoItems = merchItems.filter((m) => !m.requiresSize);
   const allSizesChosen = sizeItems.every((m) => sizes[m.id]);
   const canSubmit = selected !== null && allSizesChosen;
+
+  // Price summary
+  const slotPrice = selectedDistance?.price ?? 0;
+  const discountAmount = (() => {
+    if (!promoResult?.valid || !promoResult.discountType || promoResult.discountValue === undefined) return 0;
+    if (promoResult.discountType === "PERCENT") return Math.round((slotPrice * promoResult.discountValue) / 100);
+    return Math.min(promoResult.discountValue, slotPrice);
+  })();
+  const transferAmount = transferChecked && transferPrice ? transferPrice : 0;
+  const totalAmount = slotPrice - discountAmount + transferAmount;
 
   return (
     <form action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
@@ -383,21 +399,15 @@ export function DistanceSelect({
       {state.error === "promo_exhausted" && <p className="text-sm text-danger">{t("promoError_exhausted")}</p>}
       {state.error === "qualification_missing" && <p className="text-sm text-danger">{t("qualificationUrlRequired")}</p>}
 
-      <button
-        type="submit"
-        disabled={pending || !canSubmit}
-        className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
-      >
-        {pending ? t("submitting") : t("submitCta")}
-      </button>
-
-      {/* Transfer option — below submit, orange accent */}
+      {/* Transfer option — below errors, before submit */}
       {transferPrice && location && (
         <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-s)] border border-ember/30 bg-ember/5 px-4 py-3 transition-colors has-[:checked]:border-ember has-[:checked]:bg-ember/10">
           <input
             type="checkbox"
             name="includesTransfer"
             value="true"
+            checked={transferChecked}
+            onChange={(e) => setTransferChecked(e.target.checked)}
             className="mt-0.5 accent-ember"
           />
           <div className="flex flex-col gap-0.5">
@@ -409,6 +419,42 @@ export function DistanceSelect({
           </span>
         </label>
       )}
+
+      {/* Price summary + submit */}
+      {selected !== null && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3">
+          <div className="flex flex-col gap-1.5 text-sm">
+            <div className="flex justify-between text-ink-soft">
+              <span>{t("priceSummarySlot")}</span>
+              <span className="tabular-nums">{slotPrice.toLocaleString("ru-KZ")} ₸</span>
+            </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-spruce">
+                <span>{t("priceSummaryDiscount")}</span>
+                <span className="tabular-nums">−{discountAmount.toLocaleString("ru-KZ")} ₸</span>
+              </div>
+            )}
+            {transferChecked && transferAmount > 0 && (
+              <div className="flex justify-between text-ink-soft">
+                <span>{t("priceSummaryTransfer")}</span>
+                <span className="tabular-nums">+{transferAmount.toLocaleString("ru-KZ")} ₸</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-border pt-1.5 font-bold text-ink">
+              <span>{t("priceSummaryTotal")}</span>
+              <span className="tabular-nums">{totalAmount.toLocaleString("ru-KZ")} ₸</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending || !canSubmit}
+        className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
+      >
+        {pending ? t("submitting") : t("submitCta")}
+      </button>
     </form>
   );
 }

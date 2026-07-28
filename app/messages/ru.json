@@ -301,7 +301,11 @@
     "qualificationRequired": "Требуется квалификация:",
     "qualificationUrlLabel": "Подтверждение квалификации",
     "qualificationUrlHint": "Вставьте ссылку на результат забега, страховку или другой подтверждающий документ",
-    "qualificationUrlRequired": "Укажите ссылку на подтверждение квалификации"
+    "qualificationUrlRequired": "Укажите ссылку на подтверждение квалификации",
+    "priceSummarySlot": "Слот",
+    "priceSummaryDiscount": "Промокод",
+    "priceSummaryTransfer": "Трансфер",
+    "priceSummaryTotal": "Итого"
   },
   "Payment": {
     "eyebrow": "Оплата",
