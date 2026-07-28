@@ -1,31 +1,37 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== Ridder Deploy ==="
-cd "$(dirname "$0")"
+SSH_KEY="$(dirname "$0")/ridder.pem"
+SERVER="ec2-user@51.21.230.52"
+SHA=$(git rev-parse --short HEAD)
+IMAGE="peloton-ridder:${SHA}"
 
-# ── 1. Pull latest code ────────────────────────────────────────────────────────
-echo "[1/5] Pulling latest code..."
-git pull --ff-only
+echo "=== Ridder Deploy (${SHA}) ==="
 
-# ── 2. Build images ────────────────────────────────────────────────────────────
-echo "[2/5] Building Docker images..."
-docker compose build app migrate
+# ── 1. Push latest code ───────────────────────────────────────────────────────
+echo "[1/3] Pushing code..."
+git push origin main
 
-# ── 3. Start infrastructure (db, minio) if not running ────────────────────────
-echo "[3/5] Starting infrastructure..."
-docker compose up -d db minio
-echo "Waiting for db and minio to be healthy..."
-docker compose wait db minio 2>/dev/null || sleep 10
+# ── 2. Build on server (build-args читаются из .env на сервере) ───────────────
+echo "[2/3] Building ${IMAGE} on server..."
+ssh -i "${SSH_KEY}" "${SERVER}" "
+  cd /home/ec2-user/ridder
+  git pull --ff-only
+  export \$(grep -v '^#' .env | grep 'NEXT_PUBLIC_' | xargs)
+  docker build \
+    --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY=\"\${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}\" \
+    --build-arg NEXT_PUBLIC_MAPTILER_KEY=\"\${NEXT_PUBLIC_MAPTILER_KEY:-}\" \
+    -t ${IMAGE} \
+    ./app
+"
 
-# ── 4. Run database migrations ────────────────────────────────────────────────
-echo "[4/5] Running database migrations..."
-docker compose run --rm migrate
+# ── 3. Deploy ─────────────────────────────────────────────────────────────────
+echo "[3/3] Deploying..."
+ssh -i "${SSH_KEY}" "${SERVER}" "
+  cd /home/ec2-user/ridder
+  APP_TAG=${SHA} docker compose up -d --no-build --force-recreate app
+  RUNNING=\$(docker inspect ridder-app-1 --format '{{.Config.Image}}')
+  echo \"Running: \${RUNNING}\"
+"
 
-# ── 5. Start / restart all services ───────────────────────────────────────────
-echo "[5/5] Starting services..."
-docker compose up -d --remove-orphans db minio nginx app
-
-echo ""
-echo "=== Deploy complete ==="
-docker compose ps
+echo "✓ Deploy done — ${IMAGE}"
