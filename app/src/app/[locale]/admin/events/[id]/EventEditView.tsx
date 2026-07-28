@@ -8,6 +8,7 @@ import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
 import { RegulationsSection } from "./RegulationsSection";
 import { AboutSection } from "./AboutSection";
+import { PhotosSection } from "./PhotosSection";
 import { DayProgramSection } from "./DayProgramSection";
 import { HowToGetSection } from "./HowToGetSection";
 import { EquipmentSection } from "./EquipmentSection";
@@ -165,6 +166,12 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
           initialAboutText={event.aboutText ?? ""}
           initialPhotoLinks={(event.photoLinks as PhotoLink[] | null) ?? []}
         />
+        <div className="mt-6">
+          <PhotosSection
+            eventId={event.id}
+            initialPhotos={(event.eventPhotos as string[] | null) ?? []}
+          />
+        </div>
       </section>
 
       <section>

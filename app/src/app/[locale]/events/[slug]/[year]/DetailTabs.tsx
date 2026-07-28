@@ -40,6 +40,7 @@ type Props = {
   courseIntro: string;
   aboutText: string;
   photoLinks: PhotoLink[];
+  eventPhotos?: string[];
   dayProgram: DayProgramItem[];
   howToGet: string;
   distanceEquipment: DistanceEquipment;
@@ -57,6 +58,7 @@ export function DetailTabs({
   courseIntro,
   aboutText,
   photoLinks,
+  eventPhotos = [],
   dayProgram,
   howToGet,
   distanceEquipment,
@@ -77,6 +79,7 @@ export function DetailTabs({
   const [equipDistId, setEquipDistId] = useState(allDistances[0]?.id ?? "");
   const [resultsDistId, setResultsDistId] = useState<string>("all");
   const [resultsSearch, setResultsSearch] = useState("");
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
@@ -209,6 +212,53 @@ export function DetailTabs({
                 </div>
               </div>
             )}
+
+            {eventPhotos.length > 0 && (
+              <div>
+                <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">
+                  {t("eventPhotosLabel")}
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {eventPhotos.map((url, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setLightboxUrl(url)}
+                      className="group overflow-hidden rounded-[var(--radius-s)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ember"
+                    >
+                      <img
+                        src={url}
+                        alt=""
+                        className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
+              aria-label="Закрыть"
+            >
+              ✕
+            </button>
+            <img
+              src={lightboxUrl}
+              alt=""
+              className="max-h-[90vh] max-w-[90vw] rounded-[var(--radius-s)] object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
 

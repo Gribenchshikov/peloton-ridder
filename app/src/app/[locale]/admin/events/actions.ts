@@ -547,6 +547,51 @@ export async function updateAboutAction(
   return { success: true };
 }
 
+export async function uploadEventPhotoAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState & { url?: string }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("photo");
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+
+  const saved = await saveFile(file, "event-photos");
+  if ("error" in saved) return { error: saved.error };
+
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { eventPhotos: true } });
+  const existing = (event?.eventPhotos as string[] | null) ?? [];
+  const updated = [...existing, saved.url];
+
+  await prisma.event.update({ where: { id: eventId }, data: { eventPhotos: updated } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true, url: saved.url };
+}
+
+export async function deleteEventPhotoAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const url = formData.get("url");
+  if (typeof url !== "string") return { error: "invalid" };
+
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { eventPhotos: true } });
+  const existing = (event?.eventPhotos as string[] | null) ?? [];
+  const updated = existing.filter((u) => u !== url);
+
+  await prisma.event.update({ where: { id: eventId }, data: { eventPhotos: updated.length ? updated : Prisma.DbNull } });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
 // ── Day program / Программа дня ──────────────────────────────────────────────
 
 export async function updateDayProgramAction(

@@ -201,6 +201,7 @@ model Event {
   waiverFiles                  Json?    // { locale: "ru"|"kk"|"en"; name: string; url: string }[]
   aboutText                    String?
   photoLinks                   Json?    // { url: string; label: string }[]
+  eventPhotos                  Json?    // string[] — URLs загруженных фото
   dayProgram                   Json?    // { time: string; description: string }[]
   howToGet                     String?
   distanceEquipment            Json?    // { [distanceId]: { required: string[]; recommended: string[] } }

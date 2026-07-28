@@ -42,6 +42,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
   const waiverFiles = (event.waiverFiles as RegulationFile[] | null) ?? [];
   const results = event.results ?? [];
   const photoLinks = (event.photoLinks as PhotoLink[] | null) ?? [];
+  const eventPhotos = (event.eventPhotos as string[] | null) ?? [];
   const dayProgram = (event.dayProgram as DayProgramItem[] | null) ?? [];
   const distanceEquipment = (event.distanceEquipment as DistanceEquipment | null) ?? {};
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
@@ -164,6 +165,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               courseIntro={event.race.courseIntro ?? ""}
               aboutText={event.aboutText ?? ""}
               photoLinks={photoLinks}
+              eventPhotos={eventPhotos}
               dayProgram={dayProgram}
               howToGet={event.howToGet ?? ""}
               distanceEquipment={distanceEquipment}
