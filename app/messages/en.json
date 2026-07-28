@@ -130,6 +130,7 @@
     "noAccount": "Don't have an account yet?",
     "errorEmailTaken": "This email is already registered — try signing in instead.",
     "errorInvalid": "Please check the fields — something isn't filled in correctly.",
+    "errorNameLatinOnly": "First and last name must use Latin letters, hyphens, and spaces only.",
     "errorInvalidCredentials": "Invalid email or password.",
     "errorBotCheck": "Bot check failed. Refresh the page and try again.",
     "checkEmailTitle": "Check your email",

@@ -12,6 +12,7 @@ const initialState: RegisterState = {};
 const ERROR_KEYS: Record<string, string> = {
   email_taken: "errorEmailTaken",
   invalid: "errorInvalid",
+  name_latin_only: "errorNameLatinOnly",
   bot_check: "errorBotCheck",
   password_mismatch: "errorPasswordMismatch",
 };
@@ -27,8 +28,8 @@ export function RegisterForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <FormField label={t("name")} name="firstName" type="text" required />
-      <FormField label={t("surname")} name="lastName" type="text" required />
+      <FormField label={t("name")} name="firstName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} />
+      <FormField label={t("surname")} name="lastName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} />
       <FormField label={t("email")} name="email" type="email" required />
       <FormField label={t("city")} name="city" type="text" />
       <FormField label={t("phone")} name="phone" type="tel" />

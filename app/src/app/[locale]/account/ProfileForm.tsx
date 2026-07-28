@@ -36,8 +36,8 @@ export function ProfileForm({
             className="rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-2.5 text-ink-faint"
           />
         </label>
-        <FormField label={tAuth("name")} name="firstName" type="text" required defaultValue={user.firstName} />
-        <FormField label={tAuth("surname")} name="lastName" type="text" required defaultValue={user.lastName} />
+        <FormField label={tAuth("name")} name="firstName" type="text" required defaultValue={user.firstName} pattern="[A-Za-z][A-Za-z \-]*" title={tAuth("errorNameLatinOnly")} />
+        <FormField label={tAuth("surname")} name="lastName" type="text" required defaultValue={user.lastName} pattern="[A-Za-z][A-Za-z \-]*" title={tAuth("errorNameLatinOnly")} />
         <FormField label={tAuth("city")} name="city" type="text" defaultValue={user.city} />
         <FormField label={t("phone")} name="phone" type="tel" defaultValue={user.phone} />
         <label className="flex flex-col gap-1.5 text-sm">
@@ -65,6 +65,7 @@ export function ProfileForm({
         </label>
 
         {state.success && <p className="text-sm text-spruce">{t("profileSaved")}</p>}
+        {state.error === "name_latin_only" && <p className="text-sm text-danger">{tAuth("errorNameLatinOnly")}</p>}
         {state.error === "invalid" && <p className="text-sm text-danger">{tAuth("errorInvalid")}</p>}
 
         <button

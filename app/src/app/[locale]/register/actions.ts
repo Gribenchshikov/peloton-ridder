@@ -8,10 +8,12 @@ import { sendVerificationEmail, sendAdminAlertEmail } from "@/lib/mailer";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { buildAppUrl } from "@/lib/url";
 
+const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
+
 const RegisterSchema = z
   .object({
-    firstName: z.string().trim().min(2).max(100),
-    lastName: z.string().trim().min(2).max(100),
+    firstName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
+    lastName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
     email: z.string().trim().toLowerCase().email(),
     phone: z.string().trim().max(30).optional(),
     birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -43,7 +45,10 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
 
   if (!parsed.success) {
     const isMismatch = parsed.error.issues.some((i) => i.message === "password_mismatch");
-    return { error: isMismatch ? "password_mismatch" : "invalid" };
+    if (isMismatch) return { error: "password_mismatch" };
+    const isLatinOnly = parsed.error.issues.some((i) => i.message === "latin_only");
+    if (isLatinOnly) return { error: "name_latin_only" };
+    return { error: "invalid" };
   }
 
   const { firstName, lastName, email, phone, birthDate, password, city } = parsed.data;

@@ -10,9 +10,11 @@ import { CancelReason } from "@/generated/prisma/client";
 
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
+const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
+
 const ProfileSchema = z.object({
-  firstName: z.string().trim().min(2).max(100),
-  lastName: z.string().trim().min(2).max(100),
+  firstName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
+  lastName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
   city: z.string().trim().max(100).optional(),
   phone: z.string().trim().max(30).optional(),
   tshirtSize: z.enum(TSHIRT_SIZES).optional(),
@@ -44,6 +46,8 @@ export async function updateProfileAction(
   });
 
   if (!parsed.success) {
+    const isLatinOnly = parsed.error.issues.some((i) => i.message === "latin_only");
+    if (isLatinOnly) return { error: "name_latin_only" };
     return { error: "invalid" };
   }
 

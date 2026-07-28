@@ -10,6 +10,8 @@ export function FormField({
   placeholder,
   hint,
   error,
+  pattern,
+  title,
 }: {
   label: string;
   name: string;
@@ -22,6 +24,8 @@ export function FormField({
   placeholder?: string;
   hint?: string;
   error?: boolean;
+  pattern?: string;
+  title?: string;
 }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
@@ -39,6 +43,8 @@ export function FormField({
         defaultValue={defaultValue}
         step={step}
         placeholder={placeholder}
+        pattern={pattern}
+        title={title}
         className={[
           "rounded-[var(--radius-s)] border bg-stone-50 px-3 py-2.5 text-ink outline-none transition-colors",
           error
