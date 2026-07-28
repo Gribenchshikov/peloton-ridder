@@ -631,6 +631,9 @@ export async function importResultsCsvAction(
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
 
+  const distanceId = formData.get("distanceId");
+  const distId = typeof distanceId === "string" && distanceId ? distanceId : null;
+
   const text = await file.text();
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return { error: "empty_file" };
@@ -649,10 +652,14 @@ export async function importResultsCsvAction(
   }
   if (rows.length === 0) return { error: "no_rows" };
 
+  const deleteWhere = distId
+    ? { eventId, distanceId: distId, source: "EXCEL" as const }
+    : { eventId, source: "EXCEL" as const };
+
   await prisma.$transaction([
-    prisma.result.deleteMany({ where: { eventId, source: "EXCEL" } }),
+    prisma.result.deleteMany({ where: deleteWhere }),
     prisma.result.createMany({
-      data: rows.map((r) => ({ eventId, source: "EXCEL", ...r })),
+      data: rows.map((r) => ({ eventId, distanceId: distId, source: "EXCEL", ...r })),
       skipDuplicates: true,
     }),
   ]);

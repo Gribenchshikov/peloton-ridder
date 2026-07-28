@@ -4,17 +4,22 @@ import { useState, useTransition } from "react";
 import { importResultsCsvAction, fetchMyraceResultsAction, clearResultsAction } from "../actions";
 import type { Result } from "@/generated/prisma/client";
 
+type Distance = { id: string; name: string; km: number };
+
 type Props = {
   eventId: string;
   initialResults: Result[];
+  distances: Distance[];
 };
 
-export function ResultsSection({ eventId, initialResults }: Props) {
+export function ResultsSection({ eventId, initialResults, distances }: Props) {
   const [results, setResults] = useState<Result[]>(initialResults);
   const [csvStatus, setCsvStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
   const [myraceStatus, setMyraceStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
   const [clearStatus, setClearStatus] = useState<{ error?: string; success?: boolean }>({});
   const [myraceUrl, setMyraceUrl] = useState("");
+  const [csvDistanceId, setCsvDistanceId] = useState(distances[0]?.id ?? "");
+  const [filterDistanceId, setFilterDistanceId] = useState<string>("all");
   const [csvPending, startCsv] = useTransition();
   const [myracePending, startMyrace] = useTransition();
   const [clearPending, startClear] = useTransition();
@@ -24,6 +29,7 @@ export function ResultsSection({ eventId, initialResults }: Props) {
     if (!file) return;
     const fd = new FormData();
     fd.set("file", file);
+    if (csvDistanceId) fd.set("distanceId", csvDistanceId);
     setCsvStatus({});
     startCsv(async () => {
       const result = await importResultsCsvAction(eventId, {}, fd);
@@ -59,13 +65,20 @@ export function ResultsSection({ eventId, initialResults }: Props) {
   const excelCount = results.filter((r) => r.source === "EXCEL").length;
   const myraceCount = results.filter((r) => r.source === "MYRACE").length;
 
+  const filteredResults =
+    filterDistanceId === "all"
+      ? results
+      : results.filter((r) => r.distanceId === filterDistanceId);
+
+  const distanceMap = Object.fromEntries(distances.map((d) => [d.id, d.name]));
+
   return (
     <section className="flex flex-col gap-6">
       <h2 className="font-display text-lg font-bold text-ink">Результаты</h2>
 
       {results.length > 0 && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="text-sm text-ink-soft">
               {results.length} результатов
               {excelCount > 0 && ` (CSV: ${excelCount})`}
@@ -82,6 +95,36 @@ export function ResultsSection({ eventId, initialResults }: Props) {
           </div>
           {clearStatus.error && <p className="text-sm text-danger">Ошибка</p>}
 
+          {distances.length > 1 && (
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFilterDistanceId("all")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                  filterDistanceId === "all"
+                    ? "bg-ember text-white"
+                    : "bg-surface-2 text-ink-soft hover:text-ink"
+                }`}
+              >
+                Все
+              </button>
+              {distances.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setFilterDistanceId(d.id)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    filterDistanceId === d.id
+                      ? "bg-ember text-white"
+                      : "bg-surface-2 text-ink-soft hover:text-ink"
+                  }`}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
             <table className="w-full min-w-[480px] text-sm">
               <thead>
@@ -91,25 +134,33 @@ export function ResultsSection({ eventId, initialResults }: Props) {
                   <th className="px-3 py-2 text-left font-semibold text-ink-faint">Имя</th>
                   <th className="px-3 py-2 text-left font-semibold text-ink-faint tabular-nums">Время</th>
                   <th className="px-3 py-2 text-left font-semibold text-ink-faint">Категория</th>
+                  {distances.length > 0 && (
+                    <th className="px-3 py-2 text-left font-semibold text-ink-faint">Дистанция</th>
+                  )}
                   <th className="px-3 py-2 text-left font-semibold text-ink-faint">Источник</th>
                 </tr>
               </thead>
               <tbody>
-                {results.slice(0, 50).map((r) => (
+                {filteredResults.slice(0, 50).map((r) => (
                   <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                     <td className="px-3 py-2 tabular-nums font-bold text-ink">{r.place ?? "—"}</td>
                     <td className="px-3 py-2 tabular-nums text-ink-soft">{r.bibNumber}</td>
                     <td className="px-3 py-2 text-ink">{r.name}</td>
                     <td className="px-3 py-2 tabular-nums text-ink-soft">{r.time ?? "—"}</td>
                     <td className="px-3 py-2 text-ink-faint">{r.category ?? "—"}</td>
+                    {distances.length > 0 && (
+                      <td className="px-3 py-2 text-ink-faint">
+                        {r.distanceId ? (distanceMap[r.distanceId] ?? "—") : "—"}
+                      </td>
+                    )}
                     <td className="px-3 py-2 text-[11px] uppercase tracking-wide text-ink-faint">{r.source}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {results.length > 50 && (
+            {filteredResults.length > 50 && (
               <p className="px-3 py-2 text-xs text-ink-faint">
-                Показано 50 из {results.length}
+                Показано 50 из {filteredResults.length}
               </p>
             )}
           </div>
@@ -123,6 +174,22 @@ export function ResultsSection({ eventId, initialResults }: Props) {
           <p className="text-xs text-ink-soft">
             Колонки: <code className="rounded bg-surface-2 px-1">номер,имя,место,время,категория</code>
           </p>
+          {distances.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-ink-soft">Дистанция</label>
+              <select
+                value={csvDistanceId}
+                onChange={(e) => setCsvDistanceId(e.target.value)}
+                className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm text-ink focus:border-ember focus:outline-none"
+              >
+                {distances.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.km} км)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <label className={`cursor-pointer self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft ${csvPending ? "opacity-50" : ""}`}>
             {csvPending ? "Загружается…" : "Выбрать файл (.csv)"}
             <input

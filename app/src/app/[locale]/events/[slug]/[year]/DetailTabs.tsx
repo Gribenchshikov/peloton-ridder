@@ -47,6 +47,7 @@ type Props = {
   regulationBlocks: RegulationBlock[];
   waiverFiles: RegulationFile[];
   results: Result[];
+  resultsUrl?: string | null;
   registrations: Registration[];
   distances?: DistanceWithProfile[];
   allDistances?: DistanceBasic[];
@@ -63,6 +64,7 @@ export function DetailTabs({
   regulationBlocks,
   waiverFiles,
   results,
+  resultsUrl,
   registrations,
   distances = [],
   allDistances = [],
@@ -73,6 +75,8 @@ export function DetailTabs({
   const [tab, setTab] = useState<Tab>("about");
   const [activeDistId, setActiveDistId] = useState(distances[0]?.id ?? "");
   const [equipDistId, setEquipDistId] = useState(allDistances[0]?.id ?? "");
+  const [resultsDistId, setResultsDistId] = useState<string>("all");
+  const [resultsSearch, setResultsSearch] = useState("");
   const activeDist = distances.find((d) => d.id === activeDistId) ?? distances[0];
 
   const filesForLocale = regulationFiles.filter((f) => f.locale === locale);
@@ -241,38 +245,95 @@ export function DetailTabs({
         )}
 
         {/* ── Результаты ── */}
-        {tab === "results" && (
-          <div>
-            {results.length === 0 ? (
-              <p className="text-sm text-ink-faint">{t("resultsEmpty")}</p>
-            ) : (
-              <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
-                <table className="w-full min-w-[360px] text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-surface-2">
-                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsPlace")}</th>
-                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsBib")}</th>
-                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">{t("resultsName")}</th>
-                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsTime")}</th>
-                      <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">{t("resultsCategory")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.map((r) => (
-                      <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
-                        <td className="px-4 py-2.5 font-bold tabular-nums text-ink">{r.place ?? "—"}</td>
-                        <td className="px-4 py-2.5 tabular-nums text-ink-soft">{r.bibNumber}</td>
-                        <td className="px-4 py-2.5 text-ink">{r.name}</td>
-                        <td className="px-4 py-2.5 tabular-nums text-ink-soft">{r.time ?? "—"}</td>
-                        <td className="px-4 py-2.5 text-ink-faint">{r.category ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+        {tab === "results" && (() => {
+          const query = resultsSearch.trim().toLowerCase();
+          const byDist = resultsDistId === "all" ? results : results.filter((r) => r.distanceId === resultsDistId);
+          const visible = query
+            ? byDist.filter((r) => {
+                const bib = String(r.bibNumber);
+                const name = r.name.toLowerCase();
+                return name.includes(query) || bib.includes(query);
+              })
+            : byDist;
+          return (
+            <div className="flex flex-col gap-4">
+              {resultsUrl && (
+                <a
+                  href={resultsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-ink-soft"
+                >
+                  {t("resultsExternalLink")} →
+                </a>
+              )}
+              {results.length === 0 && !resultsUrl ? (
+                <p className="text-sm text-ink-faint">{t("resultsEmpty")}</p>
+              ) : results.length > 0 ? (
+                <>
+                  <div className="flex flex-col gap-3">
+                    {allDistances.length > 1 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setResultsDistId("all")}
+                          className={`rounded-full px-3 py-1 text-sm font-semibold transition-colors ${resultsDistId === "all" ? "bg-ember text-white" : "bg-surface-2 text-ink-soft hover:text-ink"}`}
+                        >
+                          {t("resultsAllDistances")}
+                        </button>
+                        {allDistances.map((d) => (
+                          <button
+                            key={d.id}
+                            type="button"
+                            onClick={() => setResultsDistId(d.id)}
+                            className={`rounded-full px-3 py-1 text-sm font-semibold transition-colors ${resultsDistId === d.id ? "bg-ember text-white" : "bg-surface-2 text-ink-soft hover:text-ink"}`}
+                          >
+                            {d.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <input
+                      type="search"
+                      value={resultsSearch}
+                      onChange={(e) => setResultsSearch(e.target.value)}
+                      placeholder={t("resultsSearchPlaceholder")}
+                      className="w-full max-w-xs rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-ember focus:outline-none"
+                    />
+                  </div>
+                  {visible.length === 0 ? (
+                    <p className="text-sm text-ink-faint">{t("resultsNoMatch")}</p>
+                  ) : (
+                    <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
+                      <table className="w-full min-w-[360px] text-sm">
+                        <thead>
+                          <tr className="border-b border-border bg-surface-2">
+                            <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsPlace")}</th>
+                            <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsBib")}</th>
+                            <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">{t("resultsName")}</th>
+                            <th className="px-4 py-2.5 text-left font-semibold text-ink-faint tabular-nums">{t("resultsTime")}</th>
+                            <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">{t("resultsCategory")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {visible.map((r) => (
+                            <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2">
+                              <td className="px-4 py-2.5 font-bold tabular-nums text-ink">{r.place ?? "—"}</td>
+                              <td className="px-4 py-2.5 tabular-nums text-ink-soft">{r.bibNumber}</td>
+                              <td className="px-4 py-2.5 text-ink">{r.name}</td>
+                              <td className="px-4 py-2.5 tabular-nums text-ink-soft">{r.time ?? "—"}</td>
+                              <td className="px-4 py-2.5 text-ink-faint">{r.category ?? "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+          );
+        })()}
 
         {/* ── Программа дня ── */}
         {tab === "dayprogram" && (

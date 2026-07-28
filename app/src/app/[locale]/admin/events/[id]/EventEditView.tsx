@@ -194,6 +194,7 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
       <ResultsSection
         eventId={event.id}
         initialResults={(event.results ?? []) as Result[]}
+        distances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
       />
 
       <div className="border-t border-border pt-6">

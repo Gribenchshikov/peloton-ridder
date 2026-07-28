@@ -161,6 +161,7 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
               regulationBlocks={regulationBlocks}
               waiverFiles={waiverFiles}
               results={results}
+              resultsUrl={event.resultsUrl}
               registrations={event.registrations}
               distances={distancesWithProfile}
               allDistances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}

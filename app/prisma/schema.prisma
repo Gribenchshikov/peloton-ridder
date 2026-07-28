@@ -248,6 +248,7 @@ model Distance {
 
   registrations Registration[]
   waitlist      Waitlist[]
+  results       Result[]
 }
 
 // Мерч, включённый в стоимость регистрации на Event (футболка, баф, медаль и т.п.).
@@ -347,6 +348,8 @@ model Result {
   id             String        @id @default(cuid())
   eventId        String
   event          Event         @relation(fields: [eventId], references: [id])
+  distanceId     String?
+  distance       Distance?     @relation(fields: [distanceId], references: [id])
   bibNumber      Int
   name           String
   place          Int?
@@ -358,6 +361,7 @@ model Result {
   importedAt     DateTime      @default(now())
 
   @@index([eventId])
+  @@index([distanceId])
 }
 
 model Partner {
