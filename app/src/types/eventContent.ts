@@ -1,4 +1,4 @@
-export type PhotoLink = { url: string; label: string };
+export type PhotoLink = { url: string; label: string; coverUrl?: string };
 export type DayProgramItem = { time: string; description: string };
 export type DistanceEquipment = {
   [distanceId: string]: {

@@ -547,6 +547,21 @@ export async function updateAboutAction(
   return { success: true };
 }
 
+export async function uploadPhotoLinkCoverAction(
+  _eventId: string,
+  formData: FormData,
+): Promise<{ url?: string; error?: string }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("cover");
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+
+  const saved = await saveFile(file, "photo-covers");
+  if ("error" in saved) return { error: saved.error };
+  return { url: saved.url };
+}
+
 export async function uploadEventPhotoAction(
   eventId: string,
   _prevState: ActionState,

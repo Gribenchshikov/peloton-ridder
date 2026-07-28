@@ -192,21 +192,35 @@ export function DetailTabs({
                 <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">
                   {t("photoLinksLabel")}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {photoLinks.map((link, i) => (
                     <a
                       key={i}
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
+                      className="group overflow-hidden rounded-[var(--radius-s)] border border-border bg-surface-2 transition-colors hover:border-ink-soft"
                     >
-                      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
-                        <rect x="1" y="2" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-                        <path d="M1 9l3.5-3.5L7 8l3-3 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <circle cx="4.5" cy="5.5" r="1" fill="currentColor"/>
-                      </svg>
-                      {link.label}
+                      {link.coverUrl ? (
+                        <div className="overflow-hidden">
+                          <img
+                            src={link.coverUrl}
+                            alt={link.label}
+                            className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex aspect-[4/3] items-center justify-center bg-surface-2">
+                          <svg width="28" height="28" viewBox="0 0 15 15" fill="none" aria-hidden className="text-ink-faint">
+                            <rect x="1" y="2" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                            <path d="M1 9l3.5-3.5L7 8l3-3 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="4.5" cy="5.5" r="1" fill="currentColor"/>
+                          </svg>
+                        </div>
+                      )}
+                      <div className="px-3 py-2 text-sm font-semibold text-ink">
+                        {link.label} ↗
+                      </div>
                     </a>
                   ))}
                 </div>
