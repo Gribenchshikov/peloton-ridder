@@ -6,8 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { safeRelativePath } from "@/lib/safeRedirect";
-import { CancelReason } from "@/generated/prisma/client";
+import { CancelReason, RefundType } from "@/generated/prisma/client";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
+import { sendRefundRequestEmail } from "@/lib/mailer";
 
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -113,6 +114,79 @@ export async function userCancelRegistrationAction(
 
   if (reg.distanceId) {
     void notifyWaitlistForDistance(reg.distanceId);
+  }
+
+  revalidatePath("/[locale]/account", "page");
+  return { success: true };
+}
+
+export type RequestRefundState = { error?: string; success?: boolean };
+
+const VALID_REFUND_TYPES: RefundType[] = ["SLOT", "TRANSFER"];
+
+export async function requestRefundAction(
+  _prevState: RequestRefundState,
+  formData: FormData,
+): Promise<RequestRefundState> {
+  const userId = await requireUserId();
+  if (!userId) return { error: "unauthorized" };
+
+  const registrationId = formData.get("registrationId");
+  const type = formData.get("refundType");
+  const reason = formData.get("reason");
+
+  if (typeof registrationId !== "string") return { error: "invalid" };
+  if (typeof type !== "string" || !VALID_REFUND_TYPES.includes(type as RefundType)) return { error: "invalid" };
+
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: {
+      userId: true,
+      status: true,
+      includesTransfer: true,
+      isTransferOnly: true,
+      distance: { select: { name: true } },
+      event: {
+        select: {
+          cancellationDeadline: true,
+          year: true,
+          race: { select: { name: true } },
+        },
+      },
+      refundRequests: { where: { status: "PENDING" }, select: { id: true, type: true } },
+    },
+  });
+
+  if (!reg || reg.userId !== userId) return { error: "not_found" };
+  if (reg.status !== "PAID") return { error: "not_paid" };
+  if (new Date() > reg.event.cancellationDeadline) return { error: "deadline_passed" };
+  if (type === "TRANSFER" && !reg.includesTransfer && !reg.isTransferOnly) return { error: "no_transfer" };
+  if (reg.refundRequests.some((r) => r.type === type)) return { error: "already_requested" };
+
+  await prisma.refundRequest.create({
+    data: {
+      registrationId,
+      type: type as RefundType,
+      reason: typeof reason === "string" && reason.trim() ? reason.trim() : null,
+    },
+  });
+
+  const [adminEmails, user] = await Promise.all([
+    prisma.user.findMany({ where: { isAdmin: true }, select: { email: true } }).then((u) => u.map((x) => x.email)),
+    prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true, email: true } }),
+  ]);
+
+  if (user && adminEmails.length > 0) {
+    void sendRefundRequestEmail(
+      adminEmails,
+      `${user.firstName} ${user.lastName}`,
+      user.email,
+      `${reg.event.race.name} ${reg.event.year}`,
+      reg.distance?.name ?? "Трансфер",
+      type as RefundType,
+      typeof reason === "string" && reason.trim() ? reason.trim() : null,
+      registrationId,
+    );
   }
 
   revalidatePath("/[locale]/account", "page");

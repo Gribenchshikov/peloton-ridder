@@ -8,6 +8,7 @@ import { ProfileForm } from "./ProfileForm";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { ChangeEmailForm } from "./ChangeEmailForm";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
+import { RefundRequestButton } from "./RefundRequestButton";
 import { VolunteerProgress } from "./VolunteerProgress";
 import { AvatarUpload } from "./AvatarUpload";
 import { ClubSection } from "./ClubSection";
@@ -279,10 +280,19 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                     🏅 {tCert("downloadCta")}
                   </Link>
                 )}
-                {(reg.status === "RESERVED" || reg.status === "PAID") &&
+                {reg.status === "RESERVED" &&
                   !reg.kitPickedUpAt &&
                   new Date() <= new Date(reg.event.cancellationDeadline) && (
                     <CancelRegistrationButton registrationId={reg.id} />
+                  )}
+                {reg.status === "PAID" &&
+                  !reg.kitPickedUpAt &&
+                  new Date() <= new Date(reg.event.cancellationDeadline) && (
+                    <RefundRequestButton
+                      registrationId={reg.id}
+                      hasTransfer={reg.includesTransfer || reg.isTransferOnly}
+                      pendingTypes={reg.refundRequests.map((r) => r.type)}
+                    />
                   )}
               </div>
             </li>

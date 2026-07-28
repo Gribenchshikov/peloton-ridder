@@ -5,6 +5,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { getEventWithRegistrations } from "@/lib/queries";
 import { RegistrationActions } from "./RegistrationActions";
+import { RefundRequestsSection } from "./RefundRequestsSection";
 
 type EventData = NonNullable<Awaited<ReturnType<typeof getEventWithRegistrations>>>;
 type Registration = EventData["registrations"][number];
@@ -260,6 +261,18 @@ export function RegistrationsView({ event }: { event: EventData }) {
           </div>
         </div>
       )}
+
+      {/* Pending refund requests */}
+      <RefundRequestsSection
+        eventId={event.id}
+        refunds={event.registrations
+          .flatMap((r) =>
+            (r.refundRequests ?? []).map((req) => ({
+              ...req,
+              registration: { id: r.id, user: r.user, distance: r.distance },
+            }))
+          )}
+      />
 
       {/* Filters */}
       <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 p-4">

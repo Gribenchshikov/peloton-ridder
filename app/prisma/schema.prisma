@@ -44,6 +44,17 @@ enum ClubMembershipStatus {
   REJECTED
 }
 
+enum RefundType {
+  SLOT
+  TRANSFER
+}
+
+enum RefundStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
 enum CancelReason {
   INJURY
   CANT_ATTEND
@@ -298,6 +309,7 @@ model Registration {
 
   result            Result?
   registrationMerch RegistrationMerch[]
+  refundRequests    RefundRequest[]
 
   @@index([eventId])
   @@index([distanceId])
@@ -315,6 +327,18 @@ model Waitlist {
   createdAt   DateTime @default(now())
 
   @@index([eventId])
+}
+
+model RefundRequest {
+  id             String       @id @default(cuid())
+  registrationId String
+  registration   Registration @relation(fields: [registrationId], references: [id])
+  type           RefundType
+  status         RefundStatus @default(PENDING)
+  reason         String?
+  adminNote      String?
+  requestedAt    DateTime     @default(now())
+  resolvedAt     DateTime?
 }
 
 // Источник — автопарсинг live.myrace.info ИЛИ ручная Excel-загрузка в админке (T20).

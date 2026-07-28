@@ -250,3 +250,84 @@ export async function toggleReregistrationPermissionAction(
   revalidateRegistrationPages();
   return { success: "permission_changed" };
 }
+
+export type RefundActionState = { error?: string; success?: boolean };
+
+export async function confirmRefundAction(
+  refundRequestId: string,
+  eventId: string,
+  _prevState: RefundActionState,
+  _formData: FormData,
+): Promise<RefundActionState> {
+  void _prevState; void _formData;
+
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const refund = await prisma.refundRequest.findUnique({
+    where: { id: refundRequestId },
+    select: {
+      status: true,
+      type: true,
+      registration: {
+        select: { id: true, eventId: true, distanceId: true, status: true, includesTransfer: true },
+      },
+    },
+  });
+  if (!refund || refund.registration.eventId !== eventId) return { error: "not_found" };
+  if (refund.status !== "PENDING") return { error: "already_resolved" };
+
+  await prisma.$transaction(async (tx) => {
+    await tx.refundRequest.update({
+      where: { id: refundRequestId },
+      data: { status: "CONFIRMED", resolvedAt: new Date() },
+    });
+    if (refund.type === "SLOT") {
+      await tx.registration.update({
+        where: { id: refund.registration.id },
+        data: { status: "CANCELLED", reservedUntil: null, bibNumber: null },
+      });
+      await reassignPaidBibNumbers(tx, eventId);
+    } else {
+      await tx.registration.update({
+        where: { id: refund.registration.id },
+        data: { includesTransfer: false, transferUsedAt: null },
+      });
+    }
+  });
+
+  if (refund.type === "SLOT" && refund.registration.distanceId) {
+    void notifyWaitlistForDistance(refund.registration.distanceId);
+  }
+
+  revalidateRegistrationPages();
+  return { success: true };
+}
+
+export async function rejectRefundAction(
+  refundRequestId: string,
+  eventId: string,
+  adminNote: string,
+  _prevState: RefundActionState,
+  _formData: FormData,
+): Promise<RefundActionState> {
+  void _prevState; void _formData;
+
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const refund = await prisma.refundRequest.findUnique({
+    where: { id: refundRequestId },
+    select: { status: true, registration: { select: { eventId: true } } },
+  });
+  if (!refund || refund.registration.eventId !== eventId) return { error: "not_found" };
+  if (refund.status !== "PENDING") return { error: "already_resolved" };
+
+  await prisma.refundRequest.update({
+    where: { id: refundRequestId },
+    data: { status: "REJECTED", adminNote: adminNote || null, resolvedAt: new Date() },
+  });
+
+  revalidateRegistrationPages();
+  return { success: true };
+}
