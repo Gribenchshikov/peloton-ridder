@@ -335,11 +335,13 @@ export function DetailTabs({
                     <div className="mb-2 text-xs font-bold uppercase tracking-wide text-danger">{t("equipmentRequired")}</div>
                     <ul className="flex flex-col gap-1.5">
                       {equipForDist.required.map((key) => {
-                        const item = EQUIPMENT_ITEMS.find((e) => e.key === key);
-                        return item ? (
+                        const predefined = EQUIPMENT_ITEMS.find((e) => e.key === key);
+                        const custom = (equipForDist.customItems ?? []).find((i) => i.key === key);
+                        const label = predefined?.label ?? custom?.label;
+                        return label ? (
                           <li key={key} className="flex items-center gap-2.5 text-sm text-ink">
                             <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
-                            {item.label}
+                            {label}
                           </li>
                         ) : null;
                       })}
@@ -351,11 +353,13 @@ export function DetailTabs({
                     <div className="mb-2 text-xs font-bold uppercase tracking-wide text-dawn">{t("equipmentRecommended")}</div>
                     <ul className="flex flex-col gap-1.5">
                       {equipForDist.recommended.map((key) => {
-                        const item = EQUIPMENT_ITEMS.find((e) => e.key === key);
-                        return item ? (
+                        const predefined = EQUIPMENT_ITEMS.find((e) => e.key === key);
+                        const custom = (equipForDist.customItems ?? []).find((i) => i.key === key);
+                        const label = predefined?.label ?? custom?.label;
+                        return label ? (
                           <li key={key} className="flex items-center gap-2.5 text-sm text-ink-soft">
                             <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-dawn" />
-                            {item.label}
+                            {label}
                           </li>
                         ) : null;
                       })}
