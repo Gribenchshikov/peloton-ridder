@@ -298,7 +298,10 @@
     "contactOrganizerError": "Не удалось отправить. Попробуйте ещё раз.",
     "birthDateLabel": "Дата рождения",
     "birthDateHint": "Будет сохранена в вашем профиле",
-    "qualificationRequired": "Требуется квалификация:"
+    "qualificationRequired": "Требуется квалификация:",
+    "qualificationUrlLabel": "Подтверждение квалификации",
+    "qualificationUrlHint": "Вставьте ссылку на результат забега, страховку или другой подтверждающий документ",
+    "qualificationUrlRequired": "Укажите ссылку на подтверждение квалификации"
   },
   "Payment": {
     "eyebrow": "Оплата",

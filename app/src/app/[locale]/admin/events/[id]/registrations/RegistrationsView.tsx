@@ -301,6 +301,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Трансфер</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColComment")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Квалификация</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
                 </tr>
@@ -348,6 +349,20 @@ export function RegistrationsView({ event }: { event: EventData }) {
                           </div>
                         ) : (
                           reg.adminComment ?? "—"
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-xs">
+                        {reg.qualificationUrl ? (
+                          <a
+                            href={reg.qualificationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-ember hover:underline"
+                          >
+                            Открыть ↗
+                          </a>
+                        ) : (
+                          <span className="text-ink-faint">—</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">

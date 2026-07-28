@@ -321,6 +321,24 @@ export function DistanceSelect({
         </div>
       )}
 
+      {/* Qualification URL — shown when selected distance requires qualification */}
+      {selectedDistance?.requiresQualification && (
+        <div className="flex flex-col gap-1.5 rounded-[var(--radius-s)] border border-warn/40 bg-warn/5 p-4">
+          <label className="text-sm font-semibold text-ink-soft">
+            {t("qualificationUrlLabel")}
+            <span className="ml-1.5 text-xs font-bold text-danger">*</span>
+          </label>
+          <input
+            type="url"
+            name="qualificationUrl"
+            required
+            placeholder="https://..."
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          />
+          <p className="text-xs text-ink-faint">{t("qualificationUrlHint")}</p>
+        </div>
+      )}
+
       {/* Birth date — shown only when not set in profile */}
       {!hasBirthDate && (
         <div className="flex flex-col gap-1.5">
@@ -363,6 +381,7 @@ export function DistanceSelect({
       {state.error === "promo_invalid" && <p className="text-sm text-danger">{t("promoError_not_found")}</p>}
       {state.error === "promo_expired" && <p className="text-sm text-danger">{t("promoError_expired")}</p>}
       {state.error === "promo_exhausted" && <p className="text-sm text-danger">{t("promoError_exhausted")}</p>}
+      {state.error === "qualification_missing" && <p className="text-sm text-danger">{t("qualificationUrlRequired")}</p>}
 
       <button
         type="submit"

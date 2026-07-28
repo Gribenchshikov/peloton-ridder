@@ -298,7 +298,10 @@
     "contactOrganizerError": "Жіберу мүмкін болмады. Қайта көріңіз.",
     "birthDateLabel": "Туған күні",
     "birthDateHint": "Профиліңізге сақталады",
-    "qualificationRequired": "Біліктілік талап етіледі:"
+    "qualificationRequired": "Біліктілік талап етіледі:",
+    "qualificationUrlLabel": "Біліктілікті растау",
+    "qualificationUrlHint": "Жарыс нәтижесіне, сақтандыруға немесе басқа растаушы құжатқа сілтеме енгізіңіз",
+    "qualificationUrlRequired": "Біліктілікті растайтын сілтемені көрсетіңіз"
   },
   "Payment": {
     "eyebrow": "Төлем",

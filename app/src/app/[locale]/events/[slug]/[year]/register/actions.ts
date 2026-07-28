@@ -167,6 +167,14 @@ export async function createRegistrationAction(
 
     const includesTransfer = formData.get("includesTransfer") === "true";
 
+    // Если дистанция требует квалификации — поле обязательно
+    let qualificationUrl: string | null = null;
+    if (distance.requiresQualification) {
+      const raw = String(formData.get("qualificationUrl") ?? "").trim();
+      if (!raw) return { kind: "error" as const, error: "qualification_missing" };
+      qualificationUrl = raw;
+    }
+
     // Парсим доп. участников для семейных/командных дистанций
     type ExtraParticipant = { firstName: string; lastName: string; birthDate: string };
     let additionalParticipants: ExtraParticipant[] | null = null;
@@ -204,6 +212,7 @@ export async function createRegistrationAction(
       promoCodeId,
       discountAmount,
       includesTransfer,
+      qualificationUrl,
       additionalParticipants: additionalParticipants ?? undefined,
     };
     const registration = cancelled

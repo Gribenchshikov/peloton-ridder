@@ -280,6 +280,7 @@ model Registration {
   allowReregistration   Boolean      @default(false)
   reregistrationCount  Int          @default(0)
   disqualified    Boolean            @default(false)
+  qualificationUrl String?
   kaspiOrderId    String?
   kaspiPaymentUrl String?
   runningClubId   String?

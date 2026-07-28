@@ -298,7 +298,10 @@
     "contactOrganizerError": "Could not send. Please try again.",
     "birthDateLabel": "Date of birth",
     "birthDateHint": "Will be saved to your profile",
-    "qualificationRequired": "Qualification required:"
+    "qualificationRequired": "Qualification required:",
+    "qualificationUrlLabel": "Qualification proof",
+    "qualificationUrlHint": "Paste a link to your race result, insurance, or other supporting document",
+    "qualificationUrlRequired": "Please provide a link to your qualification proof"
   },
   "Payment": {
     "eyebrow": "Payment",
