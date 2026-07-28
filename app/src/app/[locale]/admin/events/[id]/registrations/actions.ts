@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
+import { notifyWaitlistForDistance } from "@/lib/waitlist";
 
 export type RegistrationAdminActionState = {
   error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid";
@@ -80,12 +81,14 @@ export async function cancelRegistrationAction(
       },
     });
     await reassignPaidBibNumbers(tx, eventId);
-    return { success: "cancelled" as const };
+    return { success: "cancelled" as const, distanceId: registration.distanceId };
   });
 
   if ("error" in outcome) return outcome;
+  if (outcome.distanceId) void notifyWaitlistForDistance(outcome.distanceId);
   revalidateRegistrationPages();
-  return outcome;
+  const { distanceId: _, ...rest } = outcome;
+  return rest;
 }
 
 export async function restoreRegistrationAction(

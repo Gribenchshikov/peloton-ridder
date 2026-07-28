@@ -83,6 +83,39 @@ export async function sendBroadcastEmail(to: string, name: string, subject: stri
   await sendMail(to, subject, text, html);
 }
 
+export async function sendWaitlistSlotAvailableEmail(
+  to: string,
+  name: string,
+  raceName: string,
+  distanceName: string,
+  registerUrl: string,
+) {
+  const subject = `Место освободилось — ${raceName} · ${distanceName}`;
+  const text = [
+    `Здравствуйте, ${name}!`,
+    ``,
+    `Для вас появилось место на дистанции ${distanceName} (${raceName}).`,
+    `Зарегистрируйтесь как можно скорее — места распределяются по порядку оплаты:`,
+    ``,
+    registerUrl,
+    ``,
+    `С уважением,`,
+    `Peloton Ridder`,
+  ].join("\n");
+  const html = `
+<p>Здравствуйте, ${name}!</p>
+<p>Для вас появилось место на дистанции <strong>${distanceName}</strong> (${raceName}).</p>
+<p>Зарегистрируйтесь как можно скорее — места распределяются по порядку оплаты.</p>
+<p style="margin:20px 0">
+  <a href="${registerUrl}" style="display:inline-block;padding:10px 20px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
+    Зарегистрироваться
+  </a>
+</p>
+<p style="color:#888;font-size:13px">С уважением,<br>Peloton Ridder</p>
+`.trim();
+  await sendMail(to, subject, text, html);
+}
+
 export async function sendRegistrationConfirmationEmail(
   to: string,
   name: string,

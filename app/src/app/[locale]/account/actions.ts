@@ -7,6 +7,7 @@ import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { safeRelativePath } from "@/lib/safeRedirect";
 import { CancelReason } from "@/generated/prisma/client";
+import { notifyWaitlistForDistance } from "@/lib/waitlist";
 
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -91,7 +92,7 @@ export async function userCancelRegistrationAction(
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    select: { userId: true, status: true, event: { select: { cancellationDeadline: true } } },
+    select: { userId: true, distanceId: true, status: true, event: { select: { cancellationDeadline: true } } },
   });
 
   if (!reg || reg.userId !== userId) return { error: "not_found" };
@@ -109,6 +110,10 @@ export async function userCancelRegistrationAction(
       cancelComment: typeof comment === "string" && comment.trim() ? comment.trim() : null,
     },
   });
+
+  if (reg.distanceId) {
+    void notifyWaitlistForDistance(reg.distanceId);
+  }
 
   revalidatePath("/[locale]/account", "page");
   return { success: true };
