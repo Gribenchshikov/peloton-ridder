@@ -154,6 +154,7 @@ export function getUserProfile(userId: string) {
           status: true,
           bibNumber: true,
           kitPickedUpAt: true,
+          transferUsedAt: true,
           createdAt: true,
           cancelReason: true,
           includesTransfer: true,

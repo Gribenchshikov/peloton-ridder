@@ -286,12 +286,14 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                     <CancelRegistrationButton registrationId={reg.id} />
                   )}
                 {reg.status === "PAID" &&
-                  !reg.kitPickedUpAt &&
-                  new Date() <= new Date(reg.event.cancellationDeadline) && (
+                  new Date() <= new Date(reg.event.cancellationDeadline) &&
+                  !reg.transferUsedAt &&
+                  !(reg.kitPickedUpAt && !(reg.includesTransfer || reg.isTransferOnly)) && (
                     <RefundRequestButton
                       registrationId={reg.id}
                       hasTransfer={reg.includesTransfer || reg.isTransferOnly}
                       pendingTypes={reg.refundRequests.map((r) => r.type)}
+                      slotLocked={!!reg.kitPickedUpAt}
                     />
                   )}
               </div>

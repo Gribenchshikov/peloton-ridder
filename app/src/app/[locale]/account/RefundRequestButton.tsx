@@ -7,6 +7,7 @@ type Props = {
   registrationId: string;
   hasTransfer: boolean;
   pendingTypes: string[];
+  slotLocked?: boolean;
 };
 
 const initialState: RequestRefundState = {};
@@ -19,9 +20,9 @@ const ERROR_LABELS: Record<string, string> = {
   unauthorized: "Необходима авторизация.",
 };
 
-export function RefundRequestButton({ registrationId, hasTransfer, pendingTypes }: Props) {
+export function RefundRequestButton({ registrationId, hasTransfer, pendingTypes, slotLocked = false }: Props) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<"SLOT" | "TRANSFER">("SLOT");
+  const [type, setType] = useState<"SLOT" | "TRANSFER">(slotLocked ? "TRANSFER" : "SLOT");
   const [reason, setReason] = useState("");
   const [state, formAction, pending] = useActionState(requestRefundAction, initialState);
 
@@ -65,16 +66,21 @@ export function RefundRequestButton({ registrationId, hasTransfer, pendingTypes 
 
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">Тип возврата</span>
-                <label className={`flex cursor-pointer items-center gap-2.5 text-sm ${slotPending ? "opacity-40" : "text-ink"}`}>
-                  <input
-                    type="radio"
-                    checked={type === "SLOT"}
-                    onChange={() => setType("SLOT")}
-                    disabled={slotPending}
-                    className="accent-ember"
-                  />
-                  Слот (полный возврат регистрации)
-                </label>
+                {!slotLocked && (
+                  <label className={`flex cursor-pointer items-center gap-2.5 text-sm ${slotPending ? "opacity-40" : "text-ink"}`}>
+                    <input
+                      type="radio"
+                      checked={type === "SLOT"}
+                      onChange={() => setType("SLOT")}
+                      disabled={slotPending}
+                      className="accent-ember"
+                    />
+                    Слот (полный возврат регистрации)
+                  </label>
+                )}
+                {slotLocked && (
+                  <p className="text-xs text-ink-faint">Стартовый пакет уже выдан — возврат слота недоступен.</p>
+                )}
                 {hasTransfer && (
                   <label className={`flex cursor-pointer items-center gap-2.5 text-sm ${transferPending ? "opacity-40" : "text-ink"}`}>
                     <input
