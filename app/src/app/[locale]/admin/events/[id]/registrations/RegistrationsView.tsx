@@ -1,14 +1,45 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { getEventWithRegistrations } from "@/lib/queries";
 import { RegistrationActions } from "./RegistrationActions";
 import { RefundRequestsSection } from "./RefundRequestsSection";
+import { toggleKitIssuedAction, toggleTransferBoardedAction } from "./actions";
 
 type EventData = NonNullable<Awaited<ReturnType<typeof getEventWithRegistrations>>>;
 type Registration = EventData["registrations"][number];
+
+function InlineCheckbox({
+  checked: initialChecked,
+  onToggle,
+}: {
+  checked: boolean;
+  onToggle: (next: boolean) => Promise<{ error?: string }>;
+}) {
+  const [checked, setChecked] = useState(initialChecked);
+  const [pending, startTransition] = useTransition();
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const next = e.target.checked;
+    setChecked(next);
+    startTransition(async () => {
+      const res = await onToggle(next);
+      if (res.error) setChecked(!next);
+    });
+  }
+
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={handleChange}
+      disabled={pending}
+      className="h-4 w-4 cursor-pointer accent-ember disabled:opacity-50"
+    />
+  );
+}
 
 function StatusBadge({ status }: { status: Registration["status"] }) {
   const t = useTranslations("Admin");
@@ -303,7 +334,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
             Показано: <span className="font-semibold text-ink">{filtered.length}</span> из {event.registrations.length}
           </p>
           <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
-            <table className="w-full min-w-[1060px] text-sm">
+            <table className="w-full min-w-[1180px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-surface-2">
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColBib")}</th>
@@ -315,6 +346,8 @@ export function RegistrationsView({ event }: { event: EventData }) {
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColComment")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Квалификация</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">Пакет</th>
+                  <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">Посадка</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
                 </tr>
@@ -376,6 +409,22 @@ export function RegistrationsView({ event }: { event: EventData }) {
                           </a>
                         ) : (
                           <span className="text-ink-faint">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <InlineCheckbox
+                          checked={reg.kitPickedUpAt !== null}
+                          onToggle={(v) => toggleKitIssuedAction(reg.id, event.id, v)}
+                        />
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {(reg.includesTransfer || reg.isTransferOnly) ? (
+                          <InlineCheckbox
+                            checked={reg.transferUsedAt !== null}
+                            onToggle={(v) => toggleTransferBoardedAction(reg.id, event.id, v)}
+                          />
+                        ) : (
+                          <span className="text-xs text-ink-faint">—</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">

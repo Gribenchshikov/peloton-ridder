@@ -390,6 +390,8 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
           createdAt: true,
           qualificationUrl: true,
           discountAmount: true,
+          kitPickedUpAt: true,
+          transferUsedAt: true,
           user: { select: { firstName: true, lastName: true, email: true, phone: true } },
           distance: { select: { id: true, name: true, km: true } },
           runningClub: { select: { name: true } },
@@ -468,6 +470,8 @@ export function getEventWithRegistrations(id: string) {
           allowReregistration: true,
           createdAt: true,
           qualificationUrl: true,
+          kitPickedUpAt: true,
+          transferUsedAt: true,
           user: { select: { firstName: true, lastName: true, email: true, phone: true } },
           distance: { select: { id: true, name: true, km: true } },
           refundRequests: {

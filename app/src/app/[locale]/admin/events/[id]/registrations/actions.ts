@@ -304,6 +304,52 @@ export async function confirmRefundAction(
   return { success: true };
 }
 
+export async function toggleKitIssuedAction(
+  registrationId: string,
+  eventId: string,
+  issued: boolean,
+): Promise<{ error?: string }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { eventId: true },
+  });
+  if (!reg || reg.eventId !== eventId) return { error: "not_found" };
+
+  await prisma.registration.update({
+    where: { id: registrationId },
+    data: { kitPickedUpAt: issued ? new Date() : null },
+  });
+
+  revalidateRegistrationPages();
+  return {};
+}
+
+export async function toggleTransferBoardedAction(
+  registrationId: string,
+  eventId: string,
+  boarded: boolean,
+): Promise<{ error?: string }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const reg = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { eventId: true },
+  });
+  if (!reg || reg.eventId !== eventId) return { error: "not_found" };
+
+  await prisma.registration.update({
+    where: { id: registrationId },
+    data: { transferUsedAt: boarded ? new Date() : null },
+  });
+
+  revalidateRegistrationPages();
+  return {};
+}
+
 export async function rejectRefundAction(
   refundRequestId: string,
   eventId: string,
