@@ -27,32 +27,51 @@ const RegisterSchema = z
     path: ["confirmPassword"],
   });
 
+type FormValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  city: string;
+  country: string;
+  phone: string;
+  birthDate: string;
+};
+
 export type RegisterState = {
   error?: string;
   success?: boolean;
+  values?: FormValues;
 };
 
 export async function registerAction(_prevState: RegisterState, formData: FormData): Promise<RegisterState> {
+  const values: FormValues = {
+    firstName: (formData.get("firstName") as string) ?? "",
+    lastName: (formData.get("lastName") as string) ?? "",
+    email: (formData.get("email") as string) ?? "",
+    city: (formData.get("city") as string) ?? "",
+    country: (formData.get("country") as string) ?? "",
+    phone: (formData.get("phone") as string) ?? "",
+    birthDate: (formData.get("birthDate") as string) ?? "",
+  };
+
   const parsed = RegisterSchema.safeParse({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    email: formData.get("email"),
-    phone: formData.get("phone") || undefined,
-    birthDate: formData.get("birthDate") || undefined,
+    ...values,
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    city: formData.get("city") || undefined,
-    country: formData.get("country") || undefined,
+    city: values.city || undefined,
+    country: values.country || undefined,
+    phone: values.phone || undefined,
+    birthDate: values.birthDate || undefined,
   });
 
   if (!parsed.success) {
     const isMismatch = parsed.error.issues.some((i) => i.message === "password_mismatch");
-    if (isMismatch) return { error: "password_mismatch" };
+    if (isMismatch) return { error: "password_mismatch", values };
     const isLatinOnly = parsed.error.issues.some((i) => i.message === "latin_only");
-    if (isLatinOnly) return { error: "name_latin_only" };
+    if (isLatinOnly) return { error: "name_latin_only", values };
     const isWeakPassword = parsed.error.issues.some((i) => i.message === "password_no_letter" || i.message === "password_no_digit");
-    if (isWeakPassword) return { error: "password_weak" };
-    return { error: "invalid" };
+    if (isWeakPassword) return { error: "password_weak", values };
+    return { error: "invalid", values };
   }
 
   const { firstName, lastName, email, phone, birthDate, password, city, country } = parsed.data;
@@ -62,10 +81,10 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
     prisma.user.findUnique({ where: { email } }),
   ]);
   if (!turnstileOk) {
-    return { error: "bot_check" };
+    return { error: "bot_check", values };
   }
   if (existing) {
-    return { error: "email_taken" };
+    return { error: "email_taken", values };
   }
 
   const passwordHash = await hashPassword(password);

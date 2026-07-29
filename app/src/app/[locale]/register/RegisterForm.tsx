@@ -30,16 +30,19 @@ export function RegisterForm() {
     return <AuthSuccessCard title={t("checkEmailTitle")} text={t("checkEmailText")} />;
   }
 
+  const v = state.values;
+
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <FormField label={t("name")} name="firstName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} />
-      <FormField label={t("surname")} name="lastName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} />
-      <FormField label={t("email")} name="email" type="email" required />
-      <FormField label={t("city")} name="city" type="text" />
+      <FormField label={t("name")} name="firstName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} defaultValue={v?.firstName} />
+      <FormField label={t("surname")} name="lastName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} defaultValue={v?.lastName} />
+      <FormField label={t("email")} name="email" type="email" required defaultValue={v?.email} />
+      <FormField label={t("city")} name="city" type="text" defaultValue={v?.city} />
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-semibold text-ink-soft">{t("country")}</span>
         <select
           name="country"
+          defaultValue={v?.country ?? ""}
           className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
         >
           <option value=""></option>
@@ -50,12 +53,13 @@ export function RegisterForm() {
           ))}
         </select>
       </label>
-      <FormField label={t("phone")} name="phone" type="tel" />
+      <FormField label={t("phone")} name="phone" type="tel" defaultValue={v?.phone} />
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-semibold text-ink-soft">{t("birthDate")}</span>
         <input
           type="date"
           name="birthDate"
+          defaultValue={v?.birthDate}
           max={new Date().toISOString().slice(0, 10)}
           className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
         />
