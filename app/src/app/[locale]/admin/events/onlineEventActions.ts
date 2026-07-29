@@ -62,8 +62,8 @@ export async function createOnlineEventAction(
         ...eventData,
         raceId,
         location: "Онлайн",
-        cancellationDeadline: eventData.registrationDeadline,
-        medicalCancellationDeadline: eventData.registrationDeadline,
+        cancellationDeadline: eventData.dateISO,
+        medicalCancellationDeadline: eventData.dateISO,
         ...coverResult,
       },
     });
@@ -112,8 +112,8 @@ export async function updateOnlineEventAction(
       data: {
         ...eventData,
         location: "Онлайн",
-        cancellationDeadline: eventData.registrationDeadline,
-        medicalCancellationDeadline: eventData.registrationDeadline,
+        cancellationDeadline: eventData.dateISO,
+        medicalCancellationDeadline: eventData.dateISO,
         ...coverResult,
         ...(newRaceId ? { raceId: newRaceId } : {}),
       },
