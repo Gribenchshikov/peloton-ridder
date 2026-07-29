@@ -4,6 +4,21 @@ import { verifySync } from "otplib";
 import { prisma } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 
+const ALLOWED_FONTS = ["unbounded", "oswald", "bebas-neue", "impact", "georgia"] as const;
+type FontKey = (typeof ALLOWED_FONTS)[number];
+
+export async function saveFontAction(font: FontKey): Promise<{ ok: boolean }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { ok: false };
+  if (!ALLOWED_FONTS.includes(font)) return { ok: false };
+  await prisma.siteSetting.upsert({
+    where: { key: "display_font" },
+    create: { key: "display_font", value: font },
+    update: { value: font },
+  });
+  return { ok: true };
+}
+
 export async function saveLegalDocAction(key: string, content: string): Promise<{ ok: boolean }> {
   const adminId = await requireAdminId();
   if (!adminId) return { ok: false };

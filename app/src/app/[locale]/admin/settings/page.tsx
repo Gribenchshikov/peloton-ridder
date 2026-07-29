@@ -10,6 +10,7 @@ import { SizeTableEditor } from "./SizeTableEditor";
 import { HomeStatsEditor } from "./HomeStatsEditor";
 import { ContactInfoEditor } from "./ContactInfoEditor";
 import { LegalDocsEditor } from "./LegalDocsEditor";
+import { FontSelector } from "./FontSelector";
 import type { StatItem, ContactInfo } from "@/lib/settingsActions";
 
 const DEFAULT_STATS: StatItem[] = [
@@ -46,13 +47,14 @@ export default async function SettingsPage({
 
   const activeTab = tab === "docs" ? "docs" : "general";
 
-  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw] = await Promise.all([
+  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont] = await Promise.all([
     getTranslations("Admin"),
     getSiteSetting("hero_bg_url"),
     getSiteSetting("registrations_open"),
     getSiteSetting("tshirt_size_table"),
     getSiteSetting("home_stats"),
     getSiteSetting("contact_info"),
+    getSiteSetting("display_font"),
   ]);
 
   const isOpen = registrationsOpen !== "false";
@@ -97,6 +99,8 @@ export default async function SettingsPage({
 
       {activeTab === "general" && (
         <div className="flex flex-col gap-6">
+          <FontSelector initial={(displayFont as "unbounded" | "oswald" | "bebas-neue" | "impact" | "georgia") ?? "unbounded"} />
+
           <RegistrationToggle initialOpen={isOpen} />
 
           <HomeStatsEditor initial={homeStats} />
