@@ -56,6 +56,8 @@ export function DistanceSelect({
   transferPrice,
   location,
   defaultClubId,
+  isChallenge,
+  hasStrava,
 }: {
   eventId: string;
   locale: string;
