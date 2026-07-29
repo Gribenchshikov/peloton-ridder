@@ -13,7 +13,7 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
     await signIn("credentials", {
       email: formData.get("email"),
       password: formData.get("password"),
-      redirectTo: safeRelativePath(formData.get("callbackUrl")) ?? "/account",
+      redirectTo: safeRelativePath(formData.get("callbackUrl")) ?? "/",
     });
     return {};
   } catch (error) {
