@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { RaceFormState } from "./actions";
 
 type Props =
@@ -26,6 +26,7 @@ export function RaceForm(props: Props) {
   const [state, dispatch, pending] = useActionState(props.action, {});
   const slugRef = useRef<HTMLInputElement>(null);
   const defaults = props.mode === "edit" ? props.defaults : null;
+  const [isChallenge, setIsChallenge] = useState(defaults?.isChallenge ?? false);
 
   function onNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (props.mode === "create" && slugRef.current && !slugRef.current.dataset.edited) {
@@ -40,6 +41,37 @@ export function RaceForm(props: Props) {
 
   return (
     <form action={dispatch} className="flex flex-col gap-5">
+      {/* Тип трассы */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-semibold text-ink">Тип трассы</label>
+        <div className="flex gap-1 rounded-[var(--radius-s)] border border-border bg-surface p-1">
+          <button
+            type="button"
+            onClick={() => setIsChallenge(false)}
+            className={`flex-1 rounded-[var(--radius-s)] py-2 text-sm font-semibold transition-colors ${
+              !isChallenge ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Офлайн
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsChallenge(true)}
+            className={`flex-1 rounded-[var(--radius-s)] py-2 text-sm font-semibold transition-colors ${
+              isChallenge ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Онлайн
+          </button>
+        </div>
+        <input type="hidden" name="isChallenge" value={isChallenge ? "on" : ""} />
+        {isChallenge && (
+          <p className="text-xs text-ink-faint">
+            Участники загружают активности через Strava. Результаты — суммарный км за период.
+          </p>
+        )}
+      </div>
+
       {state.saved && (
         <p className="rounded-[var(--radius-s)] bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
           {t("eventSaved")}
@@ -118,16 +150,6 @@ export function RaceForm(props: Props) {
           className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ember focus:ring-1 focus:ring-ember"
         />
       </div>
-
-      <label className="flex cursor-pointer items-center gap-2.5 text-sm">
-        <input
-          type="checkbox"
-          name="isChallenge"
-          defaultChecked={defaults?.isChallenge ?? false}
-          className="h-4 w-4 cursor-pointer accent-ember"
-        />
-        <span className="font-semibold text-ink-soft">Онлайн-челлендж (результаты из Strava)</span>
-      </label>
 
       <button
         type="submit"

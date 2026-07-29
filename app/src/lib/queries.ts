@@ -304,7 +304,7 @@ export function getUsersForAdmin() {
 }
 
 export function getRacesForAdmin() {
-  return prisma.race.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
+  return prisma.race.findMany({ select: { id: true, name: true, isChallenge: true }, orderBy: { name: "asc" } });
 }
 
 export function getRacesListForAdmin() {

@@ -49,6 +49,7 @@ export async function GET(request: Request) {
   let synced = 0;
   let skipped = 0;
   let errors = 0;
+  const errorDetails: string[] = [];
 
   for (const event of activeEvents) {
     for (const reg of event.registrations) {
@@ -136,11 +137,13 @@ export async function GET(request: Request) {
 
           synced++;
         }
-      } catch {
+      } catch (err) {
         errors++;
+        const msg = err instanceof Error ? err.message : String(err);
+        errorDetails.push(`reg:${reg.id.slice(-6)} – ${msg}`);
       }
     }
   }
 
-  return NextResponse.json({ activeEvents: activeEvents.length, synced, skipped, errors });
+  return NextResponse.json({ activeEvents: activeEvents.length, synced, skipped, errors, errorDetails });
 }

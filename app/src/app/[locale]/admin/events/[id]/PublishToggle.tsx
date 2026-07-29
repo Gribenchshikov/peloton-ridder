@@ -1,15 +1,24 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { togglePublishedAction, type PublishState } from "./publishAction";
+import { togglePublishedAction } from "./publishAction";
 
 export function PublishToggle({ eventId, initialIsPublished }: { eventId: string; initialIsPublished: boolean }) {
-  const boundAction = togglePublishedAction.bind(null, eventId);
-  const [state, formAction, pending] = useActionState(boundAction, {});
   const [showModal, setShowModal] = useState(false);
   const [targetPublish, setTargetPublish] = useState(false);
+  const [isPublished, setIsPublished] = useState(initialIsPublished);
 
-  const isPublished = state.isPublished !== undefined ? state.isPublished : initialIsPublished;
+  const [state, formAction, pending] = useActionState(
+    async (prev: { error?: string }, formData: FormData) => {
+      const result = await togglePublishedAction(eventId, prev, formData);
+      if (result.ok && result.isPublished !== undefined) {
+        setIsPublished(result.isPublished);
+        setShowModal(false);
+      }
+      return result;
+    },
+    {}
+  );
 
   function openModal(publish: boolean) {
     setTargetPublish(publish);
@@ -41,13 +50,6 @@ export function PublishToggle({ eventId, initialIsPublished }: { eventId: string
         </button>
       </div>
 
-      {state.error === "invalid_code" && (
-        <p className="text-xs text-danger">Неверный код 2FA</p>
-      )}
-      {state.error === "no_2fa" && (
-        <p className="text-xs text-danger">Сначала настройте 2FA в /admin/setup-2fa</p>
-      )}
-
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <form
@@ -70,12 +72,20 @@ export function PublishToggle({ eventId, initialIsPublished }: { eventId: string
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
+                pattern="\d{6}"
+                autoComplete="one-time-code"
                 required
                 autoFocus
                 placeholder="123456"
-                className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+                className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-center font-mono text-xl font-bold tracking-[0.3em] text-ink placeholder:text-ink-faint focus:border-ember focus:outline-none"
               />
             </div>
+            {state.error === "invalid_code" && (
+              <p className="mt-2 text-sm text-danger">Неверный код 2FA</p>
+            )}
+            {state.error === "no_2fa" && (
+              <p className="mt-2 text-sm text-danger">Сначала настройте 2FA в /admin/setup-2fa</p>
+            )}
             <div className="mt-4 flex gap-2 justify-end">
               <button
                 type="button"
@@ -87,10 +97,9 @@ export function PublishToggle({ eventId, initialIsPublished }: { eventId: string
               <button
                 type="submit"
                 disabled={pending}
-                onClick={() => setShowModal(false)}
                 className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white hover:bg-ember-strong disabled:opacity-50"
               >
-                {pending ? "…" : "Подтвердить"}
+                {pending ? "Проверяем…" : "Подтвердить"}
               </button>
             </div>
           </form>

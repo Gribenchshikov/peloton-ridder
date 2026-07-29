@@ -45,7 +45,10 @@ export async function fetchStravaActivities(
   const res = await fetch(`https://www.strava.com/api/v3/athlete/activities?${params}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) throw new Error(`Strava activities fetch failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Strava activities fetch failed: ${res.status} – ${body}`);
+  }
   return res.json() as Promise<StravaRawActivity[]>;
 }
 
@@ -54,7 +57,7 @@ export function getStravaAuthUrl(state: string): string {
     client_id: process.env.STRAVA_CLIENT_ID!,
     response_type: "code",
     redirect_uri: process.env.STRAVA_REDIRECT_URI!,
-    approval_prompt: "auto",
+    approval_prompt: "force",
     scope: "activity:read_all",
     state,
   });

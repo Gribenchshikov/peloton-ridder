@@ -3,6 +3,7 @@ import type { getEventForAdmin } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
 import { AdminFormHeader } from "../AdminFormHeader";
 import { EventForm } from "../EventForm";
+import { OnlineEventEditView } from "./OnlineEventEditView";
 import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
@@ -44,6 +45,17 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
 
 export function EventEditView({ event, allPartners, allRaces, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; allRaces: { id: string; name: string }[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; }) {
   const t = useTranslations("Admin");
+
+  if (event.race.isChallenge) {
+    return (
+      <OnlineEventEditView
+        event={event}
+        allRaces={allRaces}
+        locale={locale}
+        lastNotification={lastNotification}
+      />
+    );
+  }
 
   if (wizard === "2") {
     return (

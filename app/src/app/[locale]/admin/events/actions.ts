@@ -378,6 +378,7 @@ export async function deleteEventAction(
 
   await prisma.$transaction(async (tx) => {
     await tx.registrationMerch.deleteMany({ where: { registration: { eventId } } });
+    await tx.refundRequest.deleteMany({ where: { registration: { eventId } } });
     await tx.registration.deleteMany({ where: { eventId } });
     await tx.waitlist.deleteMany({ where: { eventId } });
     await tx.result.deleteMany({ where: { eventId } });
@@ -699,6 +700,83 @@ export async function updateDistanceEquipmentAction(
 }
 
 // ── Results ────────────────────────────────────────────────────────────────────
+
+export async function importItraResultsAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState & { count?: number }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "invalid" };
+  if (file.size > 20 * 1024 * 1024) return { error: "tooLarge" };
+
+  const distanceId = formData.get("distanceId");
+  const distId = typeof distanceId === "string" && distanceId ? distanceId : null;
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  // Dynamic import — xlsx пакет тяжёлый, только в server action
+  const XLSX = await import("xlsx");
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  // header:1 даёт массив массивов; первая строка — заголовки
+  const rawRows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false });
+
+  if (rawRows.length < 2) return { error: "empty_file" };
+
+  // Определяем индексы по заголовкам (регистронезависимо)
+  const headers = (rawRows[0] as string[]).map((h) => String(h ?? "").trim().toLowerCase());
+  const col = (name: string) => headers.findIndex((h) => h.includes(name));
+
+  const idxRanking  = col("ranking");
+  const idxTime     = col("time");
+  const idxFamily   = col("family");
+  const idxFirst    = col("first");
+  const idxGender   = col("gender");
+  const idxNat      = col("nationality");
+  const idxBib      = col("bib");
+
+  if (idxBib === -1 || idxFamily === -1) return { error: "invalid" };
+
+  type ResultRow = { bibNumber: number; name: string; place: number | null; time: string | null; category: string | null };
+  const rows: ResultRow[] = [];
+
+  for (const raw of rawRows.slice(1) as string[][]) {
+    const bib = Number(raw[idxBib]);
+    if (!bib || isNaN(bib)) continue;
+
+    const family = String(raw[idxFamily] ?? "").trim();
+    const first  = String(raw[idxFirst] ?? "").trim();
+    const name   = [family, first].filter(Boolean).join(" ");
+
+    const place  = idxRanking !== -1 ? (Number(raw[idxRanking]) || null) : null;
+    const time   = idxTime !== -1 ? (String(raw[idxTime] ?? "").trim() || null) : null;
+
+    // category — пол + национальность: "M · KAZ"
+    const gender = idxGender !== -1 ? String(raw[idxGender] ?? "").trim() : "";
+    const nat    = idxNat    !== -1 ? String(raw[idxNat]    ?? "").trim() : "";
+    const category = [gender, nat].filter(Boolean).join(" · ") || null;
+
+    rows.push({ bibNumber: bib, name, place, time, category });
+  }
+
+  if (rows.length === 0) return { error: "no_rows" };
+
+  await prisma.$transaction([
+    prisma.result.deleteMany({ where: { eventId, source: "ITRA", ...(distId ? { distanceId: distId } : {}) } }),
+    prisma.result.createMany({
+      data: rows.map((r) => ({ eventId, distanceId: distId, source: "ITRA", ...r })),
+      skipDuplicates: true,
+    }),
+  ]);
+
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true, count: rows.length };
+}
 
 export async function importResultsCsvAction(
   eventId: string,

@@ -31,6 +31,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const data = await exchangeStravaCode(code);
+    // Strava возвращает scope в ответе — проверяем что activity:read_all выдан
+    const grantedScope: string = ((data as unknown) as Record<string, unknown>).scope as string ?? "";
+    if (!grantedScope.includes("activity:read_all") && !grantedScope.includes("activity:read")) {
+      console.warn("[strava callback] insufficient scope:", grantedScope);
+      return NextResponse.redirect(`${base}/account?strava=scope_error&scope=${encodeURIComponent(grantedScope)}`);
+    }
     await prisma.user.update({
       where: { id: session.user.id },
       data: {

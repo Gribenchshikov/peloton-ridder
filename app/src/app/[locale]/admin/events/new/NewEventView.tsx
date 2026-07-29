@@ -1,33 +1,91 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { AdminFormHeader } from "../AdminFormHeader";
 import { EventForm } from "../EventForm";
+import { OnlineEventForm } from "../OnlineEventForm";
 
-export function NewEventView({ locale, races }: { locale: string; races: { id: string; name: string }[] }) {
+type Race = { id: string; name: string; isChallenge: boolean };
+
+export function NewEventView({ locale, races }: { locale: string; races: Race[] }) {
   const t = useTranslations("Admin");
   const router = useRouter();
+
+  const offlineRaces = races.filter((r) => !r.isChallenge);
+  const onlineRaces = races.filter((r) => r.isChallenge);
+
+  const hasOnline = onlineRaces.length > 0;
+  const hasOffline = offlineRaces.length > 0;
+
+  const [type, setType] = useState<"offline" | "online">(hasOffline ? "offline" : "online");
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-16">
       <div className="flex flex-col gap-3">
         <AdminFormHeader title={t("newEventTitle")} />
-        <WizardStepper current={1} />
+        <WizardStepper current={1} online={type === "online"} />
       </div>
-      <EventForm
-        mode="create"
-        locale={locale}
-        races={races}
-        submitLabel={t("wizardNextCta")}
-        onCreated={(id) => router.push(`/admin/events/${id}?wizard=2`)}
-      />
+
+      {/* Тип выбор — только если есть оба типа трасс */}
+      {hasOnline && hasOffline && (
+        <div className="flex gap-1 rounded-[var(--radius-s)] border border-border bg-surface p-1">
+          <button
+            type="button"
+            onClick={() => setType("offline")}
+            className={`flex-1 rounded-[var(--radius-s)] py-2.5 text-sm font-semibold transition-colors ${
+              type === "offline" ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Офлайн-забег
+          </button>
+          <button
+            type="button"
+            onClick={() => setType("online")}
+            className={`flex-1 rounded-[var(--radius-s)] py-2.5 text-sm font-semibold transition-colors ${
+              type === "online" ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Онлайн-челлендж
+          </button>
+        </div>
+      )}
+
+      {type === "offline" ? (
+        <EventForm
+          mode="create"
+          locale={locale}
+          races={offlineRaces}
+          submitLabel={t("wizardNextCta")}
+          onCreated={(id) => router.push(`/admin/events/${id}?wizard=2`)}
+        />
+      ) : (
+        <OnlineEventForm
+          mode="create"
+          locale={locale}
+          races={onlineRaces}
+          submitLabel="Создать →"
+          onCreated={(id) => router.push(`/admin/events/${id}`)}
+        />
+      )}
     </main>
   );
 }
 
-function WizardStepper({ current }: { current: 1 | 2 | 3 }) {
+function WizardStepper({ current, online }: { current: 1 | 2 | 3; online: boolean }) {
   const t = useTranslations("Admin");
+
+  if (online) {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <span className="font-semibold text-ember">1. Основное</span>
+        <span className="text-ink-faint">›</span>
+        <span className="text-ink-faint">2. Публикация</span>
+      </div>
+    );
+  }
+
   const steps: [1 | 2 | 3, string][] = [
     [1, t("wizardStep1Label")],
     [2, t("wizardStep2Label")],

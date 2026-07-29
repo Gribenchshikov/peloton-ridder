@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { importResultsCsvAction, fetchMyraceResultsAction, clearResultsAction } from "../actions";
+import { importResultsCsvAction, importItraResultsAction, fetchMyraceResultsAction, clearResultsAction } from "../actions";
 import type { Result } from "@/generated/prisma/client";
 
 type Distance = { id: string; name: string; km: number };
@@ -15,12 +15,15 @@ type Props = {
 export function ResultsSection({ eventId, initialResults, distances }: Props) {
   const [results, setResults] = useState<Result[]>(initialResults);
   const [csvStatus, setCsvStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
+  const [itraStatus, setItraStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
   const [myraceStatus, setMyraceStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
   const [clearStatus, setClearStatus] = useState<{ error?: string; success?: boolean }>({});
   const [myraceUrl, setMyraceUrl] = useState("");
   const [csvDistanceId, setCsvDistanceId] = useState(distances[0]?.id ?? "");
+  const [itraDistanceId, setItraDistanceId] = useState(distances[0]?.id ?? "");
   const [filterDistanceId, setFilterDistanceId] = useState<string>("all");
   const [csvPending, startCsv] = useTransition();
+  const [itraPending, startItra] = useTransition();
   const [myracePending, startMyrace] = useTransition();
   const [clearPending, startClear] = useTransition();
 
@@ -34,6 +37,21 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
     startCsv(async () => {
       const result = await importResultsCsvAction(eventId, {}, fd);
       setCsvStatus(result);
+      if (result.success) window.location.reload();
+    });
+    e.target.value = "";
+  }
+
+  function handleItra(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.set("file", file);
+    if (itraDistanceId) fd.set("distanceId", itraDistanceId);
+    setItraStatus({});
+    startItra(async () => {
+      const result = await importItraResultsAction(eventId, {}, fd);
+      setItraStatus(result);
       if (result.success) window.location.reload();
     });
     e.target.value = "";
@@ -63,6 +81,7 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
   }
 
   const excelCount = results.filter((r) => r.source === "EXCEL").length;
+  const itraCount = results.filter((r) => r.source === "ITRA").length;
   const myraceCount = results.filter((r) => r.source === "MYRACE").length;
 
   const filteredResults =
@@ -82,6 +101,7 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
             <div className="text-sm text-ink-soft">
               {results.length} результатов
               {excelCount > 0 && ` (CSV: ${excelCount})`}
+              {itraCount > 0 && ` (ITRA: ${itraCount})`}
               {myraceCount > 0 && ` (myrace.info: ${myraceCount})`}
             </div>
             <button
@@ -167,7 +187,7 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
         </div>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {/* CSV upload */}
         <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border p-4">
           <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">Загрузить CSV</div>
@@ -202,6 +222,45 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
           </label>
           {csvStatus.success && <p className="text-sm text-spruce">Загружено {csvStatus.count} строк ✓</p>}
           {csvStatus.error && <p className="text-sm text-danger">Ошибка: {csvStatus.error}</p>}
+        </div>
+
+        {/* ITRA Excel upload */}
+        <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border p-4">
+          <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">ITRA Excel</div>
+          <p className="text-xs text-ink-soft">
+            Файл <code className="rounded bg-surface-2 px-1">ITRA-RaceResults_*.xlsx</code> — финишный протокол ITRA
+          </p>
+          {distances.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-ink-soft">Дистанция</label>
+              <select
+                value={itraDistanceId}
+                onChange={(e) => setItraDistanceId(e.target.value)}
+                className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm text-ink focus:border-ember focus:outline-none"
+              >
+                {distances.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.km} км)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <label className={`cursor-pointer self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft ${itraPending ? "opacity-50" : ""}`}>
+            {itraPending ? "Загружается…" : "Выбрать файл (.xlsx)"}
+            <input
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className="sr-only"
+              onChange={handleItra}
+              disabled={itraPending}
+            />
+          </label>
+          {itraStatus.success && <p className="text-sm text-spruce">Загружено {itraStatus.count} строк ✓</p>}
+          {itraStatus.error === "invalid" && <p className="text-sm text-danger">Неверный формат файла</p>}
+          {itraStatus.error === "empty_file" && <p className="text-sm text-danger">Файл пустой</p>}
+          {itraStatus.error === "no_rows" && <p className="text-sm text-danger">Нет данных для импорта</p>}
+          {itraStatus.error === "tooLarge" && <p className="text-sm text-danger">Файл слишком большой</p>}
         </div>
 
         {/* myrace.info fetch */}
