@@ -92,7 +92,7 @@ export function DistanceForm(props: DistanceFormProps) {
     <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <FormField label={t("fieldName")} name="name" type="text" required placeholder="например: Горная 21" defaultValue={d?.name} error={inv?.includes("name")} />
       <FormField label={t("fieldDiscipline")} name="discipline" type="text" optional placeholder="например: Trail Run" defaultValue={d?.discipline ?? undefined} error={inv?.includes("discipline")} />
-      <FormField label={t("fieldKm")} name="km" type="number" step="0.01" required placeholder="например: 21.1" defaultValue={d ? String(d.km) : undefined} error={inv?.includes("km")} />
+      <FormField label={t("fieldKm")} name="km" type="number" step="0.01" required placeholder="например: 21.1 (онлайн-челлендж — 0)" defaultValue={d ? String(d.km) : undefined} error={inv?.includes("km")} />
       <FormField label={t("fieldGain")} name="gain" type="number" optional placeholder="например: 800" defaultValue={d?.gain != null ? String(d.gain) : undefined} error={inv?.includes("gain")} />
       <FormField label={t("fieldPrice")} name="price" type="number" required placeholder="например: 5000" defaultValue={d ? String(d.price) : undefined} error={inv?.includes("price")} />
       <FormField label={t("fieldMaxSlots")} name="maxSlots" type="number" optional placeholder="например: 100" defaultValue={d?.maxSlots != null ? String(d.maxSlots) : undefined} error={inv?.includes("maxSlots")} />
