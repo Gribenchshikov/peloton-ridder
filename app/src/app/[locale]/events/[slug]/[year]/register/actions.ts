@@ -152,7 +152,11 @@ export async function createRegistrationAction(
     let promoCodeId: string | null = null;
     let discountAmount = 0;
     if (promoCode) {
-      const promo = await tx.promoCode.findUnique({ where: { code: promoCode.toUpperCase() } });
+      // Lock the promo code row before check+increment to prevent concurrent requests
+      // from both passing maxUses and over-consuming a limited code.
+      const [promoRow] = await tx.$queryRaw<{ id: string }[]>`
+        SELECT "id" FROM "PromoCode" WHERE "code" = ${promoCode.toUpperCase()} FOR UPDATE`;
+      const promo = promoRow ? await tx.promoCode.findUnique({ where: { id: promoRow.id } }) : null;
       if (!promo || !promo.active) return { kind: "error" as const, error: "promo_invalid" };
       if (promo.expiresAt && promo.expiresAt < now) return { kind: "error" as const, error: "promo_expired" };
       if (promo.maxUses !== null && promo.usedCount >= promo.maxUses) return { kind: "error" as const, error: "promo_exhausted" };
