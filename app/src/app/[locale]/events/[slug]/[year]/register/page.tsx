@@ -70,7 +70,7 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} sizeTableRows={sizeTableRows} hasBirthDate={!!profile.birthDate} defaultTshirtSize={profile.tshirtSize} defaultClubId={profile.runningClubId} />;
+  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} sizeTableRows={sizeTableRows} hasBirthDate={!!profile.birthDate} defaultTshirtSize={profile.tshirtSize} defaultClubId={profile.runningClubId} isChallenge={event.race.isChallenge} hasStrava={!!profile.stravaAthleteId} />;
 }
 
 type ActiveReg = NonNullable<Awaited<ReturnType<typeof getActiveRegistration>>>;

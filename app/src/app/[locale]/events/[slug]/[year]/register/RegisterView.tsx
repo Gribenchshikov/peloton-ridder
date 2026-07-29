@@ -25,6 +25,8 @@ export function RegisterView({
   hasBirthDate,
   defaultTshirtSize,
   defaultClubId,
+  isChallenge,
+  hasStrava,
 }: {
   event: EventWithSlots;
   profile: UserContactInfo;
@@ -35,6 +37,8 @@ export function RegisterView({
   hasBirthDate: boolean;
   defaultTshirtSize?: string | null;
   defaultClubId?: string | null;
+  isChallenge?: boolean;
+  hasStrava?: boolean;
 }) {
   const t = useTranslations("Registration");
 
@@ -54,7 +58,7 @@ export function RegisterView({
         </h1>
       </div>
       <ParticipantCard profile={profile} callbackPath={callbackPath} />
-      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} sizeTableRows={sizeTableRows} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} transferPrice={event.transferPrice} location={event.location} defaultClubId={defaultClubId} />
+      <DistanceSelect eventId={event.id} locale={locale} distances={event.distances} merchItems={event.merchItems} clubs={clubs} sizeTableRows={sizeTableRows} hasBirthDate={hasBirthDate} defaultTshirtSize={defaultTshirtSize} transferPrice={event.transferPrice} location={event.location} defaultClubId={defaultClubId} isChallenge={isChallenge} hasStrava={hasStrava} />
     </main>
   );
 }

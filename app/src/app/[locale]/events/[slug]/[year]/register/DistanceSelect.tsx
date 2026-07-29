@@ -68,6 +68,8 @@ export function DistanceSelect({
   transferPrice?: number | null;
   location?: string | null;
   defaultClubId?: string | null;
+  isChallenge?: boolean;
+  hasStrava?: boolean;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
@@ -370,6 +372,30 @@ export function DistanceSelect({
         />
         <p className="text-xs text-ink-faint">{t("emergencyContactHint")}</p>
       </div>
+
+      {/* Strava connect prompt — only for online challenges */}
+      {isChallenge && !hasStrava && (
+        <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-[#FC4C02]/30 bg-[#FC4C02]/5 p-4">
+          <div className="flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#FC4C02" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+            </svg>
+            <span className="text-sm font-bold text-ink">Подключи Strava</span>
+          </div>
+          <p className="text-xs text-ink-soft">
+            Это онлайн-челлендж — результаты считываются автоматически из твоих пробежек в Strava. Без подключения твои км не будут засчитаны.
+          </p>
+          <a
+            href="/api/strava/connect"
+            className="inline-flex w-fit items-center gap-2 rounded-[var(--radius-s)] bg-[#FC4C02] px-4 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+            </svg>
+            Подключить Strava
+          </a>
+        </div>
+      )}
 
       {/* Birth date — shown only when not set in profile */}
       {!hasBirthDate && (

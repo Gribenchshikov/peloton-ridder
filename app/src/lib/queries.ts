@@ -204,7 +204,7 @@ export function getUserProfile(userId: string) {
 export function getUserContactInfo(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true, birthDate: true, tshirtSize: true, avatarUrl: true, runningClubId: true },
+    select: { firstName: true, lastName: true, email: true, emailVerified: true, city: true, phone: true, birthDate: true, tshirtSize: true, avatarUrl: true, runningClubId: true, stravaAthleteId: true },
   });
 }
 
@@ -250,7 +250,7 @@ export function getEventForRegistration(slug: string, year: number) {
       registrationDeadline: true,
       location: true,
       transferPrice: true,
-      race: { select: { name: true, slug: true } },
+      race: { select: { name: true, slug: true, isChallenge: true } },
       distances: { orderBy: { km: "asc" } },
       merchItems: {
         orderBy: { order: "asc" },
