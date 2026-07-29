@@ -109,12 +109,10 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
   return (
     <div className="flex flex-col gap-8">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard label="Оплачено" value={paid.length} accent />
-        <KpiCard label="Бронь" value={reserved.length} />
-        <KpiCard label="Отменено" value={cancelled.length} />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <KpiCard label="Всего регистраций" value={registrations.length} sub={`оплачено: ${paid.length} · бронь: ${reserved.length}`} />
         <KpiCard label="Валовая выручка" value={kzt(grossRevenue)} />
-        <KpiCard label="Скидки" value={kzt(totalDiscounts)} />
+        <KpiCard label="Потерянная выгода" value={kzt(totalDiscounts)} />
         <KpiCard label="Чистая выручка" value={kzt(netRevenue)} accent />
       </div>
 
@@ -129,7 +127,7 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Оплачено</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Бронь</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Выручка</th>
-                  <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Скидки</th>
+                  <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Потерянная выгода</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Чистая</th>
                 </tr>
               </thead>
@@ -259,11 +257,12 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
   );
 }
 
-function KpiCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
+function KpiCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
   return (
     <div className={`rounded-[var(--radius-m)] border p-4 ${accent ? "border-ember/30 bg-ember/5" : "border-border bg-surface"}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">{label}</p>
       <p className={`mt-1.5 text-xl font-bold tabular-nums ${accent ? "text-ember" : "text-ink"}`}>{value}</p>
+      {sub && <p className="mt-1 text-[11px] text-ink-faint">{sub}</p>}
     </div>
   );
 }
