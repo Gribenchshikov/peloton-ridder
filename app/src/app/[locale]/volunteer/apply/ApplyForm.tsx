@@ -10,6 +10,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   experience_too_short: "Расскажите подробнее об опыте (минимум 10 символов).",
   strava_invalid_url: "Ссылка на Strava должна начинаться с http:// или https://.",
   already_applied: "Вы уже подавали заявку на этот забег.",
+  max_attempts_reached: "Вы исчерпали возможность повторной подачи заявки на этот забег.",
   event_not_found: "Событие не найдено.",
   unauthorized: "Необходима авторизация.",
 };

@@ -179,6 +179,7 @@ export function getUserProfile(userId: string) {
       volunteerApplications: {
         select: {
           id: true,
+          eventId: true,
           status: true,
           creditedAt: true,
           event: {

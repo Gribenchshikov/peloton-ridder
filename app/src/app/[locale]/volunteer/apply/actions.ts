@@ -34,10 +34,16 @@ export async function applyVolunteerAction(
   });
   if (!event) return { error: "event_not_found" };
 
-  const existing = await prisma.volunteerApplication.findFirst({
+  const existing = await prisma.volunteerApplication.findMany({
     where: { userId, eventId },
+    orderBy: { createdAt: "desc" },
+    select: { status: true },
   });
-  if (existing) return { error: "already_applied" };
+  if (existing.length > 0) {
+    const latest = existing[0];
+    if (latest.status === "PENDING" || latest.status === "APPROVED") return { error: "already_applied" };
+    if (existing.length >= 2) return { error: "max_attempts_reached" };
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
