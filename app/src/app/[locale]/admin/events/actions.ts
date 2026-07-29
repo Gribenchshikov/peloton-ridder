@@ -40,6 +40,7 @@ const EventFieldsSchema = z.object({
   transferPrice: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
   resultsUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   volunteerChatUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
+  challengeWindowEnd: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
   // coverImageUrl обрабатывается отдельно через saveFile (file upload), не через Zod
 });
 

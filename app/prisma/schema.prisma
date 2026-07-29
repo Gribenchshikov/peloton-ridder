@@ -160,14 +160,15 @@ model Series {
 
 // Вечнозелёный шаблон забега: Radon Race / Ridder UpHill / Panorama Fall Run / Ski Summer Fest.
 model Race {
-  id          String @id @default(cuid())
-  slug        String @unique
+  id          String  @id @default(cuid())
+  slug        String  @unique
   name        String
   courseIntro String
   equipment   Json
   landmarks   Json
   icon        String
   color       String
+  isChallenge Boolean @default(false)
 
   events      Event[]
   seriesRaces SeriesRace[]
@@ -200,6 +201,7 @@ model Event {
   medicalCancellationDeadline  DateTime
   isFeatured                   Boolean     @default(false)
   isPublished                  Boolean     @default(false)
+  challengeWindowEnd           DateTime?
   resultsUrl                   String?
   coverImageUrl                String?
   volunteerChatUrl             String?
@@ -322,9 +324,10 @@ model Registration {
   additionalParticipants Json?
   createdAt       DateTime           @default(now())
 
-  result            Result?
-  registrationMerch RegistrationMerch[]
-  refundRequests    RefundRequest[]
+  result              Result?
+  registrationMerch   RegistrationMerch[]
+  refundRequests      RefundRequest[]
+  challengeActivities ChallengeActivity[]
 
   @@index([eventId])
   @@index([distanceId])
@@ -472,6 +475,26 @@ model ClubMembershipRequest {
   adminNote     String?
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
+}
+
+// Активность Strava, засчитанная в челлендж. Одна строка = одна тренировка.
+// Античит-проверки (темп, дистанция, пауза, GPS) выполняются при синхронизации.
+model ChallengeActivity {
+  id               String       @id @default(cuid())
+  registrationId   String
+  registration     Registration @relation(fields: [registrationId], references: [id])
+  stravaActivityId String       @unique
+  distanceKm       Float
+  movingTimeSec    Int
+  elapsedTimeSec   Int
+  avgPaceSecPerKm  Float
+  hasGps           Boolean      @default(true)
+  startedAt        DateTime
+  isValid          Boolean      @default(true)
+  invalidReason    String?
+  fetchedAt        DateTime     @default(now())
+
+  @@index([registrationId])
 }
 
 // Глобальные настройки сайта — KV-хранилище. Текущие ключи: hero_bg_url.

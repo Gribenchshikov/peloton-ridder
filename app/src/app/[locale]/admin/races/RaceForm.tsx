@@ -9,7 +9,7 @@ type Props =
   | {
       mode: "edit";
       action: (prev: RaceFormState, fd: FormData) => Promise<RaceFormState>;
-      defaults: { name: string; slug: string; courseIntro: string; icon: string; color: string };
+      defaults: { name: string; slug: string; courseIntro: string; icon: string; color: string; isChallenge: boolean };
     };
 
 function slugify(name: string) {
@@ -118,6 +118,16 @@ export function RaceForm(props: Props) {
           className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ember focus:ring-1 focus:ring-ember"
         />
       </div>
+
+      <label className="flex cursor-pointer items-center gap-2.5 text-sm">
+        <input
+          type="checkbox"
+          name="isChallenge"
+          defaultChecked={defaults?.isChallenge ?? false}
+          className="h-4 w-4 cursor-pointer accent-ember"
+        />
+        <span className="font-semibold text-ink-soft">Онлайн-челлендж (результаты из Strava)</span>
+      </label>
 
       <button
         type="submit"

@@ -7,6 +7,8 @@ import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
 import { DetailTabs, type DistanceWithProfile } from "./DetailTabs";
+import { ChallengeLeaderboard } from "./ChallengeLeaderboard";
+import { getChallengeLeaderboard } from "@/lib/queries";
 import type { Distance } from "@/generated/prisma/client";
 import type { ProfileData } from "@/lib/gpxParser";
 import type { AidStation } from "@/types/aidStation";
@@ -29,10 +31,14 @@ export default async function EventDetailPage({
   const event = await getEventDetail(slug, Number(year));
   if (!event) notFound();
 
-  return <EventDetailView event={event} />;
+  const leaderboard = event.race.isChallenge ? await getChallengeLeaderboard(event.id) : null;
+
+  return <EventDetailView event={event} leaderboard={leaderboard} />;
 }
 
-function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<typeof getEventDetail>>> }) {
+type LeaderboardRow = Awaited<ReturnType<typeof getChallengeLeaderboard>>[number];
+
+function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<ReturnType<typeof getEventDetail>>>; leaderboard: LeaderboardRow[] | null }) {
   const t = useTranslations("EventDetail");
   const tStatus = useTranslations("Status");
   const format = useFormatter();
@@ -159,8 +165,11 @@ function EventDetailView({ event }: { event: NonNullable<Awaited<ReturnType<type
 
         {/* Content grid */}
         <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
-          {/* LEFT: Tabs */}
+          {/* LEFT: Tabs + Challenge Leaderboard */}
           <div className="flex min-w-0 flex-col gap-6">
+            {leaderboard && event.challengeWindowEnd && (
+              <ChallengeLeaderboard rows={leaderboard} windowEnd={event.challengeWindowEnd} />
+            )}
             <DetailTabs
               courseIntro={event.race.courseIntro ?? ""}
               aboutText={event.aboutText ?? ""}

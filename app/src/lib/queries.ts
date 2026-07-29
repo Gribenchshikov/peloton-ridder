@@ -317,7 +317,7 @@ export function getRacesListForAdmin() {
 export function getRaceForAdmin(id: string) {
   return prisma.race.findUnique({
     where: { id },
-    select: { id: true, name: true, slug: true, courseIntro: true, icon: true, color: true },
+    select: { id: true, name: true, slug: true, courseIntro: true, icon: true, color: true, isChallenge: true },
   });
 }
 
@@ -325,7 +325,7 @@ export function getEventForAdmin(id: string) {
   return prisma.event.findUnique({
     where: { id },
     include: {
-      race: { select: { id: true, name: true } },
+      race: { select: { id: true, name: true, isChallenge: true } },
       distances: {
         orderBy: { km: "asc" },
         select: {
@@ -506,5 +506,38 @@ export function getEventDetail(slug: string, year: number) {
       },
       results: { orderBy: [{ place: "asc" }, { time: "asc" }] },
     },
+  });
+}
+
+export async function getChallengeLeaderboard(eventId: string) {
+  // Агрегируем суммарные км + кол-во активностей на участника, сортируем по убыванию км
+  const rows = await prisma.challengeActivity.groupBy({
+    by: ["registrationId"],
+    where: { registration: { eventId }, isValid: true },
+    _sum: { distanceKm: true },
+    _count: { id: true },
+    orderBy: { _sum: { distanceKm: "desc" } },
+  });
+
+  if (rows.length === 0) return [];
+
+  const registrationIds = rows.map((r) => r.registrationId);
+  const registrations = await prisma.registration.findMany({
+    where: { id: { in: registrationIds } },
+    select: { id: true, user: { select: { firstName: true, lastName: true, avatarUrl: true } } },
+  });
+  const regMap = new Map(registrations.map((r) => [r.id, r]));
+
+  return rows.map((row, i) => {
+    const reg = regMap.get(row.registrationId);
+    return {
+      place: i + 1,
+      registrationId: row.registrationId,
+      firstName: reg?.user.firstName ?? "",
+      lastName: reg?.user.lastName ?? "",
+      avatarUrl: reg?.user.avatarUrl ?? null,
+      totalKm: row._sum.distanceKm ?? 0,
+      activityCount: row._count.id,
+    };
   });
 }

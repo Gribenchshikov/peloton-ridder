@@ -136,6 +136,8 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
           transferPrice: event.transferPrice,
           resultsUrl: event.resultsUrl,
           coverImageUrl: event.coverImageUrl,
+          challengeWindowEnd: event.challengeWindowEnd ?? null,
+          isChallenge: event.race.isChallenge,
         }}
       />
 

@@ -27,6 +27,8 @@ type EventDefaults = {
   isFeatured: boolean;
   resultsUrl: string | null;
   coverImageUrl: string | null;
+  challengeWindowEnd: Date | null;
+  isChallenge: boolean;
 };
 
 type EventFormProps =
@@ -151,6 +153,20 @@ export function EventForm(props: EventFormProps) {
       </label>
 
       <FormField label={t("fieldResultsUrl")} name="resultsUrl" type="url" optional defaultValue={d?.resultsUrl ?? undefined} />
+
+      {d?.isChallenge && (
+        <div className="flex flex-col gap-1.5 rounded-[var(--radius-s)] border border-ember/30 bg-ember/5 p-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-ember">Онлайн-челлендж</p>
+          <FormField
+            label="Конец окна приёма результатов"
+            name="challengeWindowEnd"
+            type="date"
+            optional
+            defaultValue={d?.challengeWindowEnd ? toDateInputValue(d.challengeWindowEnd) : undefined}
+          />
+          <p className="text-xs text-ink-faint">Старт окна = дата события. Результаты Strava засчитываются до этой даты включительно.</p>
+        </div>
+      )}
 
       {/* Обложка забега — file upload */}
       <div className="flex flex-col gap-1.5 text-sm">

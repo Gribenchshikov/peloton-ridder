@@ -29,6 +29,7 @@ const RaceSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/)
     .optional()
     .default("#e87040"),
+  isChallenge: z.preprocess((v) => v === "on", z.boolean()),
 });
 
 export type RaceFormState = { error?: string; fieldErrors?: Record<string, string[]>; saved?: boolean };
@@ -46,6 +47,7 @@ export async function createRaceAction(
     courseIntro: formData.get("courseIntro"),
     icon: formData.get("icon") || "i-mountain",
     color: formData.get("color") || "#e87040",
+    isChallenge: formData.get("isChallenge"),
   };
 
   const parsed = RaceSchema.safeParse(raw);
@@ -76,6 +78,7 @@ export async function updateRaceAction(
     courseIntro: formData.get("courseIntro"),
     icon: formData.get("icon") || "i-mountain",
     color: formData.get("color") || "#e87040",
+    isChallenge: formData.get("isChallenge"),
   };
 
   const parsed = RaceSchema.safeParse(raw);

@@ -1,3 +1,54 @@
+export interface StravaRawActivity {
+  id: number;
+  type: string;
+  distance: number;        // метры
+  moving_time: number;     // секунды
+  elapsed_time: number;    // секунды
+  average_speed: number;   // м/с
+  start_date: string;      // ISO
+  map: { summary_polyline: string | null } | null;
+}
+
+export async function refreshStravaToken(refreshToken: string): Promise<{
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+} | null> {
+  try {
+    const res = await fetch("https://www.strava.com/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: process.env.STRAVA_CLIENT_ID,
+        client_secret: process.env.STRAVA_CLIENT_SECRET,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }),
+    });
+    if (!res.ok) return null;
+    return res.json() as Promise<{ access_token: string; refresh_token: string; expires_at: number }>;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchStravaActivities(
+  accessToken: string,
+  after: Date,
+  before: Date,
+): Promise<StravaRawActivity[]> {
+  const params = new URLSearchParams({
+    after: String(Math.floor(after.getTime() / 1000)),
+    before: String(Math.floor(before.getTime() / 1000)),
+    per_page: "200",
+  });
+  const res = await fetch(`https://www.strava.com/api/v3/athlete/activities?${params}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error(`Strava activities fetch failed: ${res.status}`);
+  return res.json() as Promise<StravaRawActivity[]>;
+}
+
 export function getStravaAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID!,
