@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, FormEvent } from "react";
 import jsQR from "jsqr";
 
 type ScanResult = {
@@ -25,7 +25,9 @@ type ScanResult = {
 
 type ActionState = "idle" | "loading" | "done" | "error";
 
-export function ScannerView() {
+type EventOption = { id: string; label: string };
+
+export function ScannerView({ events }: { events: EventOption[] }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -37,6 +39,11 @@ export function ScannerView() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [kitState, setKitState] = useState<ActionState>("idle");
   const [transferState, setTransferState] = useState<ActionState>("idle");
+
+  const [manualBib, setManualBib] = useState("");
+  const [manualEventId, setManualEventId] = useState(events[0]?.id ?? "");
+  const [manualError, setManualError] = useState<string | null>(null);
+  const [manualLoading, setManualLoading] = useState(false);
 
   const stopCamera = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -66,6 +73,8 @@ export function ScannerView() {
     setTransferState("idle");
     setScanning(true);
     setCameraError(null);
+    setManualBib("");
+    setManualError(null);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -142,6 +151,29 @@ export function ScannerView() {
     }
   };
 
+  const handleManualLookup = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!manualBib || !manualEventId) return;
+    setManualLoading(true);
+    setManualError(null);
+    setScanResult(null);
+    setFetchError(null);
+    setKitState("idle");
+    setTransferState("idle");
+    stopCamera();
+    setScanning(false);
+
+    const res = await fetch(`/api/scan/bib?bibNumber=${encodeURIComponent(manualBib)}&eventId=${encodeURIComponent(manualEventId)}`);
+    setManualLoading(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setManualError(body.error === "not_found" ? "Участник с таким номером не найден" : "Ошибка поиска");
+      return;
+    }
+    const data: ScanResult = await res.json();
+    setScanResult(data);
+  };
+
   const alreadyPickedUp = scanResult?.kitPickedUpAt != null;
   const alreadyBoarded = scanResult?.transferUsedAt != null;
   const notPaid = scanResult && scanResult.status !== "PAID";
@@ -170,6 +202,42 @@ export function ScannerView() {
 
       {/* Hidden canvas for QR processing */}
       <canvas ref={canvasRef} className="hidden" />
+
+      {/* Manual bib number lookup */}
+      {events.length > 0 && (
+        <form onSubmit={handleManualLookup} className="mt-6 flex flex-col gap-3 rounded-[var(--radius-m)] border border-border bg-surface p-4">
+          <p className="text-sm font-semibold text-ink">Ввести номер вручную</p>
+          {events.length > 1 && (
+            <select
+              value={manualEventId}
+              onChange={(e) => setManualEventId(e.target.value)}
+              className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+            >
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>{ev.label}</option>
+              ))}
+            </select>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={1}
+              value={manualBib}
+              onChange={(e) => setManualBib(e.target.value)}
+              placeholder="Стартовый номер"
+              className="flex-1 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ember focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={!manualBib || !manualEventId || manualLoading}
+              className="rounded-[var(--radius-s)] bg-ember px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {manualLoading ? "…" : "Найти"}
+            </button>
+          </div>
+          {manualError && <p className="text-sm text-danger">{manualError}</p>}
+        </form>
+      )}
 
       {fetchError && (
         <div className="mt-6 rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 p-4">

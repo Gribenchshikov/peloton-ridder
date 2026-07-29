@@ -16,12 +16,24 @@ export default async function ScanPage({
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { isAdmin: true, isVolunteer: true },
+    select: { isAdmin: true, isVolunteer: true, isOperator: true },
   });
 
-  if (!user?.isAdmin && !user?.isVolunteer) {
+  if (!user?.isAdmin && !user?.isVolunteer && !user?.isOperator) {
     return redirect({ href: "/", locale });
   }
 
-  return <ScannerView />;
+  const events = await prisma.event.findMany({
+    where: { status: { in: ["OPEN", "CLOSED", "COMPLETED"] } },
+    orderBy: { dateISO: "desc" },
+    take: 10,
+    select: { id: true, year: true, race: { select: { name: true } } },
+  });
+
+  const formattedEvents = events.map((e) => ({
+    id: e.id,
+    label: `${e.race.name} ${e.year}`,
+  }));
+
+  return <ScannerView events={formattedEvents} />;
 }
