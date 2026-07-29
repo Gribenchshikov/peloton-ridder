@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getKitPickupListBySlug } from "@/lib/queries";
+import { KitPickupSearch } from "./KitPickupSearch";
 
 export default async function KitPickupListPage({
   params,
@@ -83,32 +84,7 @@ export default async function KitPickupListPage({
               <h2 className="mb-3 font-display text-base font-bold text-warn">
                 Ожидают выдачи ({notPickedUp.length})
               </h2>
-              <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
-                <table className="w-full min-w-[480px] text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-surface-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                      <th className="px-4 py-2.5 text-left">№ нагр.</th>
-                      <th className="px-4 py-2.5 text-left">Участник</th>
-                      <th className="px-4 py-2.5 text-left">Телефон</th>
-                      <th className="px-4 py-2.5 text-left">Дистанция</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {notPickedUp.map((reg) => (
-                      <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
-                        <td className="px-4 py-2.5 tabular-nums font-bold text-ink">
-                          {reg.bibNumber ?? "—"}
-                        </td>
-                        <td className="px-4 py-2.5 font-medium text-ink">
-                          {reg.user.firstName} {reg.user.lastName}
-                        </td>
-                        <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
-                        <td className="px-4 py-2.5 text-ink-soft">{reg.distance?.name ?? "Трансфер"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <KitPickupSearch regs={notPickedUp} />
             </section>
           )}
 

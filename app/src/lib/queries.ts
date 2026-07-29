@@ -271,7 +271,7 @@ export function getKitPickupListBySlug(slug: string, year: number) {
           bibNumber: true,
           kitPickedUpAt: true,
           distance: { select: { id: true, name: true } },
-          user: { select: { firstName: true, lastName: true, phone: true } },
+          user: { select: { firstName: true, lastName: true, phone: true, email: true } },
         },
         orderBy: [{ bibNumber: "asc" }, { createdAt: "asc" }],
       },
