@@ -5,28 +5,32 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
+import { saveFile } from "@/lib/storage";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
-
-const httpUrlSchema = z.string().trim().url().refine(
-  (value) => {
-    try {
-      return ["http:", "https:"].includes(new URL(value).protocol);
-    } catch {
-      return false;
-    }
-  },
-  { message: "must be an http(s) URL" },
-);
 
 const MemberSchema = z.object({
   name: z.string().trim().min(1).max(200),
   role: z.string().trim().min(1).max(200),
   bio: z.preprocess(emptyToUndefined, z.string().trim().max(1000).optional()),
-  photoUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   type: z.enum(["TEAM", "VOLUNTEER"]),
   order: z.coerce.number().int().min(0).max(9999),
 });
+
+async function resolvePhoto(
+  formData: FormData,
+  existingUrl?: string | null,
+): Promise<{ photoUrl?: string | null; error?: string }> {
+  const file = formData.get("photo") as File | null;
+  const remove = formData.get("removePhoto") === "1";
+  if (remove) return { photoUrl: null };
+  if (file && file.size > 0) {
+    const result = await saveFile(file, "team");
+    if ("error" in result) return { error: result.error };
+    return { photoUrl: result.url };
+  }
+  return { photoUrl: existingUrl ?? null };
+}
 
 export type ActionState = { error?: string; success?: boolean };
 
@@ -41,7 +45,10 @@ export async function createMemberAction(
   const parsed = MemberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "invalid" };
 
-  await prisma.teamMember.create({ data: parsed.data });
+  const photo = await resolvePhoto(formData, null);
+  if (photo.error) return { error: photo.error };
+
+  await prisma.teamMember.create({ data: { ...parsed.data, photoUrl: photo.photoUrl } });
   revalidatePath("/[locale]/about", "page");
   return redirect({ href: "/admin/club", locale });
 }
@@ -58,7 +65,11 @@ export async function updateMemberAction(
   const parsed = MemberSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "invalid" };
 
-  await prisma.teamMember.update({ where: { id }, data: parsed.data });
+  const existing = await prisma.teamMember.findUnique({ where: { id }, select: { photoUrl: true } });
+  const photo = await resolvePhoto(formData, existing?.photoUrl);
+  if (photo.error) return { error: photo.error };
+
+  await prisma.teamMember.update({ where: { id }, data: { ...parsed.data, photoUrl: photo.photoUrl } });
   revalidatePath("/[locale]/about", "page");
   revalidatePath("/[locale]/admin/club", "page");
   return { success: true };

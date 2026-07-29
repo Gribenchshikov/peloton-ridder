@@ -117,10 +117,10 @@ function MemberCard({ member }: { member: TeamMember }) {
         <img
           src={member.photoUrl}
           alt={member.name}
-          className="h-16 w-16 rounded-full object-cover"
+          className="h-16 w-16 rounded-full object-cover object-center"
         />
       ) : (
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ember text-lg font-bold text-white">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-ember text-lg font-bold text-white">
           {initials}
         </div>
       )}

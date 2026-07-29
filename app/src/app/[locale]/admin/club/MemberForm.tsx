@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ActionState } from "./actions";
 import type { MemberType } from "@/generated/prisma/client";
@@ -23,6 +23,23 @@ type Props = {
 export function MemberForm({ mode, action, defaultValues, onDelete }: Props) {
   const t = useTranslations("Admin");
   const [state, formAction, pending] = useActionState(action, {});
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(defaultValues?.photoUrl ?? null);
+  const [removed, setRemoved] = useState(false);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+      setRemoved(false);
+    }
+  }
+
+  function handleRemove() {
+    setPreview(null);
+    setRemoved(true);
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -72,14 +89,24 @@ export function MemberForm({ mode, action, defaultValues, onDelete }: Props) {
 
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-semibold text-ink">{t("fieldMemberPhoto")}</label>
+        {preview && (
+          <div className="flex items-center gap-3">
+            <img src={preview} alt="фото" className="h-16 w-16 rounded-full object-cover object-center" />
+            <button type="button" onClick={handleRemove} className="text-xs font-semibold text-danger hover:underline">
+              Удалить фото
+            </button>
+          </div>
+        )}
         <input
-          name="photoUrl"
-          type="url"
-          maxLength={500}
-          defaultValue={defaultValues?.photoUrl ?? ""}
-          placeholder="https://..."
-          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ember"
+          ref={fileRef}
+          name="photo"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleFileChange}
+          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink file:mr-3 file:rounded file:border-0 file:bg-ember/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-ember"
         />
+        {removed && <input type="hidden" name="removePhoto" value="1" />}
+        <span className="text-xs text-ink-faint">JPEG, PNG или WebP · макс. 20 МБ</span>
       </div>
 
       <div className="flex gap-4">
