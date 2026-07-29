@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { updateProfileAction, type ProfileState } from "./actions";
+import { COUNTRIES } from "@/lib/countries";
 
 const initialState: ProfileState = {};
 
@@ -14,7 +15,7 @@ export function ProfileForm({
   locale,
   callbackUrl,
 }: {
-  user: { firstName: string; lastName: string; email: string; city: string; phone: string; tshirtSize?: string | null; birthDate?: Date | null };
+  user: { firstName: string; lastName: string; email: string; city: string; country?: string | null; phone: string; tshirtSize?: string | null; birthDate?: Date | null };
   locale: string;
   callbackUrl?: string;
 }) {
@@ -39,6 +40,21 @@ export function ProfileForm({
         <FormField label={tAuth("name")} name="firstName" type="text" required defaultValue={user.firstName} pattern="[A-Za-z][A-Za-z \-]*" title={tAuth("errorNameLatinOnly")} />
         <FormField label={tAuth("surname")} name="lastName" type="text" required defaultValue={user.lastName} pattern="[A-Za-z][A-Za-z \-]*" title={tAuth("errorNameLatinOnly")} />
         <FormField label={tAuth("city")} name="city" type="text" defaultValue={user.city} />
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="font-semibold text-ink-soft">{tAuth("country")}</span>
+          <select
+            name="country"
+            defaultValue={user.country ?? ""}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
+          >
+            <option value="">{t("countryEmpty")}</option>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.code} — {locale === "ru" || locale === "kk" ? c.name_ru : c.name_en}
+              </option>
+            ))}
+          </select>
+        </label>
         <FormField label={t("phone")} name="phone" type="tel" defaultValue={user.phone} />
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-semibold text-ink-soft">{t("birthDate")}</span>

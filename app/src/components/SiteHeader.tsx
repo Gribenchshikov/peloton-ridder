@@ -8,6 +8,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const [session, t] = await Promise.all([auth(), getTranslations("Nav")]);
   const isAdmin = session?.user?.isAdmin ?? false;
   const isLoggedIn = Boolean(session?.user);
+  const firstName = session?.user?.firstName;
 
   const navLinks = [
     { href: "/", label: t("home") },
@@ -57,7 +58,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
               href="/account"
               className="rounded-[var(--radius-s)] border border-border px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
             >
-              {t("profile")}
+              {firstName ?? t("profile")}
             </Link>
           ) : (
             <>
@@ -83,7 +84,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
           navLinks={navLinks}
           isLoggedIn={isLoggedIn}
           isAdmin={isAdmin}
-          profileLabel={t("profile")}
+          profileLabel={firstName ?? t("profile")}
           signInLabel={t("signIn")}
           registerLabel={t("register")}
           adminLabel={t("adminPanel")}

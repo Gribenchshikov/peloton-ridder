@@ -18,6 +18,7 @@ const ProfileSchema = z.object({
   firstName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
   lastName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
   city: z.string().trim().max(100).optional(),
+  country: z.string().trim().length(3).optional(),
   phone: z.string().trim().max(30).optional(),
   tshirtSize: z.enum(TSHIRT_SIZES).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -42,6 +43,7 @@ export async function updateProfileAction(
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     city: formData.get("city") || undefined,
+    country: formData.get("country") || undefined,
     phone: formData.get("phone") || undefined,
     tshirtSize: formData.get("tshirtSize") || undefined,
     birthDate: formData.get("birthDate") || undefined,
@@ -53,11 +55,12 @@ export async function updateProfileAction(
     return { error: "invalid" };
   }
 
-  const { birthDate, ...rest } = parsed.data;
+  const { birthDate, country, ...rest } = parsed.data;
   await prisma.user.update({
     where: { id: userId },
     data: {
       ...rest,
+      country: country ?? null,
       birthDate: birthDate ? new Date(birthDate) : undefined,
     },
   });

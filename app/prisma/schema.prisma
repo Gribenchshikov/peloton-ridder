@@ -79,6 +79,7 @@ model User {
   firstName     String
   lastName      String
   city          String?
+  country       String?
   tshirtSize    String?
   birthDate     DateTime?
   isAdmin       Boolean   @default(false)

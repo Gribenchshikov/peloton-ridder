@@ -32,6 +32,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <FormField label={t("newPassword")} name="password" type="password" required minLength={8} />
 
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+      {state.error === "password_weak" && <p className="text-sm text-danger">{t("errorPasswordWeak")}</p>}
       {state.error === "expired" && <p className="text-sm text-danger">{t("resetInvalidText")}</p>}
 
       <button

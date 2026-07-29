@@ -64,6 +64,7 @@ export default async function AccountPage({
             lastName: profile.lastName,
             email: profile.email,
             city: profile.city ?? "",
+            country: profile.country,
             phone: profile.phone ?? "",
             tshirtSize: profile.tshirtSize,
             birthDate: profile.birthDate,

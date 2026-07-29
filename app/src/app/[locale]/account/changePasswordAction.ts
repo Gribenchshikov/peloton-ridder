@@ -34,7 +34,9 @@ export async function changePasswordAction(
 
   if (!parsed.success) {
     const isMismatch = parsed.error.issues.some((i) => i.message === "mismatch");
-    return { error: isMismatch ? "mismatch" : "invalid" };
+    if (isMismatch) return { error: "mismatch" };
+    const isWeak = parsed.error.issues.some((i) => i.message === "password_no_letter" || i.message === "password_no_digit");
+    return { error: isWeak ? "password_weak" : "invalid" };
   }
 
   const user = await prisma.user.findUnique({

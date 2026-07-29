@@ -133,6 +133,7 @@ export function getUserProfile(userId: string) {
       lastName: true,
       email: true,
       city: true,
+      country: true,
       phone: true,
       tshirtSize: true,
       birthDate: true,

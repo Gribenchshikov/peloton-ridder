@@ -10,6 +10,7 @@ const initialState: ChangePasswordState = {};
 const ERROR_KEYS: Record<string, string> = {
   wrong_current: "pwdWrongCurrent",
   mismatch: "pwdMismatch",
+  password_weak: "pwdWeak",
   invalid: "pwdInvalid",
 };
 

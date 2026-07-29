@@ -24,7 +24,8 @@ export async function resetPasswordAction(
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: "invalid" };
+    const isWeak = parsed.error.issues.some((i) => i.message === "password_no_letter" || i.message === "password_no_digit");
+    return { error: isWeak ? "password_weak" : "invalid" };
   }
 
   const email = await consumeVerificationToken(parsed.data.token, "PASSWORD_RESET");
