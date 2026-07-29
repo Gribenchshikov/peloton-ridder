@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { requireAdminId } from "@/lib/session";
 import { upsertSiteSetting } from "@/lib/queries";
 
-export type MedalEntry = { distanceId: string; count: number; unitCost: number };
+export type PackItem = { id: string; name: string; price: number };
 export type LineEntry = { id: string; label: string; amount: number };
 export type FinancialData = {
-  medals: MedalEntry[];
+  packItems: PackItem[];
   expenses: LineEntry[];
   incomes: LineEntry[];
 };

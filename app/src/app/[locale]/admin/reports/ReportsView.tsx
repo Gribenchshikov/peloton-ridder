@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import type { CancelReason } from "@/generated/prisma/client";
 import { saveEventFinancials } from "./actions";
-import type { FinancialData, LineEntry, MedalEntry } from "./actions";
+import type { FinancialData, LineEntry, PackItem } from "./actions";
 
 type Reg = {
   id: string;
@@ -289,23 +289,29 @@ function FinancialSection({
   netRevenue: number;
   initialData: FinancialData | null;
 }) {
-  const [medals, setMedals] = useState<MedalEntry[]>(() => {
-    if (initialData?.medals && initialData.medals.length > 0) return initialData.medals;
-    return distanceRows.map((d) => ({ distanceId: d.id, count: d.paid, unitCost: 0 }));
-  });
+  const totalPaid = distanceRows.reduce((s, d) => s + d.paid, 0);
+
+  const [packItems, setPackItems] = useState<PackItem[]>(initialData?.packItems ?? []);
   const [expenses, setExpenses] = useState<LineEntry[]>(initialData?.expenses ?? []);
   const [incomes, setIncomes] = useState<LineEntry[]>(initialData?.incomes ?? []);
   const [isPending, startTransition] = useTransition();
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
-  const totalMedalCost = medals.reduce((s, m) => s + m.count * m.unitCost, 0);
+  const perPersonCost = packItems.reduce((s, i) => s + i.price, 0);
+  const totalPackCost = perPersonCost * totalPaid;
   const totalExtraExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const totalIncomes = incomes.reduce((s, i) => s + i.amount, 0);
-  const totalCosts = totalMedalCost + totalExtraExpenses;
+  const totalCosts = totalPackCost + totalExtraExpenses;
   const profit = netRevenue - totalCosts + totalIncomes;
 
-  function updateMedal(distanceId: string, field: "count" | "unitCost", value: number) {
-    setMedals((prev) => prev.map((m) => m.distanceId === distanceId ? { ...m, [field]: value } : m));
+  function addPackItem() {
+    setPackItems((prev) => [...prev, { id: nextId(), name: "", price: 0 }]);
+  }
+  function updatePackItem(id: string, field: "name" | "price", value: string | number) {
+    setPackItems((prev) => prev.map((i) => i.id === id ? { ...i, [field]: value } : i));
+  }
+  function removePackItem(id: string) {
+    setPackItems((prev) => prev.filter((i) => i.id !== id));
   }
 
   function addExpense() {
@@ -330,7 +336,7 @@ function FinancialSection({
 
   function save() {
     startTransition(async () => {
-      await saveEventFinancials(eventId, { medals, expenses, incomes });
+      await saveEventFinancials(eventId, { packItems, expenses, incomes });
       setSavedAt(Date.now());
     });
   }
@@ -339,58 +345,64 @@ function FinancialSection({
     <Section title="Финансовый отчёт">
       <div className="flex flex-col gap-6">
 
-        {/* Medals / shirts */}
-        {distanceRows.length > 0 && (
-          <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-faint">Медали / футболки</p>
-            <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
-              <table className="w-full min-w-[460px] text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-surface-2">
-                    <th className="px-4 py-2 text-left font-semibold text-ink-faint">Дистанция</th>
-                    <th className="px-4 py-2 text-right font-semibold text-ink-faint">Кол-во</th>
-                    <th className="px-4 py-2 text-right font-semibold text-ink-faint">Цена за ед. (₸)</th>
-                    <th className="px-4 py-2 text-right font-semibold text-ink-faint">Итого</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {medals.map((m) => {
-                    const d = distanceRows.find((x) => x.id === m.distanceId);
-                    if (!d) return null;
-                    return (
-                      <tr key={m.distanceId} className="border-b border-border last:border-0">
-                        <td className="px-4 py-2 font-medium text-ink">{d.name} <span className="text-ink-faint">· {d.km} км</span></td>
-                        <td className="px-4 py-2 text-right">
-                          <input
-                            type="number"
-                            min={0}
-                            value={m.count}
-                            onChange={(e) => updateMedal(m.distanceId, "count", Number(e.target.value))}
-                            className="w-20 rounded border border-border bg-surface px-2 py-1 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-right">
-                          <input
-                            type="number"
-                            min={0}
-                            value={m.unitCost}
-                            onChange={(e) => updateMedal(m.distanceId, "unitCost", Number(e.target.value))}
-                            className="w-28 rounded border border-border bg-surface px-2 py-1 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-ink">{kzt(m.count * m.unitCost)}</td>
-                      </tr>
-                    );
-                  })}
-                  <tr className="border-t border-border bg-surface-2">
-                    <td colSpan={3} className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-ink-faint">Итого медали</td>
-                    <td className="px-4 py-2 text-right tabular-nums font-bold text-ink">{kzt(totalMedalCost)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+        {/* Стартовый пакет */}
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">
+            Стартовый пакет (мерч + медали)
+          </p>
+          <p className="mb-3 text-xs text-ink-faint">
+            Позиции ниже умножаются на кол-во оплаченных участников ({totalPaid} чел.)
+          </p>
+          <div className="flex flex-col gap-2">
+            {packItems.length > 0 && (
+              <div className="flex items-center gap-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-faint">
+                <span className="flex-1">Позиция</span>
+                <span className="w-36 text-right">Цена за 1 уч. (₸)</span>
+                <span className="w-5" />
+              </div>
+            )}
+            {packItems.map((item) => (
+              <div key={item.id} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Медаль, футболка, мешок…"
+                  value={item.name}
+                  onChange={(e) => updatePackItem(item.id, "name", e.target.value)}
+                  className="flex-1 rounded border border-border bg-surface px-3 py-1.5 text-sm text-ink focus:border-ember focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={item.price}
+                  onChange={(e) => updatePackItem(item.id, "price", Number(e.target.value))}
+                  className="w-36 rounded border border-border bg-surface px-3 py-1.5 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
+                />
+                <button
+                  onClick={() => removePackItem(item.id)}
+                  className="shrink-0 text-sm text-ink-faint hover:text-danger"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addPackItem}
+              className="self-start text-sm font-semibold text-ember hover:underline"
+            >
+              + Добавить позицию
+            </button>
           </div>
-        )}
+
+          {packItems.length > 0 && totalPaid > 0 && (
+            <div className="mt-3 flex items-center justify-between rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2.5 text-sm">
+              <span className="text-ink-soft">
+                {kzt(perPersonCost)} / уч. × {totalPaid} участников
+              </span>
+              <span className="tabular-nums font-bold text-ink">{kzt(totalPackCost)}</span>
+            </div>
+          )}
+        </div>
 
         {/* Extra expenses */}
         <div>
@@ -476,10 +488,10 @@ function FinancialSection({
               <span className="text-ink-soft">Чистая выручка (оплачено − скидки)</span>
               <span className="tabular-nums font-semibold text-ink">{kzt(netRevenue)}</span>
             </div>
-            {totalMedalCost > 0 && (
+            {totalPackCost > 0 && (
               <div className="flex justify-between">
-                <span className="text-ink-soft">− Медали / футболки</span>
-                <span className="tabular-nums text-danger">−{kzt(totalMedalCost)}</span>
+                <span className="text-ink-soft">− Стартовый пакет</span>
+                <span className="tabular-nums text-danger">−{kzt(totalPackCost)}</span>
               </div>
             )}
             {expenses.map((e) => e.amount > 0 && (
