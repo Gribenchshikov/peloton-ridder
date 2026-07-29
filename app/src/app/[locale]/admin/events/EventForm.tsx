@@ -31,7 +31,7 @@ type EventDefaults = {
 
 type EventFormProps =
   | { mode: "create"; locale: string; races: { id: string; name: string }[]; onCreated?: (eventId: string) => void; submitLabel?: string }
-  | { mode: "edit"; eventId: string; raceName: string; defaults: EventDefaults; submitLabel?: string };
+  | { mode: "edit"; eventId: string; races: { id: string; name: string }[]; currentRaceId: string; raceName: string; defaults: EventDefaults; submitLabel?: string };
 
 export function EventForm(props: EventFormProps) {
   const t = useTranslations("Admin");
@@ -64,13 +64,22 @@ export function EventForm(props: EventFormProps) {
           options={props.races.map((race) => ({ value: race.id, label: race.name }))}
         />
       ) : (
-        <FormField
-          label={t("fieldRace")}
-          name="raceName"
-          type="text"
-          required
-          defaultValue={props.raceName}
-        />
+        <>
+          <SelectField
+            label={t("fieldRace")}
+            name="raceId"
+            required
+            defaultValue={props.currentRaceId}
+            options={props.races.map((race) => ({ value: race.id, label: race.name }))}
+          />
+          <FormField
+            label="Переименовать трассу (опционально)"
+            name="raceName"
+            type="text"
+            optional
+            defaultValue={props.raceName}
+          />
+        </>
       )}
 
       <FormField label={t("fieldYear")} name="year" type="number" required defaultValue={d ? String(d.year) : undefined} />

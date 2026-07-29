@@ -130,12 +130,17 @@ export async function updateEventAction(eventId: string, _prevState: ActionState
   const parsed = parseFormData(EventFieldsSchema, formData);
   if ("error" in parsed) return parsed;
 
-  const raceName = (formData.get("raceName") as string | null)?.trim();
+  const raceName = (formData.get("raceName") as string | null)?.trim() || null;
+  const newRaceId = (formData.get("raceId") as string | null)?.trim() || null;
 
   try {
-    const event = await prisma.event.update({ where: { id: eventId }, data: { ...parsed.data, ...coverResult } });
+    const event = await prisma.event.update({
+      where: { id: eventId },
+      data: { ...parsed.data, ...coverResult, ...(newRaceId ? { raceId: newRaceId } : {}) },
+    });
+    const targetRaceId = newRaceId ?? event.raceId;
     if (raceName) {
-      await prisma.race.update({ where: { id: event.raceId }, data: { name: raceName } });
+      await prisma.race.update({ where: { id: targetRaceId }, data: { name: raceName } });
     }
   } catch (err) {
     if (isUniqueConstraintError(err)) return { error: "duplicate" };

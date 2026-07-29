@@ -15,7 +15,7 @@ export default async function EditEventPage({
   const { wizard } = await searchParams;
   await requireAdminPage(locale, `/admin/events/${id}`);
 
-  const [event, allPartners, lastNotification] = await Promise.all([
+  const [event, allPartners, lastNotification, allRaces] = await Promise.all([
     getEventForAdmin(id),
     prisma.partner.findMany({ orderBy: { name: "asc" } }),
     prisma.notification.findFirst({
@@ -23,9 +23,10 @@ export default async function EditEventPage({
       orderBy: { sentAt: "desc" },
       select: { subject: true, sentAt: true },
     }),
+    prisma.race.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
   if (!event) notFound();
 
   const wizardStep = wizard === "2" ? "2" : wizard === "3" ? "3" : undefined;
-  return <EventEditView event={event} allPartners={allPartners} wizard={wizardStep} locale={locale} lastNotification={lastNotification} />;
+  return <EventEditView event={event} allPartners={allPartners} allRaces={allRaces} wizard={wizardStep} locale={locale} lastNotification={lastNotification} />;
 }

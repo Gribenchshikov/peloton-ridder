@@ -322,7 +322,7 @@ export function getEventForAdmin(id: string) {
   return prisma.event.findUnique({
     where: { id },
     include: {
-      race: { select: { name: true } },
+      race: { select: { id: true, name: true } },
       distances: {
         orderBy: { km: "asc" },
         select: {

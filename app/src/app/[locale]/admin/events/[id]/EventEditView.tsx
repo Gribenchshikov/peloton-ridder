@@ -42,7 +42,7 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
   );
 }
 
-export function EventEditView({ event, allPartners, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; }) {
+export function EventEditView({ event, allPartners, allRaces, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; allRaces: { id: string; name: string }[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; }) {
   const t = useTranslations("Admin");
 
   if (wizard === "2") {
@@ -120,6 +120,8 @@ export function EventEditView({ event, allPartners, wizard, locale, lastNotifica
       <EventForm
         mode="edit"
         eventId={event.id}
+        races={allRaces}
+        currentRaceId={event.race.id}
         raceName={event.race.name}
         defaults={{
           year: event.year,
