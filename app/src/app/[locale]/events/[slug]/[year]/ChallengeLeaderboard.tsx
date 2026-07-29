@@ -1,4 +1,3 @@
-import Image from "next/image";
 
 type LeaderboardRow = {
   place: number;
@@ -64,12 +63,13 @@ export function ChallengeLeaderboard({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {row.avatarUrl ? (
-                        <Image
-                          src={row.avatarUrl}
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={row.avatarUrl.replace(/^http:\/\//, "https://")}
                           alt=""
                           width={32}
                           height={32}
-                          className="rounded-full object-cover"
+                          className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-bold text-ink-faint">
