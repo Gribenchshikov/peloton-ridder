@@ -44,10 +44,24 @@ export default async function KitPickupListPage({
         <Link href={backHref} className="text-sm font-semibold text-ink-faint transition-colors hover:text-ink">
           ← {event.race.name} {event.year}
         </Link>
-        <h1 className="mt-2 font-display text-2xl font-bold text-ink">Выдача стартовых наборов</h1>
-        <p className="mt-1 text-sm text-ink-soft">
-          Только оплаченные регистрации
-        </p>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-ink">Выдача стартовых наборов</h1>
+            <p className="mt-1 text-sm text-ink-soft">Только оплаченные регистрации</p>
+          </div>
+          <Link
+            href="/volunteer/scan"
+            className="flex items-center gap-2 rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <path d="M14 14h2v2h-2zM18 14h3M14 18h2M18 18h3v3M21 14v2" />
+            </svg>
+            QR-сканер выдачи
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -135,9 +149,6 @@ export default async function KitPickupListPage({
         </>
       )}
 
-      <div className="text-xs text-ink-faint">
-        Для сканирования QR — <Link href="/volunteer/scan" className="font-semibold text-ember hover:underline">QR-сканер выдачи →</Link>
-      </div>
     </main>
   );
 }
