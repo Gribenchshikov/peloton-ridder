@@ -193,6 +193,12 @@ export function RegistrationsView({ event }: { event: EventData }) {
             {t("summaryCta")}
           </Link>
           <a
+            href={`/admin/registrations/${event.race.slug}/${event.year}/export?type=kit`}
+            className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          >
+            CSV выдача
+          </a>
+          <a
             href={`/admin/registrations/${event.race.slug}/${event.year}/export?type=transfer`}
             className="rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
           >

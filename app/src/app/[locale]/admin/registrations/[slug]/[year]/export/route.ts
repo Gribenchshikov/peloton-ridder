@@ -31,6 +31,31 @@ export async function GET(
   const distanceParam = url.searchParams.get("distanceId");
   const transferParam = url.searchParams.get("transfer");
 
+  // ── Kit pickup CSV ──────────────────────────────────────────────────────────
+  if (typeParam === "kit") {
+    const paid = event.registrations.filter((r) => r.status === "PAID" && !r.isTransferOnly);
+    paid.sort((a, b) => (a.user.lastName ?? "").localeCompare(b.user.lastName ?? "", "ru"));
+
+    const rows = [
+      ["Оплата", "Фамилия", "Имя", "Рег. номер", "Экстренный контакт", "Дата рождения"],
+      ...paid.map((r) => [
+        "✓",
+        r.user.lastName,
+        r.user.firstName,
+        r.bibNumber ?? "",
+        r.emergencyContact ?? "",
+        r.user.birthDate ? new Date(r.user.birthDate).toLocaleDateString("ru-RU") : "",
+      ]),
+    ];
+    const csv = toCsv(rows);
+    return new NextResponse("﻿" + csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="kit-${slug}-${year}.csv"`,
+      },
+    });
+  }
+
   // ── Transfer CSV ────────────────────────────────────────────────────────────
   if (typeParam === "transfer") {
     const withTransfer = event.registrations.filter(

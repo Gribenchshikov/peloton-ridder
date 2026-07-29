@@ -310,6 +310,7 @@ model Registration {
   includesTransfer Boolean            @default(false)
   transferUsedAt  DateTime?
   kitPickedUpAt   DateTime?
+  emergencyContact String?
   additionalParticipants Json?
   createdAt       DateTime           @default(now())
 

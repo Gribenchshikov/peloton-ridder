@@ -355,6 +355,22 @@ export function DistanceSelect({
         </div>
       )}
 
+      {/* Emergency contact */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-ink-soft">
+          {t("emergencyContactLabel")}
+          <span className="ml-1.5 text-xs font-bold text-danger">*</span>
+        </label>
+        <input
+          type="text"
+          name="emergencyContact"
+          required
+          placeholder={t("emergencyContactPlaceholder")}
+          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+        />
+        <p className="text-xs text-ink-faint">{t("emergencyContactHint")}</p>
+      </div>
+
       {/* Birth date — shown only when not set in profile */}
       {!hasBirthDate && (
         <div className="flex flex-col gap-1.5">
