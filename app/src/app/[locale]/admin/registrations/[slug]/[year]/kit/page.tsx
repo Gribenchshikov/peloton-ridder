@@ -17,7 +17,8 @@ export default async function KitPickupListPage({
     redirect(`/${locale}/login?callbackUrl=/admin/registrations/${slug}/${year}/kit`);
   }
 
-  if (!session.user.isAdmin) {
+  const isStaff = session.user.isAdmin || session.user.isOperator;
+  if (!isStaff) {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isVolunteer: true },

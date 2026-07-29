@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdminId } from "@/lib/session";
+import { requireAdminId, requireOperatorOrAdminId } from "@/lib/session";
 import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
 
@@ -311,7 +311,7 @@ export async function toggleKitIssuedAction(
   eventId: string,
   issued: boolean,
 ): Promise<{ error?: string }> {
-  const adminId = await requireAdminId();
+  const adminId = await requireOperatorOrAdminId();
   if (!adminId) return { error: "unauthorized" };
 
   const reg = await prisma.registration.findUnique({
@@ -334,7 +334,7 @@ export async function toggleTransferBoardedAction(
   eventId: string,
   boarded: boolean,
 ): Promise<{ error?: string }> {
-  const adminId = await requireAdminId();
+  const adminId = await requireOperatorOrAdminId();
   if (!adminId) return { error: "unauthorized" };
 
   const reg = await prisma.registration.findUnique({

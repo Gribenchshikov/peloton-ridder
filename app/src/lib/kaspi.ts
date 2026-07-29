@@ -40,16 +40,17 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
     }
 
     let bibNumber: number | undefined;
-    if (registration.distance && registration.distanceId) {
+    if (registration.distance && registration.distanceId && registration.distance.bibRangeStart !== null && registration.distance.bibRangeEnd !== null) {
       const taken = await tx.registration.findMany({
         where: { distanceId: registration.distanceId, status: "PAID" },
         select: { bibNumber: true },
       });
       const takenNumbers = new Set(taken.map((r) => r.bibNumber));
-      bibNumber = registration.distance.bibRangeStart;
-      while (takenNumbers.has(bibNumber) && bibNumber <= registration.distance.bibRangeEnd) {
-        bibNumber++;
+      let candidate: number = registration.distance.bibRangeStart;
+      while (takenNumbers.has(candidate) && candidate <= registration.distance.bibRangeEnd!) {
+        candidate++;
       }
+      bibNumber = candidate;
     }
 
     const updated = await tx.registration.update({

@@ -1,4 +1,4 @@
-import { requireAdminPage } from "@/lib/session";
+import { requireFinAdminOrAdminPage } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/navigation";
 import { getSiteSetting } from "@/lib/queries";
@@ -14,7 +14,7 @@ export default async function ReportsPage({
 }) {
   const { locale } = await params;
   const { eventId } = await searchParams;
-  await requireAdminPage(locale, "/admin/reports");
+  await requireFinAdminOrAdminPage(locale, "/admin/reports");
 
   // All events for the filter dropdown
   const events = await prisma.event.findMany({

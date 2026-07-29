@@ -1,4 +1,4 @@
-import { requireAdminPage } from "@/lib/session";
+import { requireAdminPage, isSuperAdmin } from "@/lib/session";
 import { getUsersForAdmin } from "@/lib/queries";
 import { auth } from "@/auth";
 import { UsersView } from "./UsersView";
@@ -12,5 +12,10 @@ export default async function AdminUsersPage({
   await requireAdminPage(locale, "/admin/users");
 
   const [users, session] = await Promise.all([getUsersForAdmin(), auth()]);
-  return <UsersView users={users} currentUserId={session?.user?.id} />;
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase() ?? "";
+  const superAdminUserId = superAdminEmail
+    ? (users.find((u) => u.email.toLowerCase() === superAdminEmail)?.id ?? null)
+    : null;
+
+  return <UsersView users={users} currentUserId={session?.user?.id} superAdminUserId={superAdminUserId} />;
 }

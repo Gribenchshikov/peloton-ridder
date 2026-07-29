@@ -288,6 +288,8 @@ export function getUsersForAdmin() {
       email: true,
       emailVerified: true,
       isAdmin: true,
+      isOperator: true,
+      isFinAdmin: true,
       bannedUntil: true,
       isFrozen: true,
       createdAt: true,

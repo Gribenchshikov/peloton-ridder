@@ -1,7 +1,7 @@
 "use server";
 
 import { NextResponse } from "next/server";
-import { requireAdminId } from "@/lib/session";
+import { requireOperatorOrAdminId } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
 
 export async function GET(
@@ -10,7 +10,7 @@ export async function GET(
 ) {
   const { slug, year } = await params;
 
-  const adminId = await requireAdminId();
+  const adminId = await requireOperatorOrAdminId();
   if (!adminId) {
     return new NextResponse("Forbidden", { status: 403 });
   }

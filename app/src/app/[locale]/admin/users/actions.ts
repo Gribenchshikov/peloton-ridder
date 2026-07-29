@@ -2,11 +2,11 @@
 
 import { verifySync } from "otplib";
 import { prisma } from "@/lib/prisma";
-import { requireAdminId } from "@/lib/session";
+import { requireAdminId, isSuperAdmin } from "@/lib/session";
 import { sendAdminAlertEmail } from "@/lib/mailer";
 import { revalidatePath } from "next/cache";
 
-type UserActionType = "toggleAdmin" | "ban" | "unban" | "freeze" | "unfreeze" | "forceReset" | "edit";
+type UserActionType = "toggleAdmin" | "setOperator" | "setFinAdmin" | "ban" | "unban" | "freeze" | "unfreeze" | "forceReset" | "edit";
 
 export async function updateUserAction(
   userId: string,
@@ -35,6 +35,9 @@ export async function updateUserAction(
   });
   if (!target) return { error: "not_found" };
 
+  // T139: супер-админа нельзя изменять через UI
+  if (isSuperAdmin(target.email)) return { error: "cannot_modify_super_admin" };
+
   const adminEmails = (
     await prisma.user.findMany({ where: { isAdmin: true }, select: { email: true } })
   ).map((u) => u.email);
@@ -50,6 +53,18 @@ export async function updateUserAction(
     await prisma.user.update({ where: { id: userId }, data: { isAdmin: makeAdmin } });
     const eventLabel = makeAdmin ? "Выдача роли администратора" : "Снятие роли администратора";
     await sendAdminAlertEmail(adminEmails, eventLabel, targetLabel, actorLabel, new Date());
+  }
+
+  if (action === "setOperator") {
+    const makeOperator = data.makeOperator as boolean;
+    await prisma.user.update({ where: { id: userId }, data: { isOperator: makeOperator } });
+    await sendAdminAlertEmail(adminEmails, makeOperator ? "Выдача роли оператора" : "Снятие роли оператора", targetLabel, actorLabel, new Date());
+  }
+
+  if (action === "setFinAdmin") {
+    const makeFinAdmin = data.makeFinAdmin as boolean;
+    await prisma.user.update({ where: { id: userId }, data: { isFinAdmin: makeFinAdmin } });
+    await sendAdminAlertEmail(adminEmails, makeFinAdmin ? "Выдача роли фин-админа" : "Снятие роли фин-админа", targetLabel, actorLabel, new Date());
   }
 
   if (action === "ban") {

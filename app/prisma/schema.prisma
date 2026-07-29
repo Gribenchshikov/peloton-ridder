@@ -82,6 +82,8 @@ model User {
   tshirtSize    String?
   birthDate     DateTime?
   isAdmin       Boolean   @default(false)
+  isOperator    Boolean   @default(false)
+  isFinAdmin    Boolean   @default(false)
   isVolunteer              Boolean   @default(false)
   volunteerRewardClaimedAt DateTime?
   volunteerPromoCode       String?

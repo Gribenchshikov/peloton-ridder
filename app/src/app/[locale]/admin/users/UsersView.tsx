@@ -8,20 +8,24 @@ import { updateUserAction } from "./actions";
 
 type User = Awaited<ReturnType<typeof getUsersForAdmin>>[number];
 
-type UserActionType = "menu" | "toggleAdmin" | "ban" | "unban" | "freeze" | "unfreeze" | "forceReset" | "edit";
+type UserActionType = "menu" | "toggleAdmin" | "setOperator" | "setFinAdmin" | "ban" | "unban" | "freeze" | "unfreeze" | "forceReset" | "edit";
 
 type ActiveAction = {
   userId: string;
   type: UserActionType;
   makeAdmin?: boolean;
+  makeOperator?: boolean;
+  makeFinAdmin?: boolean;
 };
 
 export function UsersView({
   users,
   currentUserId,
+  superAdminUserId,
 }: {
   users: User[];
   currentUserId?: string;
+  superAdminUserId?: string | null;
 }) {
   const t = useTranslations("Admin");
   const [activeTab, setActiveTab] = useState<"admins" | "runners">("admins");
@@ -37,8 +41,8 @@ export function UsersView({
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const admins = users.filter((u) => u.isAdmin);
-  const regular = users.filter((u) => !u.isAdmin);
+  const admins = users.filter((u) => u.isAdmin || u.isOperator || u.isFinAdmin);
+  const regular = users.filter((u) => !u.isAdmin && !u.isOperator && !u.isFinAdmin);
   const baseUsers = activeTab === "admins" ? admins : regular;
   const q = searchQuery.trim().toLowerCase();
   const visibleUsers = q
@@ -76,6 +80,8 @@ export function UsersView({
       userId: user.id,
       type,
       makeAdmin: type === "toggleAdmin" ? !user.isAdmin : undefined,
+      makeOperator: type === "setOperator" ? !user.isOperator : undefined,
+      makeFinAdmin: type === "setFinAdmin" ? !user.isFinAdmin : undefined,
     });
     if (type === "edit") {
       setEditFirstName(user.firstName);
@@ -112,10 +118,14 @@ export function UsersView({
         payload.email = editEmail.trim();
       }
 
-      if (action === "toggleAdmin") {
-        payload.makeAdmin = activeAction.makeAdmin ?? false;
-      }
+      if (action === "toggleAdmin") payload.makeAdmin = activeAction.makeAdmin ?? false;
+      if (action === "setOperator") payload.makeOperator = activeAction.makeOperator ?? false;
+      if (action === "setFinAdmin") payload.makeFinAdmin = activeAction.makeFinAdmin ?? false;
       const res = await updateUserAction(user.id, action, payload, twoFaCode);
+      if (res.error === "cannot_modify_super_admin") {
+        setFormError("Нельзя изменять супер-администратора через UI.");
+        return;
+      }
       if (res.error === "cannot_demote_self") {
         setFormError(t("errorCannotDemoteSelf"));
         return;
@@ -259,13 +269,31 @@ export function UsersView({
                       </td>
                       <td className="px-4 py-2.5 text-ink-soft">{user.email}</td>
                       <td className="px-4 py-2.5 text-center">
-                        {user.isAdmin ? (
-                          <span className="inline-flex items-center rounded-full bg-ember/10 px-2 py-0.5 text-xs font-bold text-ember">
-                            Admin
-                          </span>
-                        ) : (
-                          <span className="text-xs text-ink-faint">{t("usersRoleUser")}</span>
-                        )}
+                        <div className="flex flex-wrap justify-center gap-1">
+                          {user.id === superAdminUserId && (
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                              Super
+                            </span>
+                          )}
+                          {user.isAdmin && (
+                            <span className="inline-flex items-center rounded-full bg-ember/10 px-2 py-0.5 text-xs font-bold text-ember">
+                              Admin
+                            </span>
+                          )}
+                          {user.isOperator && (
+                            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                              Оператор
+                            </span>
+                          )}
+                          {user.isFinAdmin && (
+                            <span className="inline-flex items-center rounded-full bg-spruce/10 px-2 py-0.5 text-xs font-bold text-spruce">
+                              Фин-Админ
+                            </span>
+                          )}
+                          {!user.isAdmin && !user.isOperator && !user.isFinAdmin && (
+                            <span className="text-xs text-ink-faint">{t("usersRoleUser")}</span>
+                          )}
+                        </div>
                         {isFrozen ? (
                           <div className="mt-1 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
                             ❄ Заморожен
@@ -325,10 +353,26 @@ export function UsersView({
                                 <button
                                   type="button"
                                   onClick={() => openAction(user, "toggleAdmin")}
-                                  disabled={pending}
+                                  disabled={pending || user.id === superAdminUserId}
                                   className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
                                 >
                                   {user.isAdmin ? t("usersRevokeAdmin") : t("usersMakeAdmin")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openAction(user, "setOperator")}
+                                  disabled={pending || user.id === superAdminUserId}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {user.isOperator ? "Снять оператора" : "Сделать оператором"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openAction(user, "setFinAdmin")}
+                                  disabled={pending || user.id === superAdminUserId}
+                                  className="rounded-[var(--radius-s)] border border-border bg-transparent px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-50"
+                                >
+                                  {user.isFinAdmin ? "Снять фин-админа" : "Сделать фин-админом"}
                                 </button>
                                 <button
                                   type="button"
@@ -380,6 +424,10 @@ export function UsersView({
                               <div className="mb-3 text-sm text-ink-soft">
                                 {activeAction.type === "toggleAdmin" &&
                                   t(user.isAdmin ? "usersConfirmDemote" : "usersConfirmPromote")}
+                                {activeAction.type === "setOperator" &&
+                                  (user.isOperator ? "Снять роль оператора с этого пользователя?" : "Назначить этого пользователя оператором? Он получит доступ к выдаче наборов и трансферу.")}
+                                {activeAction.type === "setFinAdmin" &&
+                                  (user.isFinAdmin ? "Снять роль фин-админа?" : "Назначить этого пользователя фин-админом? Он получит доступ к финансовым отчётам.")}
                                 {activeAction.type === "ban" &&
                                   t("usersConfirmBan", { days: banDays })}
                                 {activeAction.type === "unban" && t("usersConfirmUnban")}
