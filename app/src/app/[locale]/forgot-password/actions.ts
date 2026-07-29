@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendPasswordResetEmail } from "@/lib/mailer";
 import { buildAppUrl } from "@/lib/url";
+import { isSuperAdmin } from "@/lib/session";
 
 const ForgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -27,7 +28,8 @@ export async function forgotPasswordAction(
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   // Намеренно не раскрываем, есть ли аккаунт с таким email — тот же принцип, что и в логине:
   // ответ пользователю одинаковый независимо от того, найден ли аккаунт.
-  if (user) {
+  // Супер-админ не может сбросить пароль через публичный flow — только вручную через БД.
+  if (user && !isSuperAdmin(user.email)) {
     const token = await createVerificationToken(user.email, "PASSWORD_RESET");
     await sendPasswordResetEmail(user.email, buildAppUrl(`/reset-password?token=${token}`));
   }
