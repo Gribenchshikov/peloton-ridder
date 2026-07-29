@@ -64,14 +64,13 @@ export function EventForm(props: EventFormProps) {
           options={props.races.map((race) => ({ value: race.id, label: race.name }))}
         />
       ) : (
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="font-semibold text-ink-soft">{t("fieldRace")}</span>
-          <input
-            value={props.raceName}
-            disabled
-            className="rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-2.5 text-ink-faint"
-          />
-        </label>
+        <FormField
+          label={t("fieldRace")}
+          name="raceName"
+          type="text"
+          required
+          defaultValue={props.raceName}
+        />
       )}
 
       <FormField label={t("fieldYear")} name="year" type="number" required defaultValue={d ? String(d.year) : undefined} />

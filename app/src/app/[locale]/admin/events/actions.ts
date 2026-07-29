@@ -130,14 +130,21 @@ export async function updateEventAction(eventId: string, _prevState: ActionState
   const parsed = parseFormData(EventFieldsSchema, formData);
   if ("error" in parsed) return parsed;
 
+  const raceName = (formData.get("raceName") as string | null)?.trim();
+
   try {
-    await prisma.event.update({ where: { id: eventId }, data: { ...parsed.data, ...coverResult } });
+    const event = await prisma.event.update({ where: { id: eventId }, data: { ...parsed.data, ...coverResult } });
+    if (raceName) {
+      await prisma.race.update({ where: { id: event.raceId }, data: { name: raceName } });
+    }
   } catch (err) {
     if (isUniqueConstraintError(err)) return { error: "duplicate" };
     throw err;
   }
 
   revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/admin", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
   return { success: true };
 }
 
