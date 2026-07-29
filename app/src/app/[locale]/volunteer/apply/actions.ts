@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { sendAdminAlertEmail } from "@/lib/mailer";
+import { sendVolunteerApplicationAdminEmail } from "@/lib/mailer";
 import { redirect } from "@/i18n/navigation";
 import { getLocale } from "next-intl/server";
 
@@ -59,12 +59,11 @@ export async function applyVolunteerAction(
     await prisma.user.findMany({ where: { isAdmin: true }, select: { email: true } })
   ).map((u) => u.email);
 
-  await sendAdminAlertEmail(
+  await sendVolunteerApplicationAdminEmail(
     adminEmails,
-    `Новая заявка волонтёра — ${event.race.name} ${event.year}`,
-    `${user.firstName} ${user.lastName} <${user.email}>`,
-    "система",
-    new Date()
+    `${user.firstName} ${user.lastName}`,
+    user.email,
+    `${event.race.name} ${event.year}`,
   );
 
   const locale = await getLocale();

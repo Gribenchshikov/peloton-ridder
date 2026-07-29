@@ -207,3 +207,85 @@ export async function sendRegistrationConfirmationEmail(
 
   await sendMail(to, subject, text, html);
 }
+
+export async function sendVolunteerStatusEmail(
+  to: string,
+  name: string,
+  raceName: string,
+  decision: "APPROVED" | "REJECTED",
+  volunteerChatUrl?: string | null,
+) {
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const accountUrl = `${appUrl}/ru/account`;
+
+  if (decision === "APPROVED") {
+    const subject = `Заявка волонтёра одобрена — ${raceName}`;
+    const chatLine = volunteerChatUrl ? `\nЧат волонтёров: ${volunteerChatUrl}` : "";
+    const text = [
+      `Здравствуйте, ${name}!`,
+      ``,
+      `Ваша заявка на волонтёрство на ${raceName} одобрена.`,
+      `Организаторы свяжутся с вами ближе к событию.${chatLine}`,
+      ``,
+      `Личный кабинет: ${accountUrl}`,
+      ``,
+      `С уважением,`,
+      `Peloton Ridder`,
+    ].join("\n");
+    const chatButton = volunteerChatUrl
+      ? `<p style="margin:8px 0"><a href="${volunteerChatUrl}" style="display:inline-block;padding:8px 16px;background:#16a34a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Чат волонтёров →</a></p>`
+      : "";
+    const html = `
+<p>Здравствуйте, ${name}!</p>
+<p>Ваша заявка на волонтёрство на <strong>${raceName}</strong> <span style="color:#16a34a;font-weight:600">одобрена ✓</span>.</p>
+<p>Организаторы свяжутся с вами ближе к событию.</p>
+${chatButton}
+<p style="margin-top:16px"><a href="${accountUrl}" style="display:inline-block;padding:8px 16px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Личный кабинет</a></p>
+<p style="color:#888;font-size:13px;margin-top:16px">С уважением,<br>Peloton Ridder</p>
+`.trim();
+    await sendMail(to, subject, text, html);
+  } else {
+    const subject = `Заявка волонтёра — ${raceName}`;
+    const text = [
+      `Здравствуйте, ${name}!`,
+      ``,
+      `К сожалению, ваша заявка на волонтёрство на ${raceName} отклонена.`,
+      `Вы можете подать повторную заявку или обратиться к организаторам.`,
+      ``,
+      `Личный кабинет: ${accountUrl}`,
+      ``,
+      `С уважением,`,
+      `Peloton Ridder`,
+    ].join("\n");
+    const html = `
+<p>Здравствуйте, ${name}!</p>
+<p>К сожалению, ваша заявка на волонтёрство на <strong>${raceName}</strong> <span style="color:#dc2626;font-weight:600">отклонена</span>.</p>
+<p>Вы можете подать повторную заявку или обратиться к организаторам.</p>
+<p style="margin-top:16px"><a href="${accountUrl}" style="display:inline-block;padding:8px 16px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Личный кабинет</a></p>
+<p style="color:#888;font-size:13px;margin-top:16px">С уважением,<br>Peloton Ridder</p>
+`.trim();
+    await sendMail(to, subject, text, html);
+  }
+}
+
+export async function sendVolunteerApplicationAdminEmail(
+  adminEmails: string[],
+  applicantName: string,
+  applicantEmail: string,
+  raceName: string,
+) {
+  if (adminEmails.length === 0) return;
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const volunteersUrl = `${appUrl}/ru/admin/volunteers`;
+  const subject = `[Ridder] Новая заявка волонтёра — ${raceName}`;
+  const text = [
+    `Новая заявка волонтёра`,
+    ``,
+    `Участник: ${applicantName} <${applicantEmail}>`,
+    `Забег: ${raceName}`,
+    ``,
+    `Рассмотреть заявки: ${volunteersUrl}`,
+  ].join("\n");
+  const html = `<h3 style="margin:0 0 12px">Новая заявка волонтёра</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Участник</td><td style="font-weight:600">${applicantName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${applicantEmail}">${applicantEmail}</a></td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr></table><p style="margin-top:16px"><a href="${volunteersUrl}" style="display:inline-block;padding:8px 16px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Рассмотреть заявки →</a></p><p style="color:#888;font-size:12px;margin-top:12px">Peloton Ridder</p>`;
+  await Promise.all(adminEmails.map((to) => sendMail(to, subject, text, html)));
+}

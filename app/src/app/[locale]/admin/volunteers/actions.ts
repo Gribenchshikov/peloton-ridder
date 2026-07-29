@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import nodemailer from "nodemailer";
+import { sendVolunteerStatusEmail } from "@/lib/mailer";
 
 export async function reviewVolunteerAction(
   applicationId: string,
@@ -14,7 +15,18 @@ export async function reviewVolunteerAction(
 
   const app = await prisma.volunteerApplication.findUnique({
     where: { id: applicationId },
-    select: { status: true, userId: true },
+    select: {
+      status: true,
+      userId: true,
+      event: {
+        select: {
+          year: true,
+          volunteerChatUrl: true,
+          race: { select: { name: true } },
+        },
+      },
+      user: { select: { email: true, firstName: true, lastName: true } },
+    },
   });
   if (!app) return { error: "not_found" };
   if (app.status !== "PENDING") return { error: "already_reviewed" };
@@ -30,6 +42,12 @@ export async function reviewVolunteerAction(
       data: { isVolunteer: true },
     });
   }
+
+  const raceName = `${app.event.race.name} ${app.event.year}`;
+  const userName = `${app.user.firstName} ${app.user.lastName}`.trim();
+  sendVolunteerStatusEmail(app.user.email, userName, raceName, decision, app.event.volunteerChatUrl).catch(
+    (e) => console.error("[volunteers] email error:", e)
+  );
 
   revalidatePath("/[locale]/admin/volunteers", "page");
   return { ok: true };
