@@ -9,7 +9,7 @@ export type DistanceEquipment = {
 };
 
 export const EQUIPMENT_ITEMS = [
-  { key: "race_number",       label: "Стартовый номер",                           category: "Базовое" },
+  { key: "race_number",       label: "Регистрационный номер",                      category: "Базовое" },
   { key: "emergency_blanket", label: "Термоодеяло (спасательное)",                category: "Безопасность" },
   { key: "whistle",           label: "Свисток",                                   category: "Безопасность" },
   { key: "first_aid",         label: "Аптечка первой помощи",                     category: "Безопасность" },

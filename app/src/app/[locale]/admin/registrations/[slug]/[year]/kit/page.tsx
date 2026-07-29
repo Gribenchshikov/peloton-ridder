@@ -98,7 +98,7 @@ export default async function KitPickupListPage({
                 <table className="w-full min-w-[560px] text-sm">
                   <thead>
                     <tr className="border-b border-border bg-surface-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
-                      <th className="px-4 py-2.5 text-left">№ нагр.</th>
+                      <th className="px-4 py-2.5 text-left">Рег. номер</th>
                       <th className="px-4 py-2.5 text-left">Участник</th>
                       <th className="px-4 py-2.5 text-left">Телефон</th>
                       <th className="px-4 py-2.5 text-left">Дистанция</th>

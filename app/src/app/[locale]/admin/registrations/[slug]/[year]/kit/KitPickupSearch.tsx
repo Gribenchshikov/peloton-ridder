@@ -32,7 +32,7 @@ export function KitPickupSearch({ regs }: { regs: Reg[] }) {
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Поиск по имени, фамилии, email, номеру нагрудника..."
+        placeholder="Поиск по имени, фамилии, email, рег. номеру..."
         className="w-full rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-ember"
       />
       {query && (
@@ -44,7 +44,7 @@ export function KitPickupSearch({ regs }: { regs: Reg[] }) {
         <table className="w-full min-w-[480px] text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
-              <th className="px-4 py-2.5 text-left">№ нагр.</th>
+              <th className="px-4 py-2.5 text-left">Рег. номер</th>
               <th className="px-4 py-2.5 text-left">Участник</th>
               <th className="px-4 py-2.5 text-left">Телефон</th>
               <th className="px-4 py-2.5 text-left">Дистанция</th>

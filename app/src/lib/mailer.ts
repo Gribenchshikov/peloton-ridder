@@ -175,7 +175,7 @@ export async function sendRegistrationConfirmationEmail(
     ``,
     `Забег: ${raceName}`,
     `Дистанция: ${distanceName}`,
-    `Стартовый номер: №${bibNumber}`,
+    `Регистрационный номер: №${bibNumber}`,
     `Дата: ${dateStr}`,
     `Место: ${location}`,
     ``,
@@ -191,7 +191,7 @@ export async function sendRegistrationConfirmationEmail(
 <table style="border-collapse:collapse;margin:16px 0">
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Забег</td><td style="font-weight:600">${raceName}</td></tr>
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Дистанция</td><td>${distanceName}</td></tr>
-  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Стартовый номер</td><td style="font-size:20px;font-weight:700;color:#EA580C">№${bibNumber}</td></tr>
+  <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Регистрационный номер</td><td style="font-size:20px;font-weight:700;color:#EA580C">№${bibNumber}</td></tr>
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Дата</td><td>${dateStr}</td></tr>
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Место</td><td>${location}</td></tr>
 </table>
