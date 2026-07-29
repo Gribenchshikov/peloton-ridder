@@ -52,9 +52,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id && token.iat) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { passwordChangedAt: true, firstName: true, isAdmin: true, isOperator: true, isFinAdmin: true },
+          select: { passwordChangedAt: true, firstName: true, isAdmin: true, isOperator: true, isFinAdmin: true, bannedUntil: true, isFrozen: true },
         });
         if (dbUser?.passwordChangedAt && Math.floor(dbUser.passwordChangedAt.getTime() / 1000) > token.iat) {
+          return null;
+        }
+        if (dbUser?.isFrozen || (dbUser?.bannedUntil && dbUser.bannedUntil > new Date())) {
           return null;
         }
         token.firstName = dbUser?.firstName;

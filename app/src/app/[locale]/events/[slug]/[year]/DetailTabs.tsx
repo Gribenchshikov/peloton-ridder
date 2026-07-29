@@ -181,10 +181,9 @@ export function DetailTabs({
         {tab === "about" && (
           <div className="flex flex-col gap-6">
             {aboutBody ? (
-              <p
-                className="max-w-2xl text-[1.02rem] leading-relaxed text-ink-soft break-words"
-                dangerouslySetInnerHTML={{ __html: aboutBody }}
-              />
+              <p className="max-w-2xl whitespace-pre-line text-[1.02rem] leading-relaxed text-ink-soft break-words">
+                {aboutBody}
+              </p>
             ) : (
               <p className="text-sm text-ink-faint">{t("aboutEmpty")}</p>
             )}
