@@ -13,6 +13,7 @@ import { VolunteerProgress } from "./VolunteerProgress";
 import { AvatarUpload } from "./AvatarUpload";
 import { ClubSection } from "./ClubSection";
 import { SeriesMedals } from "./SeriesMedals";
+import { StravaSection } from "./StravaSection";
 import { logoutAction } from "@/lib/authActions";
 
 export default async function AccountPage({
@@ -20,10 +21,10 @@ export default async function AccountPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; strava?: string }>;
 }) {
   const { locale } = await params;
-  const { callbackUrl } = await searchParams;
+  const { callbackUrl, strava: stravaStatus } = await searchParams;
   const session = await auth();
   if (!session?.user?.id) {
     return redirect({ href: "/login", locale });
@@ -87,6 +88,13 @@ export default async function AccountPage({
           clubs={clubs}
         />
       </div>
+
+      {/* Strava */}
+      <StravaSection
+        stravaAthleteId={profile.stravaAthleteId}
+        stravaAthleteName={profile.stravaAthleteName}
+        status={stravaStatus}
+      />
 
       {/* Волонтёрство */}
       {hasVolunteerBlock && (

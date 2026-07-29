@@ -93,6 +93,11 @@ model User {
   totpSecret               String?
   totpEnabledAt            DateTime?
   avatarUrl                String?
+  stravaAthleteId          String?
+  stravaAthleteName        String?
+  stravaAccessToken        String?
+  stravaRefreshToken       String?
+  stravaTokenExpiresAt     DateTime?
   runningClubId            String?
   runningClub              RunningClub?            @relation("UserClub", fields: [runningClubId], references: [id])
   createdAt     DateTime  @default(now())

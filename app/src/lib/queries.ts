@@ -138,6 +138,8 @@ export function getUserProfile(userId: string) {
       tshirtSize: true,
       birthDate: true,
       avatarUrl: true,
+      stravaAthleteId: true,
+      stravaAthleteName: true,
       runningClubId: true,
       runningClub: { select: { id: true, name: true } },
       isAdmin: true,
