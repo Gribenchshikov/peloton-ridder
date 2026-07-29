@@ -3,3 +3,4 @@
 *.pem
 .env
 nginx/ssl/
+*.pdf
