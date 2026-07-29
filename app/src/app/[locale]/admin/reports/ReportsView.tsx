@@ -57,7 +57,6 @@ function nextId() {
 }
 
 export function ReportsView({ registrations, distances, merch, selectedEventName, eventId, initialFinancials }: Props) {
-  void selectedEventName;
   const paid = useMemo(() => registrations.filter((r) => r.status === "PAID"), [registrations]);
   const reserved = useMemo(() => registrations.filter((r) => r.status === "RESERVED"), [registrations]);
   const cancelled = useMemo(() => registrations.filter((r) => r.status === "CANCELLED"), [registrations]);
@@ -161,7 +160,11 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
       {eventId && (
         <FinancialSection
           eventId={eventId}
+          eventLabel={selectedEventName}
           distanceRows={byDistance.filter((d) => d.id !== "__transfer__").map((d) => ({ id: d.id, name: d.name, km: d.km, paid: d.paid }))}
+          byDistance={byDistance}
+          grossRevenue={grossRevenue}
+          totalDiscounts={totalDiscounts}
           netRevenue={netRevenue}
           initialData={initialFinancials}
         />
@@ -280,12 +283,20 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
 
 function FinancialSection({
   eventId,
+  eventLabel,
   distanceRows,
+  byDistance,
+  grossRevenue,
+  totalDiscounts,
   netRevenue,
   initialData,
 }: {
   eventId: string;
+  eventLabel: string;
   distanceRows: { id: string; name: string; km: number; paid: number }[];
+  byDistance: { id: string; name: string; km: number; paid: number; reserved: number; gross: number; discounts: number }[];
+  grossRevenue: number;
+  totalDiscounts: number;
   netRevenue: number;
   initialData: FinancialData | null;
 }) {
@@ -339,6 +350,79 @@ function FinancialSection({
       await saveEventFinancials(eventId, { packItems, expenses, incomes });
       setSavedAt(Date.now());
     });
+  }
+
+  function downloadCsv() {
+    const rows: string[][] = [];
+    const label = eventLabel || "событие";
+
+    rows.push([`Финансовый отчёт — ${label}`]);
+    rows.push([]);
+
+    rows.push(["ВЫРУЧКА"]);
+    rows.push(["Показатель", "Сумма (₸)"]);
+    rows.push(["Валовая выручка", String(grossRevenue)]);
+    rows.push(["Потерянная выгода", String(-totalDiscounts)]);
+    rows.push(["Чистая выручка", String(netRevenue)]);
+    rows.push([]);
+
+    if (byDistance.length > 0) {
+      rows.push(["ПО ДИСТАНЦИЯМ"]);
+      rows.push(["Дистанция", "Оплачено", "Бронь", "Выручка (₸)", "Потерянная выгода (₸)", "Чистая (₸)"]);
+      for (const d of byDistance) {
+        rows.push([d.name + (d.km ? ` (${d.km} км)` : ""), String(d.paid), String(d.reserved), String(d.gross), String(-d.discounts), String(d.gross - d.discounts)]);
+      }
+      rows.push([]);
+    }
+
+    if (packItems.length > 0) {
+      rows.push([`СТАРТОВЫЙ ПАКЕТ (${totalPaid} участников)`]);
+      rows.push(["Позиция", "Цена за уч. (₸)", "Кол-во уч.", "Итого (₸)"]);
+      for (const item of packItems) {
+        rows.push([item.name, String(item.price), String(totalPaid), String(item.price * totalPaid)]);
+      }
+      rows.push(["Итого стартовый пакет", "", "", String(totalPackCost)]);
+      rows.push([]);
+    }
+
+    if (expenses.length > 0) {
+      rows.push(["ДОП. РАСХОДЫ"]);
+      rows.push(["Описание", "Сумма (₸)"]);
+      for (const e of expenses) {
+        rows.push([e.label, String(e.amount)]);
+      }
+      rows.push([]);
+    }
+
+    if (incomes.length > 0) {
+      rows.push(["ДОП. ДОХОДЫ"]);
+      rows.push(["Источник", "Сумма (₸)"]);
+      for (const i of incomes) {
+        rows.push([i.label, String(i.amount)]);
+      }
+      rows.push([]);
+    }
+
+    rows.push(["ИТОГОВЫЙ РАСЧЁТ"]);
+    rows.push(["Чистая выручка (₸)", String(netRevenue)]);
+    if (totalPackCost > 0) rows.push(["− Стартовый пакет (₸)", String(-totalPackCost)]);
+    for (const e of expenses.filter((e) => e.amount > 0)) rows.push([`− ${e.label || "Расход"} (₸)`, String(-e.amount)]);
+    for (const i of incomes.filter((i) => i.amount > 0)) rows.push([`+ ${i.label || "Доход"} (₸)`, String(i.amount)]);
+    rows.push(["Реальный доход (₸)", String(profit)]);
+
+    const csv = "﻿" + rows
+      .map((row) =>
+        row.map((cell) => (cell.includes(",") || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell)).join(","),
+      )
+      .join("\r\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `report-${label.replace(/\s+/g, "-").toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -513,7 +597,7 @@ function FinancialSection({
           </div>
         </div>
 
-        {/* Save button */}
+        {/* Actions */}
         <div className="flex items-center gap-3">
           <button
             onClick={save}
@@ -521,6 +605,12 @@ function FinancialSection({
             className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50 hover:opacity-90"
           >
             {isPending ? "Сохранение…" : "Сохранить"}
+          </button>
+          <button
+            onClick={downloadCsv}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-ink-soft"
+          >
+            Скачать CSV
           </button>
           {savedAt && (
             <span className="text-sm text-spruce">Сохранено ✓</span>
