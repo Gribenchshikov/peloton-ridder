@@ -52,7 +52,7 @@ const DistanceFieldsSchema = z
   .object({
     discipline: z.preprocess(emptyToUndefined, z.string().trim().max(100).optional()),
     name: z.string().trim().min(1).max(100),
-    km: z.coerce.number().positive(),
+    km: z.coerce.number().min(0),
     gain: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
     price: z.coerce.number().int().min(0),
     maxSlots: z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional()),
