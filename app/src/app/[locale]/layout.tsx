@@ -41,14 +41,26 @@ export default async function RootLayout({
   }
   setRequestLocale(locale);
 
-  const displayFont = await getSiteSetting("display_font");
-  const fontCss = displayFont ? FONT_CSS[displayFont] : null;
+  const [displayFont, customFontUrl, customFontCss] = await Promise.all([
+    getSiteSetting("display_font"),
+    getSiteSetting("custom_font_url"),
+    getSiteSetting("custom_font_css"),
+  ]);
+
+  let fontStyle: string | null = null;
+  if (displayFont === "custom" && customFontUrl && customFontCss) {
+    const safeName = customFontCss.match(/'([^']+)'/)?.[1] ?? "CustomFont";
+    const safeUrl = customFontUrl.replace(/^http:\/\//, "https://");
+    fontStyle = `@font-face{font-family:'${safeName}';src:url('${safeUrl}')format('woff2');font-display:swap;}:root{--font-display:${customFontCss};}`;
+  } else if (displayFont && FONT_CSS[displayFont]) {
+    fontStyle = `:root{--font-display:${FONT_CSS[displayFont]};}`;
+  }
 
   return (
     <html lang={locale} className="h-full antialiased">
-      {fontCss && (
+      {fontStyle && (
         <head>
-          <style>{`:root { --font-display: ${fontCss}; }`}</style>
+          <style>{fontStyle}</style>
         </head>
       )}
       <body className="min-h-full flex flex-col">
