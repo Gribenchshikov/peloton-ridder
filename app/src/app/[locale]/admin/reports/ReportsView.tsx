@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { CancelReason } from "@/generated/prisma/client";
+import { saveEventFinancials } from "./actions";
+import type { FinancialData, LineEntry, MedalEntry } from "./actions";
 
 type Reg = {
   id: string;
@@ -31,6 +33,8 @@ type Props = {
   distances: Distance[];
   merch: MerchRow[];
   selectedEventName: string;
+  eventId?: string;
+  initialFinancials: FinancialData | null;
 };
 
 const CANCEL_REASON_LABELS: Record<string, string> = {
@@ -48,7 +52,12 @@ function kzt(n: number) {
   return `${n.toLocaleString("ru-KZ")} ₸`;
 }
 
-export function ReportsView({ registrations, distances, merch, selectedEventName }: Props) {
+function nextId() {
+  return Math.random().toString(36).slice(2);
+}
+
+export function ReportsView({ registrations, distances, merch, selectedEventName, eventId, initialFinancials }: Props) {
+  void selectedEventName;
   const paid = useMemo(() => registrations.filter((r) => r.status === "PAID"), [registrations]);
   const reserved = useMemo(() => registrations.filter((r) => r.status === "RESERVED"), [registrations]);
   const cancelled = useMemo(() => registrations.filter((r) => r.status === "CANCELLED"), [registrations]);
@@ -57,12 +66,12 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
   const totalDiscounts = useMemo(() => paid.reduce((s, r) => s + r.discountAmount, 0), [paid]);
   const netRevenue = grossRevenue - totalDiscounts;
 
-  // By distance breakdown (transfer-only registrations have no distance — use a sentinel key)
+  // By distance breakdown with id
   const byDistance = useMemo(() => {
-    const map = new Map<string, { name: string; km: number; paid: number; reserved: number; gross: number; discounts: number }>();
+    const map = new Map<string, { id: string; name: string; km: number; paid: number; reserved: number; gross: number; discounts: number }>();
     for (const r of registrations) {
       const key = r.distance?.id ?? "__transfer__";
-      const existing = map.get(key) ?? { name: r.distance?.name ?? "Трансфер", km: r.distance?.km ?? 0, paid: 0, reserved: 0, gross: 0, discounts: 0 };
+      const existing = map.get(key) ?? { id: key, name: r.distance?.name ?? "Трансфер", km: r.distance?.km ?? 0, paid: 0, reserved: 0, gross: 0, discounts: 0 };
       if (r.status === "PAID") { existing.paid++; existing.gross += r.distance?.price ?? 0; existing.discounts += r.discountAmount; }
       if (r.status === "RESERVED") existing.reserved++;
       map.set(key, existing);
@@ -146,6 +155,16 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
             </table>
           </div>
         </Section>
+      )}
+
+      {/* Financial report (only when event is selected) */}
+      {eventId && (
+        <FinancialSection
+          eventId={eventId}
+          distanceRows={byDistance.filter((d) => d.id !== "__transfer__").map((d) => ({ id: d.id, name: d.name, km: d.km, paid: d.paid }))}
+          netRevenue={netRevenue}
+          initialData={initialFinancials}
+        />
       )}
 
       {/* Slot occupancy (only when event is selected) */}
@@ -256,6 +275,251 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
     </div>
   );
 }
+
+// ── Financial Section ─────────────────────────────────────────────────────────
+
+function FinancialSection({
+  eventId,
+  distanceRows,
+  netRevenue,
+  initialData,
+}: {
+  eventId: string;
+  distanceRows: { id: string; name: string; km: number; paid: number }[];
+  netRevenue: number;
+  initialData: FinancialData | null;
+}) {
+  const [medals, setMedals] = useState<MedalEntry[]>(() => {
+    if (initialData?.medals && initialData.medals.length > 0) return initialData.medals;
+    return distanceRows.map((d) => ({ distanceId: d.id, count: d.paid, unitCost: 0 }));
+  });
+  const [expenses, setExpenses] = useState<LineEntry[]>(initialData?.expenses ?? []);
+  const [incomes, setIncomes] = useState<LineEntry[]>(initialData?.incomes ?? []);
+  const [isPending, startTransition] = useTransition();
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const totalMedalCost = medals.reduce((s, m) => s + m.count * m.unitCost, 0);
+  const totalExtraExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalIncomes = incomes.reduce((s, i) => s + i.amount, 0);
+  const totalCosts = totalMedalCost + totalExtraExpenses;
+  const profit = netRevenue - totalCosts + totalIncomes;
+
+  function updateMedal(distanceId: string, field: "count" | "unitCost", value: number) {
+    setMedals((prev) => prev.map((m) => m.distanceId === distanceId ? { ...m, [field]: value } : m));
+  }
+
+  function addExpense() {
+    setExpenses((prev) => [...prev, { id: nextId(), label: "", amount: 0 }]);
+  }
+  function updateExpense(id: string, field: "label" | "amount", value: string | number) {
+    setExpenses((prev) => prev.map((e) => e.id === id ? { ...e, [field]: value } : e));
+  }
+  function removeExpense(id: string) {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+  }
+
+  function addIncome() {
+    setIncomes((prev) => [...prev, { id: nextId(), label: "", amount: 0 }]);
+  }
+  function updateIncome(id: string, field: "label" | "amount", value: string | number) {
+    setIncomes((prev) => prev.map((i) => i.id === id ? { ...i, [field]: value } : i));
+  }
+  function removeIncome(id: string) {
+    setIncomes((prev) => prev.filter((i) => i.id !== id));
+  }
+
+  function save() {
+    startTransition(async () => {
+      await saveEventFinancials(eventId, { medals, expenses, incomes });
+      setSavedAt(Date.now());
+    });
+  }
+
+  return (
+    <Section title="Финансовый отчёт">
+      <div className="flex flex-col gap-6">
+
+        {/* Medals / shirts */}
+        {distanceRows.length > 0 && (
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-faint">Медали / футболки</p>
+            <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
+              <table className="w-full min-w-[460px] text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-surface-2">
+                    <th className="px-4 py-2 text-left font-semibold text-ink-faint">Дистанция</th>
+                    <th className="px-4 py-2 text-right font-semibold text-ink-faint">Кол-во</th>
+                    <th className="px-4 py-2 text-right font-semibold text-ink-faint">Цена за ед. (₸)</th>
+                    <th className="px-4 py-2 text-right font-semibold text-ink-faint">Итого</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {medals.map((m) => {
+                    const d = distanceRows.find((x) => x.id === m.distanceId);
+                    if (!d) return null;
+                    return (
+                      <tr key={m.distanceId} className="border-b border-border last:border-0">
+                        <td className="px-4 py-2 font-medium text-ink">{d.name} <span className="text-ink-faint">· {d.km} км</span></td>
+                        <td className="px-4 py-2 text-right">
+                          <input
+                            type="number"
+                            min={0}
+                            value={m.count}
+                            onChange={(e) => updateMedal(m.distanceId, "count", Number(e.target.value))}
+                            className="w-20 rounded border border-border bg-surface px-2 py-1 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
+                          />
+                        </td>
+                        <td className="px-4 py-2 text-right">
+                          <input
+                            type="number"
+                            min={0}
+                            value={m.unitCost}
+                            onChange={(e) => updateMedal(m.distanceId, "unitCost", Number(e.target.value))}
+                            className="w-28 rounded border border-border bg-surface px-2 py-1 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
+                          />
+                        </td>
+                        <td className="px-4 py-2 text-right tabular-nums font-semibold text-ink">{kzt(m.count * m.unitCost)}</td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t border-border bg-surface-2">
+                    <td colSpan={3} className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wide text-ink-faint">Итого медали</td>
+                    <td className="px-4 py-2 text-right tabular-nums font-bold text-ink">{kzt(totalMedalCost)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Extra expenses */}
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-faint">Доп. расходы</p>
+          <div className="flex flex-col gap-2">
+            {expenses.map((e) => (
+              <div key={e.id} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Описание расхода"
+                  value={e.label}
+                  onChange={(ev) => updateExpense(e.id, "label", ev.target.value)}
+                  className="flex-1 rounded border border-border bg-surface px-3 py-1.5 text-sm text-ink focus:border-ember focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Сумма"
+                  value={e.amount}
+                  onChange={(ev) => updateExpense(e.id, "amount", Number(ev.target.value))}
+                  className="w-36 rounded border border-border bg-surface px-3 py-1.5 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
+                />
+                <button
+                  onClick={() => removeExpense(e.id)}
+                  className="shrink-0 text-sm text-ink-faint hover:text-danger"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addExpense}
+              className="self-start text-sm font-semibold text-ember hover:underline"
+            >
+              + Добавить расход
+            </button>
+          </div>
+        </div>
+
+        {/* Extra incomes */}
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-faint">Доп. доходы (спонсоры, гранты)</p>
+          <div className="flex flex-col gap-2">
+            {incomes.map((i) => (
+              <div key={i.id} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Источник дохода"
+                  value={i.label}
+                  onChange={(ev) => updateIncome(i.id, "label", ev.target.value)}
+                  className="flex-1 rounded border border-border bg-surface px-3 py-1.5 text-sm text-ink focus:border-ember focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Сумма"
+                  value={i.amount}
+                  onChange={(ev) => updateIncome(i.id, "amount", Number(ev.target.value))}
+                  className="w-36 rounded border border-border bg-surface px-3 py-1.5 text-right text-sm tabular-nums text-ink focus:border-ember focus:outline-none"
+                />
+                <button
+                  onClick={() => removeIncome(i.id)}
+                  className="shrink-0 text-sm text-ink-faint hover:text-danger"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addIncome}
+              className="self-start text-sm font-semibold text-ember hover:underline"
+            >
+              + Добавить доход
+            </button>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-faint">Итоговый расчёт</p>
+          <div className="flex flex-col gap-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-ink-soft">Чистая выручка (оплачено − скидки)</span>
+              <span className="tabular-nums font-semibold text-ink">{kzt(netRevenue)}</span>
+            </div>
+            {totalMedalCost > 0 && (
+              <div className="flex justify-between">
+                <span className="text-ink-soft">− Медали / футболки</span>
+                <span className="tabular-nums text-danger">−{kzt(totalMedalCost)}</span>
+              </div>
+            )}
+            {expenses.map((e) => e.amount > 0 && (
+              <div key={e.id} className="flex justify-between">
+                <span className="text-ink-soft">− {e.label || "Расход"}</span>
+                <span className="tabular-nums text-danger">−{kzt(e.amount)}</span>
+              </div>
+            ))}
+            {incomes.map((i) => i.amount > 0 && (
+              <div key={i.id} className="flex justify-between">
+                <span className="text-ink-soft">+ {i.label || "Доход"}</span>
+                <span className="tabular-nums text-spruce">+{kzt(i.amount)}</span>
+              </div>
+            ))}
+            <div className="mt-2 flex justify-between border-t border-border pt-3">
+              <span className="font-semibold text-ink">Реальный доход</span>
+              <span className={`text-lg tabular-nums font-bold ${profit >= 0 ? "text-spruce" : "text-danger"}`}>{kzt(profit)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Save button */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={save}
+            disabled={isPending}
+            className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50 hover:opacity-90"
+          >
+            {isPending ? "Сохранение…" : "Сохранить"}
+          </button>
+          {savedAt && (
+            <span className="text-sm text-spruce">Сохранено ✓</span>
+          )}
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+// ── Shared primitives ─────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
   return (

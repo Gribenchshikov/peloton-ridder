@@ -1,7 +1,9 @@
 import { requireAdminPage } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/i18n/navigation";
+import { getSiteSetting } from "@/lib/queries";
 import { ReportsView } from "./ReportsView";
+import type { FinancialData } from "./actions";
 
 export default async function ReportsPage({
   params,
@@ -45,6 +47,10 @@ export default async function ReportsPage({
         orderBy: { km: "asc" },
       })
     : [];
+
+  // Financial data for selected event
+  const financialsRaw = eventId ? await getSiteSetting(`report_financials_${eventId}`) : null;
+  const initialFinancials: FinancialData | null = financialsRaw ? JSON.parse(financialsRaw) : null;
 
   // Merch orders (only PAID)
   const merch = await prisma.registrationMerch.findMany({
@@ -92,6 +98,8 @@ export default async function ReportsPage({
         selectedEventName={
           eventId ? (events.find((e) => e.id === eventId)?.race.name ?? "") : ""
         }
+        eventId={eventId}
+        initialFinancials={initialFinancials}
       />
     </main>
   );
