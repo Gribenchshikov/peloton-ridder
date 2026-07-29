@@ -26,9 +26,30 @@ export async function GET(
   }
 
   const url = new URL(req.url);
-  const statusParam = url.searchParams.get("status"); // PAID | RESERVED | CANCELLED
-  const distanceParam = url.searchParams.get("distanceId"); // id | TRANSFER_ONLY
-  const transferParam = url.searchParams.get("transfer"); // yes | no
+  const typeParam = url.searchParams.get("type"); // transfer | kit | (default: full)
+  const statusParam = url.searchParams.get("status");
+  const distanceParam = url.searchParams.get("distanceId");
+  const transferParam = url.searchParams.get("transfer");
+
+  // ── Transfer CSV ────────────────────────────────────────────────────────────
+  if (typeParam === "transfer") {
+    const withTransfer = event.registrations.filter(
+      (r) => r.status === "PAID" && (r.includesTransfer || r.isTransferOnly),
+    );
+    withTransfer.sort((a, b) => (a.user.lastName ?? "").localeCompare(b.user.lastName ?? "", "ru"));
+
+    const rows = [
+      ["Рег. номер", "Фамилия", "Имя", "Телефон", "Отметка"],
+      ...withTransfer.map((r) => [r.bibNumber ?? "", r.user.lastName, r.user.firstName, r.user.phone ?? "", ""]),
+    ];
+    const csv = toCsv(rows);
+    return new NextResponse("﻿" + csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="transfer-${slug}-${year}.csv"`,
+      },
+    });
+  }
 
   const registrations = event.registrations.filter((r) => {
     if (statusParam && r.status !== statusParam) return false;
@@ -78,7 +99,19 @@ export async function GET(
     }),
   ];
 
-  const csv = rows
+  const csv = toCsv(rows);
+  const filename = `participants-${slug}-${year}.csv`;
+
+  return new NextResponse("﻿" + csv, {
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
+}
+
+function toCsv(rows: (string | number)[][]): string {
+  return rows
     .map((row) =>
       row
         .map((cell) => {
@@ -90,13 +123,4 @@ export async function GET(
         .join(","),
     )
     .join("\r\n");
-
-  const filename = `participants-${slug}-${year}.csv`;
-
-  return new NextResponse("﻿" + csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  });
 }
