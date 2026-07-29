@@ -8,7 +8,6 @@ type Event = { id: string; year: number; raceName: string };
 const ERROR_MESSAGES: Record<string, string> = {
   motivation_too_short: "Расскажите подробнее о мотивации (минимум 10 символов).",
   experience_too_short: "Расскажите подробнее об опыте (минимум 10 символов).",
-  no_availability: "Укажите доступность.",
   strava_invalid_url: "Ссылка на Strava должна начинаться с http:// или https://.",
   already_applied: "Вы уже подавали заявку на этот забег.",
   event_not_found: "Событие не найдено.",
@@ -70,21 +69,6 @@ export function ApplyForm({ events, preselectedEventId }: { events: Event[]; pre
           minLength={10}
           placeholder="Какие забеги вы бегали, где волонтёрили раньше"
           className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-ember focus:outline-none"
-        />
-      </div>
-
-      {/* Availability */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-ink" htmlFor="availability">
-          Когда вы свободны? <span className="text-danger">*</span>
-        </label>
-        <input
-          id="availability"
-          name="availability"
-          type="text"
-          required
-          placeholder="Например: «весь день старта» или «только утром»"
-          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ember focus:outline-none"
         />
       </div>
 

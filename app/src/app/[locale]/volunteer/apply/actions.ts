@@ -19,12 +19,10 @@ export async function applyVolunteerAction(
   const motivation = (formData.get("motivation") as string | null)?.trim() ?? "";
   const experience = (formData.get("experience") as string | null)?.trim() ?? "";
   const stravaUrl = (formData.get("stravaUrl") as string | null)?.trim() || null;
-  const availability = (formData.get("availability") as string | null)?.trim() ?? "";
 
   if (!eventId) return { error: "no_event" };
   if (motivation.length < 10) return { error: "motivation_too_short" };
   if (experience.length < 10) return { error: "experience_too_short" };
-  if (!availability) return { error: "no_availability" };
 
   if (stravaUrl && !/^https?:\/\//i.test(stravaUrl)) {
     return { error: "strava_invalid_url" };
@@ -48,7 +46,7 @@ export async function applyVolunteerAction(
   if (!user) return { error: "unauthorized" };
 
   await prisma.volunteerApplication.create({
-    data: { userId, eventId, motivation, experience, stravaUrl, availability },
+    data: { userId, eventId, motivation, experience, stravaUrl, availability: "" },
   });
 
   const adminEmails = (
