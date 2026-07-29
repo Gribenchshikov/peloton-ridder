@@ -65,10 +65,10 @@ const DistanceFieldsSchema = z
     requiresQualification: z.preprocess((v) => v === "on", z.boolean()),
     qualificationNote: z.preprocess(emptyToUndefined, z.string().trim().max(500).optional()),
     requiresInsurance: z.preprocess((v) => v === "on", z.boolean()),
-    bibRangeStart: z.coerce.number().int().min(0),
-    bibRangeEnd: z.coerce.number().int().min(0),
+    bibRangeStart: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
+    bibRangeEnd: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
   })
-  .refine((d) => d.bibRangeEnd >= d.bibRangeStart, { path: ["bibRangeEnd"], message: "bibRange" });
+  .refine((d) => d.bibRangeStart === undefined || d.bibRangeEnd === undefined || d.bibRangeEnd >= d.bibRangeStart, { path: ["bibRangeEnd"], message: "bibRange" });
 
 const MerchItemFieldsSchema = z.object({
   name: z.string().trim().min(1).max(100),

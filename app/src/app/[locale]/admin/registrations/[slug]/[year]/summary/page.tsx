@@ -45,8 +45,10 @@ export default async function EventSummaryPage({
   // По дистанциям
   const byDistance = event.distances.map((d) => {
     const dRegs = regs.filter((r) => r.distanceId === d.id);
-    const bibCap = d.bibRangeEnd - d.bibRangeStart + 1;
-    const capacity = d.maxSlots !== null ? Math.min(d.maxSlots, bibCap) : bibCap;
+    const bibCap = (d.bibRangeStart !== null && d.bibRangeEnd !== null) ? d.bibRangeEnd - d.bibRangeStart + 1 : null;
+    const capacity = bibCap !== null
+      ? (d.maxSlots !== null ? Math.min(d.maxSlots, bibCap) : bibCap)
+      : d.maxSlots;
     return { ...d, total: dRegs.length, paid: dRegs.filter((r) => r.status === "PAID").length, capacity };
   });
 
@@ -91,13 +93,13 @@ export default async function EventSummaryPage({
             </thead>
             <tbody>
               {byDistance.map((d) => {
-                const pct = d.capacity > 0 ? Math.round((d.paid / d.capacity) * 100) : 0;
+                const pct = (d.capacity != null && d.capacity > 0) ? Math.round((d.paid / d.capacity) * 100) : 0;
                 return (
                   <tr key={d.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2.5 font-medium text-ink">{d.name} <span className="text-ink-faint">({d.km} км)</span></td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink">{d.paid}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{d.total}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{d.capacity}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{d.capacity ?? "∞"}</td>
                     <td className="px-4 py-2.5 text-right">
                       <span className={`font-semibold tabular-nums ${pct >= 90 ? "text-danger" : pct >= 70 ? "text-warn" : "text-ink-soft"}`}>
                         {pct}%

@@ -33,9 +33,11 @@ export default async function WaitlistPage({
   const slotCountMap = Object.fromEntries(slotCounts.map((s) => [s.distanceId, s._count.id]));
 
   const fullDistances = event.distances.filter((d) => {
-    const bibCapacity = d.bibRangeEnd - d.bibRangeStart + 1;
-    const capacity = d.maxSlots !== null ? Math.min(d.maxSlots, bibCapacity) : bibCapacity;
-    return (slotCountMap[d.id] ?? 0) >= capacity;
+    const bibCapacity = (d.bibRangeStart !== null && d.bibRangeEnd !== null) ? d.bibRangeEnd - d.bibRangeStart + 1 : null;
+    const capacity = bibCapacity !== null
+      ? (d.maxSlots !== null ? Math.min(d.maxSlots, bibCapacity) : bibCapacity)
+      : d.maxSlots;
+    return capacity !== null && (slotCountMap[d.id] ?? 0) >= capacity;
   });
 
   if (fullDistances.length === 0) {

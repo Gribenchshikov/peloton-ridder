@@ -140,7 +140,7 @@ export async function restoreRegistrationAction(
         ],
       },
     }) : 0;
-    if (distance) {
+    if (distance && distance.bibRangeStart !== null && distance.bibRangeEnd !== null) {
       const capacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
       if (activeCount >= capacity) return { error: "full" as const };
     }
@@ -212,8 +212,10 @@ export async function changeRegistrationDistanceAction(
         ],
       },
     });
-    const capacity = targetDistance.bibRangeEnd - targetDistance.bibRangeStart + 1;
-    if (activeOnTarget >= capacity) return { error: "full" as const };
+    if (targetDistance.bibRangeStart !== null && targetDistance.bibRangeEnd !== null) {
+      const capacity = targetDistance.bibRangeEnd - targetDistance.bibRangeStart + 1;
+      if (activeOnTarget >= capacity) return { error: "full" as const };
+    }
 
     await tx.registration.update({
       where: { id: registrationId },

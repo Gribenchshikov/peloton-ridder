@@ -50,8 +50,10 @@ export default async function EventRegisterPage({
   const sizeTableRows = parseSizeTable(sizeTableSetting?.value);
   const slotCountMap = Object.fromEntries(slotCounts.map((s) => [s.distanceId, s._count.id]));
   const distancesWithSlots = event.distances.map((d) => {
-    const bibCapacity = d.bibRangeEnd - d.bibRangeStart + 1;
-    const capacity = d.maxSlots !== null ? Math.min(d.maxSlots, bibCapacity) : bibCapacity;
+    const bibCapacity = (d.bibRangeStart !== null && d.bibRangeEnd !== null) ? d.bibRangeEnd - d.bibRangeStart + 1 : null;
+    const capacity = bibCapacity !== null
+      ? (d.maxSlots !== null ? Math.min(d.maxSlots, bibCapacity) : bibCapacity)
+      : (d.maxSlots ?? Number.MAX_SAFE_INTEGER);
     const taken = slotCountMap[d.id] ?? 0;
     return { ...d, capacity, taken };
   });

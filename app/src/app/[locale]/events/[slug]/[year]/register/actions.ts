@@ -141,10 +141,12 @@ export async function createRegistrationAction(
         ],
       },
     });
-    const bibCapacity = distance.bibRangeEnd - distance.bibRangeStart + 1;
+    const bibCapacity = (distance.bibRangeStart !== null && distance.bibRangeEnd !== null) ? distance.bibRangeEnd - distance.bibRangeStart + 1 : null;
     // maxSlots — явный лимит от организатора; bib-диапазон — жёсткий потолок.
-    const capacity = distance.maxSlots !== null ? Math.min(distance.maxSlots, bibCapacity) : bibCapacity;
-    if (activeCount >= capacity) return { kind: "error" as const, error: "full" };
+    const capacity = bibCapacity !== null
+      ? (distance.maxSlots !== null ? Math.min(distance.maxSlots, bibCapacity) : bibCapacity)
+      : distance.maxSlots;
+    if (capacity !== null && activeCount >= capacity) return { kind: "error" as const, error: "full" };
 
     // Validate and apply promo code
     let promoCodeId: string | null = null;

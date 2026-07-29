@@ -60,7 +60,9 @@ export function DistanceRow({
         <div className="text-sm text-ink-faint">
           {formatKzt(format, distance.price)}
           {" · "}
-          {t("bibRangeLabel", { start: distance.bibRangeStart, end: distance.bibRangeEnd })}
+          {distance.bibRangeStart != null && distance.bibRangeEnd != null
+            ? t("bibRangeLabel", { start: distance.bibRangeStart, end: distance.bibRangeEnd })
+            : "Без нагрудных номеров"}
           {distance.hasProfile && (
             <span className="ml-2 rounded-full bg-spruce/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-spruce">
               GPX

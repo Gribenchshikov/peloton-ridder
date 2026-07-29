@@ -116,7 +116,10 @@ export function RegistrationsView({ event }: { event: EventData }) {
   const reserved = event.registrations.filter((r) => r.status === "RESERVED");
 
   const capacityByDistance = Object.fromEntries(
-    event.distances.map((d) => [d.id, d.bibRangeEnd - d.bibRangeStart + 1])
+    event.distances.map((d) => {
+      const bib = (d.bibRangeStart !== null && d.bibRangeEnd !== null) ? d.bibRangeEnd - d.bibRangeStart + 1 : null;
+      return [d.id, bib];
+    })
   );
   const paidByDistance = Object.fromEntries(
     event.distances.map((d) => [d.id, paid.filter((r) => r.distance?.id === d.id).length])
@@ -250,7 +253,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
               {event.distances.map((d) => {
                 const cap = capacityByDistance[d.id];
                 const cnt = paidByDistance[d.id];
-                const pct = cap > 0 ? Math.round((cnt / cap) * 100) : 0;
+                const pct = (cap != null && cap > 0) ? Math.round((cnt / cap) * 100) : 0;
                 return (
                   <tr key={d.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2.5 font-medium text-ink">
@@ -260,7 +263,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                       {cnt}
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">
-                      {cap} <span className="text-ink-faint">({pct}%)</span>
+                      {cap != null ? <>{cap} <span className="text-ink-faint">({pct}%)</span></> : "∞"}
                     </td>
                   </tr>
                 );
@@ -365,12 +368,12 @@ export function RegistrationsView({ event }: { event: EventData }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((reg) => {
+                {filtered.map((reg, idx) => {
                   const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
                   return (
                     <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                       <td className="px-4 py-2.5 tabular-nums text-ink-faint">
-                        {reg.bibNumber ?? "—"}
+                        {idx + 1}
                       </td>
                       <td className="px-4 py-2.5 font-medium text-ink">
                         {reg.user.firstName} {reg.user.lastName}

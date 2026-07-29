@@ -247,8 +247,8 @@ model Distance {
   profileData           Json?
   gpxUrl                String?
   aidStations           Json?
-  bibRangeStart         Int
-  bibRangeEnd           Int
+  bibRangeStart         Int?
+  bibRangeEnd           Int?
   createdAt             DateTime @default(now())
 
   registrations Registration[]

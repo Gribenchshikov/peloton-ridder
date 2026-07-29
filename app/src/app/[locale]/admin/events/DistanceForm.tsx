@@ -25,8 +25,8 @@ export type DistanceDefaults = {
   requiresQualification: boolean;
   qualificationNote: string | null;
   requiresInsurance: boolean;
-  bibRangeStart: number;
-  bibRangeEnd: number;
+  bibRangeStart: number | null;
+  bibRangeEnd: number | null;
 };
 
 type DistanceFormProps =
@@ -178,8 +178,8 @@ export function DistanceForm(props: DistanceFormProps) {
         error={inv?.includes("cutoffMinutes")}
       />
       <div className="flex items-end gap-3 sm:col-span-2">
-        <FormField label={t("fieldBibRangeStart")} name="bibRangeStart" type="number" required placeholder="1" defaultValue={d ? String(d.bibRangeStart) : undefined} error={inv?.includes("bibRangeStart")} />
-        <FormField label={t("fieldBibRangeEnd")} name="bibRangeEnd" type="number" required placeholder="200" defaultValue={d ? String(d.bibRangeEnd) : undefined} error={inv?.includes("bibRangeEnd")} />
+        <FormField label={t("fieldBibRangeStart")} name="bibRangeStart" type="number" optional placeholder="1" defaultValue={d?.bibRangeStart != null ? String(d.bibRangeStart) : undefined} error={inv?.includes("bibRangeStart")} />
+        <FormField label={t("fieldBibRangeEnd")} name="bibRangeEnd" type="number" optional placeholder="200" defaultValue={d?.bibRangeEnd != null ? String(d.bibRangeEnd) : undefined} error={inv?.includes("bibRangeEnd")} />
       </div>
 
       {/* Сертификация */}
