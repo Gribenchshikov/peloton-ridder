@@ -4,6 +4,18 @@ import { verifySync } from "otplib";
 import { prisma } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 
+export async function saveLegalDocAction(key: string, content: string): Promise<{ ok: boolean }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { ok: false };
+  if (!key.startsWith("legal_")) return { ok: false };
+  await prisma.siteSetting.upsert({
+    where: { key },
+    create: { key, value: content },
+    update: { value: content },
+  });
+  return { ok: true };
+}
+
 type ToggleState = { error?: string; open?: boolean };
 
 export async function toggleRegistrationsAction(

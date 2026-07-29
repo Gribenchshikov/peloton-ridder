@@ -2,12 +2,14 @@ import { requireAdminPage } from "@/lib/session";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getSiteSetting } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
 import { parseSizeTable } from "@/types/sizeTable";
 import { SettingsView } from "./SettingsView";
 import { RegistrationToggle } from "./RegistrationToggle";
 import { SizeTableEditor } from "./SizeTableEditor";
 import { HomeStatsEditor } from "./HomeStatsEditor";
 import { ContactInfoEditor } from "./ContactInfoEditor";
+import { LegalDocsEditor } from "./LegalDocsEditor";
 import type { StatItem, ContactInfo } from "@/lib/settingsActions";
 
 const DEFAULT_STATS: StatItem[] = [
@@ -23,13 +25,26 @@ const DEFAULT_CONTACT: ContactInfo = {
   email: "info@ridder.run",
 };
 
+const LEGAL_KEYS = [
+  "legal_refund_ru", "legal_refund_kk", "legal_refund_en",
+  "legal_offer_ru", "legal_offer_kk", "legal_offer_en",
+  "legal_privacy_ru", "legal_privacy_kk", "legal_privacy_en",
+  "legal_consent_ru", "legal_consent_kk", "legal_consent_en",
+  "legal_payment_ru", "legal_payment_kk", "legal_payment_en",
+];
+
 export default async function SettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { locale } = await params;
+  const { tab } = await searchParams;
   await requireAdminPage(locale, "/admin/settings");
+
+  const activeTab = tab === "docs" ? "docs" : "general";
 
   const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw] = await Promise.all([
     getTranslations("Admin"),
@@ -49,6 +64,12 @@ export default async function SettingsPage({
   let contactInfo: ContactInfo = DEFAULT_CONTACT;
   try { if (contactInfoRaw) contactInfo = { ...DEFAULT_CONTACT, ...JSON.parse(contactInfoRaw) }; } catch { /* use default */ }
 
+  let legalDocs: Record<string, string> = {};
+  if (activeTab === "docs") {
+    const rows = await prisma.siteSetting.findMany({ where: { key: { in: LEGAL_KEYS } } });
+    legalDocs = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  }
+
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
       <div className="mb-8">
@@ -58,27 +79,49 @@ export default async function SettingsPage({
         <h1 className="font-display text-2xl font-bold text-ink">{t("settingsPageTitle")}</h1>
       </div>
 
-      <div className="flex flex-col gap-6">
-        <RegistrationToggle initialOpen={isOpen} />
-
-        <HomeStatsEditor initial={homeStats} />
-
-        <ContactInfoEditor initial={contactInfo} />
-
-        <SizeTableEditor initialRows={sizeRows} />
-
-        <SettingsView
-          currentUrl={heroBgUrl || null}
-          labels={{
-            heroLabel: t("settingsHeroLabel"),
-            save: t("settingsHeroSave"),
-            saved: t("settingsHeroSaved"),
-            error: t("settingsHeroError"),
-            current: t("settingsHeroCurrent"),
-            remove: t("settingsHeroRemove"),
-          }}
-        />
+      {/* Tabs */}
+      <div className="mb-6 flex gap-1 border-b border-border">
+        <Link
+          href="?tab=general"
+          className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px ${activeTab === "general" ? "border-ember text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
+        >
+          Общие
+        </Link>
+        <Link
+          href="?tab=docs"
+          className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px ${activeTab === "docs" ? "border-ember text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
+        >
+          Документы
+        </Link>
       </div>
+
+      {activeTab === "general" && (
+        <div className="flex flex-col gap-6">
+          <RegistrationToggle initialOpen={isOpen} />
+
+          <HomeStatsEditor initial={homeStats} />
+
+          <ContactInfoEditor initial={contactInfo} />
+
+          <SizeTableEditor initialRows={sizeRows} />
+
+          <SettingsView
+            currentUrl={heroBgUrl || null}
+            labels={{
+              heroLabel: t("settingsHeroLabel"),
+              save: t("settingsHeroSave"),
+              saved: t("settingsHeroSaved"),
+              error: t("settingsHeroError"),
+              current: t("settingsHeroCurrent"),
+              remove: t("settingsHeroRemove"),
+            }}
+          />
+        </div>
+      )}
+
+      {activeTab === "docs" && (
+        <LegalDocsEditor initial={legalDocs} />
+      )}
     </main>
   );
 }
