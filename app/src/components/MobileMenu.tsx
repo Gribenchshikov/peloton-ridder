@@ -54,6 +54,7 @@ export function MobileMenu({
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setOpen(false)}
                 className="rounded-[var(--radius-s)] px-3 py-2.5 text-sm font-medium text-ink-soft hover:bg-surface-2 hover:text-ink"
               >
                 {link.label}
@@ -69,6 +70,7 @@ export function MobileMenu({
             {isAdmin && (
               <Link
                 href="/admin"
+                onClick={() => setOpen(false)}
                 className="rounded-[var(--radius-s)] bg-ember px-3 py-2.5 text-center text-sm font-bold text-white"
               >
                 {adminLabel}
@@ -77,6 +79,7 @@ export function MobileMenu({
             {isLoggedIn ? (
               <Link
                 href="/account"
+                onClick={() => setOpen(false)}
                 className="rounded-[var(--radius-s)] border border-border px-3 py-2.5 text-center text-sm font-semibold text-ink"
               >
                 {profileLabel}
@@ -85,12 +88,14 @@ export function MobileMenu({
               <>
                 <Link
                   href="/login"
+                  onClick={() => setOpen(false)}
                   className="rounded-[var(--radius-s)] border border-border px-3 py-2.5 text-center text-sm font-semibold text-ink"
                 >
                   {signInLabel}
                 </Link>
                 <Link
                   href="/register"
+                  onClick={() => setOpen(false)}
                   className="rounded-[var(--radius-s)] bg-ember px-3 py-2.5 text-center text-sm font-bold text-white"
                 >
                   {registerLabel}
