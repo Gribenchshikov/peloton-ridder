@@ -282,7 +282,7 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                   {reg.event.race.name} {reg.event.year}
                 </Link>
                 <p className="mt-0.5 text-sm text-ink-soft">
-                  {reg.distance ? `${reg.distance.name} · ${reg.distance.km} ${tCommon("km")}` : "Трансфер"}
+                  {reg.distance ? `${reg.distance.name}${reg.distance.km > 0 ? ` · ${reg.distance.km} ${tCommon("km")}` : ""}` : "Трансфер"}
                   {reg.bibNumber && ` · №${reg.bibNumber}`}
                 </p>
               </div>

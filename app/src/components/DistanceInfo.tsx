@@ -29,7 +29,7 @@ export function DistanceInfo({
     <>
       <div className="flex-1">
         <div className="text-sm font-semibold text-ink">
-          {name} · {km} {tCommon("km")}
+          {name}{km > 0 ? ` · ${km} ${tCommon("km")}` : ""}
         </div>
         {certification && (
           <div className="mt-0.5 text-xs text-ink-faint">
