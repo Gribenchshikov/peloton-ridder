@@ -29,6 +29,9 @@ export async function verifyTurnstileToken(token: string | null): Promise<boolea
     }),
   });
 
-  const data: { success: boolean } = await res.json();
+  const data: { success: boolean; "error-codes"?: string[] } = await res.json();
+  if (!data.success) {
+    console.error("[turnstile] verification failed:", data["error-codes"]);
+  }
   return data.success === true;
 }
