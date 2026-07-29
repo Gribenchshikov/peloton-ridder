@@ -1,9 +1,23 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { getSiteSetting } from "@/lib/queries";
 
 export async function SiteFooter() {
   const t = await getTranslations("Footer");
   const year = new Date().getFullYear();
+
+  let phone1 = t("phone1");
+  let phone2 = t("phone2");
+  let email = t("email");
+  try {
+    const raw = await getSiteSetting("contact_info");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.phone1) phone1 = parsed.phone1;
+      if (parsed.phone2) phone2 = parsed.phone2;
+      if (parsed.email) email = parsed.email;
+    }
+  } catch { /* fall back to translations */ }
 
   return (
     <footer className="border-t border-border bg-surface">
@@ -18,22 +32,22 @@ export async function SiteFooter() {
                 {t("orgCommittee")}
               </span>
               <a
-                href={`tel:${t("phone1").replace(/\s/g, "")}`}
+                href={`tel:${phone1.replace(/\s/g, "")}`}
                 className="text-sm text-ink-soft transition-colors hover:text-ink"
               >
-                {t("phone1")}
+                {phone1}
               </a>
               <a
-                href={`tel:${t("phone2").replace(/\s/g, "")}`}
+                href={`tel:${phone2.replace(/\s/g, "")}`}
                 className="text-sm text-ink-soft transition-colors hover:text-ink"
               >
-                {t("phone2")}
+                {phone2}
               </a>
               <a
-                href={`mailto:${t("email")}`}
+                href={`mailto:${email}`}
                 className="text-sm text-ink-soft transition-colors hover:text-ink"
               >
-                {t("email")}
+                {email}
               </a>
             </div>
           </div>

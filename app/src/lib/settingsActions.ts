@@ -39,3 +39,22 @@ export async function saveSizeTableAction(json: string) {
   await upsertSiteSetting("tshirt_size_table", json);
   return { ok: true };
 }
+
+export type StatItem = { value: string; label: string };
+
+export async function saveHomeStatsAction(stats: StatItem[]) {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+  if (!Array.isArray(stats) || stats.length !== 4) return { error: "invalid" };
+  await upsertSiteSetting("home_stats", JSON.stringify(stats));
+  return { ok: true };
+}
+
+export type ContactInfo = { phone1: string; phone2: string; email: string };
+
+export async function saveContactInfoAction(info: ContactInfo) {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+  await upsertSiteSetting("contact_info", JSON.stringify(info));
+  return { ok: true };
+}

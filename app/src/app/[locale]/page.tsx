@@ -6,17 +6,21 @@ import { EventCard } from "@/components/EventCard";
 import { getHomeEvents, getNextEvent, getSeriesWithRaces, getSiteSetting } from "@/lib/queries";
 
 export default async function Home() {
-  const [events, nextEvent, series, heroBgUrl] = await Promise.all([
+  const [events, nextEvent, series, heroBgUrl, homeStatsRaw] = await Promise.all([
     getHomeEvents(),
     getNextEvent(),
     getSeriesWithRaces(),
     getSiteSetting("hero_bg_url"),
+    getSiteSetting("home_stats"),
   ]);
+
+  let customStats: { value: string; label: string }[] | null = null;
+  try { if (homeStatsRaw) customStats = JSON.parse(homeStatsRaw); } catch { /* ignore */ }
 
   return (
     <main className="flex flex-1 flex-col">
       <Hero nextEvent={nextEvent} heroBgUrl={heroBgUrl} />
-      <StatsStrip />
+      <StatsStrip customStats={customStats} />
       <EventsSection events={events} />
       {series && <SeriesSection series={series} />}
       <VolunteerSection />
@@ -142,14 +146,15 @@ function Hero({
   );
 }
 
-function StatsStrip() {
+function StatsStrip({ customStats }: { customStats: { value: string; label: string }[] | null }) {
   const t = useTranslations("Home");
-  const stats = [
+  const fallback = [
     { value: t("stat1Value"), label: t("stat1Label") },
     { value: t("stat2Value"), label: t("stat2Label") },
     { value: t("stat3Value"), label: t("stat3Label") },
     { value: t("stat4Value"), label: t("stat4Label") },
   ];
+  const stats = customStats && customStats.length === 4 ? customStats : fallback;
   return (
     <div className="mx-auto w-full max-w-6xl px-6">
       <div className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-m)] border border-border lg:grid-cols-4" style={{ gap: "1px", background: "var(--border)" }}>
