@@ -102,7 +102,7 @@
     "statsDistances": "{count, plural, one {# distance} other {# distances}}",
     "statsParticipants": "{count, plural, one {# participant} other {# participants}}",
     "partnersTitle": "Race Partners",
-    "courseProfileTitle": "Course profile",
+    "courseProfileTitle": "Course & GPX",
     "downloadGpxCta": "Download GPX",
     "aboutTitle": "About the Race",
     "aboutEmpty": "Race description coming soon.",

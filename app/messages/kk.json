@@ -102,7 +102,7 @@
     "statsDistances": "{count, plural, other {# дистанция}}",
     "statsParticipants": "{count, plural, other {# қатысушы}}",
     "partnersTitle": "Жарыс серіктестері",
-    "courseProfileTitle": "Трасса профилі",
+    "courseProfileTitle": "Трасса және GPX",
     "downloadGpxCta": "GPX жүктеу",
     "aboutTitle": "Жарыс туралы",
     "aboutEmpty": "Жарыс туралы ақпарат жуырда жарияланады.",

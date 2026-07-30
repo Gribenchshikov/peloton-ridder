@@ -102,7 +102,7 @@
     "statsDistances": "{count, plural, one {# дистанция} few {# дистанции} many {# дистанций} other {# дистанций}}",
     "statsParticipants": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участников}}",
     "partnersTitle": "Партнёры забега",
-    "courseProfileTitle": "Профиль трассы",
+    "courseProfileTitle": "Трасса и GPX",
     "downloadGpxCta": "Скачать GPX",
     "aboutTitle": "О забеге",
     "aboutEmpty": "Описание забега скоро появится.",
