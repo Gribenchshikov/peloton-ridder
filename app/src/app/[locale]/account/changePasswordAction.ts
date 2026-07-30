@@ -44,6 +44,7 @@ export async function changePasswordAction(
     select: { passwordHash: true },
   });
   if (!user) return { error: "unauthorized" };
+  if (!user.passwordHash) return { error: "wrong_current" }; // Google-пользователи без пароля
 
   const valid = await verifyPassword(parsed.data.currentPassword, user.passwordHash);
   if (!valid) return { error: "wrong_current" };

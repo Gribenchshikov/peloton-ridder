@@ -35,6 +35,7 @@ export async function changeEmailAction(
     select: { email: true, passwordHash: true },
   });
   if (!user) return { error: "unauthorized" };
+  if (!user.passwordHash) return { error: "wrong_password" }; // Google-пользователи без пароля
 
   if (user.email.toLowerCase() === newEmail.toLowerCase()) return { error: "same_email" };
 
