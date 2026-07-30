@@ -17,7 +17,7 @@ model User {
   isVolunteer              Boolean                 @default(false)
   createdAt                DateTime                @default(now())
   bannedUntil              DateTime?
-  passwordHash             String
+  passwordHash             String?
   firstName                String
   lastName                 String
   passwordChangedAt        DateTime?

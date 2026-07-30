@@ -1,16 +1,16 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Credentials-провайдер не хранит сессии в БД — только JWT в HttpOnly-куке
-  // (это дефолт Auth.js: Secure в проде, SameSite=Lax, недоступна из JS). Адаптер не нужен.
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
   providers: [
+    Google,
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
@@ -22,9 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (typeof email !== "string" || typeof password !== "string") return null;
 
         const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-        // Намеренно не различаем «нет такого email» и «неверный пароль» в возвращаемом
-        // результате — это не даёт злоумышленнику перебором узнать, какие email зарегистрированы.
-        if (!user) return null;
+        if (!user || !user.passwordHash) return null;
 
         const valid = await verifyPassword(password, user.passwordHash);
         if (!valid) return null;
@@ -37,18 +35,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.firstName = user.firstName;
-        token.isAdmin = user.isAdmin ?? false;
-        token.isOperator = user.isOperator ?? false;
-        token.isFinAdmin = user.isFinAdmin ?? false;
+    async signIn({ account, profile }) {
+      if (account?.provider !== "google") return true;
+
+      const email = profile?.email;
+      if (!email) return false;
+
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (!existing) {
+        // Создаём профиль из Google-данных
+        const googleProfile = profile as { given_name?: string; family_name?: string; picture?: string; name?: string };
+        const nameParts = (googleProfile.name ?? "").split(" ");
+        await prisma.user.create({
+          data: {
+            email,
+            firstName: googleProfile.given_name ?? nameParts[0] ?? "Участник",
+            lastName: googleProfile.family_name ?? nameParts.slice(1).join(" ") ?? "",
+            emailVerified: new Date(),
+            avatarUrl: googleProfile.picture ?? null,
+          },
+        });
+      }
+      return true;
+    },
+
+    async jwt({ token, user, account }) {
+      // Первый вход (credentials или google)
+      if (user && account) {
+        if (account.provider === "google") {
+          // Загружаем наш DB-ID по email из Google-профиля
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email! },
+            select: { id: true, firstName: true, isAdmin: true, isOperator: true, isFinAdmin: true },
+          });
+          if (!dbUser) return null;
+          token.id = dbUser.id;
+          token.firstName = dbUser.firstName;
+          token.isAdmin = dbUser.isAdmin;
+          token.isOperator = dbUser.isOperator;
+          token.isFinAdmin = dbUser.isFinAdmin;
+        } else {
+          token.id = user.id;
+          token.firstName = user.firstName;
+          token.isAdmin = user.isAdmin ?? false;
+          token.isOperator = user.isOperator ?? false;
+          token.isFinAdmin = user.isFinAdmin ?? false;
+        }
         return token;
       }
-      // Не первый вход — на каждый следующий запрос сверяем, не сброшен ли пароль
-      // ПОСЛЕ выдачи этого токена (T44: /reset-password ставит passwordChangedAt),
-      // и заодно освежаем роли (чтобы выдача/отзыв применялась сразу).
+
+      // Последующие запросы — освежаем роли и проверяем смену пароля
       if (token.id && token.iat) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
@@ -67,6 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;

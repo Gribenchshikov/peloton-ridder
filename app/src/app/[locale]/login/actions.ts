@@ -17,11 +17,13 @@ export async function loginAction(_prevState: LoginState, formData: FormData): P
     });
     return {};
   } catch (error) {
-    // signIn() бросает NEXT_REDIRECT при успехе (это нормально, пробрасываем дальше) —
-    // ошибка от неверных данных приходит как AuthError, её и обрабатываем.
     if (error instanceof AuthError) {
       return { error: "invalid_credentials" };
     }
     throw error;
   }
+}
+
+export async function googleSignInAction() {
+  await signIn("google", { redirectTo: "/" });
 }

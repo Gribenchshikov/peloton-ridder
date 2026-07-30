@@ -12,6 +12,7 @@ export function FormField({
   error,
   pattern,
   title,
+  className,
 }: {
   label: string;
   name: string;
@@ -26,6 +27,7 @@ export function FormField({
   error?: boolean;
   pattern?: string;
   title?: string;
+  className?: string;
 }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
@@ -50,7 +52,8 @@ export function FormField({
           error
             ? "border-danger focus:border-danger"
             : "border-border focus:border-ember",
-        ].join(" ")}
+          className,
+        ].filter(Boolean).join(" ")}
       />
       {hint && <span className="text-xs text-ink-faint">{hint}</span>}
     </label>
