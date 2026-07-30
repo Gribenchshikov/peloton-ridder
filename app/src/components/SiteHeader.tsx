@@ -14,8 +14,8 @@ export async function SiteHeader({ locale }: { locale: string }) {
     { href: "/", label: t("home") },
     { href: "/events", label: t("races") },
     { href: "/series", label: t("series") },
-    { href: "/about", label: t("about") },
     { href: "/partnership", label: t("partnership") },
+    { href: "/about", label: t("about") },
   ];
 
   return (
