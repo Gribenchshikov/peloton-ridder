@@ -7,6 +7,7 @@ import { createVerificationToken } from "@/lib/verification-token";
 import { sendVerificationEmail, sendAdminAlertEmail } from "@/lib/mailer";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { buildAppUrl } from "@/lib/url";
+import { isDisposableEmail } from "@/lib/disposable-email-domains";
 
 const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
 
@@ -85,6 +86,9 @@ export async function registerAction(_prevState: RegisterState, formData: FormDa
   }
   if (existing) {
     return { error: "email_taken", values };
+  }
+  if (isDisposableEmail(email)) {
+    return { error: "disposable_email", values };
   }
 
   const passwordHash = await hashPassword(password);

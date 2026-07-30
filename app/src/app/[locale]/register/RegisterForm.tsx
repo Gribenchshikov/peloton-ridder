@@ -13,6 +13,7 @@ const initialState: RegisterState = {};
 
 const ERROR_KEYS: Record<string, string> = {
   email_taken: "errorEmailTaken",
+  disposable_email: "errorDisposableEmail",
   invalid: "errorInvalid",
   name_latin_only: "errorNameLatinOnly",
   bot_check: "errorBotCheck",
