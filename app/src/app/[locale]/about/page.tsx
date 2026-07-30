@@ -1,31 +1,54 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { getSiteSetting } from "@/lib/queries";
 import type { TeamMember, TrainingGroup } from "@/generated/prisma/client";
 
 export default async function AboutPage() {
   const t = await getTranslations("About");
 
-  const [members, trainingGroups] = await Promise.all([
+  const [members, trainingGroups, bgUrl] = await Promise.all([
     prisma.teamMember.findMany({ orderBy: [{ type: "asc" }, { order: "asc" }] }),
     prisma.trainingGroup.findMany({ orderBy: { order: "asc" } }),
+    getSiteSetting("bg_about"),
   ]);
 
   const team = members.filter((m) => m.type === "TEAM");
   const volunteers = members.filter((m) => m.type === "VOLUNTEER");
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-      {/* Header */}
-      <div className="max-w-2xl">
-        <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ember">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-ember" />
-          {t("eyebrow")}
-        </span>
-        <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-ink-soft">{t("intro")}</p>
-      </div>
+    <main className="flex-1">
+      {/* Hero banner — shown only when bg image is set */}
+      {bgUrl && (
+        <div
+          className="relative overflow-hidden px-6 py-20 sm:py-24"
+          style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
+        >
+          <div className="absolute inset-0 bg-ink/65" aria-hidden />
+          <div className="relative mx-auto max-w-5xl text-white">
+            <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ember">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-ember" />
+              {t("eyebrow")}
+            </span>
+            <h1 className="mt-3 font-display text-3xl font-bold leading-tight sm:text-4xl">{t("title")}</h1>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/75">{t("intro")}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto w-full max-w-5xl px-6 py-16">
+      {/* Header — shown only when no bg image */}
+      {!bgUrl && (
+        <div className="max-w-2xl">
+          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ember">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-ember" />
+            {t("eyebrow")}
+          </span>
+          <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-ink sm:text-4xl">
+            {t("title")}
+          </h1>
+          <p className="mt-4 text-base leading-relaxed text-ink-soft">{t("intro")}</p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="mt-10 flex flex-wrap gap-8">
@@ -52,6 +75,7 @@ export default async function AboutPage() {
           </div>
         </section>
       )}
+      </div>
     </main>
   );
 }

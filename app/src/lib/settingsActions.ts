@@ -76,8 +76,13 @@ export async function savePartnershipContentAction(content: PartnershipContent) 
   return { ok: true };
 }
 
-const ALLOWED_BG_PAGES = ["partnership", "volunteer", "about", "contact"] as const;
+const ALLOWED_BG_PAGES = ["home", "partnership", "volunteer", "about", "contact"] as const;
 type BgPage = (typeof ALLOWED_BG_PAGES)[number];
+
+// "home" maps to legacy "hero_bg_url" key; others use "bg_{page}"
+function bgKey(page: BgPage): string {
+  return page === "home" ? "hero_bg_url" : `bg_${page}`;
+}
 
 export async function savePageBgAction(page: string, formData: FormData) {
   const adminId = await requireAdminId();
@@ -87,7 +92,7 @@ export async function savePageBgAction(page: string, formData: FormData) {
   if (!file || file.size === 0) return { error: "noFile" as const };
   const result = await saveFile(file, "site");
   if ("error" in result) return { error: result.error };
-  await upsertSiteSetting(`bg_${page}`, result.url);
+  await upsertSiteSetting(bgKey(page as BgPage), result.url);
   return { url: result.url };
 }
 
@@ -95,6 +100,6 @@ export async function removePageBgAction(page: string) {
   const adminId = await requireAdminId();
   if (!adminId) throw new Error("Unauthorized");
   if (!ALLOWED_BG_PAGES.includes(page as BgPage)) throw new Error("Invalid page");
-  await upsertSiteSetting(`bg_${page}`, "");
+  await upsertSiteSetting(bgKey(page as BgPage), "");
   return { ok: true };
 }

@@ -47,7 +47,7 @@ export default async function SettingsPage({
   const { tab } = await searchParams;
   await requireAdminPage(locale, "/admin/settings");
 
-  const activeTab = tab === "docs" ? "docs" : tab === "partnership" ? "partnership" : "general";
+  const activeTab = tab === "docs" ? "docs" : tab === "partnership" ? "partnership" : tab === "backgrounds" ? "backgrounds" : "general";
 
   const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss, partnershipRaw, bgPartnership, bgVolunteer, bgAbout, bgContact] = await Promise.all([
     getTranslations("Admin"),
@@ -113,6 +113,12 @@ export default async function SettingsPage({
         >
           Партнёрство
         </Link>
+        <Link
+          href="?tab=backgrounds"
+          className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px ${activeTab === "backgrounds" ? "border-ember text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
+        >
+          Фоны страниц
+        </Link>
       </div>
 
       {activeTab === "general" && (
@@ -130,27 +136,6 @@ export default async function SettingsPage({
           <ContactInfoEditor initial={contactInfo} />
 
           <SizeTableEditor initialRows={sizeRows} />
-
-          <SettingsView
-            currentUrl={heroBgUrl || null}
-            labels={{
-              heroLabel: t("settingsHeroLabel"),
-              save: t("settingsHeroSave"),
-              saved: t("settingsHeroSaved"),
-              error: t("settingsHeroError"),
-              current: t("settingsHeroCurrent"),
-              remove: t("settingsHeroRemove"),
-            }}
-          />
-
-          <PageBackgroundsEditor
-            pages={[
-              { key: "partnership", label: "Страница «Партнёрство»", currentUrl: bgPartnership || null },
-              { key: "volunteer", label: "Страница «Волонтёрство»", currentUrl: bgVolunteer || null },
-              { key: "about", label: "Страница «О нас»", currentUrl: bgAbout || null },
-              { key: "contact", label: "Страница «Контакты»", currentUrl: bgContact || null },
-            ]}
-          />
         </div>
       )}
 
@@ -160,6 +145,18 @@ export default async function SettingsPage({
 
       {activeTab === "partnership" && (
         <PartnershipEditor initial={partnershipContent} />
+      )}
+
+      {activeTab === "backgrounds" && (
+        <PageBackgroundsEditor
+          pages={[
+            { key: "home", label: "Главная страница", currentUrl: heroBgUrl || null },
+            { key: "partnership", label: "Страница «Партнёрство»", currentUrl: bgPartnership || null },
+            { key: "volunteer", label: "Страница «Волонтёрство»", currentUrl: bgVolunteer || null },
+            { key: "about", label: "Страница «О нас»", currentUrl: bgAbout || null },
+            { key: "contact", label: "Страница «Контакты»", currentUrl: bgContact || null },
+          ]}
+        />
       )}
     </main>
   );
