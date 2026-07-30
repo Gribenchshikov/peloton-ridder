@@ -298,6 +298,11 @@ export function getUsersForAdmin() {
       isFrozen: true,
       createdAt: true,
       _count: { select: { registrations: true } },
+      registrations: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { emergencyContact: true, emergencyContactName: true },
+      },
     },
     orderBy: [{ isAdmin: "desc" }, { createdAt: "asc" }],
   });

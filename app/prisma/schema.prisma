@@ -231,6 +231,7 @@ model Registration {
   additionalParticipants Json?
   qualificationUrl       String?
   emergencyContact       String?
+  emergencyContactName   String?
   challengeActivities    ChallengeActivity[]
   refundRequests         RefundRequest[]
   distance               Distance?           @relation(fields: [distanceId], references: [id])

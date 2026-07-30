@@ -207,6 +207,7 @@ export async function createRegistrationAction(
     }
 
     const emergencyContact = String(formData.get("emergencyContact") ?? "").trim() || null;
+    const emergencyContactName = String(formData.get("emergencyContactName") ?? "").trim() || null;
 
     const reservationData = {
       isTransferOnly: false,
@@ -222,6 +223,7 @@ export async function createRegistrationAction(
       includesTransfer,
       qualificationUrl,
       emergencyContact,
+      emergencyContactName,
       additionalParticipants: additionalParticipants ?? undefined,
     };
     const registration = cancelled

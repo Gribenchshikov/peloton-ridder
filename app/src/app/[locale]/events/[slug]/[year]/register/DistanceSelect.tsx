@@ -361,18 +361,27 @@ export function DistanceSelect({
 
       {/* Emergency contact */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-semibold text-ink-soft">
+        <span className="text-sm font-semibold text-ink-soft">
           {t("emergencyContactLabel")}
           <span className="ml-1.5 text-xs font-bold text-danger">*</span>
-        </label>
-        <input
-          type="text"
-          name="emergencyContact"
-          required
-          placeholder={t("emergencyContactPlaceholder")}
-          className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
-        />
+        </span>
         <p className="text-xs text-ink-faint">{t("emergencyContactHint")}</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input
+            type="text"
+            name="emergencyContactName"
+            required
+            placeholder={t("emergencyContactNamePlaceholder")}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          />
+          <input
+            type="tel"
+            name="emergencyContact"
+            required
+            placeholder={t("emergencyContactPlaceholder")}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          />
+        </div>
       </div>
 
       {/* Strava connect prompt — only for online challenges */}
