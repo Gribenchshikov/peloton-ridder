@@ -38,54 +38,49 @@ function EventsView({
     }`;
 
   return (
-    <main className="flex-1">
-      {bgUrl && (
-        <div
-          className="relative overflow-hidden px-6 py-16 sm:py-20"
-          style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
-        >
-          <div className="absolute inset-0 bg-black/65" aria-hidden />
-          <div className="relative mx-auto max-w-6xl text-white">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ember">
-              <span className="h-1.5 w-1.5 rounded-full bg-ember" />
-              {t("eyebrow")}
-            </span>
-            <h1 className="mt-2 font-display text-2xl font-bold sm:text-3xl">{t("title")}</h1>
-          </div>
-        </div>
-      )}
+    <main
+      className="relative flex-1"
+      style={
+        bgUrl
+          ? { backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+          : undefined
+      }
+    >
+      {bgUrl && <div className="absolute inset-0 bg-black/65" aria-hidden />}
 
-      <div className="px-6 py-10">
-      <div className="mx-auto max-w-6xl">
-        {!bgUrl && (
+      <div className="relative px-6 py-10">
+        <div className="mx-auto max-w-6xl">
           <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ember">
             <span className="h-1.5 w-1.5 rounded-full bg-ember" />
             {t("eyebrow")}
           </span>
-        )}
-        <div className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${!bgUrl ? "mt-2.5" : ""}`}>
-          {!bgUrl && <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">{t("title")}</h1>}
-          {bgUrl && <div />}
-          <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface-2 p-1">
-            <Link href="/events" className={tabClass(!isArchive)}>
-              {t("calendarTab")}
-            </Link>
-            <Link href="/events?tab=archive" className={tabClass(isArchive)}>
-              {t("archiveTab")}
-            </Link>
-          </div>
-        </div>
 
-        {events.length > 0 ? (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
+          <div className="mt-2.5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className={`font-display text-2xl font-bold sm:text-3xl ${bgUrl ? "text-white" : "text-ink"}`}>
+              {t("title")}
+            </h1>
+            <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface-2 p-1">
+              <Link href="/events" className={tabClass(!isArchive)}>
+                {t("calendarTab")}
+              </Link>
+              <Link href="/events?tab=archive" className={tabClass(isArchive)}>
+                {t("archiveTab")}
+              </Link>
+            </div>
           </div>
-        ) : (
-          <p className="mt-8 text-ink-faint">{isArchive ? t("emptyArchive") : t("emptyCalendar")}</p>
-        )}
-      </div>
+
+          {events.length > 0 ? (
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <p className={`mt-8 ${bgUrl ? "text-white/70" : "text-ink-faint"}`}>
+              {isArchive ? t("emptyArchive") : t("emptyCalendar")}
+            </p>
+          )}
+        </div>
       </div>
     </main>
   );
