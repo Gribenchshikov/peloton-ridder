@@ -40,11 +40,16 @@ function PageBgRow({ entry }: { entry: PageEntry }) {
     if (!file) return;
     const formData = new FormData();
     formData.set("file", file);
+    formData.set("page", entry.key);
     setStatus("saving");
     startTransition(async () => {
-      const result = await savePageBgAction(entry.key, formData);
-      if ("error" in result) setStatus("error");
-      else { setPreviewUrl(result.url); setStatus("saved"); }
+      try {
+        const result = await savePageBgAction(formData);
+        if ("error" in result) setStatus("error");
+        else { setPreviewUrl(result.url); setStatus("saved"); }
+      } catch {
+        setStatus("error");
+      }
     });
   }
 

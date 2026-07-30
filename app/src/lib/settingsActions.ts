@@ -86,22 +86,33 @@ function bgKey(page: BgPage): string {
 
 export type { BgPage };
 
-export async function savePageBgAction(page: string, formData: FormData) {
+export async function savePageBgAction(formData: FormData) {
   const adminId = await requireAdminId();
-  if (!adminId) throw new Error("Unauthorized");
-  if (!ALLOWED_BG_PAGES.includes(page as BgPage)) throw new Error("Invalid page");
+  if (!adminId) return { error: "unauthorized" as const };
+  const page = formData.get("page") as string | null;
+  if (!page || !ALLOWED_BG_PAGES.includes(page as BgPage)) return { error: "invalidPage" as const };
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return { error: "noFile" as const };
-  const result = await saveFile(file, "site");
-  if ("error" in result) return { error: result.error };
-  await upsertSiteSetting(bgKey(page as BgPage), result.url);
-  return { url: result.url };
+  try {
+    const result = await saveFile(file, "site");
+    if ("error" in result) return { error: result.error };
+    await upsertSiteSetting(bgKey(page as BgPage), result.url);
+    return { url: result.url };
+  } catch (err) {
+    console.error("[savePageBgAction]", err);
+    return { error: "uploadFailed" as const };
+  }
 }
 
 export async function removePageBgAction(page: string) {
   const adminId = await requireAdminId();
-  if (!adminId) throw new Error("Unauthorized");
-  if (!ALLOWED_BG_PAGES.includes(page as BgPage)) throw new Error("Invalid page");
-  await upsertSiteSetting(bgKey(page as BgPage), "");
-  return { ok: true };
+  if (!adminId) return { error: "unauthorized" as const };
+  if (!ALLOWED_BG_PAGES.includes(page as BgPage)) return { error: "invalidPage" as const };
+  try {
+    await upsertSiteSetting(bgKey(page as BgPage), "");
+    return { ok: true };
+  } catch (err) {
+    console.error("[removePageBgAction]", err);
+    return { error: "removeFailed" as const };
+  }
 }
