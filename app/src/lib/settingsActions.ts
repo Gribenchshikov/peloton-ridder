@@ -76,27 +76,23 @@ export async function savePartnershipContentAction(content: PartnershipContent) 
   return { ok: true };
 }
 
-const ALLOWED_BG_PAGES = ["home", "events", "series", "partnership", "volunteer", "about", "contact"] as const;
-type BgPage = (typeof ALLOWED_BG_PAGES)[number];
+const ALLOWED_BG_PAGES: readonly string[] = ["home", "events", "series", "partnership", "volunteer", "about", "contact"];
 
-// "home" maps to legacy "hero_bg_url" key; others use "bg_{page}"
-function bgKey(page: BgPage): string {
+function bgKey(page: string): string {
   return page === "home" ? "hero_bg_url" : `bg_${page}`;
 }
-
-export type { BgPage };
 
 export async function savePageBgAction(formData: FormData) {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" as const };
   const page = formData.get("page") as string | null;
-  if (!page || !ALLOWED_BG_PAGES.includes(page as BgPage)) return { error: "invalidPage" as const };
+  if (!page || !ALLOWED_BG_PAGES.includes(page)) return { error: "invalidPage" as const };
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) return { error: "noFile" as const };
   try {
     const result = await saveFile(file, "site");
     if ("error" in result) return { error: result.error };
-    await upsertSiteSetting(bgKey(page as BgPage), result.url);
+    await upsertSiteSetting(bgKey(page), result.url);
     return { url: result.url };
   } catch (err) {
     console.error("[savePageBgAction]", err);
@@ -107,9 +103,9 @@ export async function savePageBgAction(formData: FormData) {
 export async function removePageBgAction(page: string) {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" as const };
-  if (!ALLOWED_BG_PAGES.includes(page as BgPage)) return { error: "invalidPage" as const };
+  if (!ALLOWED_BG_PAGES.includes(page)) return { error: "invalidPage" as const };
   try {
-    await upsertSiteSetting(bgKey(page as BgPage), "");
+    await upsertSiteSetting(bgKey(page), "");
     return { ok: true };
   } catch (err) {
     console.error("[removePageBgAction]", err);
