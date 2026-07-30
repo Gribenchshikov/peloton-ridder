@@ -21,6 +21,8 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
   const [equipment, setEquipment] = useState<DistanceEquipment>(initialEquipment);
   const [activeDistId, setActiveDistId] = useState(distances[0]?.id ?? "");
   const [newItemLabel, setNewItemLabel] = useState("");
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
   const action = updateDistanceEquipmentAction.bind(null, eventId);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
 
@@ -70,6 +72,31 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
       };
     });
     setNewItemLabel("");
+  }
+
+  function startEditCustomItem(key: string, label: string) {
+    setEditingKey(key);
+    setEditingLabel(label);
+  }
+
+  function saveEditCustomItem() {
+    if (!editingKey) return;
+    const label = editingLabel.trim();
+    if (!label) return;
+    setEquipment((prev) => {
+      const current = prev[activeDistId] ?? { required: [], recommended: [], customItems: [] };
+      return {
+        ...prev,
+        [activeDistId]: {
+          ...current,
+          customItems: (current.customItems ?? []).map((i) =>
+            i.key === editingKey ? { ...i, label } : i
+          ),
+        },
+      };
+    });
+    setEditingKey(null);
+    setEditingLabel("");
   }
 
   function deleteCustomItem(key: string) {
@@ -179,6 +206,7 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
           <div className="mb-2 flex flex-col divide-y divide-border overflow-hidden rounded-[var(--radius-s)] border border-border">
             {customItems.map((item) => {
               const st = getState(item.key);
+              const isEditing = editingKey === item.key;
               return (
                 <div
                   key={item.key}
@@ -190,7 +218,30 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
                       : "bg-surface text-ink-soft"
                   }`}
                 >
-                  <span className="flex-1">{item.label}</span>
+                  {isEditing ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={editingLabel}
+                      onChange={(e) => setEditingLabel(e.target.value)}
+                      onBlur={saveEditCustomItem}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") { e.preventDefault(); saveEditCustomItem(); }
+                        if (e.key === "Escape") { setEditingKey(null); }
+                      }}
+                      className="flex-1 rounded border border-ember bg-surface px-2 py-0.5 text-sm text-ink focus:outline-none"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => startEditCustomItem(item.key, item.label)}
+                      className="flex-1 text-left hover:text-ink"
+                      title="Нажмите чтобы редактировать"
+                    >
+                      {item.label}
+                      <span className="ml-1.5 text-[10px] text-ink-faint opacity-60">✏</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => toggle(item.key, "required")}
