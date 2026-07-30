@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { getSeriesWithRaces, getSeriesSeason, getSeriesAvailableYears } from "@/lib/queries";
+import { getSeriesWithRaces, getSeriesSeason, getSeriesAvailableYears, getSiteSetting } from "@/lib/queries";
 import { buildLeaderboard, formatSeconds } from "@/lib/seriesUtils";
 
 export default async function SeriesPage({
@@ -16,24 +16,47 @@ export default async function SeriesPage({
   const currentYear = new Date().getFullYear();
   const year = yearParam ? Number(yearParam) : (availableYears[0] ?? currentYear);
 
-  const season = await getSeriesSeason(series.id, year);
+  const [season, bgUrl] = await Promise.all([
+    getSeriesSeason(series.id, year),
+    getSiteSetting("bg_series"),
+  ]);
   if (!season) notFound();
 
   const leaderboard = buildLeaderboard(season);
   const stageCount = season.seriesRaces.length;
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-      {/* Header */}
-      <div className="mb-10">
-        <span className="text-xs font-bold uppercase tracking-wide text-ember">
-          Ridder Race Series
-        </span>
-        <h1 className="mt-2 font-display text-3xl font-bold text-ink">{season.name}</h1>
-        {season.description && (
-          <p className="mt-2 max-w-2xl text-ink-soft">{season.description}</p>
-        )}
-      </div>
+    <main className="flex-1">
+      {bgUrl && (
+        <div
+          className="relative overflow-hidden px-6 py-16 sm:py-20"
+          style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
+        >
+          <div className="absolute inset-0 bg-black/65" aria-hidden />
+          <div className="relative mx-auto max-w-5xl text-white">
+            <span className="text-xs font-bold uppercase tracking-wide text-ember">Ridder Race Series</span>
+            <h1 className="mt-2 font-display text-3xl font-bold">{season.name}</h1>
+            {season.description && (
+              <p className="mt-2 max-w-2xl text-white/75">{season.description}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto w-full max-w-5xl px-6 py-10">
+      {/* Header — shown when no bg image */}
+      {!bgUrl && (
+        <div className="mb-10">
+          <span className="text-xs font-bold uppercase tracking-wide text-ember">
+            Ridder Race Series
+          </span>
+          <h1 className="mt-2 font-display text-3xl font-bold text-ink">{season.name}</h1>
+          {season.description && (
+            <p className="mt-2 max-w-2xl text-ink-soft">{season.description}</p>
+          )}
+        </div>
+      )}
+      {bgUrl && <div className="mb-10" />}
 
       {/* Year switcher */}
       {availableYears.length > 1 && (
@@ -175,6 +198,7 @@ export default async function SeriesPage({
             })}
           </ol>
         </section>
+      </div>
       </div>
     </main>
   );

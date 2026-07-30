@@ -133,7 +133,7 @@ export default async function PartnershipPage() {
     <main className="flex-1">
       {/* ── Hero ── */}
       <section className="relative overflow-hidden bg-ink px-6 py-20 text-white sm:py-28" style={bgStyle}>
-        {bgUrl && <div className="absolute inset-0 bg-ink/70" aria-hidden />}
+        {bgUrl && <div className="absolute inset-0 bg-black/70" aria-hidden />}
         <div
           className="pointer-events-none absolute inset-0 opacity-15"
           style={{

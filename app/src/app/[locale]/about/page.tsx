@@ -23,7 +23,7 @@ export default async function AboutPage() {
           className="relative overflow-hidden px-6 py-20 sm:py-24"
           style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
         >
-          <div className="absolute inset-0 bg-ink/65" aria-hidden />
+          <div className="absolute inset-0 bg-black/65" aria-hidden />
           <div className="relative mx-auto max-w-5xl text-white">
             <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ember">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-ember" />

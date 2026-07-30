@@ -76,13 +76,15 @@ export async function savePartnershipContentAction(content: PartnershipContent) 
   return { ok: true };
 }
 
-const ALLOWED_BG_PAGES = ["home", "partnership", "volunteer", "about", "contact"] as const;
+const ALLOWED_BG_PAGES = ["home", "events", "series", "partnership", "volunteer", "about", "contact"] as const;
 type BgPage = (typeof ALLOWED_BG_PAGES)[number];
 
 // "home" maps to legacy "hero_bg_url" key; others use "bg_{page}"
 function bgKey(page: BgPage): string {
   return page === "home" ? "hero_bg_url" : `bg_${page}`;
 }
+
+export type { BgPage };
 
 export async function savePageBgAction(page: string, formData: FormData) {
   const adminId = await requireAdminId();

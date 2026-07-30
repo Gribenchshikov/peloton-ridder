@@ -49,7 +49,7 @@ export default async function SettingsPage({
 
   const activeTab = tab === "docs" ? "docs" : tab === "partnership" ? "partnership" : tab === "backgrounds" ? "backgrounds" : "general";
 
-  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss, partnershipRaw, bgPartnership, bgVolunteer, bgAbout, bgContact] = await Promise.all([
+  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss, partnershipRaw, bgPartnership, bgVolunteer, bgAbout, bgContact, bgEvents, bgSeries] = await Promise.all([
     getTranslations("Admin"),
     getSiteSetting("hero_bg_url"),
     getSiteSetting("registrations_open"),
@@ -64,6 +64,8 @@ export default async function SettingsPage({
     getSiteSetting("bg_volunteer"),
     getSiteSetting("bg_about"),
     getSiteSetting("bg_contact"),
+    getSiteSetting("bg_events"),
+    getSiteSetting("bg_series"),
   ]);
 
   const isOpen = registrationsOpen !== "false";
@@ -151,6 +153,8 @@ export default async function SettingsPage({
         <PageBackgroundsEditor
           pages={[
             { key: "home", label: "Главная страница", currentUrl: heroBgUrl || null },
+            { key: "events", label: "Страница «Забеги»", currentUrl: bgEvents || null },
+            { key: "series", label: "Страница «Серии»", currentUrl: bgSeries || null },
             { key: "partnership", label: "Страница «Партнёрство»", currentUrl: bgPartnership || null },
             { key: "volunteer", label: "Страница «Волонтёрство»", currentUrl: bgVolunteer || null },
             { key: "about", label: "Страница «О нас»", currentUrl: bgAbout || null },

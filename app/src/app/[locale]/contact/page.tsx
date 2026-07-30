@@ -27,7 +27,7 @@ export default async function ContactPage() {
           className="relative overflow-hidden px-6 py-16 sm:py-20"
           style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
         >
-          <div className="absolute inset-0 bg-ink/65" aria-hidden />
+          <div className="absolute inset-0 bg-black/65" aria-hidden />
           <div className="relative mx-auto max-w-2xl text-white">
             <span className="text-xs font-bold uppercase tracking-wide text-ember">Контакты</span>
             <h1 className="mt-2 font-display text-2xl font-bold">Свяжитесь с нами</h1>

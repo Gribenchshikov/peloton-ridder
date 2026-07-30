@@ -45,7 +45,7 @@ function VolunteerView({
           className="relative overflow-hidden px-6 py-20 sm:py-28"
           style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
         >
-          <div className="absolute inset-0 bg-ink/65" aria-hidden />
+          <div className="absolute inset-0 bg-black/65" aria-hidden />
           <div className="relative mx-auto max-w-3xl text-white">
             <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
             <h1 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("title")}</h1>
