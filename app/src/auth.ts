@@ -10,7 +10,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   providers: [
-    Google,
+    Google({ authorization: { params: { prompt: "select_account" } } }),
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
