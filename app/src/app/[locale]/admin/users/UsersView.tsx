@@ -245,9 +245,7 @@ export function UsersView({
               <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">{t("usersColRole")}</th>
               <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">{t("usersColVerified")}</th>
               <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">{t("usersColRegs")}</th>
-              {activeTab === "runners" && (
-                <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Экстренный контакт</th>
-              )}
+              <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Экстренный контакт</th>
               <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
               <th className="px-4 py-2.5" />
             </tr>
@@ -255,7 +253,7 @@ export function UsersView({
           <tbody>
             {visibleUsers.length === 0 ? (
               <tr>
-                <td colSpan={activeTab === "runners" ? 8 : 7} className="px-4 py-8 text-center text-sm text-ink-soft">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-ink-soft">
                   {activeTab === "admins" ? t("usersAdminsEmpty") : t("usersRunnersEmpty")}
                 </td>
               </tr>
@@ -323,7 +321,7 @@ export function UsersView({
                       <td className="px-4 py-2.5 text-center tabular-nums text-ink">
                         {user._count.registrations}
                       </td>
-                      {activeTab === "runners" && (() => {
+                      {(() => {
                         const ec = user.registrations[0];
                         return (
                           <td className="px-4 py-2.5 text-left text-xs text-ink">
@@ -371,7 +369,7 @@ export function UsersView({
                     {isActiveAction ? (
                       activeAction.type === "menu" ? (
                         <tr className="bg-surface-2" key={`${user.id}-menu`}>
-                          <td colSpan={activeTab === "runners" ? 8 : 7} className="px-4 py-4">
+                          <td colSpan={8} className="px-4 py-4">
                             <div className="flex flex-col gap-2 rounded-[var(--radius-m)] border border-border bg-surface p-4 shadow-sm">
                               <div className="grid gap-2 sm:grid-cols-4">
                                 <button
@@ -443,7 +441,7 @@ export function UsersView({
                         </tr>
                       ) : (
                         <tr className="bg-surface-2" key={`${user.id}-action`}>
-                          <td colSpan={activeTab === "runners" ? 8 : 7} className="px-4 py-4">
+                          <td colSpan={8} className="px-4 py-4">
                             <div className="rounded-[var(--radius-m)] border border-border bg-surface p-4 shadow-sm">
                               <div className="mb-3 text-sm text-ink-soft">
                                 {activeAction.type === "toggleAdmin" &&
