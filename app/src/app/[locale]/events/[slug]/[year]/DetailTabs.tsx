@@ -44,6 +44,7 @@ type Props = {
   dayProgram: DayProgramItem[];
   howToGet: string;
   howToGetUrl?: string | null;
+  locationUrl?: string | null;
   distanceEquipment: DistanceEquipment;
   regulationFiles: RegulationFile[];
   regulationBlocks: RegulationBlock[];
@@ -63,6 +64,7 @@ export function DetailTabs({
   dayProgram,
   howToGet,
   howToGetUrl,
+  locationUrl,
   distanceEquipment,
   regulationFiles,
   regulationBlocks,
@@ -97,7 +99,7 @@ export function DetailTabs({
     { id: "regulation", label: t("regulationTitle") },
     { id: "results", label: t("resultsTabTitle") },
     { id: "dayprogram", label: t("dayProgramTitle"), hidden: dayProgram.length === 0 },
-    { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet && !howToGetUrl },
+    { id: "howtoget", label: t("howToGetTitle"), hidden: !howToGet && !howToGetUrl && !locationUrl },
     { id: "equipment", label: t("equipmentTitle"), hidden: !hasEquipment },
     { id: "profile", label: t("courseProfileTitle"), hidden: !hasProfile },
     { id: "participants", label: t("participantsTitle") },
@@ -474,27 +476,59 @@ export function DetailTabs({
 
         {/* ── Как добраться ── */}
         {tab === "howtoget" && (
-          <div className="flex flex-col gap-4">
-            {howToGet ? (
-              <p className="max-w-2xl text-sm leading-relaxed text-ink-soft whitespace-pre-line break-words">
-                {howToGet}
-              </p>
-            ) : (
-              <p className="text-sm text-ink-faint">{t("howToGetEmpty")}</p>
+          <div className="flex flex-col gap-5">
+            {/* Место старта — prominent card */}
+            {locationUrl && (
+              <div className="flex flex-col gap-3 rounded-[var(--radius-m)] border border-ember/30 bg-ember/5 p-4">
+                <div className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-ember" aria-hidden>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+                  </svg>
+                  <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("startLocationLabel")}</span>
+                </div>
+                <p className="text-sm text-ink-soft">{t("startLocationHint")}</p>
+                <a
+                  href={locationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 self-start rounded-[var(--radius-s)] bg-ember px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                  {t("startLocationCta")}
+                </a>
+              </div>
             )}
-            {howToGetUrl && (
-              <a
-                href={howToGetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                  <circle cx="12" cy="9" r="2.5"/>
-                </svg>
-                {t("howToGetMapCta")}
-              </a>
+
+            {/* Описание + маршрут */}
+            {(howToGet || howToGetUrl) && (
+              <div className="flex flex-col gap-4">
+                {howToGet ? (
+                  <p className="max-w-2xl text-sm leading-relaxed text-ink-soft whitespace-pre-line break-words">
+                    {howToGet}
+                  </p>
+                ) : null}
+                {howToGetUrl && (
+                  <a
+                    href={howToGetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft hover:bg-surface"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                    {t("howToGetMapCta")}
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Fallback if nothing set */}
+            {!howToGet && !howToGetUrl && !locationUrl && (
+              <p className="text-sm text-ink-faint">{t("howToGetEmpty")}</p>
             )}
           </div>
         )}

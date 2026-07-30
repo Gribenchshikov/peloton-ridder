@@ -115,17 +115,20 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
                 <Icon name="i-clock" className="h-4 w-4" />
                 {format.dateTime(event.dateISO, { day: "numeric", month: "long", year: "numeric" })}
               </span>
-              <span className="flex items-center gap-2">
-                <Icon name="i-pin" className="h-4 w-4" />
+              <span className="flex items-center gap-2 flex-wrap">
+                <Icon name="i-pin" className="h-4 w-4 shrink-0" />
                 {event.location}
                 {event.locationUrl && (
                   <a
                     href={event.locationUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-full border border-white/40 bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+                    className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-stone-800 shadow transition-colors hover:bg-white"
                   >
-                    на карте ↗
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="shrink-0" aria-hidden>
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+                    </svg>
+                    на карте
                   </a>
                 )}
               </span>
@@ -178,6 +181,7 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
               dayProgram={dayProgram}
               howToGet={event.howToGet ?? ""}
               howToGetUrl={event.howToGetUrl}
+              locationUrl={event.locationUrl}
               distanceEquipment={distanceEquipment}
               regulationFiles={regulationFiles}
               regulationBlocks={regulationBlocks}
