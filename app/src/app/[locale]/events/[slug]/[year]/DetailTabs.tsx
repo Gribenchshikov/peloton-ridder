@@ -623,9 +623,9 @@ export function DetailTabs({
                 <span className="text-sm font-semibold text-ink">{activeDist.name}</span>
               )}
 
-              {activeDist.gpxUrl && (
+              {(activeDist.gpxUrl ?? (activeDist.profileData?.track?.length ?? 0) >= 2) && (
                 <a
-                  href={activeDist.gpxUrl}
+                  href={activeDist.gpxUrl ?? `/api/gpx/${activeDist.id}`}
                   download
                   className="shrink-0 flex items-center gap-1.5 rounded-[var(--radius-s)] border border-border px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-ink-soft hover:text-ink"
                 >
