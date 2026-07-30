@@ -63,6 +63,9 @@ export async function SiteFooter() {
             <Link href="/contact" className="text-sm text-ink-soft transition-colors hover:text-ink">
               {t("contacts")}
             </Link>
+            <Link href="/partnership" className="text-sm text-ink-soft transition-colors hover:text-ink">
+              {t("partnership")}
+            </Link>
           </nav>
 
           {/* Legal documents */}
