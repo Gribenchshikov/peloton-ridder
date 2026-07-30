@@ -1,6 +1,7 @@
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
+import { getSiteSetting } from "@/lib/queries";
 
 async function getOpenEventsForVolunteer() {
   return prisma.event.findMany({
@@ -11,13 +12,18 @@ async function getOpenEventsForVolunteer() {
 }
 
 export default async function VolunteerPage() {
-  const events = await getOpenEventsForVolunteer();
-  return <VolunteerView events={events} />;
+  const [events, bgUrl] = await Promise.all([
+    getOpenEventsForVolunteer(),
+    getSiteSetting("bg_volunteer"),
+  ]);
+  return <VolunteerView events={events} bgUrl={bgUrl || null} />;
 }
 
 function VolunteerView({
   events,
+  bgUrl,
 }: {
+  bgUrl: string | null;
   events: Awaited<ReturnType<typeof getOpenEventsForVolunteer>>;
 }) {
   const t = useTranslations("VolunteerPage");
@@ -32,27 +38,43 @@ function VolunteerView({
   const roles = [t("role1"), t("role2"), t("role3"), t("role4")];
 
   return (
-    <main className="flex-1 px-6 py-16">
-      <div className="mx-auto max-w-3xl">
-        {/* Hero */}
-        <span className="text-xs font-bold uppercase tracking-wide text-ember">
-          {t("eyebrow")}
-        </span>
-        <h1 className="mt-2 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-ink-soft">
-          {t("lead")}
-        </p>
-
-        {/* Honest badge */}
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm text-ink-soft">
-          <span className="font-bold text-ink">{t("honestBadgeLabel")}</span>
-          {t("honestBadgeText")}
+    <main className="flex-1">
+      {/* Hero — with optional background image */}
+      {bgUrl ? (
+        <div
+          className="relative overflow-hidden px-6 py-20 sm:py-28"
+          style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
+        >
+          <div className="absolute inset-0 bg-ink/65" aria-hidden />
+          <div className="relative mx-auto max-w-3xl text-white">
+            <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
+            <h1 className="mt-2 font-display text-3xl font-extrabold sm:text-4xl">{t("title")}</h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-white/75">{t("lead")}</p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur-sm">
+              <span className="font-bold text-white">{t("honestBadgeLabel")}</span>
+              {t("honestBadgeText")}
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="px-6 pt-16">
+          <div className="mx-auto max-w-3xl">
+            <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
+            <h1 className="mt-2 font-display text-3xl font-extrabold text-ink sm:text-4xl">{t("title")}</h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-ink-soft">{t("lead")}</p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-4 py-2 text-sm text-ink-soft">
+              <span className="font-bold text-ink">{t("honestBadgeLabel")}</span>
+              {t("honestBadgeText")}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={`px-6 pb-16 ${bgUrl ? "pt-12" : "pt-8"}`}>
+        <div className="mx-auto max-w-3xl">
 
         {/* What volunteers do */}
-        <section className="mt-12">
+        <section className="mt-4">
           <h2 className="font-display text-xl font-bold text-ink">{t("rolesTitle")}</h2>
           <ul className="mt-4 flex flex-col gap-2">
             {roles.map((role, i) => (
@@ -116,6 +138,7 @@ function VolunteerView({
             </p>
           </section>
         )}
+        </div>
       </div>
     </main>
   );

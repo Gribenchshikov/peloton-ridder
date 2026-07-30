@@ -11,7 +11,9 @@ import { HomeStatsEditor } from "./HomeStatsEditor";
 import { ContactInfoEditor } from "./ContactInfoEditor";
 import { LegalDocsEditor } from "./LegalDocsEditor";
 import { FontSelector } from "./FontSelector";
-import type { StatItem, ContactInfo } from "@/lib/settingsActions";
+import { PartnershipEditor } from "./PartnershipEditor";
+import { PageBackgroundsEditor } from "./PageBackgroundsEditor";
+import type { StatItem, ContactInfo, PartnershipContent } from "@/lib/settingsActions";
 
 const DEFAULT_STATS: StatItem[] = [
   { value: "4", label: "старта за сезон" },
@@ -45,9 +47,9 @@ export default async function SettingsPage({
   const { tab } = await searchParams;
   await requireAdminPage(locale, "/admin/settings");
 
-  const activeTab = tab === "docs" ? "docs" : "general";
+  const activeTab = tab === "docs" ? "docs" : tab === "partnership" ? "partnership" : "general";
 
-  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss] = await Promise.all([
+  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss, partnershipRaw, bgPartnership, bgVolunteer, bgAbout, bgContact] = await Promise.all([
     getTranslations("Admin"),
     getSiteSetting("hero_bg_url"),
     getSiteSetting("registrations_open"),
@@ -57,6 +59,11 @@ export default async function SettingsPage({
     getSiteSetting("display_font"),
     getSiteSetting("custom_font_name"),
     getSiteSetting("custom_font_css"),
+    getSiteSetting("partnership_content"),
+    getSiteSetting("bg_partnership"),
+    getSiteSetting("bg_volunteer"),
+    getSiteSetting("bg_about"),
+    getSiteSetting("bg_contact"),
   ]);
 
   const isOpen = registrationsOpen !== "false";
@@ -67,6 +74,9 @@ export default async function SettingsPage({
 
   let contactInfo: ContactInfo = DEFAULT_CONTACT;
   try { if (contactInfoRaw) contactInfo = { ...DEFAULT_CONTACT, ...JSON.parse(contactInfoRaw) }; } catch { /* use default */ }
+
+  let partnershipContent: PartnershipContent | null = null;
+  try { if (partnershipRaw) partnershipContent = JSON.parse(partnershipRaw); } catch { /* use default */ }
 
   let legalDocs: Record<string, string> = {};
   if (activeTab === "docs") {
@@ -97,6 +107,12 @@ export default async function SettingsPage({
         >
           Документы
         </Link>
+        <Link
+          href="?tab=partnership"
+          className={`px-4 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px ${activeTab === "partnership" ? "border-ember text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
+        >
+          Партнёрство
+        </Link>
       </div>
 
       {activeTab === "general" && (
@@ -126,11 +142,24 @@ export default async function SettingsPage({
               remove: t("settingsHeroRemove"),
             }}
           />
+
+          <PageBackgroundsEditor
+            pages={[
+              { key: "partnership", label: "Страница «Партнёрство»", currentUrl: bgPartnership || null },
+              { key: "volunteer", label: "Страница «Волонтёрство»", currentUrl: bgVolunteer || null },
+              { key: "about", label: "Страница «О нас»", currentUrl: bgAbout || null },
+              { key: "contact", label: "Страница «Контакты»", currentUrl: bgContact || null },
+            ]}
+          />
         </div>
       )}
 
       {activeTab === "docs" && (
         <LegalDocsEditor initial={legalDocs} />
+      )}
+
+      {activeTab === "partnership" && (
+        <PartnershipEditor initial={partnershipContent} />
       )}
     </main>
   );

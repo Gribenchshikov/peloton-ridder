@@ -1,5 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
+import { getSiteSetting } from "@/lib/queries";
+import type { PartnershipContent } from "@/lib/settingsActions";
 
 const SPONSOR_PACKAGES = [
   {
@@ -98,20 +100,40 @@ const PARTNER_TYPES = [
   },
 ];
 
-const STATS = [
-  { value: "400+", label: "участников в сезоне" },
-  { value: "3", label: "старта в год" },
-  { value: "7", label: "лет в Риддере" },
-  { value: "18–65", label: "лет — средний возраст аудитории" },
-];
+const DEFAULT_CONTENT: PartnershipContent = {
+  heroTitle: "Поддержите горный спорт",
+  heroEmphasis: "в Казахстане",
+  heroSubtitle:
+    "Peloton Ridder объединяет сотни бегунов в горах Восточного Казахстана. Наши старты — это живое сообщество, медиаприсутствие и прямой контакт с активной и платёжеспособной аудиторией.",
+  stats: [
+    { value: "400+", label: "участников в сезоне" },
+    { value: "3", label: "старта в год" },
+    { value: "7", label: "лет в Риддере" },
+    { value: "18–65", label: "лет — средний возраст аудитории" },
+  ],
+  sponsorsIntro:
+    "Выберите уровень присутствия вашего бренда на наших событиях. Для каждого пакета мы разрабатываем индивидуальное предложение — свяжитесь с нами, чтобы обсудить детали.",
+  partnersIntro:
+    "Партнёрство — это не спонсорство. Здесь мы ищем взаимовыгодный обмен ценностями: продуктом, экспертизой или аудиторией.",
+};
 
 export default async function PartnershipPage() {
-  const partners = await prisma.partner.findMany({ orderBy: { name: "asc" } });
+  const [partners, contentRaw, bgUrl] = await Promise.all([
+    prisma.partner.findMany({ orderBy: { name: "asc" } }),
+    getSiteSetting("partnership_content"),
+    getSiteSetting("bg_partnership"),
+  ]);
+
+  let content: PartnershipContent = DEFAULT_CONTENT;
+  try { if (contentRaw) content = { ...DEFAULT_CONTENT, ...JSON.parse(contentRaw) }; } catch { /* use default */ }
+
+  const bgStyle = bgUrl ? { backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined;
 
   return (
     <main className="flex-1">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden bg-ink px-6 py-20 text-white sm:py-28">
+      <section className="relative overflow-hidden bg-ink px-6 py-20 text-white sm:py-28" style={bgStyle}>
+        {bgUrl && <div className="absolute inset-0 bg-ink/70" aria-hidden />}
         <div
           className="pointer-events-none absolute inset-0 opacity-15"
           style={{
@@ -126,15 +148,14 @@ export default async function PartnershipPage() {
             Партнёрство и спонсорство
           </span>
           <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
-            Поддержите горный спорт<br className="hidden sm:block" />
-            <span className="text-ember"> в Казахстане</span>
+            {content.heroTitle}<br className="hidden sm:block" />
+            <span className="text-ember"> {content.heroEmphasis}</span>
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
-            Peloton Ridder объединяет сотни бегунов в горах Восточного Казахстана. Наши старты —
-            это живое сообщество, медиаприсутствие и прямой контакт с активной и платёжеспособной аудиторией.
+            {content.heroSubtitle}
           </p>
           <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-m)] border border-white/10 bg-white/10 sm:grid-cols-4">
-            {STATS.map((s) => (
+            {content.stats.map((s) => (
               <div key={s.value} className="bg-white/5 px-5 py-4 backdrop-blur-sm">
                 <div className="font-display text-2xl font-extrabold text-white sm:text-3xl">{s.value}</div>
                 <div className="mt-0.5 text-xs text-white/50">{s.label}</div>
@@ -149,10 +170,7 @@ export default async function PartnershipPage() {
         <div className="mb-10 max-w-2xl">
           <span className="text-xs font-bold uppercase tracking-widest text-ember">Спонсорство</span>
           <h2 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">Спонсорские пакеты</h2>
-          <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-            Выберите уровень присутствия вашего бренда на наших событиях. Для каждого пакета мы разрабатываем
-            индивидуальное предложение — свяжитесь с нами, чтобы обсудить детали.
-          </p>
+          <p className="mt-3 text-sm leading-relaxed text-ink-soft">{content.sponsorsIntro}</p>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -228,10 +246,7 @@ export default async function PartnershipPage() {
           <div className="mb-10 max-w-2xl">
             <span className="text-xs font-bold uppercase tracking-widest text-ember">Партнёрство</span>
             <h2 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">Форматы партнёрства</h2>
-            <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-              Партнёрство — это не спонсорство. Здесь мы ищем взаимовыгодный обмен ценностями:
-              продуктом, экспертизой или аудиторией.
-            </p>
+            <p className="mt-3 text-sm leading-relaxed text-ink-soft">{content.partnersIntro}</p>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-3">
