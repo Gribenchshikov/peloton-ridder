@@ -652,7 +652,9 @@
   "Nav": {
     "home": "Home",
     "races": "Races",
+    "series": "Series",
     "about": "About",
+    "partnership": "Partnership",
     "profile": "Profile",
     "signIn": "Sign in",
     "register": "Sign up",

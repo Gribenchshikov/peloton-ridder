@@ -652,7 +652,9 @@
   "Nav": {
     "home": "Главная",
     "races": "Забеги",
+    "series": "Серии",
     "about": "О нас",
+    "partnership": "Партнёрство",
     "profile": "Профиль",
     "signIn": "Войти",
     "register": "Регистрация",

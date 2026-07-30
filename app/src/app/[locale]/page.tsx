@@ -85,9 +85,12 @@ function Hero({
             {t("lead")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <button className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong">
+            <Link
+              href="/about"
+              className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+            >
               {t("joinCta")}
-            </button>
+            </Link>
             <Link
               href="/events"
               className="flex items-center gap-2 rounded-[var(--radius-s)] border border-[rgba(251,248,241,.38)] bg-[rgba(251,248,241,.08)] px-5 py-3 text-sm font-bold text-[#FBF8F1] backdrop-blur-sm transition-colors hover:border-[rgba(251,248,241,.7)]"

@@ -13,7 +13,9 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const navLinks = [
     { href: "/", label: t("home") },
     { href: "/events", label: t("races") },
+    { href: "/series", label: t("series") },
     { href: "/about", label: t("about") },
+    { href: "/partnership", label: t("partnership") },
   ];
 
   return (
