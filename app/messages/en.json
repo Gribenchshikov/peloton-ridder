@@ -28,7 +28,11 @@
     "volunteerEyebrow": "Volunteering",
     "volunteerTitle": "Help out at races",
     "volunteerText": "We need volunteers at aid stations, registration and on course. No prior experience needed.",
-    "volunteerCta": "Become a volunteer"
+    "volunteerCta": "Become a volunteer",
+    "partnershipEyebrow": "Partnership",
+    "partnershipTitle": "Become part of Ridder Race",
+    "partnershipText": "We welcome partnerships with brands, media and organisations. Sponsorship packages, prize partners, technical partners — we will find a format that works for you.",
+    "partnershipCta": "Learn about terms"
   },
   "Status": {
     "OPEN": "Registration open",

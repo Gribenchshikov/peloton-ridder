@@ -21,6 +21,7 @@ export default async function Home() {
     <main className="flex flex-1 flex-col">
       <Hero nextEvent={nextEvent} heroBgUrl={heroBgUrl} />
       <StatsStrip customStats={customStats} />
+      <PartnershipSection />
       <EventsSection events={events} />
       {series && <SeriesSection series={series} />}
       <VolunteerSection />
@@ -169,6 +170,54 @@ function StatsStrip({ customStats }: { customStats: { value: string; label: stri
         ))}
       </div>
     </div>
+  );
+}
+
+function PartnershipSection() {
+  const t = useTranslations("Home");
+  return (
+    <section className="px-6 py-8 pb-0">
+      <div className="mx-auto max-w-6xl">
+        <div
+          className="relative overflow-hidden rounded-[var(--radius-l)] px-10 py-12 sm:px-14"
+          style={{
+            background:
+              "linear-gradient(105deg, rgba(38,18,10,.97) 0%, rgba(38,18,10,.82) 45%, rgba(38,18,10,.50) 100%), var(--ember)",
+          }}
+        >
+          {/* декоративный акцент */}
+          <div
+            className="pointer-events-none absolute right-0 top-0 h-full w-[45%] opacity-10"
+            style={{
+              background:
+                "radial-gradient(ellipse 80% 90% at 90% 50%, var(--ember) 0%, transparent 70%)",
+            }}
+            aria-hidden
+          />
+
+          <div className="relative z-10 flex flex-wrap items-center justify-between gap-8">
+            <div className="max-w-[52ch]">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ember">
+                <span className="h-1.5 w-1.5 rounded-full bg-ember" />
+                {t("partnershipEyebrow")}
+              </span>
+              <h2 className="mt-3 font-display text-2xl font-bold text-white sm:text-3xl">
+                {t("partnershipTitle")}
+              </h2>
+              <p className="mt-3 max-w-[44ch] text-sm leading-relaxed text-[rgba(255,220,200,.80)]">
+                {t("partnershipText")}
+              </p>
+            </div>
+            <Link
+              href="/partnership"
+              className="shrink-0 rounded-[var(--radius-s)] bg-ember px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+            >
+              {t("partnershipCta")}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
