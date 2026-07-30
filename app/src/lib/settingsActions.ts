@@ -76,13 +76,21 @@ export async function savePartnershipContentAction(content: PartnershipContent) 
   return { ok: true };
 }
 
-import type { SponsorPackage } from "@/lib/sponsorPackages";
+import type { SponsorPackage, PartnerType } from "@/lib/sponsorPackages";
 
 export async function saveSponsorPackagesAction(packages: SponsorPackage[]) {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
   if (!Array.isArray(packages)) return { error: "invalid" };
   await upsertSiteSetting("sponsor_packages", JSON.stringify(packages));
+  return { ok: true };
+}
+
+export async function savePartnerTypesAction(types: PartnerType[]) {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+  if (!Array.isArray(types)) return { error: "invalid" };
+  await upsertSiteSetting("partner_types", JSON.stringify(types));
   return { ok: true };
 }
 

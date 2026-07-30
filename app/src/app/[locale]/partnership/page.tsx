@@ -2,46 +2,25 @@ import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSiteSetting } from "@/lib/queries";
 import type { PartnershipContent } from "@/lib/settingsActions";
-import { DEFAULT_SPONSOR_PACKAGES, type SponsorPackage } from "@/lib/sponsorPackages";
+import { DEFAULT_SPONSOR_PACKAGES, DEFAULT_PARTNER_TYPES, type SponsorPackage, type PartnerType } from "@/lib/sponsorPackages";
 
-const PARTNER_TYPES = [
-  {
-    id: "tech",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-      </svg>
-    ),
-    name: "Технический партнёр",
-    description: "Предоставляете оборудование или экспертизу — мы обеспечиваем видимость вашего бренда среди активной аудитории.",
-    youGive: ["Оборудование или услуги для проведения забега", "Профессиональная экспертиза или сервис"],
-    youGet: ["Логотип на сайте и баннерах", "Упоминание как технического партнёра", "Стартовые слоты для команды"],
-  },
-  {
-    id: "prize",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-      </svg>
-    ),
-    name: "Призовой партнёр",
-    description: "Ваша продукция попадает прямо в руки участников — это один из самых эффективных форматов для product-бренда.",
-    youGive: ["Призы для победителей дистанций", "Продукция для стартовых пакетов участников"],
-    youGet: ["Логотип на сайте и в соцсетях", "Упоминание в эфире на старте и финише", "Прямой контакт с аудиторией"],
-  },
-  {
-    id: "media",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="m15 10 4.553-2.07A1 1 0 0 1 21 8.845v6.31a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z"/>
-      </svg>
-    ),
-    name: "Медиа-партнёр",
-    description: "Взаимный обмен аудиторией: вы освещаете наши события, мы продвигаем вашу площадку.",
-    youGive: ["Публикации и репортажи о событии", "Фото- или видеосъёмка"],
-    youGet: ["Логотип на сайте", "Взаимные кросс-публикации", "Эксклюзивный контент с события"],
-  },
-];
+const PARTNER_ICONS = {
+  tech: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+    </svg>
+  ),
+  prize: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+    </svg>
+  ),
+  media: (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="m15 10 4.553-2.07A1 1 0 0 1 21 8.845v6.31a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z"/>
+    </svg>
+  ),
+};
 
 const DEFAULT_CONTENT: PartnershipContent = {
   heroTitle: "Поддержите горный спорт",
@@ -68,10 +47,11 @@ export default async function PartnershipPage({
   const { locale } = await params;
   const lang = (locale === "kk" || locale === "en") ? locale : "ru";
 
-  const [partners, contentRaw, packagesRaw, bgUrl] = await Promise.all([
+  const [partners, contentRaw, packagesRaw, typesRaw, bgUrl] = await Promise.all([
     prisma.partner.findMany({ orderBy: { name: "asc" } }),
     getSiteSetting("partnership_content"),
     getSiteSetting("sponsor_packages"),
+    getSiteSetting("partner_types"),
     getSiteSetting("bg_partnership"),
   ]);
 
@@ -80,6 +60,9 @@ export default async function PartnershipPage({
 
   let sponsorPackages: SponsorPackage[] = DEFAULT_SPONSOR_PACKAGES;
   try { if (packagesRaw) sponsorPackages = JSON.parse(packagesRaw); } catch { /* use default */ }
+
+  let partnerTypes: PartnerType[] = DEFAULT_PARTNER_TYPES;
+  try { if (typesRaw) partnerTypes = JSON.parse(typesRaw); } catch { /* use default */ }
 
   const bgStyle = bgUrl ? { backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined;
 
@@ -204,19 +187,19 @@ export default async function PartnershipPage({
           </div>
 
           <div className="grid gap-5 sm:grid-cols-3">
-            {PARTNER_TYPES.map((pt) => (
+            {partnerTypes.map((pt) => (
               <div key={pt.id} className="rounded-[var(--radius-m)] border border-border bg-surface p-6">
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[var(--radius-s)] bg-ember/10 text-ember">
-                  {pt.icon}
+                  {PARTNER_ICONS[pt.id as keyof typeof PARTNER_ICONS]}
                 </div>
-                <h3 className="font-display text-base font-bold text-ink">{pt.name}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{pt.description}</p>
+                <h3 className="font-display text-base font-bold text-ink">{pt.name[lang]}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{pt.description[lang]}</p>
 
                 <div className="mt-5 grid grid-cols-2 gap-4">
                   <div>
                     <p className="mb-2 text-[0.68rem] font-bold uppercase tracking-wide text-ink-faint">Вы даёте</p>
                     <ul className="flex flex-col gap-1.5">
-                      {pt.youGive.map((g) => (
+                      {pt.youGive[lang].map((g) => (
                         <li key={g} className="flex items-start gap-1.5 text-xs text-ink-soft">
                           <span className="mt-0.5 shrink-0 text-ink-faint">—</span>
                           {g}
@@ -227,7 +210,7 @@ export default async function PartnershipPage({
                   <div>
                     <p className="mb-2 text-[0.68rem] font-bold uppercase tracking-wide text-ink-faint">Вы получаете</p>
                     <ul className="flex flex-col gap-1.5">
-                      {pt.youGet.map((g) => (
+                      {pt.youGet[lang].map((g) => (
                         <li key={g} className="flex items-start gap-1.5 text-xs text-ink-soft">
                           <span className="mt-0.5 shrink-0 text-ember">✓</span>
                           {g}

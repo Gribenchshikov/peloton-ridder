@@ -13,9 +13,10 @@ import { LegalDocsEditor } from "./LegalDocsEditor";
 import { FontSelector } from "./FontSelector";
 import { PartnershipEditor } from "./PartnershipEditor";
 import { SponsorPackagesEditor } from "./SponsorPackagesEditor";
+import { PartnerTypesEditor } from "./PartnerTypesEditor";
 import { PageBackgroundsEditor } from "./PageBackgroundsEditor";
 import type { StatItem, ContactInfo, PartnershipContent } from "@/lib/settingsActions";
-import type { SponsorPackage } from "@/lib/sponsorPackages";
+import type { SponsorPackage, PartnerType } from "@/lib/sponsorPackages";
 
 const DEFAULT_STATS: StatItem[] = [
   { value: "4", label: "старта за сезон" },
@@ -51,7 +52,7 @@ export default async function SettingsPage({
 
   const activeTab = tab === "docs" ? "docs" : tab === "partnership" ? "partnership" : tab === "backgrounds" ? "backgrounds" : "general";
 
-  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss, partnershipRaw, sponsorPackagesRaw, bgPartnership, bgVolunteer, bgAbout, bgContact, bgEvents, bgSeries] = await Promise.all([
+  const [t, heroBgUrl, registrationsOpen, sizeTableRaw, homeStatsRaw, contactInfoRaw, displayFont, customFontName, customFontCss, partnershipRaw, sponsorPackagesRaw, partnerTypesRaw, bgPartnership, bgVolunteer, bgAbout, bgContact, bgEvents, bgSeries] = await Promise.all([
     getTranslations("Admin"),
     getSiteSetting("hero_bg_url"),
     getSiteSetting("registrations_open"),
@@ -63,6 +64,7 @@ export default async function SettingsPage({
     getSiteSetting("custom_font_css"),
     getSiteSetting("partnership_content"),
     getSiteSetting("sponsor_packages"),
+    getSiteSetting("partner_types"),
     getSiteSetting("bg_partnership"),
     getSiteSetting("bg_volunteer"),
     getSiteSetting("bg_about"),
@@ -85,6 +87,9 @@ export default async function SettingsPage({
 
   let sponsorPackages: SponsorPackage[] | null = null;
   try { if (sponsorPackagesRaw) sponsorPackages = JSON.parse(sponsorPackagesRaw); } catch { /* use default */ }
+
+  let partnerTypes: PartnerType[] | null = null;
+  try { if (partnerTypesRaw) partnerTypes = JSON.parse(partnerTypesRaw); } catch { /* use default */ }
 
   let legalDocs: Record<string, string> = {};
   if (activeTab === "docs") {
@@ -155,6 +160,7 @@ export default async function SettingsPage({
         <div className="flex flex-col gap-6">
           <PartnershipEditor initial={partnershipContent} />
           <SponsorPackagesEditor initial={sponsorPackages} />
+          <PartnerTypesEditor initial={partnerTypes} />
         </div>
       )}
 

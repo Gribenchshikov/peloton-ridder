@@ -1,6 +1,74 @@
 export type LocalizedText = { ru: string; en: string; kk: string };
 export type LocalizedList = { ru: string[]; en: string[]; kk: string[] };
 
+export type PartnerType = {
+  id: string;
+  name: LocalizedText;
+  description: LocalizedText;
+  youGive: LocalizedList;
+  youGet: LocalizedList;
+};
+
+export const DEFAULT_PARTNER_TYPES: PartnerType[] = [
+  {
+    id: "tech",
+    name: { ru: "Технический партнёр", en: "Technical Partner", kk: "Техникалық серіктес" },
+    description: {
+      ru: "Предоставляете оборудование или экспертизу — мы обеспечиваем видимость вашего бренда среди активной аудитории.",
+      en: "You provide equipment or expertise — we give your brand visibility among an active audience.",
+      kk: "Жабдықтар немесе тәжірибе ұсынасыз — біз брендіңізді белсенді аудитория арасында көрсетеміз.",
+    },
+    youGive: {
+      ru: ["Оборудование или услуги для проведения забега", "Профессиональная экспертиза или сервис"],
+      en: ["Equipment or services for the race", "Professional expertise or service"],
+      kk: ["Жарысты өткізуге арналған жабдықтар немесе қызметтер", "Кәсіби тәжірибе немесе қызмет"],
+    },
+    youGet: {
+      ru: ["Логотип на сайте и баннерах", "Упоминание как технического партнёра", "Стартовые слоты для команды"],
+      en: ["Logo on the website and banners", "Mention as technical partner", "Start slots for your team"],
+      kk: ["Сайт пен баннерлердегі логотип", "Техникалық серіктес ретінде атап өту", "Командаға старт слоттары"],
+    },
+  },
+  {
+    id: "prize",
+    name: { ru: "Призовой партнёр", en: "Prize Partner", kk: "Сыйлық серіктес" },
+    description: {
+      ru: "Ваша продукция попадает прямо в руки участников — это один из самых эффективных форматов для product-бренда.",
+      en: "Your products go directly into the hands of participants — one of the most effective formats for a product brand.",
+      kk: "Өніміңіз тікелей қатысушылардың қолына тиеді — бұл product-брендке арналған тиімді форматтардың бірі.",
+    },
+    youGive: {
+      ru: ["Призы для победителей дистанций", "Продукция для стартовых пакетов участников"],
+      en: ["Prizes for distance winners", "Products for participant start kits"],
+      kk: ["Дистанция жеңімпаздарына сыйлықтар", "Қатысушылардың старт пакеттеріне арналған өнімдер"],
+    },
+    youGet: {
+      ru: ["Логотип на сайте и в соцсетях", "Упоминание в эфире на старте и финише", "Прямой контакт с аудиторией"],
+      en: ["Logo on the website and social media", "MC mentions at start and finish", "Direct contact with the audience"],
+      kk: ["Сайт пен әлеуметтік желідегі логотип", "Старт пен финиште диктор атап өту", "Аудиториямен тікелей байланыс"],
+    },
+  },
+  {
+    id: "media",
+    name: { ru: "Медиа-партнёр", en: "Media Partner", kk: "Медиа серіктес" },
+    description: {
+      ru: "Взаимный обмен аудиторией: вы освещаете наши события, мы продвигаем вашу площадку.",
+      en: "Mutual audience exchange: you cover our events, we promote your platform.",
+      kk: "Өзара аудитория алмасу: сіз іс-шараларымызды жазасыз, біз алаңыңызды ілгерілетеміз.",
+    },
+    youGive: {
+      ru: ["Публикации и репортажи о событии", "Фото- или видеосъёмка"],
+      en: ["Publications and reports about the event", "Photo or video coverage"],
+      kk: ["Іс-шара туралы жарияланымдар мен репортаждар", "Фото немесе бейне түсіру"],
+    },
+    youGet: {
+      ru: ["Логотип на сайте", "Взаимные кросс-публикации", "Эксклюзивный контент с события"],
+      en: ["Logo on the website", "Mutual cross-posts", "Exclusive event content"],
+      kk: ["Сайттағы логотип", "Өзара кросс-жарияланымдар", "Іс-шарадан эксклюзивті контент"],
+    },
+  },
+];
+
 export type SponsorPackage = {
   id: string;
   featured: boolean;
