@@ -2,64 +2,7 @@ import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSiteSetting } from "@/lib/queries";
 import type { PartnershipContent } from "@/lib/settingsActions";
-
-const SPONSOR_PACKAGES = [
-  {
-    id: "title",
-    tier: "Титульный",
-    label: "Максимальная видимость",
-    featured: true,
-    benefits: [
-      "Имя компании в названии забега",
-      "Логотип на стартовой арке и всех баннерах",
-      "Брендированная зона на старте и финише",
-      "Объявления диктора на протяжении всего события",
-      "Логотип на финишных медалях участников",
-      "Логотип на футболках участников",
-      "Публикации в соцсетях (до, во время и после)",
-      "Логотип на сайте в разделе «Партнёры»",
-      "Пакет стартовых слотов для сотрудников",
-    ],
-  },
-  {
-    id: "general",
-    tier: "Генеральный",
-    label: "Широкое присутствие",
-    featured: false,
-    benefits: [
-      "Логотип на стартовой арке и баннерах",
-      "Стенд в стартовом городке",
-      "Объявления диктора",
-      "Логотип на футболках участников",
-      "Публикации в соцсетях (3 поста)",
-      "Логотип на сайте в разделе «Партнёры»",
-      "Пакет стартовых слотов для сотрудников",
-    ],
-  },
-  {
-    id: "official",
-    tier: "Официальный",
-    label: "Целевая поддержка",
-    featured: false,
-    benefits: [
-      "Логотип на выбранных баннерах",
-      "Публикации в соцсетях (2 поста)",
-      "Логотип на сайте в разделе «Партнёры»",
-      "Стартовые слоты для сотрудников",
-    ],
-  },
-  {
-    id: "info",
-    tier: "Информационный",
-    label: "Партнёр по информации",
-    featured: false,
-    benefits: [
-      "Логотип на сайте в разделе «Партнёры»",
-      "Взаимный обмен публикациями в соцсетях",
-      "Упоминание в рассылке участникам",
-    ],
-  },
-];
+import { DEFAULT_SPONSOR_PACKAGES, type SponsorPackage } from "@/lib/sponsorPackages";
 
 const PARTNER_TYPES = [
   {
@@ -117,15 +60,26 @@ const DEFAULT_CONTENT: PartnershipContent = {
     "Партнёрство — это не спонсорство. Здесь мы ищем взаимовыгодный обмен ценностями: продуктом, экспертизой или аудиторией.",
 };
 
-export default async function PartnershipPage() {
-  const [partners, contentRaw, bgUrl] = await Promise.all([
+export default async function PartnershipPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const lang = (locale === "kk" || locale === "en") ? locale : "ru";
+
+  const [partners, contentRaw, packagesRaw, bgUrl] = await Promise.all([
     prisma.partner.findMany({ orderBy: { name: "asc" } }),
     getSiteSetting("partnership_content"),
+    getSiteSetting("sponsor_packages"),
     getSiteSetting("bg_partnership"),
   ]);
 
   let content: PartnershipContent = DEFAULT_CONTENT;
   try { if (contentRaw) content = { ...DEFAULT_CONTENT, ...JSON.parse(contentRaw) }; } catch { /* use default */ }
+
+  let sponsorPackages: SponsorPackage[] = DEFAULT_SPONSOR_PACKAGES;
+  try { if (packagesRaw) sponsorPackages = JSON.parse(packagesRaw); } catch { /* use default */ }
 
   const bgStyle = bgUrl ? { backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined;
 
@@ -174,7 +128,7 @@ export default async function PartnershipPage() {
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {SPONSOR_PACKAGES.map((pkg) => (
+          {sponsorPackages.map((pkg) => (
             <div
               key={pkg.id}
               className={`relative flex flex-col rounded-[var(--radius-m)] border p-6 ${
@@ -196,13 +150,13 @@ export default async function PartnershipPage() {
                       : "bg-surface-2 text-ink-soft"
                   }`}
                 >
-                  {pkg.tier}
+                  {pkg.tier[lang]}
                 </span>
-                <p className="mt-2 text-xs text-ink-faint">{pkg.label}</p>
+                <p className="mt-2 text-xs text-ink-faint">{pkg.label[lang]}</p>
               </div>
 
               <ul className="flex flex-col gap-2 text-sm text-ink-soft">
-                {pkg.benefits.map((b) => (
+                {pkg.benefits[lang].map((b) => (
                   <li key={b} className="flex items-start gap-2">
                     <svg
                       width="14"

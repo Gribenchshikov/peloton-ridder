@@ -76,6 +76,16 @@ export async function savePartnershipContentAction(content: PartnershipContent) 
   return { ok: true };
 }
 
+import type { SponsorPackage } from "@/lib/sponsorPackages";
+
+export async function saveSponsorPackagesAction(packages: SponsorPackage[]) {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+  if (!Array.isArray(packages)) return { error: "invalid" };
+  await upsertSiteSetting("sponsor_packages", JSON.stringify(packages));
+  return { ok: true };
+}
+
 const ALLOWED_BG_PAGES: readonly string[] = ["home", "events", "series", "partnership", "volunteer", "about", "contact"];
 
 function bgKey(page: string): string {
