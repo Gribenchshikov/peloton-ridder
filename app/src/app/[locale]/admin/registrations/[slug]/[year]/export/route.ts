@@ -136,16 +136,16 @@ export async function GET(
 }
 
 function toCsv(rows: (string | number)[][]): string {
-  return rows
-    .map((row) =>
-      row
-        .map((cell) => {
-          const s = String(cell);
-          return s.includes(",") || s.includes('"') || s.includes("\n")
-            ? `"${s.replace(/"/g, '""')}"`
-            : s;
-        })
-        .join(","),
-    )
-    .join("\r\n");
+  const SEP = ";";
+  const lines = rows.map((row) =>
+    row
+      .map((cell) => {
+        const s = String(cell);
+        return s.includes(SEP) || s.includes('"') || s.includes("\n")
+          ? `"${s.replace(/"/g, '""')}"`
+          : s;
+      })
+      .join(SEP),
+  );
+  return `sep=${SEP}\r\n` + lines.join("\r\n");
 }

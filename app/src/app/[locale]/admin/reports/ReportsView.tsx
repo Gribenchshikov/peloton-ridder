@@ -410,9 +410,10 @@ function FinancialSection({
     for (const i of incomes.filter((i) => i.amount > 0)) rows.push([`+ ${i.label || "Доход"} (₸)`, String(i.amount)]);
     rows.push(["Реальный доход (₸)", String(profit)]);
 
-    const csv = "﻿" + rows
+    const SEP = ";";
+    const csv = `sep=${SEP}\r\n﻿` + rows
       .map((row) =>
-        row.map((cell) => (cell.includes(",") || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell)).join(","),
+        row.map((cell) => (cell.includes(SEP) || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell)).join(SEP),
       )
       .join("\r\n");
 
