@@ -163,7 +163,7 @@ export function UsersView({
             href="/admin"
             className="text-sm font-semibold text-ink-faint transition-colors hover:text-ink"
           >
-            ← {t("title")}
+            ← {t("backToAdminCta")}
           </Link>
           <h1 className="mt-2 font-display text-2xl font-bold text-ink">{t("usersTitle")}</h1>
         </div>

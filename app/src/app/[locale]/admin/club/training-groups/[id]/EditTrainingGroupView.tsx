@@ -21,7 +21,7 @@ export function EditTrainingGroupView({ locale, group }: { locale: string; group
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-16">
-      <AdminFormHeader title={group.title} backHref="/admin/club" />
+      <AdminFormHeader title={group.title} backHref="/admin/club" backLabel={t("backToClubCta")} />
       <TrainingGroupForm
         mode="edit"
         action={action}

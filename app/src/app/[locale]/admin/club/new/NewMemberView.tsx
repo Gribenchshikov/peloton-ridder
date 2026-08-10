@@ -11,7 +11,7 @@ export function NewMemberView({ locale }: { locale: string }) {
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-6 py-16">
-      <AdminFormHeader title={t("newMemberTitle")} backHref="/admin/club" />
+      <AdminFormHeader title={t("newMemberTitle")} backHref="/admin/club" backLabel={t("backToClubCta")} />
       <MemberForm mode="create" locale={locale} action={action} />
     </main>
   );

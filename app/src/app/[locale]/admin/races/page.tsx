@@ -19,7 +19,7 @@ export default async function RacesAdminPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/admin" className="text-sm font-semibold text-ink-faint transition-colors hover:text-ink">
-            ← {t("title")}
+            ← {t("backToAdminCta")}
           </Link>
           <h1 className="mt-2 font-display text-2xl font-bold text-ink">{t("racesTitle")}</h1>
         </div>
