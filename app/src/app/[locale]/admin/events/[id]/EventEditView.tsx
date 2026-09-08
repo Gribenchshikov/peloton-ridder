@@ -4,11 +4,13 @@ import { Link } from "@/i18n/navigation";
 import { AdminFormHeader } from "../AdminFormHeader";
 import { EventForm } from "../EventForm";
 import { OnlineEventEditView } from "./OnlineEventEditView";
+import { MassEventEditView } from "./MassEventEditView";
 import { DistancesSection } from "./DistancesSection";
 import { MerchSection } from "./MerchSection";
 import { PartnersSection } from "./PartnersSection";
 import { RegulationsSection } from "./RegulationsSection";
 import { AboutSection } from "./AboutSection";
+import { MediaLinksSection } from "./MediaLinksSection";
 import { PhotosSection } from "./PhotosSection";
 import { DayProgramSection } from "./DayProgramSection";
 import { HowToGetSection } from "./HowToGetSection";
@@ -45,6 +47,10 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
 
 export function EventEditView({ event, allPartners, allRaces, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; allRaces: { id: string; name: string }[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; }) {
   const t = useTranslations("Admin");
+
+  if (event.race.isMass) {
+    return <MassEventEditView event={event} locale={locale} />;
+  }
 
   if (event.race.isChallenge) {
     return (
@@ -180,7 +186,14 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
         <AboutSection
           eventId={event.id}
           initialAboutText={event.aboutText ?? ""}
-          initialPhotoLinks={(event.photoLinks as PhotoLink[] | null) ?? []}
+        />
+      </section>
+
+      <section>
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">Фото и видео</div>
+        <MediaLinksSection
+          eventId={event.id}
+          initialLinks={(event.photoLinks as PhotoLink[] | null) ?? []}
         />
         <div className="mt-6">
           <PhotosSection
@@ -219,6 +232,8 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
       <ResultsSection
         eventId={event.id}
         initialResults={(event.results ?? []) as Result[]}
+        initialResultsUrl={event.resultsUrl ?? null}
+        initialItraResultsUrl={event.itraResultsUrl ?? null}
         distances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
       />
 

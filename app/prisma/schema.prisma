@@ -91,6 +91,7 @@ model Race {
   icon        String
   color       String
   isChallenge Boolean      @default(false)
+  isMass      Boolean      @default(false)
   events      Event[]
   seriesRaces SeriesRace[]
 }
@@ -118,6 +119,7 @@ model Event {
   cancellationDeadline        DateTime
   medicalCancellationDeadline DateTime
   resultsUrl                  String?
+  itraResultsUrl              String?
   createdAt                   DateTime               @default(now())
   coverImageUrl               String?
   volunteerChatUrl            String?

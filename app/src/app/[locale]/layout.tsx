@@ -20,6 +20,10 @@ const FONT_CSS: Record<string, string> = {
 export const metadata: Metadata = {
   title: "Peloton Ridder",
   description: "Беговой клуб · Риддер",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: "/apple-icon.png",
+  },
 };
 
 // Публичные страницы читают БД напрямую (события, серия, забеги) — рендерим

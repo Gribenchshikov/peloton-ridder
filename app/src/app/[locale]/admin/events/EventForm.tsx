@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
+import { useRouter } from "@/i18n/navigation";
 import { createEventAction, updateEventAction, type ActionState } from "./actions";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
@@ -39,6 +40,7 @@ export function EventForm(props: EventFormProps) {
   const t = useTranslations("Admin");
   const tAuth = useTranslations("Auth");
   const tStatus = useTranslations("Status");
+  const router = useRouter();
 
   const boundAction =
     props.mode === "create" ? createEventAction.bind(null, props.locale) : updateEventAction.bind(null, props.eventId);
@@ -55,6 +57,10 @@ export function EventForm(props: EventFormProps) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.eventId]);
+
+  useEffect(() => {
+    if (state.success) router.refresh();
+  }, [state.success, router]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
@@ -95,6 +101,7 @@ export function EventForm(props: EventFormProps) {
       <FormField label={t("fieldLocation")} name="location" type="text" required defaultValue={d?.location} />
       <FormField label={t("fieldLocationUrl")} name="locationUrl" type="url" optional defaultValue={d?.locationUrl ?? undefined} />
       <SelectField
+        key={d?.status ?? "DRAFT"}
         label={t("fieldStatus")}
         name="status"
         required

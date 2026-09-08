@@ -77,7 +77,13 @@ const MerchItemFieldsSchema = z.object({
   order: z.coerce.number().int().min(0).max(9999),
 });
 
-export type ActionState = { error?: string; success?: boolean; eventId?: string; invalidFields?: string[] };
+export type ActionState = { error?: string; success?: boolean; eventId?: string; invalidFields?: string[]; url?: string };
+
+function asRegulationFiles(value: unknown): RegulationFile[] {
+  if (Array.isArray(value)) return value as RegulationFile[];
+  if (value && typeof value === "object" && "url" in value) return [value as RegulationFile];
+  return [];
+}
 
 function parseFormData<T>(schema: z.ZodType<T>, formData: FormData): { data: T } | { error: "invalid"; invalidFields: string[] } {
   const parsed = schema.safeParse(Object.fromEntries(formData));
@@ -109,6 +115,12 @@ export async function createEventAction(_locale: string, _prevState: ActionState
   const parsed = parseFormData(CreateEventSchema, formData);
   if ("error" in parsed) return parsed;
 
+  const race = await prisma.race.findUnique({
+    where: { id: parsed.data.raceId },
+    select: { isMass: true, isChallenge: true },
+  });
+  if (!race || race.isMass || race.isChallenge) return { error: "invalid" };
+
   let eventId: string;
   try {
     const event = await prisma.event.create({ data: { ...parsed.data, ...coverResult } });
@@ -134,23 +146,34 @@ export async function updateEventAction(eventId: string, _prevState: ActionState
   const raceName = (formData.get("raceName") as string | null)?.trim() || null;
   const newRaceId = (formData.get("raceId") as string | null)?.trim() || null;
 
+  if (newRaceId) {
+    const race = await prisma.race.findUnique({
+      where: { id: newRaceId },
+      select: { isMass: true, isChallenge: true },
+    });
+    if (!race || race.isMass || race.isChallenge) return { error: "invalid" };
+  }
+
   try {
     const event = await prisma.event.update({
       where: { id: eventId },
       data: { ...parsed.data, ...coverResult, ...(newRaceId ? { raceId: newRaceId } : {}) },
+      select: { raceId: true, year: true, race: { select: { slug: true } } },
     });
     const targetRaceId = newRaceId ?? event.raceId;
     if (raceName) {
       await prisma.race.update({ where: { id: targetRaceId }, data: { name: raceName } });
     }
+    revalidatePath(`/[locale]/events/${event.race.slug}/${event.year}`, "page");
   } catch (err) {
     if (isUniqueConstraintError(err)) return { error: "duplicate" };
     throw err;
   }
 
-  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath(`/[locale]/admin/events/${eventId}`, "page");
   revalidatePath("/[locale]/admin", "page");
-  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  revalidatePath("/[locale]", "page");
+  revalidatePath("/[locale]/events", "page");
   return { success: true };
 }
 
@@ -414,16 +437,16 @@ export async function uploadRegulationFileAction(
   const saved = await saveFile(file, "regulations");
   if ("error" in saved) return { error: saved.error };
 
-  const displayName = typeof name === "string" && name.trim() ? name.trim() : file.name;
+  const displayName = typeof name === "string" && name.trim() ? name.trim().slice(0, 200) : file.name;
 
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { regulationFiles: true } });
-  const existing = (event?.regulationFiles ?? []) as RegulationFile[];
+  const existing = asRegulationFiles(event?.regulationFiles);
   const updated = [...existing, { locale, name: displayName, url: saved.url } as RegulationFile];
 
   await prisma.event.update({ where: { id: eventId }, data: { regulationFiles: updated } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
-  return { success: true };
+  return { success: true, url: saved.url };
 }
 
 export async function removeRegulationFileAction(
@@ -438,7 +461,7 @@ export async function removeRegulationFileAction(
   if (typeof url !== "string") return { error: "invalid" };
 
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { regulationFiles: true } });
-  const existing = (event?.regulationFiles ?? []) as RegulationFile[];
+  const existing = asRegulationFiles(event?.regulationFiles);
   const updated = existing.filter((f) => f.url !== url);
 
   await prisma.event.update({ where: { id: eventId }, data: { regulationFiles: updated } });
@@ -467,16 +490,16 @@ export async function uploadWaiverFileAction(
   const saved = await saveFile(file, "waivers");
   if ("error" in saved) return { error: saved.error };
 
-  const displayName = typeof name === "string" && name.trim() ? name.trim() : file.name;
+  const displayName = typeof name === "string" && name.trim() ? name.trim().slice(0, 200) : file.name;
 
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { waiverFiles: true } });
-  const existing = (event?.waiverFiles ?? []) as RegulationFile[];
+  const existing = asRegulationFiles(event?.waiverFiles);
   const updated = [...existing, { locale, name: displayName, url: saved.url } as RegulationFile];
 
   await prisma.event.update({ where: { id: eventId }, data: { waiverFiles: updated } });
   revalidatePath("/[locale]/admin/events/[id]", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
-  return { success: true };
+  return { success: true, url: saved.url };
 }
 
 export async function removeWaiverFileAction(
@@ -491,7 +514,7 @@ export async function removeWaiverFileAction(
   if (typeof url !== "string") return { error: "invalid" };
 
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { waiverFiles: true } });
-  const existing = (event?.waiverFiles ?? []) as RegulationFile[];
+  const existing = asRegulationFiles(event?.waiverFiles);
   const updated = existing.filter((f) => f.url !== url);
 
   await prisma.event.update({ where: { id: eventId }, data: { waiverFiles: updated } });
@@ -542,17 +565,51 @@ export async function updateAboutAction(
   if (!adminId) return { error: "unauthorized" };
 
   const aboutText = formData.get("aboutText");
-  const linksRaw = formData.get("photoLinks");
-
-  let photoLinks: PhotoLink[] = [];
-  if (typeof linksRaw === "string" && linksRaw) {
-    try { photoLinks = JSON.parse(linksRaw); } catch { return { error: "invalid" }; }
-  }
 
   await prisma.event.update({
     where: { id: eventId },
     data: {
       aboutText: typeof aboutText === "string" ? aboutText || null : null,
+    },
+  });
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath("/[locale]/events/[slug]/[year]", "page");
+  return { success: true };
+}
+
+const MediaLinkSchema = z.object({
+  url: httpUrlSchema,
+  label: z.string().trim().min(1).max(80),
+  coverUrl: z.string().trim().min(1).max(500).optional(),
+  kind: z.enum(["photo", "video"]).optional(),
+});
+
+export async function updateMediaLinksAction(
+  eventId: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const linksRaw = formData.get("photoLinks");
+  let parsed: unknown = [];
+  if (typeof linksRaw === "string" && linksRaw) {
+    try { parsed = JSON.parse(linksRaw); } catch { return { error: "invalid" }; }
+  }
+  const result = z.array(MediaLinkSchema).safeParse(parsed);
+  if (!result.success) return { error: "invalid" };
+
+  const photoLinks: PhotoLink[] = result.data.map((link) => ({
+    url: link.url,
+    label: link.label,
+    ...(link.coverUrl ? { coverUrl: link.coverUrl } : {}),
+    kind: link.kind === "video" ? "video" : "photo",
+  }));
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: {
       photoLinks: photoLinks.length ? (photoLinks as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
     },
   });
@@ -826,64 +883,36 @@ export async function importResultsCsvAction(
   return { success: true, count: rows.length };
 }
 
-export async function fetchMyraceResultsAction(
+export async function saveResultsLinkAction(
   eventId: string,
   _prevState: ActionState,
   formData: FormData,
-): Promise<ActionState & { count?: number }> {
+): Promise<ActionState> {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
 
-  const url = formData.get("url");
-  if (typeof url !== "string" || !url.startsWith("http")) return { error: "invalid_url" };
+  const kind = formData.get("kind");
+  if (kind !== "myrace" && kind !== "itra") return { error: "invalid" };
 
-  let xml: string;
-  try {
-    const res = await fetch(url, { next: { revalidate: 0 } });
-    if (!res.ok) return { error: "fetch_failed" };
-    xml = await res.text();
-  } catch {
-    return { error: "fetch_failed" };
+  const field = kind === "itra" ? "itraResultsUrl" : "resultsUrl";
+  const clear = formData.get("clear") === "1";
+  let url: string | null = null;
+  if (!clear) {
+    const parsed = httpUrlSchema.safeParse(formData.get("url"));
+    if (!parsed.success) return { error: "invalid_url" };
+    url = parsed.data;
   }
 
-  // Parse XML: look for <Result> or <result> elements with BibNumber/Name/Place/Time
-  const rows: { bibNumber: number; name: string; place: number | null; time: string | null; category: string | null }[] = [];
-  const resultRegex = /<(?:Result|result|Participant|participant)([^>]*)>/g;
-  const attrRegex = /(\w+)="([^"]*)"/g;
+  const updated = await prisma.event.update({
+    where: { id: eventId },
+    data: { [field]: url },
+    select: { year: true, race: { select: { slug: true } } },
+  });
 
-  function getAttr(attrs: string, ...keys: string[]): string {
-    const m: Record<string, string> = {};
-    let a: RegExpExecArray | null;
-    const rx = /(\w+)="([^"]*)"/g;
-    while ((a = rx.exec(attrs)) !== null) m[a[1].toLowerCase()] = a[2];
-    for (const k of keys) if (m[k]) return m[k];
-    return "";
-  }
-
-  let match: RegExpExecArray | null;
-  while ((match = resultRegex.exec(xml)) !== null) {
-    const attrs = match[1];
-    const bib = Number(getAttr(attrs, "bibnumber", "bib", "number", "startno"));
-    if (!bib || isNaN(bib)) continue;
-    const name = getAttr(attrs, "name", "fullname", "athlete");
-    const place = Number(getAttr(attrs, "place", "rank", "position")) || null;
-    const time = getAttr(attrs, "time", "chiptime", "guntime", "resulttime") || null;
-    const category = getAttr(attrs, "category", "class", "agegroup") || null;
-    rows.push({ bibNumber: bib, name, place, time, category });
-  }
-
-  if (rows.length === 0) return { error: "no_results_in_xml" };
-
-  await prisma.$transaction([
-    prisma.result.deleteMany({ where: { eventId, source: "MYRACE" } }),
-    prisma.result.createMany({
-      data: rows.map((r) => ({ eventId, source: "MYRACE", ...r })),
-      skipDuplicates: true,
-    }),
-  ]);
-  revalidatePath("/[locale]/admin/events/[id]", "page");
-  revalidatePath("/[locale]/events/[slug]/[year]", "page");
-  return { success: true, count: rows.length };
+  revalidatePath(`/[locale]/admin/events/${eventId}`, "page");
+  revalidatePath(`/[locale]/events/${updated.race.slug}/${updated.year}`, "page");
+  revalidatePath("/[locale]/events", "page");
+  return { success: true };
 }
 
 export async function clearResultsAction(

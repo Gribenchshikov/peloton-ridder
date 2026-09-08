@@ -1,32 +1,26 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { RaceFormState } from "./actions";
+import { slugify } from "@/lib/slugify";
 
 type Props =
   | { mode: "create"; action: (prev: RaceFormState, fd: FormData) => Promise<RaceFormState> }
   | {
       mode: "edit";
       action: (prev: RaceFormState, fd: FormData) => Promise<RaceFormState>;
-      defaults: { name: string; slug: string; courseIntro: string; icon: string; color: string; isChallenge: boolean };
+      defaults: { name: string; slug: string; courseIntro: string; icon: string; color: string; isChallenge: boolean; isMass: boolean };
     };
-
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 export function RaceForm(props: Props) {
   const t = useTranslations("Admin");
   const [state, dispatch, pending] = useActionState(props.action, {});
   const slugRef = useRef<HTMLInputElement>(null);
   const defaults = props.mode === "edit" ? props.defaults : null;
-  const [isChallenge, setIsChallenge] = useState(defaults?.isChallenge ?? false);
+  const [kind, setKind] = useState<"race" | "challenge" | "mass">(
+    defaults?.isMass ? "mass" : defaults?.isChallenge ? "challenge" : "race",
+  );
 
   function onNameChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (props.mode === "create" && slugRef.current && !slugRef.current.dataset.edited) {
@@ -43,31 +37,46 @@ export function RaceForm(props: Props) {
     <form action={dispatch} className="flex flex-col gap-5">
       {/* Тип трассы */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-semibold text-ink">Тип трассы</label>
+        <label className="text-sm font-semibold text-ink">Тип</label>
         <div className="flex gap-1 rounded-[var(--radius-s)] border border-border bg-surface p-1">
           <button
             type="button"
-            onClick={() => setIsChallenge(false)}
+            onClick={() => setKind("race")}
             className={`flex-1 rounded-[var(--radius-s)] py-2 text-sm font-semibold transition-colors ${
-              !isChallenge ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+              kind === "race" ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
             }`}
           >
-            Офлайн
+            Забег
           </button>
           <button
             type="button"
-            onClick={() => setIsChallenge(true)}
+            onClick={() => setKind("challenge")}
             className={`flex-1 rounded-[var(--radius-s)] py-2 text-sm font-semibold transition-colors ${
-              isChallenge ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+              kind === "challenge" ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
             }`}
           >
             Онлайн
           </button>
+          <button
+            type="button"
+            onClick={() => setKind("mass")}
+            className={`flex-1 rounded-[var(--radius-s)] py-2 text-sm font-semibold transition-colors ${
+              kind === "mass" ? "bg-ember text-white" : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Мероприятие
+          </button>
         </div>
-        <input type="hidden" name="isChallenge" value={isChallenge ? "on" : ""} />
-        {isChallenge && (
+        <input type="hidden" name="isChallenge" value={kind === "challenge" ? "on" : ""} />
+        <input type="hidden" name="isMass" value={kind === "mass" ? "on" : ""} />
+        {kind === "challenge" && (
           <p className="text-xs text-ink-faint">
             Участники загружают активности через Strava. Результаты — суммарный км за период.
+          </p>
+        )}
+        {kind === "mass" && (
+          <p className="text-xs text-ink-faint">
+            Культмассовое событие без регистрации и протокола — описание, фото и видео.
           </p>
         )}
       </div>

@@ -19,13 +19,17 @@ export default async function EventRegisterPage({
 
   const [session, event] = await Promise.all([auth(), getEventForRegistration(slug, Number(year))]);
 
+  if (!event) notFound();
+  if (event.race.isMass) {
+    return redirect({ href: `/events/${slug}/${year}`, locale });
+  }
+
   if (!session?.user?.id) {
     return redirect({
       href: { pathname: "/login", query: { callbackUrl: `/events/${slug}/${year}/register` } },
       locale,
     });
   }
-  if (!event) notFound();
 
   if (event.status !== "OPEN" || event.registrationDeadline < new Date()) {
     return redirect({ href: `/events/${slug}/${year}`, locale });

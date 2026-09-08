@@ -1,4 +1,9 @@
-export type PhotoLink = { url: string; label: string; coverUrl?: string };
+export type MediaKind = "photo" | "video";
+export type PhotoLink = { url: string; label: string; coverUrl?: string; kind?: MediaKind };
+
+export function mediaKind(link: PhotoLink): MediaKind {
+  return link.kind === "video" ? "video" : "photo";
+}
 export type DayProgramItem = { time: string; description: string };
 export type DistanceEquipment = {
   [distanceId: string]: {

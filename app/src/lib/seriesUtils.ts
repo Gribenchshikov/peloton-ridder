@@ -7,17 +7,23 @@ export type LeaderboardEntry = {
   name: string;
   userId: string | null;
   stagesCount: number;
-  totalSeconds: number; // сумма времён для тайбрейка
+  scoredStages: number;
+  totalSeconds: number; // сумма известных времён
   stages: { stageOrder: number; place: number | null; time: string | null }[];
 };
 
-// "3:42:15" → секунды; null если не распознать
+// "3:42:15" → секунды; 0 если не распознать
 export function parseTimeToSeconds(time: string | null | undefined): number {
   if (!time) return 0;
   const parts = time.split(":").map(Number);
+  if (parts.some((n) => Number.isNaN(n))) return 0;
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   return 0;
+}
+
+function hasScoredResult(place: number | null, time: string | null): boolean {
+  return place != null || Boolean(time?.trim());
 }
 
 export function buildLeaderboard(season: Season): LeaderboardEntry[] {
@@ -38,6 +44,7 @@ export function buildLeaderboard(season: Season): LeaderboardEntry[] {
           name: result.name,
           userId,
           stagesCount: 0,
+          scoredStages: 0,
           totalSeconds: 0,
           stages: [],
         };
@@ -45,14 +52,20 @@ export function buildLeaderboard(season: Season): LeaderboardEntry[] {
       }
 
       entry.stagesCount += 1;
+      if (hasScoredResult(result.place, result.time)) entry.scoredStages += 1;
       entry.totalSeconds += parseTimeToSeconds(result.time);
       entry.stages.push({ stageOrder: sr.stageOrder, place: result.place, time: result.time });
     }
   }
 
   return Array.from(map.values()).sort((a, b) => {
+    if (b.scoredStages !== a.scoredStages) return b.scoredStages - a.scoredStages;
+    const aTimed = a.totalSeconds > 0;
+    const bTimed = b.totalSeconds > 0;
+    if (aTimed !== bTimed) return aTimed ? -1 : 1;
+    if (aTimed) return a.totalSeconds - b.totalSeconds;
     if (b.stagesCount !== a.stagesCount) return b.stagesCount - a.stagesCount;
-    return a.totalSeconds - b.totalSeconds; // меньше времени = лучше
+    return a.name.localeCompare(b.name, "ru");
   });
 }
 

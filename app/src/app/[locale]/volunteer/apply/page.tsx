@@ -21,7 +21,7 @@ export default async function VolunteerApplyPage({
   }
 
   const events = await prisma.event.findMany({
-    where: { status: { in: ["OPEN", "DRAFT"] } },
+    where: { status: { in: ["OPEN", "DRAFT"] }, race: { isMass: false } },
     orderBy: { dateISO: "asc" },
     select: { id: true, year: true, race: { select: { name: true } } },
   });

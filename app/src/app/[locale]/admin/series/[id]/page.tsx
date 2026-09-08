@@ -16,7 +16,7 @@ export default async function EditSeriesPage({ params }: { params: Promise<{ loc
       where: { id },
       include: { seriesRaces: { orderBy: { stageOrder: "asc" } } },
     }),
-    prisma.race.findMany({ orderBy: { name: "asc" } }),
+    prisma.race.findMany({ where: { isMass: false }, orderBy: { name: "asc" } }),
   ]);
   if (!series) notFound();
 

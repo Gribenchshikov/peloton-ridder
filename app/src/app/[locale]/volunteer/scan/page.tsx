@@ -24,7 +24,7 @@ export default async function ScanPage({
   }
 
   const events = await prisma.event.findMany({
-    where: { status: { in: ["OPEN", "CLOSED", "COMPLETED"] } },
+    where: { status: { in: ["OPEN", "CLOSED", "COMPLETED"] }, race: { isMass: false } },
     orderBy: { dateISO: "desc" },
     take: 10,
     select: { id: true, year: true, race: { select: { name: true } } },

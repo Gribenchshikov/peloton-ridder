@@ -10,7 +10,7 @@ export default async function NewSeriesPage({ params }: { params: Promise<{ loca
 
   const [t, allRaces] = await Promise.all([
     getTranslations("Admin"),
-    prisma.race.findMany({ orderBy: { name: "asc" } }),
+    prisma.race.findMany({ where: { isMass: false }, orderBy: { name: "asc" } }),
   ]);
 
   return (

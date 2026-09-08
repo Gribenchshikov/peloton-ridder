@@ -23,10 +23,17 @@ export default async function EditEventPage({
       orderBy: { sentAt: "desc" },
       select: { subject: true, sentAt: true },
     }),
-    prisma.race.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.race.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, isChallenge: true, isMass: true },
+    }),
   ]);
   if (!event) notFound();
 
+  const racesForForm = allRaces.filter((r) =>
+    event.race.isChallenge ? r.isChallenge && !r.isMass : !r.isChallenge && !r.isMass,
+  );
+
   const wizardStep = wizard === "2" ? "2" : wizard === "3" ? "3" : undefined;
-  return <EventEditView event={event} allPartners={allPartners} allRaces={allRaces} wizard={wizardStep} locale={locale} lastNotification={lastNotification} />;
+  return <EventEditView event={event} allPartners={allPartners} allRaces={racesForForm} wizard={wizardStep} locale={locale} lastNotification={lastNotification} />;
 }

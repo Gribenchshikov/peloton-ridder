@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { EventCard } from "@/components/EventCard";
-import { getHomeEvents, getArchiveEvents } from "@/lib/queries";
+import { getCalendarEvents, getArchiveEvents } from "@/lib/queries";
 import { getSiteSetting } from "@/lib/queries";
 
 export default async function EventsPage({
@@ -12,7 +12,7 @@ export default async function EventsPage({
   const { tab } = await searchParams;
   const isArchive = tab === "archive";
   const [filtered, bgUrl] = await Promise.all([
-    isArchive ? getArchiveEvents() : getHomeEvents(),
+    isArchive ? getArchiveEvents() : getCalendarEvents(),
     getSiteSetting("bg_events"),
   ]);
 

@@ -1,9 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { getSiteSetting } from "@/lib/queries";
+import { localizeTeamMember } from "@/lib/teamI18n";
 import type { TeamMember, TrainingGroup } from "@/generated/prisma/client";
 
-export default async function AboutPage() {
+export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const t = await getTranslations("About");
 
   const [members, trainingGroups, bgUrl] = await Promise.all([
@@ -12,8 +14,8 @@ export default async function AboutPage() {
     getSiteSetting("bg_about"),
   ]);
 
-  const team = members.filter((m) => m.type === "TEAM");
-  const volunteers = members.filter((m) => m.type === "VOLUNTEER");
+  const team = members.filter((m) => m.type === "TEAM").map((m) => localizeTeamMember(m, locale));
+  const volunteers = members.filter((m) => m.type === "VOLUNTEER").map((m) => localizeTeamMember(m, locale));
 
   return (
     <main className="flex-1">
@@ -141,10 +143,10 @@ function MemberCard({ member }: { member: TeamMember }) {
         <img
           src={member.photoUrl}
           alt={member.name}
-          className="h-16 w-16 rounded-full object-cover object-center"
+          className="h-32 w-32 rounded-full object-cover object-center"
         />
       ) : (
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-ember text-lg font-bold text-white">
+        <div className="flex h-32 w-32 shrink-0 items-center justify-center rounded-full bg-ember text-2xl font-bold text-white">
           {initials}
         </div>
       )}

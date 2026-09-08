@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations, useFormatter } from "next-intl";
 import type { getAdminEvents } from "@/lib/queries";
@@ -9,7 +9,7 @@ type EventRow = Awaited<ReturnType<typeof getAdminEvents>>[number];
 
 const ALL_STATUSES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
 
-const DEFAULT_LIMIT = 10;
+const PAGE_SIZE = 10;
 
 export function AdminEventsTable({ events }: { events: EventRow[] }) {
   const t = useTranslations("Admin");
@@ -17,6 +17,7 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
   const format = useFormatter();
   const [nameFilter, setNameFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     let result = events;
@@ -32,9 +33,20 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
     return result;
   }, [events, nameFilter, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [nameFilter, statusFilter]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const displayed = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const from = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = (page - 1) * PAGE_SIZE + displayed.length;
   const hasFilters = nameFilter.trim() !== "" || statusFilter !== "";
-  const displayed = hasFilters ? filtered : filtered.slice(0, DEFAULT_LIMIT);
-  const hiddenCount = hasFilters ? 0 : filtered.length - DEFAULT_LIMIT;
 
   return (
     <div>
@@ -99,12 +111,14 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
                     <td className="px-4 py-2.5 text-ink-faint">{tStatus(event.status)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <div className="flex items-center justify-end gap-4">
-                        <Link
-                          href={`/admin/registrations/${event.race.slug}/${event.year}`}
-                          className="text-sm font-semibold text-ink-soft hover:text-ink"
-                        >
-                          {t("viewRegistrationsCta")}
-                        </Link>
+                        {!event.race.isMass && (
+                          <Link
+                            href={`/admin/registrations/${event.race.slug}/${event.year}`}
+                            className="text-sm font-semibold text-ink-soft hover:text-ink"
+                          >
+                            {t("viewRegistrationsCta")}
+                          </Link>
+                        )}
                         <Link
                           href={`/admin/events/${event.id}`}
                           className="font-semibold text-ink hover:text-ember"
@@ -118,13 +132,67 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
               </tbody>
             </table>
           </div>
-          {hiddenCount > 0 && (
-            <p className="mt-2 text-xs text-ink-faint">
-              Показано {DEFAULT_LIMIT} из {filtered.length}. Используйте фильтр для поиска.
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-ink-faint">
+              {t("eventsShownRange", { from, to, total: filtered.length })}
             </p>
-          )}
+            {totalPages > 1 && (
+              <nav className="flex items-center gap-1" aria-label="Пагинация">
+                <PageButton
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  {t("eventsPagePrev")}
+                </PageButton>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                  <PageButton
+                    key={n}
+                    active={n === page}
+                    onClick={() => setPage(n)}
+                  >
+                    {n}
+                  </PageButton>
+                ))}
+                <PageButton
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  {t("eventsPageNext")}
+                </PageButton>
+              </nav>
+            )}
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+function PageButton({
+  children,
+  onClick,
+  disabled,
+  active,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-current={active ? "page" : undefined}
+      className={`rounded-[var(--radius-s)] px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+        active
+          ? "bg-ember text-white"
+          : "border border-border text-ink-soft hover:bg-surface-2 hover:text-ink"
+      }`}
+    >
+      {children}
+    </button>
   );
 }

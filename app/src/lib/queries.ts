@@ -8,12 +8,22 @@ export function upsertSiteSetting(key: string, value: string) {
   return prisma.siteSetting.upsert({ where: { key }, create: { key, value }, update: { value } });
 }
 
+const UPCOMING_STATUSES = ["OPEN", "DRAFT", "CLOSED"] as const;
+
 export function getHomeEvents() {
   return prisma.event.findMany({
-    where: { isPublished: true, status: { in: ["OPEN", "DRAFT"] } },
+    where: { isPublished: true, status: { in: [...UPCOMING_STATUSES] } },
     include: { race: true, distances: true },
     orderBy: { dateISO: "asc" },
     take: 4,
+  });
+}
+
+export function getCalendarEvents() {
+  return prisma.event.findMany({
+    where: { isPublished: true, status: { in: [...UPCOMING_STATUSES] } },
+    include: { race: true, distances: true },
+    orderBy: { dateISO: "asc" },
   });
 }
 
@@ -27,12 +37,12 @@ export function getArchiveEvents() {
 
 export async function getNextEvent() {
   const featured = await prisma.event.findFirst({
-    where: { isPublished: true, isFeatured: true, status: "OPEN" },
+    where: { isPublished: true, isFeatured: true, status: { in: ["OPEN", "CLOSED"] }, race: { isMass: false } },
     include: { race: true, distances: true },
   });
   if (featured) return featured;
   return prisma.event.findFirst({
-    where: { isPublished: true, dateISO: { gte: new Date() }, status: "OPEN" },
+    where: { isPublished: true, dateISO: { gte: new Date() }, status: { in: ["OPEN", "CLOSED"] }, race: { isMass: false } },
     include: { race: true, distances: true },
     orderBy: { dateISO: "asc" },
   });
@@ -250,7 +260,7 @@ export function getEventForRegistration(slug: string, year: number) {
       registrationDeadline: true,
       location: true,
       transferPrice: true,
-      race: { select: { name: true, slug: true, isChallenge: true } },
+      race: { select: { name: true, slug: true, isChallenge: true, isMass: true } },
       distances: { orderBy: { km: "asc" } },
       merchItems: {
         orderBy: { order: "asc" },
@@ -309,7 +319,7 @@ export function getUsersForAdmin() {
 }
 
 export function getRacesForAdmin() {
-  return prisma.race.findMany({ select: { id: true, name: true, isChallenge: true }, orderBy: { name: "asc" } });
+  return prisma.race.findMany({ select: { id: true, name: true, isChallenge: true, isMass: true }, orderBy: { name: "asc" } });
 }
 
 export function getRacesListForAdmin() {
@@ -322,7 +332,7 @@ export function getRacesListForAdmin() {
 export function getRaceForAdmin(id: string) {
   return prisma.race.findUnique({
     where: { id },
-    select: { id: true, name: true, slug: true, courseIntro: true, icon: true, color: true, isChallenge: true },
+    select: { id: true, name: true, slug: true, courseIntro: true, icon: true, color: true, isChallenge: true, isMass: true },
   });
 }
 
@@ -330,7 +340,7 @@ export function getEventForAdmin(id: string) {
   return prisma.event.findUnique({
     where: { id },
     include: {
-      race: { select: { id: true, name: true, isChallenge: true } },
+      race: { select: { id: true, name: true, isChallenge: true, isMass: true } },
       distances: {
         orderBy: { km: "asc" },
         select: {

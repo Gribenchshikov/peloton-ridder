@@ -1,4 +1,10 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutBucketPolicyCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
   endpoint: process.env.S3_ENDPOINT ?? "http://localhost:9000",
@@ -11,6 +17,33 @@ const s3 = new S3Client({
 });
 
 const BUCKET = process.env.S3_BUCKET ?? "ridder";
+
+let bucketReady: Promise<void> | null = null;
+
+async function ensureBucket() {
+  try {
+    await s3.send(new HeadBucketCommand({ Bucket: BUCKET }));
+    return;
+  } catch {
+    await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
+    await s3.send(
+      new PutBucketPolicyCommand({
+        Bucket: BUCKET,
+        Policy: JSON.stringify({
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Effect: "Allow",
+              Principal: { AWS: ["*"] },
+              Action: ["s3:GetObject"],
+              Resource: [`arn:aws:s3:::${BUCKET}/*`],
+            },
+          ],
+        }),
+      }),
+    );
+  }
+}
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -57,6 +90,12 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
 
   const key = `${folder}/${crypto.randomUUID()}.${ext}`;
   const body = Buffer.from(await file.arrayBuffer());
+
+  bucketReady ??= ensureBucket().catch((err) => {
+    bucketReady = null;
+    throw err;
+  });
+  await bucketReady;
 
   await s3.send(
     new PutObjectCommand({

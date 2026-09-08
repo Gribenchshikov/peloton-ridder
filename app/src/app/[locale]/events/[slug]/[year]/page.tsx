@@ -3,7 +3,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { getEventDetail } from "@/lib/queries";
-import { groupDistancesByDiscipline } from "@/lib/distanceLabel";
+import { groupDistancesByDiscipline, heroDistanceStats } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
 import { DetailTabs, type DistanceWithProfile } from "./DetailTabs";
@@ -52,7 +52,10 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
   const dayProgram = (event.dayProgram as DayProgramItem[] | null) ?? [];
   const distanceEquipment = (event.distanceEquipment as DistanceEquipment | null) ?? {};
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
+  const heroStats = heroDistanceStats(event.distances);
   const paidCount = event.registrations.length;
+  const heroStatCount = heroStats.length + (paidCount > 0 ? 1 : 0);
+  const isMass = event.race.isMass;
 
   const distancesWithProfile: DistanceWithProfile[] = event.distances
     .filter((d) => d.profileData != null)
@@ -135,21 +138,21 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
             </div>
 
             {/* Stats strip */}
-            {event.distances.length > 0 && (
+            {heroStats.length > 0 && (
               <div
                 className="mt-5 grid gap-px overflow-hidden rounded-[var(--radius-m)] border border-white/20 backdrop-blur-md"
                 style={{
-                  gridTemplateColumns: `repeat(${Math.min(event.distances.length + (paidCount > 0 ? 1 : 0), 4)}, 1fr)`,
+                  gridTemplateColumns: `repeat(${Math.min(Math.max(heroStatCount, 1), 4)}, 1fr)`,
                   background: "rgba(255,255,255,.14)",
                 }}
               >
-                {event.distances.slice(0, 3).map((d) => (
-                  <div key={d.id} className="bg-black/25 px-4 py-3">
+                {heroStats.map((stat) => (
+                  <div key={stat.label} className="bg-black/25 px-4 py-3">
                     <span className="mb-1 block text-[.62rem] uppercase tracking-wide text-white/60">
-                      {d.name}
+                      {stat.label}
                     </span>
                     <b className="font-display text-[1.1rem] font-bold">
-                      {d.km ? `${d.km} км` : "—"}
+                      {stat.kmLabel}
                     </b>
                   </div>
                 ))}
@@ -167,7 +170,7 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
         </div>
 
         {/* Content grid */}
-        <div className="grid gap-6 pb-16 lg:grid-cols-[1fr_340px] lg:items-start lg:gap-8">
+        <div className={`grid gap-6 pb-16 lg:items-start lg:gap-8 ${isMass && event.eventPartners.length === 0 ? "" : "lg:grid-cols-[1fr_340px]"}`}>
           {/* LEFT: Tabs + Challenge Leaderboard */}
           <div className="flex min-w-0 flex-col gap-6">
             {leaderboard && event.challengeWindowEnd && (
@@ -188,14 +191,19 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
               waiverFiles={waiverFiles}
               results={results}
               resultsUrl={event.resultsUrl}
+              itraResultsUrl={event.itraResultsUrl}
               registrations={event.registrations}
               distances={distancesWithProfile}
               allDistances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
+              isMass={isMass}
             />
           </div>
 
           {/* RIGHT: sticky sidebar */}
+          {(!isMass || event.eventPartners.length > 0) && (
           <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
+            {!isMass && (
+              <>
             {/* 1. Distances + Register CTA */}
             <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
               <h3 className="mb-4 font-display text-base font-bold text-ink">{t("distancesTitle")}</h3>
@@ -314,19 +322,36 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
             )}
 
             {/* Results */}
-            {event.resultsUrl && (
-              <a
-                href={event.resultsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-[var(--radius-m)] border border-border bg-surface p-5 transition-colors hover:bg-surface-2"
-              >
+            {(event.resultsUrl || event.itraResultsUrl) && (
+              <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
                 <h3 className="font-display text-base font-bold text-ink">{t("resultsTitle")}</h3>
-                <span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ember">
-                  {t("resultsCta")}
-                  <Icon name="i-arrow" className="h-4 w-4" />
-                </span>
-              </a>
+                <div className="mt-3 flex flex-col gap-2">
+                  {event.resultsUrl && (
+                    <a
+                      href={event.resultsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-ember transition-colors hover:text-ember-strong"
+                    >
+                      {t("resultsExternalLink")}
+                      <Icon name="i-arrow" className="h-4 w-4" />
+                    </a>
+                  )}
+                  {event.itraResultsUrl && (
+                    <a
+                      href={event.itraResultsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-ember transition-colors hover:text-ember-strong"
+                    >
+                      {t("resultsItraLink")}
+                      <Icon name="i-arrow" className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+              </>
             )}
 
             {/* Partners */}
@@ -371,6 +396,7 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
               </div>
             )}
           </aside>
+          )}
         </div>
       </div>
     </main>

@@ -5,7 +5,7 @@ import { getSiteSetting } from "@/lib/queries";
 
 async function getOpenEventsForVolunteer() {
   return prisma.event.findMany({
-    where: { status: "OPEN" },
+    where: { status: "OPEN", race: { isMass: false } },
     select: { id: true, year: true, dateISO: true, race: { select: { name: true, slug: true } } },
     orderBy: { dateISO: "asc" },
   });

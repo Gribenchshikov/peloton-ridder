@@ -22,6 +22,7 @@ export default async function WaitlistPage({
     return redirect({ href: { pathname: "/login", query: { callbackUrl: `/events/${slug}/${year}/waitlist` } }, locale });
   }
   if (!event) notFound();
+  if (event.race.isMass) return redirect({ href: `/events/${slug}/${year}`, locale });
   if (event.status !== "OPEN") return redirect({ href: `/events/${slug}/${year}`, locale });
 
   const now = new Date();

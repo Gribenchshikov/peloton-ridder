@@ -47,7 +47,7 @@ export function MobileMenu({
 
       {open && (
         <div
-          className="absolute left-0 right-0 top-14 z-50 border-b border-border bg-surface px-6 py-4 shadow-[var(--shadow)]"
+          className="absolute left-0 right-0 top-16 z-50 border-b border-border bg-surface px-6 py-4 shadow-[var(--shadow)]"
         >
           <nav className="flex flex-col gap-1">
             {navLinks.map((link) => (

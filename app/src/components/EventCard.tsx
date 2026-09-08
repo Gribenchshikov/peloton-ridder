@@ -25,7 +25,11 @@ export function EventCard({ event }: { event: EventWithRelations }) {
   const format = useFormatter();
 
   const kmValues = [...new Set(event.distances.map((d) => d.km).filter(Boolean).sort((a, b) => a - b))];
-  const distLabel = kmValues.length > 0 ? kmValues.join(" / ") + " " + tc("km") : "—";
+  const distLabel = event.race.isMass
+    ? event.location
+    : kmValues.length > 0
+      ? kmValues.join(" / ") + " " + tc("km")
+      : "—";
 
   return (
     <Link

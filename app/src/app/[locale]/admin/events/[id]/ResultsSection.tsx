@@ -1,30 +1,131 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { importResultsCsvAction, importItraResultsAction, fetchMyraceResultsAction, clearResultsAction } from "../actions";
+import { importResultsCsvAction, importItraResultsAction, saveResultsLinkAction, clearResultsAction } from "../actions";
 import type { Result } from "@/generated/prisma/client";
 
 type Distance = { id: string; name: string; km: number };
+type ResultsLinkKind = "myrace" | "itra";
 
 type Props = {
   eventId: string;
   initialResults: Result[];
+  initialResultsUrl: string | null;
+  initialItraResultsUrl: string | null;
   distances: Distance[];
 };
 
-export function ResultsSection({ eventId, initialResults, distances }: Props) {
+function ResultsLinkCard({
+  eventId,
+  kind,
+  title,
+  hint,
+  placeholder,
+  initialUrl,
+}: {
+  eventId: string;
+  kind: ResultsLinkKind;
+  title: string;
+  hint: string;
+  placeholder: string;
+  initialUrl: string | null;
+}) {
+  const [url, setUrl] = useState(initialUrl ?? "");
+  const [publishedUrl, setPublishedUrl] = useState(initialUrl ?? "");
+  const [status, setStatus] = useState<{ error?: string; success?: boolean }>({});
+  const [pending, start] = useTransition();
+
+  function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!url) return;
+    const fd = new FormData();
+    fd.set("kind", kind);
+    fd.set("url", url);
+    setStatus({});
+    start(async () => {
+      const result = await saveResultsLinkAction(eventId, {}, fd);
+      setStatus(result);
+      if (result.success) setPublishedUrl(url);
+    });
+  }
+
+  function clear() {
+    const fd = new FormData();
+    fd.set("kind", kind);
+    fd.set("clear", "1");
+    setStatus({});
+    start(async () => {
+      const result = await saveResultsLinkAction(eventId, {}, fd);
+      setStatus(result);
+      if (result.success) {
+        setPublishedUrl("");
+        setUrl("");
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border p-4">
+      <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">{title}</div>
+      <p className="text-xs text-ink-soft">{hint}</p>
+      <form onSubmit={save} className="flex flex-col gap-2">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded border border-border bg-surface px-3 py-1.5 text-sm focus:border-ember focus:outline-none"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={pending || !url}
+            className="self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft disabled:opacity-50"
+          >
+            {pending ? "Сохраняется…" : "Опубликовать ссылку"}
+          </button>
+          {publishedUrl && (
+            <button
+              type="button"
+              onClick={clear}
+              disabled={pending}
+              className="text-xs font-semibold text-ink-faint hover:text-danger disabled:opacity-50"
+            >
+              Убрать
+            </button>
+          )}
+        </div>
+      </form>
+      {publishedUrl && (
+        <a
+          href={publishedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="truncate text-xs font-semibold text-ember hover:underline"
+        >
+          {publishedUrl}
+        </a>
+      )}
+      {status.success && <p className="text-sm text-spruce">Ссылка опубликована ✓</p>}
+      {status.error === "invalid_url" && <p className="text-sm text-danger">Некорректная ссылка</p>}
+      {status.error === "unauthorized" && <p className="text-sm text-danger">Нет прав</p>}
+      {status.error && status.error !== "invalid_url" && status.error !== "unauthorized" && (
+        <p className="text-sm text-danger">Ошибка: {status.error}</p>
+      )}
+    </div>
+  );
+}
+
+export function ResultsSection({ eventId, initialResults, initialResultsUrl, initialItraResultsUrl, distances }: Props) {
   const [results, setResults] = useState<Result[]>(initialResults);
   const [csvStatus, setCsvStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
   const [itraStatus, setItraStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
-  const [myraceStatus, setMyraceStatus] = useState<{ error?: string; success?: boolean; count?: number }>({});
   const [clearStatus, setClearStatus] = useState<{ error?: string; success?: boolean }>({});
-  const [myraceUrl, setMyraceUrl] = useState("");
   const [csvDistanceId, setCsvDistanceId] = useState(distances[0]?.id ?? "");
   const [itraDistanceId, setItraDistanceId] = useState(distances[0]?.id ?? "");
   const [filterDistanceId, setFilterDistanceId] = useState<string>("all");
   const [csvPending, startCsv] = useTransition();
   const [itraPending, startItra] = useTransition();
-  const [myracePending, startMyrace] = useTransition();
   const [clearPending, startClear] = useTransition();
 
   function handleCsv(e: React.ChangeEvent<HTMLInputElement>) {
@@ -55,19 +156,6 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
       if (result.success) window.location.reload();
     });
     e.target.value = "";
-  }
-
-  function handleMyrace(e: React.FormEvent) {
-    e.preventDefault();
-    if (!myraceUrl) return;
-    const fd = new FormData();
-    fd.set("url", myraceUrl);
-    setMyraceStatus({});
-    startMyrace(async () => {
-      const result = await fetchMyraceResultsAction(eventId, {}, fd);
-      setMyraceStatus(result);
-      if (result.success) window.location.reload();
-    });
   }
 
   function handleClear() {
@@ -187,7 +275,7 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
         </div>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2">
         {/* CSV upload */}
         <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border p-4">
           <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">Загрузить CSV</div>
@@ -263,28 +351,22 @@ export function ResultsSection({ eventId, initialResults, distances }: Props) {
           {itraStatus.error === "tooLarge" && <p className="text-sm text-danger">Файл слишком большой</p>}
         </div>
 
-        {/* myrace.info fetch */}
-        <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border p-4">
-          <div className="text-xs font-bold uppercase tracking-wide text-ink-faint">myrace.info</div>
-          <form onSubmit={handleMyrace} className="flex flex-col gap-2">
-            <input
-              type="url"
-              value={myraceUrl}
-              onChange={(e) => setMyraceUrl(e.target.value)}
-              placeholder="https://live.myrace.info/…"
-              className="w-full rounded border border-border bg-surface px-3 py-1.5 text-sm focus:border-ember focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={myracePending || !myraceUrl}
-              className="self-start rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft disabled:opacity-50"
-            >
-              {myracePending ? "Загружается…" : "Загрузить"}
-            </button>
-          </form>
-          {myraceStatus.success && <p className="text-sm text-spruce">Загружено {myraceStatus.count} результатов ✓</p>}
-          {myraceStatus.error && <p className="text-sm text-danger">Ошибка: {myraceStatus.error}</p>}
-        </div>
+        <ResultsLinkCard
+          eventId={eventId}
+          kind="myrace"
+          title="myrace.info"
+          hint="Ссылка на live-результаты. Протокол не импортируется — на странице события появится кнопка перехода."
+          placeholder="https://live.myrace.info/?f=…"
+          initialUrl={initialResultsUrl}
+        />
+        <ResultsLinkCard
+          eventId={eventId}
+          kind="itra"
+          title="ITRA"
+          hint="Ссылка на протокол ITRA. На странице события появится отдельная кнопка перехода."
+          placeholder="https://itra.run/…"
+          initialUrl={initialItraResultsUrl}
+        />
       </div>
     </section>
   );

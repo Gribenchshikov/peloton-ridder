@@ -24,6 +24,9 @@ export default async function TransferPage({
     });
   }
   if (!event) notFound();
+  if (event.race.isMass) {
+    return redirect({ href: `/events/${slug}/${year}`, locale });
+  }
   if (event.status !== "OPEN" || !event.transferPrice || event.registrationDeadline < new Date()) {
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }

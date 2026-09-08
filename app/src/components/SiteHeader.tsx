@@ -20,10 +20,9 @@ export async function SiteHeader({ locale }: { locale: string }) {
 
   return (
     <header className="relative sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-6">
-        {/* Logo */}
-        <Link href="/" className="shrink-0 font-display text-base font-bold text-ink transition-colors hover:text-ember">
-          Peloton Ridder
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
+        <Link href="/" className="flex shrink-0 items-center" aria-label="Peloton Ridder">
+          <img src="/logo.png" alt="Peloton Ridder" className="h-14 w-auto" />
         </Link>
 
         {/* Desktop nav */}

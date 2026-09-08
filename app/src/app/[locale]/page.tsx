@@ -79,8 +79,7 @@ function Hero({
           >
             {t("titlePart1")}
             <br />
-            {t("titlePart2")}{" "}
-            <span style={{ color: "var(--dawn)" }}>{t("titleEmphasis")}</span>.
+            <span style={{ color: "var(--ember)" }}>{t("titleEmphasis")}</span>
           </h1>
           <p className="mt-5 max-w-[46ch] text-[1.05rem] leading-relaxed text-[rgba(251,248,241,.80)]">
             {t("lead")}

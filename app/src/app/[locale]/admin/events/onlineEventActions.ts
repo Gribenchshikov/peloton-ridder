@@ -55,6 +55,12 @@ export async function createOnlineEventAction(
 
   const { price, maxSlots, raceId, ...eventData } = parsed.data;
 
+  const race = await prisma.race.findUnique({
+    where: { id: raceId },
+    select: { isChallenge: true, isMass: true },
+  });
+  if (!race?.isChallenge || race.isMass) return { error: "invalid" };
+
   let eventId: string;
   try {
     const event = await prisma.event.create({
@@ -106,6 +112,14 @@ export async function updateOnlineEventAction(
   const raceName = (formData.get("raceName") as string | null)?.trim() || null;
   const newRaceId = (formData.get("raceId") as string | null)?.trim() || null;
 
+  if (newRaceId) {
+    const race = await prisma.race.findUnique({
+      where: { id: newRaceId },
+      select: { isChallenge: true, isMass: true },
+    });
+    if (!race?.isChallenge || race.isMass) return { error: "invalid" };
+  }
+
   try {
     const event = await prisma.event.update({
       where: { id: eventId },
@@ -144,8 +158,10 @@ export async function updateOnlineEventAction(
     throw err;
   }
 
-  revalidatePath("/[locale]/admin/events/[id]", "page");
+  revalidatePath(`/[locale]/admin/events/${eventId}`, "page");
   revalidatePath("/[locale]/admin", "page");
+  revalidatePath("/[locale]", "page");
+  revalidatePath("/[locale]/events", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
   return { success: true };
 }

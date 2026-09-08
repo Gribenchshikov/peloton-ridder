@@ -6,14 +6,7 @@ import { requireAdminId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { revalidatePath } from "next/cache";
 
-function slugify(name: string) {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import { slugify } from "@/lib/slugify";
 
 const RaceSchema = z.object({
   name: z.string().min(2).max(100),
@@ -30,7 +23,8 @@ const RaceSchema = z.object({
     .optional()
     .default("#e87040"),
   isChallenge: z.preprocess((v) => v === "on", z.boolean()),
-});
+  isMass: z.preprocess((v) => v === "on", z.boolean()),
+}).refine((d) => !(d.isChallenge && d.isMass), { message: "invalid_kind" });
 
 export type RaceFormState = { error?: string; fieldErrors?: Record<string, string[]>; saved?: boolean };
 
@@ -48,6 +42,7 @@ export async function createRaceAction(
     icon: formData.get("icon") || "i-mountain",
     color: formData.get("color") || "#e87040",
     isChallenge: formData.get("isChallenge"),
+    isMass: formData.get("isMass"),
   };
 
   const parsed = RaceSchema.safeParse(raw);
@@ -79,6 +74,7 @@ export async function updateRaceAction(
     icon: formData.get("icon") || "i-mountain",
     color: formData.get("color") || "#e87040",
     isChallenge: formData.get("isChallenge"),
+    isMass: formData.get("isMass"),
   };
 
   const parsed = RaceSchema.safeParse(raw);

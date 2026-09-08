@@ -37,6 +37,7 @@ export default async function EditRacePage({
           icon: race.icon,
           color: race.color,
           isChallenge: race.isChallenge,
+          isMass: race.isMass,
         }}
       />
     </main>
