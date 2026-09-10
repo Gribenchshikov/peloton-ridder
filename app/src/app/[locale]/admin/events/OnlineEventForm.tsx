@@ -4,10 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { createOnlineEventAction, updateOnlineEventAction, type OnlineActionState } from "./onlineEventActions";
-
-function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
+import { toDateInputValue } from "@/lib/dates";
 
 export type OnlineEventDefaults = {
   year: number;

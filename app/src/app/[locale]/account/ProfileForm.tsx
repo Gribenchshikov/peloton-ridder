@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { updateProfileAction, type ProfileState } from "./actions";
@@ -25,6 +25,16 @@ export function ProfileForm({
   const tAuth = useTranslations("Auth");
   const boundAction = updateProfileAction.bind(null, locale);
   const [state, formAction, pending] = useActionState(boundAction, initialState);
+  const [tshirtSize, setTshirtSize] = useState(user.tshirtSize ?? "");
+
+  // After a Server Action React resets the form to values from first render.
+  // Re-apply the just-saved size after that reset (timeout: after the reset event).
+  useEffect(() => {
+    if (!state.success || state.tshirtSize === undefined) return;
+    const savedSize = state.tshirtSize;
+    const timer = window.setTimeout(() => setTshirtSize(savedSize), 0);
+    return () => window.clearTimeout(timer);
+  }, [state.success, state.tshirtSize]);
 
   const needsLatinFix = hasCyrillic(user.firstName) || hasCyrillic(user.lastName);
 
@@ -46,7 +56,11 @@ export function ProfileForm({
         </div>
       )}
 
-      <form action={formAction} className="mt-3 flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
+      <form
+        action={formAction}
+        onReset={(e) => e.preventDefault()}
+        className="mt-3 flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5"
+      >
         {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
         <label className="flex flex-col gap-1.5 text-sm">
           <span className="font-semibold text-ink-soft">{tAuth("email")}</span>
@@ -89,7 +103,8 @@ export function ProfileForm({
           <span className="font-semibold text-ink-soft">{t("tshirtSize")}</span>
           <select
             name="tshirtSize"
-            defaultValue={user.tshirtSize ?? ""}
+            value={tshirtSize}
+            onChange={(e) => setTshirtSize(e.target.value)}
             className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-ink"
           >
             <option value="">{t("tshirtSizeEmpty")}</option>

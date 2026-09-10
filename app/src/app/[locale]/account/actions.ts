@@ -27,6 +27,7 @@ const ProfileSchema = z.object({
 export type ProfileState = {
   error?: string;
   success?: boolean;
+  tshirtSize?: string;
 };
 
 export async function updateProfileAction(
@@ -73,7 +74,7 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/[locale]/account", "page");
-  return { success: true };
+  return { success: true, tshirtSize: rest.tshirtSize ?? "" };
 }
 
 const VALID_CANCEL_REASONS = Object.values(CancelReason);

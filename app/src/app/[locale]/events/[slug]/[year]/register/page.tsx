@@ -31,7 +31,7 @@ export default async function EventRegisterPage({
     });
   }
 
-  if (event.status !== "OPEN" || event.registrationDeadline < new Date()) {
+  if (event.status !== "OPEN") {
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }
 

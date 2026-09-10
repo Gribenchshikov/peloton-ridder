@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import type { CancelReason } from "@/generated/prisma/client";
 import { saveEventFinancials } from "./actions";
 import type { FinancialData, LineEntry, PackItem } from "./actions";
+import { csvWindows1251Bytes, toCsv } from "@/lib/csv";
 
 type Reg = {
   id: string;
@@ -410,14 +411,8 @@ function FinancialSection({
     for (const i of incomes.filter((i) => i.amount > 0)) rows.push([`+ ${i.label || "Доход"} (₸)`, String(i.amount)]);
     rows.push(["Реальный доход (₸)", String(profit)]);
 
-    const SEP = ";";
-    const csv = `sep=${SEP}\r\n﻿` + rows
-      .map((row) =>
-        row.map((cell) => (cell.includes(SEP) || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell)).join(SEP),
-      )
-      .join("\r\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const csv = toCsv(rows);
+    const blob = new Blob([csvWindows1251Bytes(csv)], { type: "text/csv;charset=windows-1251;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

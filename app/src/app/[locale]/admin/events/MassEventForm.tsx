@@ -5,13 +5,10 @@ import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { createMassEventAction, updateMassEventAction, type MassActionState } from "./massEventActions";
+import { toDateInputValue } from "@/lib/dates";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
 const initialState: MassActionState = {};
-
-function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
 
 type MassDefaults = {
   year: number;

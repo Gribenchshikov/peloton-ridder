@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
+import { localDateSchema } from "@/lib/dates";
 
 export type OnlineActionState = { error?: string; success?: boolean; eventId?: string };
 
@@ -12,9 +13,9 @@ const emptyToUndefined = (value: unknown) => (value === "" || value == null ? un
 
 const OnlineEventSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
-  dateISO: z.coerce.date(),
-  challengeWindowEnd: z.coerce.date(),
-  registrationDeadline: z.coerce.date(),
+  dateISO: localDateSchema,
+  challengeWindowEnd: localDateSchema,
+  registrationDeadline: localDateSchema,
   status: z.enum(["DRAFT", "OPEN", "CLOSED", "COMPLETED"]),
   isFeatured: z.preprocess((v) => v === "on", z.boolean()),
   price: z.coerce.number().int().min(0),

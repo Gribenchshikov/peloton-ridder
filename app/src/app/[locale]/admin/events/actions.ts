@@ -11,6 +11,7 @@ import { redirect } from "@/i18n/navigation";
 import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
+import { localDateSchema } from "@/lib/dates";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -29,18 +30,18 @@ const httpUrlSchema = z.string().trim().url().refine(
 
 const EventFieldsSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
-  dateISO: z.coerce.date(),
+  dateISO: localDateSchema,
   location: z.string().trim().min(1).max(200),
   locationUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   status: z.enum(["DRAFT", "OPEN", "CLOSED", "COMPLETED"]),
   isFeatured: z.preprocess((v) => v === "on", z.boolean()),
-  registrationDeadline: z.coerce.date(),
-  cancellationDeadline: z.coerce.date(),
-  medicalCancellationDeadline: z.coerce.date(),
+  registrationDeadline: localDateSchema,
+  cancellationDeadline: localDateSchema,
+  medicalCancellationDeadline: localDateSchema,
   transferPrice: z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional()),
   resultsUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   volunteerChatUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
-  challengeWindowEnd: z.preprocess(emptyToUndefined, z.coerce.date().optional()),
+  challengeWindowEnd: z.preprocess(emptyToUndefined, localDateSchema.optional()),
   // coverImageUrl обрабатывается отдельно через saveFile (file upload), не через Zod
 });
 

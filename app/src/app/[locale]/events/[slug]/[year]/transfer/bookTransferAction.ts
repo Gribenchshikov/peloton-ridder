@@ -21,10 +21,9 @@ export async function bookTransferAction(
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    select: { id: true, status: true, transferPrice: true, registrationDeadline: true, race: { select: { slug: true } }, year: true },
+    select: { id: true, status: true, transferPrice: true, race: { select: { slug: true } }, year: true },
   });
   if (!event || event.status !== "OPEN" || !event.transferPrice) return { error: "unavailable" };
-  if (event.registrationDeadline < new Date()) return { error: "closed" };
 
   // Проверяем нет ли уже активной записи (слот или трансфер)
   const existing = await prisma.registration.findFirst({

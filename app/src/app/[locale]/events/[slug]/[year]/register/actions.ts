@@ -77,7 +77,7 @@ export async function createRegistrationAction(
       tx.event.findUnique({ where: { id: eventId } }),
       tx.distance.findUnique({ where: { id: distanceId } }),
     ]);
-    if (!event || event.status !== "OPEN" || event.registrationDeadline < now) {
+    if (!event || event.status !== "OPEN") {
       return { kind: "error" as const, error: "closed" };
     }
     if (!distance || distance.eventId !== eventId) {

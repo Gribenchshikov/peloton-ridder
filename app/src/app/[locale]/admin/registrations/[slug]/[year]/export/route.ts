@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { requireOperatorOrAdminId } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
+import { csvDownloadHeaders, csvWindows1251Bytes, toCsv } from "@/lib/csv";
 
 export async function GET(
   req: Request,
@@ -48,11 +49,8 @@ export async function GET(
       ]),
     ];
     const csv = toCsv(rows);
-    return new NextResponse("﻿" + csv, {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="kit-${slug}-${year}.csv"`,
-      },
+    return new NextResponse(csvWindows1251Bytes(csv), {
+      headers: csvDownloadHeaders(`kit-${slug}-${year}.csv`),
     });
   }
 
@@ -68,11 +66,8 @@ export async function GET(
       ...withTransfer.map((r) => [r.bibNumber ?? "", r.user.lastName, r.user.firstName, r.user.phone ?? "", ""]),
     ];
     const csv = toCsv(rows);
-    return new NextResponse("﻿" + csv, {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="transfer-${slug}-${year}.csv"`,
-      },
+    return new NextResponse(csvWindows1251Bytes(csv), {
+      headers: csvDownloadHeaders(`transfer-${slug}-${year}.csv`),
     });
   }
 
@@ -125,27 +120,7 @@ export async function GET(
   ];
 
   const csv = toCsv(rows);
-  const filename = `participants-${slug}-${year}.csv`;
-
-  return new NextResponse("﻿" + csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
+  return new NextResponse(csvWindows1251Bytes(csv), {
+    headers: csvDownloadHeaders(`participants-${slug}-${year}.csv`),
   });
-}
-
-function toCsv(rows: (string | number)[][]): string {
-  const SEP = ";";
-  const lines = rows.map((row) =>
-    row
-      .map((cell) => {
-        const s = String(cell);
-        return s.includes(SEP) || s.includes('"') || s.includes("\n")
-          ? `"${s.replace(/"/g, '""')}"`
-          : s;
-      })
-      .join(SEP),
-  );
-  return `sep=${SEP}\r\n` + lines.join("\r\n");
 }

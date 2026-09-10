@@ -6,6 +6,7 @@ import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
 import { slugify } from "@/lib/slugify";
+import { localDateSchema } from "@/lib/dates";
 
 export type MassActionState = { error?: string; success?: boolean; eventId?: string };
 
@@ -24,7 +25,7 @@ const httpUrlSchema = z.string().trim().url().refine(
 
 const MassEventSchema = z.object({
   year: z.coerce.number().int().min(2020).max(2100),
-  dateISO: z.coerce.date(),
+  dateISO: localDateSchema,
   location: z.string().trim().min(1).max(200),
   locationUrl: z.preprocess(emptyToUndefined, httpUrlSchema.optional()),
   status: z.enum(["DRAFT", "OPEN", "CLOSED", "COMPLETED"]),

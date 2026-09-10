@@ -27,7 +27,7 @@ export default async function TransferPage({
   if (event.race.isMass) {
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }
-  if (event.status !== "OPEN" || !event.transferPrice || event.registrationDeadline < new Date()) {
+  if (event.status !== "OPEN" || !event.transferPrice) {
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }
 

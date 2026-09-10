@@ -6,14 +6,11 @@ import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { useRouter } from "@/i18n/navigation";
 import { createEventAction, updateEventAction, type ActionState } from "./actions";
+import { toDateInputValue } from "@/lib/dates";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
 
 const initialState: ActionState = {};
-
-function toDateInputValue(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
 
 type EventDefaults = {
   year: number;
