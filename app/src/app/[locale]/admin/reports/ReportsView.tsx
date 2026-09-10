@@ -412,7 +412,7 @@ function FinancialSection({
     rows.push(["Реальный доход (₸)", String(profit)]);
 
     const csv = toCsv(rows);
-    const blob = new Blob([csvWindows1251Bytes(csv)], { type: "text/csv;charset=windows-1251;" });
+    const blob = new Blob([csvWindows1251Bytes(csv).buffer], { type: "text/csv;charset=windows-1251;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

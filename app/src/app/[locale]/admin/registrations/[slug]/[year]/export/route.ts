@@ -49,7 +49,7 @@ export async function GET(
       ]),
     ];
     const csv = toCsv(rows);
-    return new NextResponse(csvWindows1251Bytes(csv), {
+    return new NextResponse(Buffer.from(csvWindows1251Bytes(csv)), {
       headers: csvDownloadHeaders(`kit-${slug}-${year}.csv`),
     });
   }
@@ -66,7 +66,7 @@ export async function GET(
       ...withTransfer.map((r) => [r.bibNumber ?? "", r.user.lastName, r.user.firstName, r.user.phone ?? "", ""]),
     ];
     const csv = toCsv(rows);
-    return new NextResponse(csvWindows1251Bytes(csv), {
+    return new NextResponse(Buffer.from(csvWindows1251Bytes(csv)), {
       headers: csvDownloadHeaders(`transfer-${slug}-${year}.csv`),
     });
   }
@@ -120,7 +120,7 @@ export async function GET(
   ];
 
   const csv = toCsv(rows);
-  return new NextResponse(csvWindows1251Bytes(csv), {
+  return new NextResponse(Buffer.from(csvWindows1251Bytes(csv)), {
     headers: csvDownloadHeaders(`participants-${slug}-${year}.csv`),
   });
 }

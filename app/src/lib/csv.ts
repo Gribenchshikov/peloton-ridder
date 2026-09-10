@@ -42,7 +42,7 @@ export function toCsv(rows: (string | number)[][]): string {
   return `sep=${SEP}\r\n` + lines.join("\r\n");
 }
 
-export function csvWindows1251Bytes(csv: string): Uint8Array {
+export function csvWindows1251Bytes(csv: string): Uint8Array<ArrayBuffer> {
   const out: number[] = [];
   for (let i = 0; i < csv.length; i++) {
     const code = csv.charCodeAt(i);
@@ -67,7 +67,9 @@ export function csvWindows1251Bytes(csv: string): Uint8Array {
     }
     out.push(0x3f);
   }
-  return Uint8Array.from(out);
+  const bytes = new Uint8Array(new ArrayBuffer(out.length));
+  bytes.set(out);
+  return bytes;
 }
 
 export function csvDownloadHeaders(filename: string): HeadersInit {
