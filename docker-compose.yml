@@ -46,13 +46,7 @@ services:
 
   # ── Next.js application ───────────────────────────────────────────────────────
   app:
-    image: peloton-ridder:${APP_TAG:-latest}
-    build:
-      context: ./app
-      target: runner
-      args:
-        NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-        NEXT_PUBLIC_MAPTILER_KEY: ${NEXT_PUBLIC_MAPTILER_KEY}
+    image: ghcr.io/gribenchshikov/peloton-ridder:latest
     restart: unless-stopped
     environment:
       NODE_ENV: production
