@@ -1,6 +1,7 @@
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import type { Event, Race, Distance } from "@/generated/prisma/client";
 
 type EventWithRelations = Event & { race: Race; distances: Distance[] };
@@ -43,7 +44,7 @@ export function EventCard({ event }: { event: EventWithRelations }) {
         {event.coverImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={event.coverImageUrl}
+            src={publicAssetUrl(event.coverImageUrl) ?? event.coverImageUrl}
             alt=""
             className="h-full w-full object-cover object-center"
             loading="lazy"

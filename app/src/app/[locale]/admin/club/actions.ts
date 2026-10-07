@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { saveFile } from "@/lib/storage";
-import { syncTeamPhotosToStorage } from "@/lib/syncTeamPhotos";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -34,24 +33,6 @@ async function resolvePhoto(
 }
 
 export type ActionState = { error?: string; success?: boolean };
-export type SyncTeamPhotosState = { error?: string; success?: boolean; uploaded?: number };
-
-export async function syncTeamPhotosAction(
-  _prev: SyncTeamPhotosState,
-  _formData: FormData,
-): Promise<SyncTeamPhotosState> {
-  const adminId = await requireAdminId();
-  if (!adminId) return { error: "unauthorized" };
-
-  const result = await syncTeamPhotosToStorage();
-  if (result.uploaded === 0 && result.errors.length > 0) {
-    return { error: result.errors[0] };
-  }
-
-  revalidatePath("/[locale]/about", "page");
-  revalidatePath("/[locale]/admin/club", "page");
-  return { success: true, uploaded: result.uploaded };
-}
 
 export async function createMemberAction(
   locale: string,

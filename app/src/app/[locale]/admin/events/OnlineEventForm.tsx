@@ -5,6 +5,7 @@ import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { createOnlineEventAction, updateOnlineEventAction, type OnlineActionState } from "./onlineEventActions";
 import { toDateInputValue } from "@/lib/dates";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 export type OnlineEventDefaults = {
@@ -56,7 +57,7 @@ export function OnlineEventForm(props: Props) {
   const d = props.mode === "edit" ? props.defaults : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(d?.coverImageUrl ?? null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(publicAssetUrl(d?.coverImageUrl) ?? null);
   const [bulkState, setBulkState] = useState<OnlineActionState>({});
   const displayState = bulkState.error || bulkState.success ? bulkState : state;
   const { hideInlineSave } = useEventSaveRegistration(

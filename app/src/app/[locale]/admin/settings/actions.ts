@@ -53,10 +53,7 @@ export async function uploadFontAction(
       ContentType: "font/woff2",
     }),
   );
-  const base =
-    process.env.UPLOAD_URL?.replace(/\/$/, "") ??
-    `${(process.env.S3_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "")}/${bucket}`;
-  const url = `${base}/${key}`;
+  const url = `/uploads/${key}`;
   const css = `'${fontName}', sans-serif`;
 
   await Promise.all([

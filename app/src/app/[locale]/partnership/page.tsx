@@ -1,6 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSiteSetting } from "@/lib/queries";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import type { PartnershipContent } from "@/lib/settingsActions";
 import { DEFAULT_SPONSOR_PACKAGES, DEFAULT_PARTNER_TYPES, type SponsorPackage, type PartnerType } from "@/lib/sponsorPackages";
 
@@ -278,7 +279,7 @@ export default async function PartnershipPage({
                 const inner = (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={p.logoUrl}
+                    src={publicAssetUrl(p.logoUrl) ?? p.logoUrl}
                     alt={p.name}
                     className="h-10 max-w-[120px] object-contain opacity-60 transition-opacity hover:opacity-100"
                   />

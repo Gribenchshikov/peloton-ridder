@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { linkPartnerAction, unlinkPartnerAction } from "../../partners/actions";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 type Partner = { id: string; name: string; logoUrl: string; websiteUrl: string | null };
 type LinkedPartner = { partner: Partner };
@@ -42,7 +43,7 @@ export function PartnersSection({ eventId, linked, all }: Props) {
           {linked.map(({ partner }) => (
             <div key={partner.id} className="flex items-center gap-3 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={partner.logoUrl} alt={partner.name} className="h-7 w-14 object-contain" />
+              <img src={publicAssetUrl(partner.logoUrl) ?? partner.logoUrl} alt={partner.name} className="h-7 w-14 object-contain" />
               <span className="flex-1 text-sm font-semibold text-ink">{partner.name}</span>
               <button
                 type="button"

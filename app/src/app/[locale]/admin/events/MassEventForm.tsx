@@ -6,6 +6,7 @@ import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { createMassEventAction, updateMassEventAction, type MassActionState } from "./massEventActions";
 import { toDateInputValue } from "@/lib/dates";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
@@ -40,7 +41,7 @@ export function MassEventForm(props: Props) {
   const d = props.mode === "edit" ? props.defaults : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(d?.coverImageUrl ?? null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(publicAssetUrl(d?.coverImageUrl) ?? null);
   const [useExisting, setUseExisting] = useState(false);
   const [bulkState, setBulkState] = useState<MassActionState>({});
   const displayState = bulkState.error || bulkState.success ? bulkState : state;

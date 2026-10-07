@@ -1,3 +1,4 @@
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 type LeaderboardRow = {
   place: number;
@@ -65,7 +66,7 @@ export function ChallengeLeaderboard({
                       {row.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={row.avatarUrl.replace(/^http:\/\//, "https://")}
+                          src={publicAssetUrl(row.avatarUrl.replace(/^http:\/\//, "https://")) ?? row.avatarUrl.replace(/^http:\/\//, "https://")}
                           alt=""
                           width={32}
                           height={32}

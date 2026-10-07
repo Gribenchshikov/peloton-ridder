@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AdminFormHeader } from "../events/AdminFormHeader";
-import { SyncTeamPhotosButton } from "./SyncTeamPhotosButton";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import type { TeamMember, TrainingGroup } from "@/generated/prisma/client";
 
 export function ClubView({ members, trainingGroups }: { members: TeamMember[]; trainingGroups: TrainingGroup[] }) {
@@ -16,7 +16,6 @@ export function ClubView({ members, trainingGroups }: { members: TeamMember[]; t
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
       <AdminFormHeader title={t("clubTitle")} />
       <div className="flex flex-wrap items-start justify-end gap-3">
-        <SyncTeamPhotosButton />
         <Link
           href="/admin/club/new"
           className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
@@ -84,7 +83,7 @@ function MemberThumb({ name, photoUrl }: { name: string; photoUrl: string | null
   return (
     <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full">
       {photoUrl ? (
-        <img src={photoUrl} alt={name} className="h-full w-full object-cover object-center" />
+        <img src={publicAssetUrl(photoUrl) ?? photoUrl} alt={name} className="h-full w-full object-cover object-center" />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-ember text-[11px] font-bold text-white">
           {memberInitials(name)}

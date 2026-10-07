@@ -3,6 +3,7 @@ import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 export default async function PartnersPage() {
   const adminId = await requireAdminId();
@@ -35,7 +36,7 @@ export default async function PartnersPage() {
           {partners.map((p) => (
             <div key={p.id} className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.logoUrl} alt={p.name} className="h-8 w-16 object-contain" />
+              <img src={publicAssetUrl(p.logoUrl) ?? p.logoUrl} alt={p.name} className="h-8 w-16 object-contain" />
               <div className="flex-1">
                 <span className="font-semibold text-ink">{p.name}</span>
                 {p.websiteUrl && (

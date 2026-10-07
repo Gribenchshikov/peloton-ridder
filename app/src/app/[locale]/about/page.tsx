@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { getSiteSetting } from "@/lib/queries";
 import { localizeTeamMember } from "@/lib/teamI18n";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import type { TeamMember, TrainingGroup } from "@/generated/prisma/client";
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -23,7 +24,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
       {bgUrl && (
         <div
           className="relative overflow-hidden px-6 py-20 sm:py-24"
-          style={{ backgroundImage: `url(${bgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }}
+          style={{ backgroundImage: `url(${publicAssetUrl(bgUrl)})`, backgroundSize: "cover", backgroundPosition: "center" }}
         >
           <div className="absolute inset-0 bg-black/65" aria-hidden />
           <div className="relative mx-auto max-w-5xl text-white">
@@ -141,7 +142,7 @@ function MemberCard({ member }: { member: TeamMember }) {
     <div className="flex flex-col items-center rounded-[var(--radius-m)] border border-border bg-surface p-5 text-center">
       {member.photoUrl ? (
         <img
-          src={member.photoUrl}
+          src={publicAssetUrl(member.photoUrl) ?? member.photoUrl}
           alt={member.name}
           className="h-32 w-32 rounded-full object-cover object-center"
         />

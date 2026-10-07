@@ -1,5 +1,6 @@
 import {
   CreateBucketCommand,
+  GetObjectCommand,
   HeadBucketCommand,
   PutBucketPolicyCommand,
   PutObjectCommand,
@@ -90,14 +91,8 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
 
   const key = `${folder}/${crypto.randomUUID()}.${ext}`;
   const body = Buffer.from(await file.arrayBuffer());
-  await putPublicObject(key, body, file.type);
-
-  // На проде: UPLOAD_URL=https://ridder.kz/uploads (Nginx проксирует в MinIO)
-  // В dev: прямой доступ к MinIO на :9000
-  const base = process.env.UPLOAD_URL?.replace(/\/$/, "")
-    ?? `${(process.env.S3_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "")}/${BUCKET}`;
-
-  return { url: `${base}/${key}` };
+  const url = await putPublicObject(key, body, file.type);
+  return { url };
 }
 
 export async function putPublicObject(key: string, body: Buffer, contentType: string): Promise<string> {
@@ -117,4 +112,36 @@ export async function putPublicObject(key: string, body: Buffer, contentType: st
   );
 
   return `/uploads/${key}`;
+}
+
+export type PublicObject = {
+  body: ReadableStream;
+  contentType: string;
+  contentLength?: number;
+};
+
+function isS3NotFound(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { name?: string; Code?: string; $metadata?: { httpStatusCode?: number } };
+  return (
+    err.name === "NoSuchKey" ||
+    err.name === "NotFound" ||
+    err.Code === "NoSuchKey" ||
+    err.$metadata?.httpStatusCode === 404
+  );
+}
+
+export async function getPublicObject(key: string): Promise<PublicObject | null> {
+  try {
+    const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+    if (!obj.Body) return null;
+    return {
+      body: obj.Body.transformToWebStream(),
+      contentType: obj.ContentType ?? "application/octet-stream",
+      contentLength: obj.ContentLength,
+    };
+  } catch (error) {
+    if (isS3NotFound(error)) return null;
+    throw error;
+  }
 }

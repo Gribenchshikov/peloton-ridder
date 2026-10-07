@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 export function getSiteSetting(key: string) {
-  return prisma.siteSetting.findUnique({ where: { key } }).then((r) => r?.value ?? null);
+  return prisma.siteSetting.findUnique({ where: { key } }).then((r) => {
+    const value = r?.value ?? null;
+    return publicAssetUrl(value) ?? value;
+  });
 }
 
 export function upsertSiteSetting(key: string, value: string) {

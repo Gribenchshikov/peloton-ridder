@@ -6,6 +6,7 @@ import { useEventSaveRegistration } from "./EventSaveBar";
 import type { PhotoLink, MediaKind } from "@/types/eventContent";
 import { mediaKind } from "@/types/eventContent";
 import type { ActionState } from "../actions";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 type Props = {
   eventId: string;
@@ -125,7 +126,7 @@ export function MediaLinksSection({ eventId, initialLinks }: Props) {
           {links.map((link, i) => (
             <div key={`${link.url}-${i}`} className="flex items-center gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-3 py-2">
               {link.coverUrl ? (
-                <img src={link.coverUrl} alt="" className="h-10 w-16 shrink-0 rounded object-cover" />
+                <img src={publicAssetUrl(link.coverUrl) ?? link.coverUrl} alt="" className="h-10 w-16 shrink-0 rounded object-cover" />
               ) : (
                 <div className="flex h-10 w-16 shrink-0 items-center justify-center rounded border border-border bg-surface text-[10px] font-bold uppercase tracking-wide text-ink-faint">
                   {mediaKind(link) === "video" ? "видео" : "фото"}

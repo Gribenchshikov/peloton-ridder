@@ -3,6 +3,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { getEventDetail } from "@/lib/queries";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { groupDistancesByDiscipline, heroDistanceStats } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
 import { DistanceInfo } from "@/components/DistanceInfo";
@@ -89,7 +90,7 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
           {event.coverImageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={event.coverImageUrl}
+              src={publicAssetUrl(event.coverImageUrl) ?? event.coverImageUrl}
               alt=""
               className="absolute inset-0 h-full w-full object-cover object-[center_55%]"
             />
@@ -364,7 +365,7 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={partner.logoUrl}
+                          src={publicAssetUrl(partner.logoUrl) ?? partner.logoUrl}
                           alt={partner.name}
                           className="h-10 w-full object-contain"
                         />

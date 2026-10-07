@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import type { ActionState } from "./actions";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 type Props = {
   action: (prev: ActionState, fd: FormData) => Promise<ActionState>;
@@ -16,7 +17,7 @@ export function PartnerForm({ action, defaultValues = {}, submitLabel, extra }: 
   const t = useTranslations("Admin");
   const [state, formAction, pending] = useActionState(action, {});
   const fileRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(defaultValues.logoUrl ?? null);
+  const [preview, setPreview] = useState<string | null>(publicAssetUrl(defaultValues.logoUrl) ?? null);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -49,7 +50,7 @@ export function PartnerForm({ action, defaultValues = {}, submitLabel, extra }: 
         {preview && (
           <div className="flex h-16 w-40 items-center justify-center rounded-[var(--radius-s)] border border-border bg-surface p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="логотип" className="max-h-full max-w-full object-contain" />
+            <img src={publicAssetUrl(preview) ?? preview} alt="логотип" className="max-h-full max-w-full object-contain" />
           </div>
         )}
         <input

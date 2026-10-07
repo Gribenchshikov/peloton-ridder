@@ -113,12 +113,3 @@ export function extFromPhoto(url: string, contentType: string | null): { ext: st
   if (url.endsWith(".webp")) return { ext: "webp", type: "image/webp" };
   return { ext: "jpg", type: "image/jpeg" };
 }
-
-export function storageKeyFromPhotoUrl(photoUrl: string | null, fallbackKey: string): string {
-  if (!photoUrl) return fallbackKey;
-  const uploads = photoUrl.match(/\/uploads\/(.+)$/);
-  if (uploads?.[1]) return uploads[1];
-  const bucket = photoUrl.match(/\/ridder\/(.+)$/);
-  if (bucket?.[1]) return bucket[1];
-  return fallbackKey;
-}

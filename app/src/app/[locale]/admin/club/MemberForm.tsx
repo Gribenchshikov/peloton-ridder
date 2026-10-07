@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { ActionState } from "./actions";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import type { MemberType } from "@/generated/prisma/client";
 
 type Props = {
@@ -24,7 +25,7 @@ export function MemberForm({ mode, action, defaultValues, onDelete }: Props) {
   const t = useTranslations("Admin");
   const [state, formAction, pending] = useActionState(action, {});
   const fileRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(defaultValues?.photoUrl ?? null);
+  const [preview, setPreview] = useState<string | null>(publicAssetUrl(defaultValues?.photoUrl) ?? null);
   const [removed, setRemoved] = useState(false);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {

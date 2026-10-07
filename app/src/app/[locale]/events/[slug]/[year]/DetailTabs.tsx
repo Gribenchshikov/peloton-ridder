@@ -13,6 +13,7 @@ import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock, RegulationLocale } from "@/types/regulation";
 import type { PhotoLink, DayProgramItem, DistanceEquipment, MediaKind } from "@/types/eventContent";
 import { mediaKind } from "@/types/eventContent";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { EQUIPMENT_ITEMS } from "@/types/eventContent";
 import type { Result } from "@/generated/prisma/client";
 
@@ -72,7 +73,7 @@ function MediaLinkCard({ link, kind }: { link: PhotoLink; kind: MediaKind }) {
       <div className="relative overflow-hidden">
         {link.coverUrl ? (
           <img
-            src={link.coverUrl}
+            src={publicAssetUrl(link.coverUrl) ?? link.coverUrl}
             alt={link.label}
             className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
@@ -347,7 +348,7 @@ export function DetailTabs({
               ✕
             </button>
             <img
-              src={lightboxUrl}
+              src={publicAssetUrl(lightboxUrl) ?? lightboxUrl}
               alt=""
               className="max-h-[90vh] max-w-[90vw] rounded-[var(--radius-s)] object-contain shadow-2xl"
               onClick={(e) => e.stopPropagation()}

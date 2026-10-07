@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { savePageBgAction, removePageBgAction } from "@/lib/settingsActions";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 type PageEntry = {
   key: string;
@@ -81,7 +82,7 @@ function PageBgRow({ entry }: { entry: PageEntry }) {
       {previewUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={previewUrl}
+          src={publicAssetUrl(previewUrl) ?? previewUrl}
           alt=""
           className="mb-3 h-28 w-full rounded-[var(--radius-s)] object-cover"
         />

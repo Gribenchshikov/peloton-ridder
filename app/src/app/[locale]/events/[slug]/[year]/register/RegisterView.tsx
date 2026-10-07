@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import type { getEventForRegistration, getUserContactInfo } from "@/lib/queries";
 import { fullName } from "@/lib/user";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { type SizeRow } from "@/types/sizeTable";
 import { DistanceSelect } from "./DistanceSelect";
 
@@ -83,7 +84,7 @@ function ParticipantCard({ profile, callbackPath }: { profile: UserContactInfo; 
       <div className="mt-3 flex items-center gap-3">
         <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full">
           {profile.avatarUrl ? (
-            <img src={profile.avatarUrl} alt={name} className="h-full w-full object-cover" />
+            <img src={publicAssetUrl(profile.avatarUrl) ?? profile.avatarUrl} alt={name} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-ember text-sm font-bold text-white">
               {initials}

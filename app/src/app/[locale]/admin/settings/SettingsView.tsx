@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { saveHeroBgAction, removeHeroBgAction } from "@/lib/settingsActions";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 type Props = {
   currentUrl: string | null;
@@ -61,7 +62,7 @@ export function SettingsView({ currentUrl, labels }: Props) {
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">{labels.current}</p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={previewUrl}
+            src={publicAssetUrl(previewUrl) ?? previewUrl}
             alt="Hero background"
             className="h-48 w-full rounded-[var(--radius-s)] object-cover"
           />

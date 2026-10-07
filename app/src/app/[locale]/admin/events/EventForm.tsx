@@ -7,6 +7,7 @@ import { SelectField } from "@/components/SelectField";
 import { useRouter } from "@/i18n/navigation";
 import { createEventAction, updateEventAction, type ActionState } from "./actions";
 import { toDateInputValue } from "@/lib/dates";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
@@ -47,7 +48,7 @@ export function EventForm(props: EventFormProps) {
   const d = props.mode === "edit" ? props.defaults : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(d?.coverImageUrl ?? null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(publicAssetUrl(d?.coverImageUrl) ?? null);
   const [transferEnabled, setTransferEnabled] = useState(d?.transferPrice != null);
   const [bulkState, setBulkState] = useState<ActionState>({});
   const displayState = bulkState.error || bulkState.success ? bulkState : state;

@@ -2,10 +2,11 @@
 
 import { useActionState, useRef, useState } from "react";
 import { uploadAvatarAction, type AvatarState } from "./avatarAction";
+import { publicAssetUrl } from "@/lib/publicAssetUrl";
 
 export function AvatarUpload({ initialUrl, name }: { initialUrl: string | null; name: string }) {
   const [state, formAction, pending] = useActionState(uploadAvatarAction, {});
-  const [preview, setPreview] = useState<string | null>(initialUrl);
+  const [preview, setPreview] = useState<string | null>(publicAssetUrl(initialUrl));
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentUrl = state.url ?? preview;
@@ -34,7 +35,7 @@ export function AvatarUpload({ initialUrl, name }: { initialUrl: string | null; 
         title="Изменить фото"
       >
         {currentUrl ? (
-          <img src={currentUrl} alt={name} className="h-full w-full object-cover" />
+          <img src={publicAssetUrl(currentUrl) ?? currentUrl} alt={name} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-ember text-xl font-bold text-white">
             {initials}
