@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations, useFormatter } from "next-intl";
+import { Icon } from "@/components/IconSprite";
 import type { getAdminEvents } from "@/lib/queries";
 
 type EventRow = Awaited<ReturnType<typeof getAdminEvents>>[number];
@@ -95,7 +96,7 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
                   <tr key={event.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2.5 font-semibold text-ink">
                       <Link
-                        href={`/events/${event.race.slug}/${event.year}`}
+                        href={`/admin/events/${event.id}`}
                         className="hover:text-ember"
                       >
                         {event.race.name} {event.year}
@@ -120,10 +121,14 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
                           </Link>
                         )}
                         <Link
-                          href={`/admin/events/${event.id}`}
-                          className="font-semibold text-ink hover:text-ember"
+                          href={`/events/${event.race.slug}/${event.year}`}
+                          title={t("viewOnSiteCta")}
+                          aria-label={t("viewOnSiteCta")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex text-ink-soft hover:text-ember"
                         >
-                          {t("editCta")}
+                          <Icon name="i-eye" className="h-5 w-5" />
                         </Link>
                       </div>
                     </td>

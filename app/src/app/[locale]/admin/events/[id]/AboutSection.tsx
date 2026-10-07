@@ -3,6 +3,7 @@
 import { useState, useActionState } from "react";
 import { updateAboutAction } from "../actions";
 import type { ActionState } from "../actions";
+import { useEventSaveRegistration } from "./EventSaveBar";
 
 type Props = {
   eventId: string;
@@ -14,6 +15,15 @@ export function AboutSection({ eventId, initialAboutText }: Props) {
 
   const action = updateAboutAction.bind(null, eventId);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(`about-${eventId}`, async () => {
+    const fd = new FormData();
+    fd.set("aboutText", aboutText);
+    const result = await updateAboutAction(eventId, {}, fd);
+    setBulkState(result);
+    return result;
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,6 +42,7 @@ export function AboutSection({ eventId, initialAboutText }: Props) {
           <div className="text-right text-xs text-ink-faint">{aboutText.length}/4000</div>
         </div>
         <div className="flex items-center gap-3">
+          {!hideInlineSave && (
           <button
             type="submit"
             disabled={pending}
@@ -39,8 +50,9 @@ export function AboutSection({ eventId, initialAboutText }: Props) {
           >
             {pending ? "Сохранение…" : "Сохранить"}
           </button>
-          {state.success && <span className="text-sm text-spruce">Сохранено</span>}
-          {state.error && <span className="text-sm text-danger">Ошибка: {state.error}</span>}
+          )}
+          {displayState.success && <span className="text-sm text-spruce">Сохранено</span>}
+          {displayState.error && <span className="text-sm text-danger">Ошибка: {displayState.error}</span>}
         </div>
       </form>
     </div>

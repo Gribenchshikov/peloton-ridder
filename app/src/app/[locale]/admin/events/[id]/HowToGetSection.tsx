@@ -3,6 +3,7 @@
 import { useState, useActionState } from "react";
 import { updateHowToGetAction } from "../actions";
 import type { ActionState } from "../actions";
+import { useEventSaveRegistration } from "./EventSaveBar";
 
 type Props = {
   eventId: string;
@@ -15,6 +16,16 @@ export function HowToGetSection({ eventId, initialText, initialUrl }: Props) {
   const [url, setUrl] = useState(initialUrl ?? "");
   const action = updateHowToGetAction.bind(null, eventId);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(`howToGet-${eventId}`, async () => {
+    const fd = new FormData();
+    fd.set("howToGet", text);
+    fd.set("howToGetUrl", url);
+    const result = await updateHowToGetAction(eventId, {}, fd);
+    setBulkState(result);
+    return result;
+  });
 
   return (
     <div className="flex flex-col gap-3">
@@ -43,6 +54,7 @@ export function HowToGetSection({ eventId, initialText, initialUrl }: Props) {
         <input type="hidden" name="howToGet" value={text} />
         <input type="hidden" name="howToGetUrl" value={url} />
         <div className="flex items-center gap-3">
+          {!hideInlineSave && (
           <button
             type="submit"
             disabled={pending}
@@ -50,8 +62,9 @@ export function HowToGetSection({ eventId, initialText, initialUrl }: Props) {
           >
             {pending ? "Сохранение…" : "Сохранить"}
           </button>
-          {state.success && <span className="text-sm text-spruce">Сохранено</span>}
-          {state.error && <span className="text-sm text-danger">Ошибка</span>}
+          )}
+          {displayState.success && <span className="text-sm text-spruce">Сохранено</span>}
+          {displayState.error && <span className="text-sm text-danger">Ошибка</span>}
         </div>
       </form>
     </div>

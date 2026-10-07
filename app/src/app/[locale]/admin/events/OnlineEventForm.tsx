@@ -5,6 +5,7 @@ import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { createOnlineEventAction, updateOnlineEventAction, type OnlineActionState } from "./onlineEventActions";
 import { toDateInputValue } from "@/lib/dates";
+import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 export type OnlineEventDefaults = {
   year: number;
@@ -54,7 +55,21 @@ export function OnlineEventForm(props: Props) {
   const [state, formAction, pending] = useActionState(boundAction, initialState);
   const d = props.mode === "edit" ? props.defaults : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(d?.coverImageUrl ?? null);
+  const [bulkState, setBulkState] = useState<OnlineActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(
+    props.mode === "edit" ? `online-${props.eventId}` : "",
+    async () => {
+      if (props.mode !== "edit") return { success: true };
+      const result = await submitRegisteredForm(formRef.current, (prev, fd) =>
+        updateOnlineEventAction(props.eventId, prev, fd),
+      );
+      setBulkState(result);
+      return result;
+    },
+  );
 
   useEffect(() => {
     if (state.eventId && props.mode === "create" && props.onCreated) {
@@ -65,6 +80,7 @@ export function OnlineEventForm(props: Props) {
 
   return (
     <form
+      ref={formRef}
       action={formAction}
       className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-ember/25 bg-surface p-5"
     >
@@ -197,19 +213,20 @@ export function OnlineEventForm(props: Props) {
           <input type="hidden" name="currentCoverImageUrl" value={d.coverImageUrl} />
         )}
         <span className="text-xs text-ink-faint">JPEG, PNG или WebP · макс. 5 МБ</span>
-        {(state.error === "invalidType" || state.error === "tooLarge") && (
+        {(displayState.error === "invalidType" || displayState.error === "tooLarge") && (
           <p className="text-xs text-danger">
-            {state.error === "tooLarge" ? "Файл слишком большой (макс. 5 МБ)" : "Только JPEG, PNG или WebP"}
+            {displayState.error === "tooLarge" ? "Файл слишком большой (макс. 5 МБ)" : "Только JPEG, PNG или WebP"}
           </p>
         )}
       </div>
 
-      {state.success && <p className="text-sm text-spruce">Сохранено</p>}
-      {state.error === "invalid" && <p className="text-sm text-danger">Проверьте заполненные поля</p>}
-      {state.error === "duplicate" && (
+      {displayState.success && <p className="text-sm text-spruce">Сохранено</p>}
+      {displayState.error === "invalid" && <p className="text-sm text-danger">Проверьте заполненные поля</p>}
+      {displayState.error === "duplicate" && (
         <p className="text-sm text-danger">Событие с таким годом для этой трассы уже существует</p>
       )}
 
+      {!hideInlineSave && (
       <button
         type="submit"
         disabled={pending}
@@ -217,6 +234,7 @@ export function OnlineEventForm(props: Props) {
       >
         {pending ? "…" : (props.submitLabel ?? (props.mode === "create" ? "Создать" : "Сохранить"))}
       </button>
+      )}
     </form>
   );
 }

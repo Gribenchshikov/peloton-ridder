@@ -7,6 +7,7 @@ import { NotifySection } from "./NotifySection";
 import { AboutSection } from "./AboutSection";
 import { MediaLinksSection } from "./MediaLinksSection";
 import { deleteEventAction } from "../actions";
+import { EventSaveShell } from "./EventSaveBar";
 import type { PhotoLink } from "@/types/eventContent";
 
 type EventWithDetails = NonNullable<Awaited<ReturnType<typeof getEventForAdmin>>>;
@@ -25,6 +26,7 @@ export function OnlineEventEditView({
   const participation = event.distances.find((d) => d.km === 0) ?? event.distances[0];
 
   return (
+    <EventSaveShell>
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-6 py-16">
       <AdminFormHeader
         title={`${event.race.name} ${event.year}`}
@@ -78,5 +80,6 @@ export function OnlineEventEditView({
         <DeleteEventButton action={deleteEventAction.bind(null, locale, event.id)} />
       </div>
     </main>
+    </EventSaveShell>
   );
 }

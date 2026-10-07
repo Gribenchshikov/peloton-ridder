@@ -7,6 +7,7 @@ import { SelectField } from "@/components/SelectField";
 import { useRouter } from "@/i18n/navigation";
 import { createEventAction, updateEventAction, type ActionState } from "./actions";
 import { toDateInputValue } from "@/lib/dates";
+import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
 
@@ -45,8 +46,22 @@ export function EventForm(props: EventFormProps) {
 
   const d = props.mode === "edit" ? props.defaults : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(d?.coverImageUrl ?? null);
   const [transferEnabled, setTransferEnabled] = useState(d?.transferPrice != null);
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(
+    props.mode === "edit" ? `event-${props.eventId}` : "",
+    async () => {
+      if (props.mode !== "edit") return { success: true };
+      const result = await submitRegisteredForm(formRef.current, (prev, fd) =>
+        updateEventAction(props.eventId, prev, fd),
+      );
+      setBulkState(result);
+      return result;
+    },
+  );
 
   useEffect(() => {
     if (state.eventId && props.mode === "create" && props.onCreated) {
@@ -60,7 +75,7 @@ export function EventForm(props: EventFormProps) {
   }, [state.success, router]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
       {props.mode === "create" ? (
         <SelectField
           label={t("fieldRace")}
@@ -196,17 +211,18 @@ export function EventForm(props: EventFormProps) {
           <input type="hidden" name="currentCoverImageUrl" value={d.coverImageUrl} />
         )}
         <span className="text-xs text-ink-faint">JPEG, PNG или WebP · макс. 5 МБ</span>
-        {(state.error === "invalidType" || state.error === "tooLarge") && (
+        {(displayState.error === "invalidType" || displayState.error === "tooLarge") && (
           <p className="text-xs text-danger">
-            {state.error === "tooLarge" ? "Файл слишком большой (макс. 5 МБ)" : "Только JPEG, PNG или WebP"}
+            {displayState.error === "tooLarge" ? "Файл слишком большой (макс. 5 МБ)" : "Только JPEG, PNG или WebP"}
           </p>
         )}
       </div>
 
-      {state.success && <p className="text-sm text-spruce">{t("eventSaved")}</p>}
-      {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
-      {state.error === "duplicate" && <p className="text-sm text-danger">{t("errorDuplicate")}</p>}
+      {displayState.success && <p className="text-sm text-spruce">{t("eventSaved")}</p>}
+      {displayState.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+      {displayState.error === "duplicate" && <p className="text-sm text-danger">{t("errorDuplicate")}</p>}
 
+      {!hideInlineSave && (
       <button
         type="submit"
         disabled={pending}
@@ -214,6 +230,7 @@ export function EventForm(props: EventFormProps) {
       >
         {pending ? tAuth("submitting") : (props.submitLabel ?? (props.mode === "create" ? t("createSubmitCta") : t("saveSubmitCta")))}
       </button>
+      )}
     </form>
   );
 }

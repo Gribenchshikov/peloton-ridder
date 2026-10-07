@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { updateAidStationsAction, updateRaceStartAction } from "./actions";
+import { useEventSaveRegistration } from "./[id]/EventSaveBar";
 import type { AidStation, AidStationType } from "@/types/aidStation";
 
 type Props = {
@@ -67,24 +68,53 @@ export function AidStationEditor({ distanceId, initialStations, initialRaceStart
   }
 
   function saveStations() {
-    const fd = new FormData();
-    fd.set("aidStations", JSON.stringify(stations));
-    setStationsStatus({});
-    startStationsTransition(async () => {
-      const result = await updateAidStationsAction(distanceId, {}, fd);
-      setStationsStatus(result);
+    startStationsTransition(() => {
+      void persistStations();
     });
   }
 
   function saveStartTime() {
+    startStartTransition(() => {
+      void persistStartTime();
+    });
+  }
+
+  async function persistStartTime() {
     const fd = new FormData();
     fd.set("raceStartMinutes", raceStartMins != null ? String(raceStartMins) : "");
     setStartStatus({});
-    startStartTransition(async () => {
-      const result = await updateRaceStartAction(distanceId, {}, fd);
-      setStartStatus(result);
-    });
+    const result = await updateRaceStartAction(distanceId, {}, fd);
+    setStartStatus(result);
+    return result;
   }
+
+  async function persistStations() {
+    let next = stations;
+    const km = parseFloat(newS.km);
+    if (newS.name.trim() && !isNaN(km)) {
+      const cutoff = newS.cutoffMinutes !== "" ? parseInt(newS.cutoffMinutes) : undefined;
+      const s: AidStation = { name: newS.name.trim(), km, type: newS.type, ...(cutoff != null ? { cutoffMinutes: cutoff } : {}) };
+      next = [...stations, s].sort((a, b) => a.km - b.km);
+      setStations(next);
+      setNewS(emptyNew);
+      setAdding(false);
+    }
+    const fd = new FormData();
+    fd.set("aidStations", JSON.stringify(next));
+    setStationsStatus({});
+    const result = await updateAidStationsAction(distanceId, {}, fd);
+    setStationsStatus(result);
+    return result;
+  }
+
+  const { hideInlineSave } = useEventSaveRegistration(`aid-${distanceId}`, async () => {
+    const startResult = await persistStartTime();
+    const stationsResult = await persistStations();
+    if (startResult.error || stationsResult.error) {
+      return { error: startResult.error ?? stationsResult.error };
+    }
+    return { success: true };
+  });
 
   return (
     <div className="flex flex-col gap-4 border-t border-border pt-3 mt-1">
@@ -98,6 +128,7 @@ export function AidStationEditor({ distanceId, initialStations, initialRaceStart
             onChange={(e) => { setStartTime(e.target.value); setStartStatus({}); }}
             className="rounded border border-border bg-surface px-2 py-1.5 text-sm tabular-nums focus:border-ember focus:outline-none"
           />
+          {!hideInlineSave && (
           <button
             type="button"
             onClick={saveStartTime}
@@ -106,6 +137,7 @@ export function AidStationEditor({ distanceId, initialStations, initialRaceStart
           >
             {startPending ? "…" : "Сохранить старт"}
           </button>
+          )}
           {startStatus.success && <span className="text-sm text-spruce">Сохранено ✓</span>}
           {startStatus.error && <span className="text-sm text-danger">Ошибка</span>}
         </div>
@@ -180,10 +212,12 @@ export function AidStationEditor({ distanceId, initialStations, initialRaceStart
         )}
 
         <div className="flex items-center gap-3">
+          {!hideInlineSave && (
           <button type="button" onClick={saveStations} disabled={stationsPending}
             className="rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-1.5 text-sm font-semibold text-ink transition-colors hover:border-ink-soft disabled:opacity-50">
             {stationsPending ? "Сохраняется…" : "Сохранить пункты"}
           </button>
+          )}
           {stationsStatus.success && <span className="text-sm text-spruce">Сохранено ✓</span>}
           {stationsStatus.error && <span className="text-sm text-danger">Ошибка</span>}
         </div>

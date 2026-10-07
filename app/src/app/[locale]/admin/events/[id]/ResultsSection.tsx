@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { importResultsCsvAction, importItraResultsAction, saveResultsLinkAction, clearResultsAction } from "../actions";
+import { useEventSaveRegistration } from "./EventSaveBar";
 import type { Result } from "@/generated/prisma/client";
 
 type Distance = { id: string; name: string; km: number };
@@ -34,6 +35,16 @@ function ResultsLinkCard({
   const [publishedUrl, setPublishedUrl] = useState(initialUrl ?? "");
   const [status, setStatus] = useState<{ error?: string; success?: boolean }>({});
   const [pending, start] = useTransition();
+  const { hideInlineSave } = useEventSaveRegistration(`results-link-${eventId}-${kind}`, async () => {
+    if (!url.trim() || url === publishedUrl) return { success: true };
+    const fd = new FormData();
+    fd.set("kind", kind);
+    fd.set("url", url);
+    const result = await saveResultsLinkAction(eventId, {}, fd);
+    setStatus(result);
+    if (result.success) setPublishedUrl(url);
+    return result;
+  });
 
   function save(e: React.FormEvent) {
     e.preventDefault();
@@ -77,6 +88,7 @@ function ResultsLinkCard({
           className="w-full rounded border border-border bg-surface px-3 py-1.5 text-sm focus:border-ember focus:outline-none"
         />
         <div className="flex flex-wrap items-center gap-2">
+          {!hideInlineSave && (
           <button
             type="submit"
             disabled={pending || !url}
@@ -84,6 +96,7 @@ function ResultsLinkCard({
           >
             {pending ? "Сохраняется…" : "Опубликовать ссылку"}
           </button>
+          )}
           {publishedUrl && (
             <button
               type="button"

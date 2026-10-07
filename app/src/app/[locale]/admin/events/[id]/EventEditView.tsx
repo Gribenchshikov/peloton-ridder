@@ -20,6 +20,7 @@ import { NotifySection } from "./NotifySection";
 import { TelegramTopicSection } from "./TelegramTopicSection";
 import { PublishToggle } from "./PublishToggle";
 import { DeleteEventButton } from "./DeleteEventButton";
+import { EventSaveShell } from "./EventSaveBar";
 import { deleteEventAction } from "../actions";
 import type { Partner, Result } from "@/generated/prisma/client";
 import type { AidStation } from "@/types/aidStation";
@@ -45,7 +46,7 @@ function WizardStepper({ current }: { current: 2 | 3 }) {
   );
 }
 
-export function EventEditView({ event, allPartners, allRaces, wizard, locale, lastNotification }: { event: EventWithDetails; allPartners: Partner[]; allRaces: { id: string; name: string }[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; }) {
+export function EventEditView({ event, allPartners, allRaces, wizard, locale, lastNotification, telegramConfigured }: { event: EventWithDetails; allPartners: Partner[]; allRaces: { id: string; name: string }[]; wizard?: "2" | "3"; locale: string; lastNotification?: { subject: string; sentAt: Date } | null; telegramConfigured?: boolean; }) {
   const t = useTranslations("Admin");
 
   if (event.race.isMass) {
@@ -124,6 +125,7 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
   }
 
   return (
+    <EventSaveShell>
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-6 py-16">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <AdminFormHeader title={t("editEventTitle", { name: `${event.race.name} ${event.year}` })} />
@@ -250,6 +252,7 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
           eventId={event.id}
           initialTopicId={event.volunteerTgTopicId ?? null}
           initialChatUrl={event.volunteerChatUrl ?? null}
+          telegramConfigured={Boolean(telegramConfigured)}
         />
       </div>
 
@@ -258,5 +261,6 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
         <DeleteEventButton action={deleteEventAction.bind(null, locale, event.id)} />
       </div>
     </main>
+    </EventSaveShell>
   );
 }

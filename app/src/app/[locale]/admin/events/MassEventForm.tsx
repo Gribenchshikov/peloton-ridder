@@ -6,6 +6,7 @@ import { FormField } from "@/components/FormField";
 import { SelectField } from "@/components/SelectField";
 import { createMassEventAction, updateMassEventAction, type MassActionState } from "./massEventActions";
 import { toDateInputValue } from "@/lib/dates";
+import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 const STATUS_VALUES = ["DRAFT", "OPEN", "CLOSED", "COMPLETED"] as const;
 const initialState: MassActionState = {};
@@ -38,8 +39,22 @@ export function MassEventForm(props: Props) {
 
   const d = props.mode === "edit" ? props.defaults : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(d?.coverImageUrl ?? null);
   const [useExisting, setUseExisting] = useState(false);
+  const [bulkState, setBulkState] = useState<MassActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(
+    props.mode === "edit" ? `mass-${props.eventId}` : "",
+    async () => {
+      if (props.mode !== "edit") return { success: true };
+      const result = await submitRegisteredForm(formRef.current, (prev, fd) =>
+        updateMassEventAction(props.eventId, prev, fd),
+      );
+      setBulkState(result);
+      return result;
+    },
+  );
 
   useEffect(() => {
     if (state.eventId && props.mode === "create" && props.onCreated) {
@@ -51,7 +66,7 @@ export function MassEventForm(props: Props) {
   const massRaces = props.mode === "create" ? props.massRaces : [];
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
       <p className="text-sm text-ink-soft">
         Культмассовое мероприятие без регистрации, результатов и финишного протокола. На странице — описание, фото и видео.
       </p>
@@ -136,10 +151,11 @@ export function MassEventForm(props: Props) {
         )}
       </div>
 
-      {state.success && <p className="text-sm text-spruce">{t("eventSaved")}</p>}
-      {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
-      {state.error === "duplicate" && <p className="text-sm text-danger">{t("errorDuplicate")}</p>}
+      {displayState.success && <p className="text-sm text-spruce">{t("eventSaved")}</p>}
+      {displayState.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+      {displayState.error === "duplicate" && <p className="text-sm text-danger">{t("errorDuplicate")}</p>}
 
+      {!hideInlineSave && (
       <button
         type="submit"
         disabled={pending}
@@ -147,6 +163,7 @@ export function MassEventForm(props: Props) {
       >
         {pending ? tAuth("submitting") : props.mode === "create" ? "Создать →" : t("saveSubmitCta")}
       </button>
+      )}
     </form>
   );
 }

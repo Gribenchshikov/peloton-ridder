@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { createMerchAction, updateMerchAction, type ActionState } from "./actions";
+import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 
 const initialState: ActionState = {};
 
@@ -33,9 +34,22 @@ export function MerchForm(props: MerchFormProps) {
     return result;
   }
   const [state, formAction, pending] = useActionState(action, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(
+    props.mode === "edit" ? `merch-${props.merchItemId}` : "",
+    async () => {
+      if (props.mode !== "edit") return { success: true };
+      const result = await submitRegisteredForm(formRef.current, boundAction);
+      setBulkState(result);
+      if (result.success) props.onSuccess?.();
+      return result;
+    },
+  );
 
   return (
-    <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <FormField label={t("fieldMerchName")} name="name" type="text" required defaultValue={d?.name} />
       <FormField
         label={t("fieldMerchOrder")}
@@ -60,7 +74,8 @@ export function MerchForm(props: MerchFormProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:col-span-2">
-        {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+        {displayState.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+        {(!hideInlineSave || props.mode === "create") && (
         <button
           type="submit"
           disabled={pending}
@@ -68,6 +83,7 @@ export function MerchForm(props: MerchFormProps) {
         >
           {pending ? tAuth("submitting") : props.mode === "create" ? t("addMerchCta") : t("saveSubmitCta")}
         </button>
+        )}
       </div>
     </form>
   );

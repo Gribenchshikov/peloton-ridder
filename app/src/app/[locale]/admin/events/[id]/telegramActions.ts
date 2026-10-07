@@ -6,6 +6,33 @@ import { revalidatePath } from "next/cache";
 
 const TG_API = (token: string) => `https://api.telegram.org/bot${token}`;
 
+function isHttpUrl(value: string): boolean {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+export async function saveVolunteerChatUrlAction(
+  eventId: string,
+  chatUrl: string,
+): Promise<{ ok?: boolean; error?: string }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const trimmed = chatUrl.trim();
+  if (trimmed && !isHttpUrl(trimmed)) return { error: "invalid_url" };
+
+  await prisma.event.update({
+    where: { id: eventId },
+    data: { volunteerChatUrl: trimmed || null },
+  });
+
+  revalidatePath("/[locale]/admin/events/[id]", "page");
+  return { ok: true };
+}
+
 export async function createVolunteerTopicAction(
   eventId: string,
 ): Promise<{ ok?: boolean; chatUrl?: string; error?: string }> {

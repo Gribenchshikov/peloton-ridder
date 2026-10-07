@@ -35,5 +35,7 @@ export default async function EditEventPage({
   );
 
   const wizardStep = wizard === "2" ? "2" : wizard === "3" ? "3" : undefined;
-  return <EventEditView event={event} allPartners={allPartners} allRaces={racesForForm} wizard={wizardStep} locale={locale} lastNotification={lastNotification} />;
+  const telegramConfigured = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.VOLUNTEER_TG_CHAT_ID);
+
+  return <EventEditView event={event} allPartners={allPartners} allRaces={racesForForm} wizard={wizardStep} locale={locale} lastNotification={lastNotification} telegramConfigured={telegramConfigured} />;
 }

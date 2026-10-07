@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useEventSaveRegistration } from "./EventSaveBar";
 import {
   uploadRegulationFileAction,
   removeRegulationFileAction,
@@ -208,15 +209,22 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
     setStatus({});
   }
 
-  function save() {
+  async function persist() {
     const fd = new FormData();
     fd.set("blocks", JSON.stringify(blocks));
     setStatus({});
-    startTransition(async () => {
-      const result = await updateRegulationBlocksAction(eventId, {}, fd);
-      setStatus(result);
+    const result = await updateRegulationBlocksAction(eventId, {}, fd);
+    setStatus(result);
+    return result;
+  }
+
+  function save() {
+    startTransition(() => {
+      void persist();
     });
   }
+
+  const { hideInlineSave } = useEventSaveRegistration(`regulation-blocks-${eventId}`, persist);
 
   return (
     <div className="flex flex-col gap-3">
@@ -304,6 +312,7 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
       </button>
 
       <div className="flex items-center gap-3">
+        {!hideInlineSave && (
         <button
           type="button"
           onClick={save}
@@ -312,6 +321,7 @@ function BlocksEditor({ eventId, initialBlocks }: { eventId: string; initialBloc
         >
           {isPending ? "Сохраняется…" : "Сохранить блоки"}
         </button>
+        )}
         {status.success && <span className="text-sm text-spruce">Сохранено ✓</span>}
         {status.error && <span className="text-sm text-danger">Ошибка</span>}
       </div>

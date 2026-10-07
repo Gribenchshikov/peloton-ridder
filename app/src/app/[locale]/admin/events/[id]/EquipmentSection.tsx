@@ -2,6 +2,7 @@
 
 import { useState, useActionState } from "react";
 import { updateDistanceEquipmentAction } from "../actions";
+import { useEventSaveRegistration } from "./EventSaveBar";
 import { EQUIPMENT_ITEMS } from "@/types/eventContent";
 import type { DistanceEquipment } from "@/types/eventContent";
 import type { ActionState } from "../actions";
@@ -25,6 +26,15 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
   const [editingLabel, setEditingLabel] = useState("");
   const action = updateDistanceEquipmentAction.bind(null, eventId);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(`equipment-${eventId}`, async () => {
+    const fd = new FormData();
+    fd.set("distanceEquipment", JSON.stringify(equipment));
+    const result = await updateDistanceEquipmentAction(eventId, {}, fd);
+    setBulkState(result);
+    return result;
+  });
 
   if (distances.length === 0) {
     return <p className="text-sm text-ink-faint">Сначала добавьте дистанции в разделе «Дистанции».</p>;
@@ -311,6 +321,7 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
       >
         <input type="hidden" name="distanceEquipment" value={JSON.stringify(equipment)} />
         <div className="flex items-center gap-3">
+          {!hideInlineSave && (
           <button
             type="submit"
             disabled={pending}
@@ -318,8 +329,9 @@ export function EquipmentSection({ eventId, distances, initialEquipment }: Props
           >
             {pending ? "Сохранение…" : "Сохранить снаряжение"}
           </button>
-          {state.success && <span className="text-sm text-spruce">Сохранено</span>}
-          {state.error && <span className="text-sm text-danger">Ошибка</span>}
+          )}
+          {displayState.success && <span className="text-sm text-spruce">Сохранено</span>}
+          {displayState.error && <span className="text-sm text-danger">Ошибка</span>}
         </div>
       </form>
     </div>

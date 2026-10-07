@@ -2,6 +2,7 @@
 
 import { useState, useActionState, useTransition } from "react";
 import { updateMediaLinksAction, uploadPhotoLinkCoverAction } from "../actions";
+import { useEventSaveRegistration } from "./EventSaveBar";
 import type { PhotoLink, MediaKind } from "@/types/eventContent";
 import { mediaKind } from "@/types/eventContent";
 import type { ActionState } from "../actions";
@@ -31,6 +32,30 @@ export function MediaLinksSection({ eventId, initialLinks }: Props) {
 
   const action = updateMediaLinksAction.bind(null, eventId);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, {});
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(`media-${eventId}`, async () => {
+    let nextLinks = links;
+    const trimUrl = newUrl.trim();
+    const trimLabel = newLabel.trim();
+    if (trimUrl && trimLabel) {
+      let coverUrl: string | undefined;
+      if (coverFile) {
+        const coverFd = new FormData();
+        coverFd.set("cover", coverFile);
+        const uploaded = await uploadPhotoLinkCoverAction(eventId, coverFd);
+        coverUrl = uploaded.url;
+      }
+      nextLinks = [...links, { url: trimUrl, label: trimLabel, kind: newKind, ...(coverUrl ? { coverUrl } : {}) }];
+      setLinks(nextLinks);
+      resetDraft();
+    }
+    const fd = new FormData();
+    fd.set("photoLinks", JSON.stringify(nextLinks));
+    const result = await updateMediaLinksAction(eventId, {}, fd);
+    setBulkState(result);
+    return result;
+  });
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
@@ -194,6 +219,7 @@ export function MediaLinksSection({ eventId, initialLinks }: Props) {
       <form action={formAction}>
         <input type="hidden" name="photoLinks" value={JSON.stringify(links)} />
         <div className="flex items-center gap-3">
+          {!hideInlineSave && (
           <button
             type="submit"
             disabled={pending}
@@ -201,8 +227,9 @@ export function MediaLinksSection({ eventId, initialLinks }: Props) {
           >
             {pending ? "Сохранение…" : "Сохранить ссылки"}
           </button>
-          {state.success && <span className="text-sm text-spruce">Сохранено</span>}
-          {state.error && <span className="text-sm text-danger">Ошибка: {state.error}</span>}
+          )}
+          {displayState.success && <span className="text-sm text-spruce">Сохранено</span>}
+          {displayState.error && <span className="text-sm text-danger">Ошибка: {displayState.error}</span>}
         </div>
       </form>
     </div>

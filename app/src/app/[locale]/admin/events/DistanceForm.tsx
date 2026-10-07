@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FormField } from "@/components/FormField";
 import { createDistanceAction, updateDistanceAction, type ActionState } from "./actions";
+import { submitRegisteredForm, useEventSaveRegistration } from "./[id]/EventSaveBar";
 import { parseParticipantRules, type ParticipantRule } from "@/types/participantRules";
 
 const initialState: ActionState = {};
@@ -65,8 +66,21 @@ export function DistanceForm(props: DistanceFormProps) {
     return result;
   }
   const [state, formAction, pending] = useActionState(action, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [bulkState, setBulkState] = useState<ActionState>({});
+  const displayState = bulkState.error || bulkState.success ? bulkState : state;
+  const { hideInlineSave } = useEventSaveRegistration(
+    props.mode === "edit" ? `distance-${props.distanceId}` : "",
+    async () => {
+      if (props.mode !== "edit") return { success: true };
+      const result = await submitRegisteredForm(formRef.current, boundAction);
+      setBulkState(result);
+      if (result.success) props.onSuccess?.();
+      return result;
+    },
+  );
 
-  const inv = state.invalidFields;
+  const inv = displayState.invalidFields;
   const isFamily = slots > 1;
 
   function handleSlotsChange(n: number) {
@@ -89,7 +103,7 @@ export function DistanceForm(props: DistanceFormProps) {
   }
 
   return (
-    <form action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <form ref={formRef} action={formAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
       <FormField label={t("fieldName")} name="name" type="text" required placeholder="например: Горная 21" defaultValue={d?.name} error={inv?.includes("name")} />
       <FormField label={t("fieldDiscipline")} name="discipline" type="text" optional placeholder="например: Trail Run" defaultValue={d?.discipline ?? undefined} error={inv?.includes("discipline")} />
       <FormField label={t("fieldKm")} name="km" type="number" step="0.01" required placeholder="например: 21.1 (онлайн - 0)" defaultValue={d ? String(d.km) : undefined} error={inv?.includes("km")} />
@@ -223,7 +237,8 @@ export function DistanceForm(props: DistanceFormProps) {
       </div>
 
       <div className="flex flex-col gap-2 sm:col-span-2">
-        {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+        {displayState.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
+        {(!hideInlineSave || props.mode === "create") && (
         <button
           type="submit"
           disabled={pending}
@@ -231,6 +246,7 @@ export function DistanceForm(props: DistanceFormProps) {
         >
           {pending ? tAuth("submitting") : props.mode === "create" ? t("addDistanceCta") : t("saveSubmitCta")}
         </button>
+        )}
       </div>
     </form>
   );
