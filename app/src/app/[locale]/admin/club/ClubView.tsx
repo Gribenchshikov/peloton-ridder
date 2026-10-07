@@ -81,18 +81,15 @@ function memberInitials(name: string) {
 }
 
 function MemberThumb({ name, photoUrl }: { name: string; photoUrl: string | null }) {
-  if (photoUrl) {
-    return (
-      <img
-        src={photoUrl}
-        alt={name}
-        className="h-10 w-10 rounded-full object-cover object-center"
-      />
-    );
-  }
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ember text-[11px] font-bold text-white">
-      {memberInitials(name)}
+    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full">
+      {photoUrl ? (
+        <img src={photoUrl} alt={name} className="h-full w-full object-cover object-center" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-ember text-[11px] font-bold text-white">
+          {memberInitials(name)}
+        </div>
+      )}
     </div>
   );
 }
@@ -119,7 +116,7 @@ function MemberSection({
             <tbody>
               {members.map((m) => (
                 <tr key={m.id} className="border-b border-border last:border-0">
-                  <td className="w-14 px-4 py-3">
+                  <td className="w-14 px-4 py-3 align-middle">
                     <MemberThumb name={m.name} photoUrl={m.photoUrl} />
                   </td>
                   <td className="px-4 py-3">
