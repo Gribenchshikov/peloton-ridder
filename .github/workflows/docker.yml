@@ -1,4 +1,4 @@
-name: Build Docker Image
+name: Build and Deploy
 
 on:
   push:
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build:
+    name: Build Docker Image
     runs-on: ubuntu-latest
 
     steps:
@@ -39,3 +40,34 @@ jobs:
             ghcr.io/gribenchshikov/peloton-ridder:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Test Server
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+
+            cd /opt/peloton-ridder
+
+            echo "=== Updating repository ==="
+            git pull --ff-only
+
+            echo "=== Pulling Docker image ==="
+            docker compose pull app
+
+            echo "=== Starting new application container ==="
+            docker compose up -d --no-build app
+
+            echo "=== Container status ==="
+            docker compose ps
+
+            echo "=== Deployment completed ==="
