@@ -71,6 +71,32 @@ export function ClubView({ members, trainingGroups }: { members: TeamMember[]; t
   );
 }
 
+function memberInitials(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+}
+
+function MemberThumb({ name, photoUrl }: { name: string; photoUrl: string | null }) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className="h-10 w-10 rounded-full object-cover object-center"
+      />
+    );
+  }
+  return (
+    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-ember text-[11px] font-bold text-white">
+      {memberInitials(name)}
+    </div>
+  );
+}
+
 function MemberSection({
   title,
   members,
@@ -93,6 +119,9 @@ function MemberSection({
             <tbody>
               {members.map((m) => (
                 <tr key={m.id} className="border-b border-border last:border-0">
+                  <td className="w-14 px-4 py-3">
+                    <MemberThumb name={m.name} photoUrl={m.photoUrl} />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-ink">{m.name}</div>
                     <div className="text-xs text-ink-faint">{m.role}</div>

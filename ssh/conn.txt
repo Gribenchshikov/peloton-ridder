@@ -1,0 +1,6 @@
+https://cloud.digitalocean.com/droplets/598986509?i=52c6ed
+ssh root@157.230.21.193
+
+
+Гугл секрет
+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
