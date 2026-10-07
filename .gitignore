@@ -4,3 +4,6 @@
 .env
 nginx/ssl/
 *.pdf
+# Server/database backups
+*.dump
+*.tar.gz
