@@ -90,7 +90,17 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
 
   const key = `${folder}/${crypto.randomUUID()}.${ext}`;
   const body = Buffer.from(await file.arrayBuffer());
+  await putPublicObject(key, body, file.type);
 
+  // На проде: UPLOAD_URL=https://ridder.kz/uploads (Nginx проксирует в MinIO)
+  // В dev: прямой доступ к MinIO на :9000
+  const base = process.env.UPLOAD_URL?.replace(/\/$/, "")
+    ?? `${(process.env.S3_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "")}/${BUCKET}`;
+
+  return { url: `${base}/${key}` };
+}
+
+export async function putPublicObject(key: string, body: Buffer, contentType: string): Promise<string> {
   bucketReady ??= ensureBucket().catch((err) => {
     bucketReady = null;
     throw err;
@@ -102,14 +112,9 @@ export async function saveFile(file: File, folder: string): Promise<SaveResult> 
       Bucket: BUCKET,
       Key: key,
       Body: body,
-      ContentType: file.type,
+      ContentType: contentType,
     }),
   );
 
-  // На проде: UPLOAD_URL=https://ridder.kz/uploads (Nginx проксирует в MinIO)
-  // В dev: прямой доступ к MinIO на :9000
-  const base = process.env.UPLOAD_URL?.replace(/\/$/, "")
-    ?? `${(process.env.S3_ENDPOINT ?? "http://localhost:9000").replace(/\/$/, "")}/${BUCKET}`;
-
-  return { url: `${base}/${key}` };
+  return `/uploads/${key}`;
 }

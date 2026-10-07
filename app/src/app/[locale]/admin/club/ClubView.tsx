@@ -1,6 +1,9 @@
+"use client";
+
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AdminFormHeader } from "../events/AdminFormHeader";
+import { SyncTeamPhotosButton } from "./SyncTeamPhotosButton";
 import type { TeamMember, TrainingGroup } from "@/generated/prisma/client";
 
 export function ClubView({ members, trainingGroups }: { members: TeamMember[]; trainingGroups: TrainingGroup[] }) {
@@ -12,7 +15,8 @@ export function ClubView({ members, trainingGroups }: { members: TeamMember[]; t
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-16">
       <AdminFormHeader title={t("clubTitle")} />
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-start justify-end gap-3">
+        <SyncTeamPhotosButton />
         <Link
           href="/admin/club/new"
           className="rounded-[var(--radius-s)] bg-ember px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
