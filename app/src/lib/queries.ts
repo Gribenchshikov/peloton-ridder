@@ -602,3 +602,29 @@ export async function getChallengeLeaderboard(eventId: string) {
     };
   });
 }
+
+export function countPendingRefundRequests() {
+  return prisma.refundRequest.count({ where: { status: "PENDING" } });
+}
+
+export function getPendingRefundRequests() {
+  return prisma.refundRequest.findMany({
+    where: { status: "PENDING" },
+    select: {
+      id: true,
+      type: true,
+      reason: true,
+      requestedAt: true,
+      registration: {
+        select: {
+          id: true,
+          eventId: true,
+          user: { select: { firstName: true, lastName: true, email: true } },
+          distance: { select: { name: true } },
+          event: { select: { year: true, race: { select: { name: true, slug: true } } } },
+        },
+      },
+    },
+    orderBy: { requestedAt: "asc" },
+  });
+}

@@ -14,6 +14,8 @@ export function MobileMenu({
   signInLabel,
   registerLabel,
   adminLabel,
+  pendingRefundCount = 0,
+  pendingRefundsLabel,
 }: {
   locale: string;
   navLinks: NavLink[];
@@ -23,6 +25,8 @@ export function MobileMenu({
   signInLabel: string;
   registerLabel: string;
   adminLabel: string;
+  pendingRefundCount?: number;
+  pendingRefundsLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -67,6 +71,15 @@ export function MobileMenu({
           </div>
 
           <div className="mt-3 flex flex-col gap-2">
+            {isAdmin && pendingRefundCount > 0 && pendingRefundsLabel && (
+              <Link
+                href="/admin/refunds"
+                onClick={() => setOpen(false)}
+                className="rounded-[var(--radius-s)] bg-warn-tint px-3 py-2.5 text-center text-sm font-bold text-warn"
+              >
+                {pendingRefundsLabel}
+              </Link>
+            )}
             {isAdmin && (
               <Link
                 href="/admin"

@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { logoutAction } from "@/lib/authActions";
 
-export function AdminView() {
+export function AdminView({ pendingRefundCount = 0 }: { pendingRefundCount?: number }) {
   const t = useTranslations("Admin");
 
   return (
@@ -31,6 +31,18 @@ export function AdminView() {
           </form>
         </div>
       </div>
+
+      {pendingRefundCount > 0 && (
+        <Link
+          href="/admin/refunds"
+          className="mb-8 flex items-center justify-between gap-3 rounded-[var(--radius-m)] border border-warn/40 bg-warn-tint px-5 py-4 transition-colors hover:border-warn"
+        >
+          <span className="text-sm font-bold text-warn">
+            Есть необработанные заявки на возврат ({pendingRefundCount})
+          </span>
+          <span className="shrink-0 text-sm font-semibold text-warn">Открыть →</span>
+        </Link>
+      )}
 
       <div className="flex flex-col gap-12">
 

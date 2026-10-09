@@ -37,8 +37,10 @@ async function lockDistances(tx: Parameters<Parameters<typeof prisma.$transactio
 function revalidateRegistrationPages() {
   revalidatePath("/[locale]/admin/events/[id]/registrations", "page");
   revalidatePath("/[locale]/admin/registrations/[slug]/[year]", "page");
+  revalidatePath("/[locale]/admin/refunds", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
   revalidatePath("/[locale]/account", "page");
+  revalidatePath("/", "layout");
 }
 
 export async function cancelRegistrationAction(

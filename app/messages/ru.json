@@ -262,9 +262,9 @@
     "refundSubmitCta": "Отправить заявку",
     "refundSubmitting": "Отправляем…",
     "refundAbortCta": "Отмена",
-    "refundStatus_PENDING": "заявка подана",
-    "refundStatus_CONFIRMED": "одобрен",
-    "refundStatus_REJECTED": "отклонён",
+    "refundStatus_PENDING": "подана заявка на возврат",
+    "refundStatus_CONFIRMED": "возврат одобрен",
+    "refundStatus_REJECTED": "заявка отклонена",
     "refundError_deadline_passed": "Срок подачи заявки на возврат истёк.",
     "refundError_already_requested": "Заявка на этот тип возврата уже подана.",
     "refundError_no_transfer": "У этой регистрации нет трансфера.",
@@ -709,7 +709,8 @@
     "profile": "Профиль",
     "signIn": "Войти",
     "register": "Регистрация",
-    "adminPanel": "Админка"
+    "adminPanel": "Админка",
+    "pendingRefunds": "Есть необработанные заявки на возврат ({count})"
   },
   "Footer": {
     "tagline": "Беговой клуб · Риддер",

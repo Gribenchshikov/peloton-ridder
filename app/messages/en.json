@@ -262,9 +262,9 @@
     "refundSubmitCta": "Submit request",
     "refundSubmitting": "Sending…",
     "refundAbortCta": "Cancel",
-    "refundStatus_PENDING": "requested",
-    "refundStatus_CONFIRMED": "approved",
-    "refundStatus_REJECTED": "declined",
+    "refundStatus_PENDING": "refund requested",
+    "refundStatus_CONFIRMED": "refund approved",
+    "refundStatus_REJECTED": "request declined",
     "refundError_deadline_passed": "The refund request deadline has passed.",
     "refundError_already_requested": "A refund of this type has already been requested.",
     "refundError_no_transfer": "This registration has no transfer.",
@@ -709,7 +709,8 @@
     "profile": "Profile",
     "signIn": "Sign in",
     "register": "Sign up",
-    "adminPanel": "Admin panel"
+    "adminPanel": "Admin panel",
+    "pendingRefunds": "Unprocessed refund requests ({count})"
   },
   "Footer": {
     "tagline": "Running club · Ridder",

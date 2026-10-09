@@ -310,12 +310,11 @@ export function RegistrationsView({ event }: { event: EventData }) {
 
       {/* Pending refund requests */}
       <RefundRequestsSection
-        eventId={event.id}
         refunds={event.registrations
           .flatMap((r) =>
             (r.refundRequests ?? []).map((req) => ({
               ...req,
-              registration: { id: r.id, user: r.user, distance: r.distance },
+              registration: { id: r.id, eventId: event.id, user: r.user, distance: r.distance },
             }))
           )}
       />

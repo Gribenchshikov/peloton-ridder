@@ -262,9 +262,9 @@
     "refundSubmitCta": "Өтінім жіберу",
     "refundSubmitting": "Жіберілуде…",
     "refundAbortCta": "Бас тарту",
-    "refundStatus_PENDING": "өтінім берілді",
-    "refundStatus_CONFIRMED": "мақұлданды",
-    "refundStatus_REJECTED": "қабылданбады",
+    "refundStatus_PENDING": "қайтаруға өтінім берілді",
+    "refundStatus_CONFIRMED": "қайтару мақұлданды",
+    "refundStatus_REJECTED": "өтінім қабылданбады",
     "refundError_deadline_passed": "Қайтару өтінімін беру мерзімі өтті.",
     "refundError_already_requested": "Бұл қайтару түріне өтінім уже берілген.",
     "refundError_no_transfer": "Бұл тіркеуде трансфер жоқ.",
@@ -709,7 +709,8 @@
     "profile": "Профиль",
     "signIn": "Кіру",
     "register": "Тіркелу",
-    "adminPanel": "Басқару тақтасы"
+    "adminPanel": "Басқару тақтасы",
+    "pendingRefunds": "Өңделмеген қайтару өтінімдері бар ({count})"
   },
   "Footer": {
     "tagline": "Жүгіру клубы · Риддер",

@@ -66,9 +66,9 @@ export function RefundRequestButton({
   const transferPending = isLocked(transferStatus);
   const slotAvailable = canRequest && !slotLocked && !slotPending;
   const transferAvailable = canRequest && hasTransfer && !transferPending;
-  const showForm = slotAvailable || transferAvailable;
 
   const [type, setType] = useState<"SLOT" | "TRANSFER">(slotAvailable ? "SLOT" : "TRANSFER");
+  const canSubmit = (type === "SLOT" && slotAvailable) || (type === "TRANSFER" && transferAvailable);
 
   useEffect(() => {
     if (slotAvailable) setType("SLOT");
@@ -102,7 +102,7 @@ export function RefundRequestButton({
         </div>
       )}
 
-      {showForm && (
+      {canRequest && (
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -180,7 +180,7 @@ export function RefundRequestButton({
               <div className="flex gap-3 pt-1">
                 <button
                   type="submit"
-                  disabled={pending}
+                  disabled={pending || !canSubmit}
                   className="rounded-[var(--radius-s)] bg-danger px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
                   {pending ? t("refundSubmitting") : t("refundSubmitCta")}

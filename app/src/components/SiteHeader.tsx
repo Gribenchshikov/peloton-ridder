@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { auth } from "@/auth";
+import { countPendingRefundRequests } from "@/lib/queries";
 import { MobileMenu } from "./MobileMenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 
@@ -9,6 +10,7 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const isAdmin = session?.user?.isAdmin ?? false;
   const isLoggedIn = Boolean(session?.user);
   const firstName = session?.user?.firstName;
+  const pendingRefundCount = isAdmin ? await countPendingRefundRequests() : 0;
 
   const navLinks = [
     { href: "/", label: t("home") },
@@ -44,6 +46,15 @@ export async function SiteHeader({ locale }: { locale: string }) {
         {/* Desktop right side */}
         <div className="hidden items-center gap-2 md:flex">
           <LocaleSwitcher />
+
+          {isAdmin && pendingRefundCount > 0 && (
+            <Link
+              href="/admin/refunds"
+              className="rounded-[var(--radius-s)] bg-warn-tint px-3 py-1.5 text-xs font-bold text-warn transition-colors hover:bg-warn/20"
+            >
+              {t("pendingRefunds", { count: pendingRefundCount })}
+            </Link>
+          )}
 
           {isAdmin && (
             <Link
@@ -89,6 +100,8 @@ export async function SiteHeader({ locale }: { locale: string }) {
           signInLabel={t("signIn")}
           registerLabel={t("register")}
           adminLabel={t("adminPanel")}
+          pendingRefundCount={pendingRefundCount}
+          pendingRefundsLabel={pendingRefundCount > 0 ? t("pendingRefunds", { count: pendingRefundCount }) : undefined}
         />
       </div>
     </header>
