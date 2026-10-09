@@ -24,6 +24,15 @@ export default async function ReportsPage({
 
   const whereEvent = eventId ? { eventId } : {};
 
+  await prisma.registration.updateMany({
+    where: {
+      status: "RESERVED",
+      reservedUntil: { lte: new Date() },
+      ...whereEvent,
+    },
+    data: { status: "CANCELLED", reservedUntil: null },
+  });
+
   // Registrations with distance price
   const registrations = await prisma.registration.findMany({
     where: whereEvent,
@@ -33,6 +42,7 @@ export default async function ReportsPage({
       createdAt: true,
       discountAmount: true,
       cancelReason: true,
+      reservedUntil: true,
       distance: { select: { price: true, name: true, km: true, maxSlots: true, id: true } },
       event: { select: { id: true, year: true, race: { select: { name: true } } } },
     },

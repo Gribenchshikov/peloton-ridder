@@ -12,9 +12,16 @@ type Reg = {
   createdAt: Date;
   discountAmount: number;
   cancelReason: CancelReason | null;
+  reservedUntil: Date | null;
   distance: { price: number; name: string; km: number; maxSlots: number | null; id: string } | null;
   event: { id: string; year: number; race: { name: string } };
 };
+
+function isActiveReserved(reg: Reg, now = Date.now()) {
+  if (reg.status !== "RESERVED") return false;
+  if (!reg.reservedUntil) return false;
+  return new Date(reg.reservedUntil).getTime() > now;
+}
 
 type Distance = {
   id: string;
@@ -61,8 +68,9 @@ function nextId() {
 
 export function ReportsView({ registrations, distances, merch, selectedEventName, eventId, initialFinancials, totalRefunds, transferRefunds }: Props) {
   const paid = useMemo(() => registrations.filter((r) => r.status === "PAID"), [registrations]);
-  const reserved = useMemo(() => registrations.filter((r) => r.status === "RESERVED"), [registrations]);
+  const reserved = useMemo(() => registrations.filter((r) => isActiveReserved(r)), [registrations]);
   const cancelled = useMemo(() => registrations.filter((r) => r.status === "CANCELLED"), [registrations]);
+  const active = useMemo(() => [...paid, ...reserved], [paid, reserved]);
 
   const grossRevenue = useMemo(() => paid.reduce((s, r) => s + (r.distance?.price ?? 0), 0), [paid]);
   const totalDiscounts = useMemo(() => paid.reduce((s, r) => s + r.discountAmount, 0), [paid]);
@@ -98,12 +106,14 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
         discounts: 0,
       };
       if (r.status === "PAID") { existing.paid++; existing.gross += r.distance?.price ?? 0; existing.discounts += r.discountAmount; }
-      if (r.status === "RESERVED") existing.reserved++;
+      if (isActiveReserved(r)) existing.reserved++;
       map.set(key, existing);
     }
-    return [...map.values()].sort(
-      (a, b) => b.year - a.year || a.eventName.localeCompare(b.eventName, "ru") || b.km - a.km,
-    );
+    return [...map.values()]
+      .filter((row) => row.paid > 0 || row.reserved > 0)
+      .sort(
+        (a, b) => b.year - a.year || a.eventName.localeCompare(b.eventName, "ru") || b.km - a.km,
+      );
   }, [registrations]);
 
   // Daily registrations (all statuses, by date)
@@ -146,7 +156,7 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
     <div className="flex flex-col gap-8">
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard label="Всего регистраций" value={registrations.length} sub={`оплачено: ${paid.length} · бронь: ${reserved.length}`} />
+        <KpiCard label="Всего регистраций" value={active.length} sub={`оплачено: ${paid.length} · бронь: ${reserved.length}`} />
         <KpiCard label="Валовая выручка" value={kzt(grossRevenue)} />
         <KpiCard label="Потерянная выгода" value={kzt(totalDiscounts)} />
         <KpiCard label="Возвраты" value={kzt(totalRefunds)} highlight />
