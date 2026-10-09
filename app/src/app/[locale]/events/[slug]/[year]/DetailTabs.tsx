@@ -15,7 +15,6 @@ import type { PhotoLink, DayProgramItem, DistanceEquipment, MediaKind } from "@/
 import { mediaKind } from "@/types/eventContent";
 import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { EQUIPMENT_ITEMS } from "@/types/eventContent";
-import type { Result } from "@/generated/prisma/client";
 
 type Tab = "about" | "media" | "regulation" | "results" | "participants" | "profile" | "dayprogram" | "howtoget" | "equipment";
 
@@ -24,6 +23,16 @@ type Registration = {
   user: { firstName: string; lastName: string };
   distance: { name: string } | null;
   bibNumber: number | null;
+};
+
+type ResultRow = {
+  id: string;
+  bibNumber: number;
+  name: string;
+  place: number | null;
+  time: string | null;
+  category: string | null;
+  distanceId: string | null;
 };
 
 export type DistanceWithProfile = {
@@ -49,7 +58,7 @@ function categorySortKey(category: string | null): [number, number, string] {
   return [gender, age, raw];
 }
 
-function compareResults(a: Result, b: Result): number {
+function compareResults(a: ResultRow, b: ResultRow): number {
   const [genderA, ageA, nameA] = categorySortKey(a.category);
   const [genderB, ageB, nameB] = categorySortKey(b.category);
   if (genderA !== genderB) return genderA - genderB;
@@ -122,7 +131,7 @@ type Props = {
   regulationFiles: RegulationFile[];
   regulationBlocks: RegulationBlock[];
   waiverFiles: RegulationFile[];
-  results: Result[];
+  results: ResultRow[];
   resultsUrl?: string | null;
   itraResultsUrl?: string | null;
   registrations: Registration[];

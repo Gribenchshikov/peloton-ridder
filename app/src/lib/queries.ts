@@ -535,13 +535,37 @@ export function getEventDetail(slug: string, year: number) {
     include: {
       race: true,
       distances: { orderBy: { km: "asc" } },
-      eventPartners: { include: { partner: true } },
+      eventPartners: {
+        include: {
+          partner: {
+            select: { id: true, name: true, logoUrl: true, websiteUrl: true },
+          },
+        },
+      },
+      // Явный select: не тянем весь User и колонки Registration, которых
+      // может ещё не быть в БД (kaspiQr*), и не отдаём их в client component.
       registrations: {
         where: { status: "PAID" },
-        include: { user: true, distance: true },
+        select: {
+          id: true,
+          bibNumber: true,
+          user: { select: { firstName: true, lastName: true } },
+          distance: { select: { name: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
-      results: { orderBy: [{ place: "asc" }, { time: "asc" }] },
+      results: {
+        select: {
+          id: true,
+          bibNumber: true,
+          name: true,
+          place: true,
+          time: true,
+          category: true,
+          distanceId: true,
+        },
+        orderBy: [{ place: "asc" }, { time: "asc" }],
+      },
     },
   });
 }

@@ -16,6 +16,20 @@ import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
 
+function asJsonArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function asJsonRecord<T extends object>(value: unknown): T {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as T) : ({} as T);
+}
+
+function asProfileData(value: unknown): ProfileData | null {
+  if (!value || typeof value !== "object") return null;
+  const data = value as ProfileData;
+  return Array.isArray(data.points) ? data : null;
+}
+
 const STATUS_STYLE: Record<string, string> = {
   OPEN: "bg-white/20 text-white backdrop-blur-sm",
   DRAFT: "bg-white/15 text-white/70 backdrop-blur-sm",
@@ -44,31 +58,32 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
   const tStatus = useTranslations("Status");
   const format = useFormatter();
 
-  const regulationFiles = (event.regulationFiles as RegulationFile[] | null) ?? [];
-  const regulationBlocks = (event.regulationBlocks as RegulationBlock[] | null) ?? [];
-  const waiverFiles = (event.waiverFiles as RegulationFile[] | null) ?? [];
-  const results = event.results ?? [];
-  const photoLinks = (event.photoLinks as PhotoLink[] | null) ?? [];
-  const eventPhotos = (event.eventPhotos as string[] | null) ?? [];
-  const dayProgram = (event.dayProgram as DayProgramItem[] | null) ?? [];
-  const distanceEquipment = (event.distanceEquipment as DistanceEquipment | null) ?? {};
+  const regulationFiles = asJsonArray<RegulationFile>(event.regulationFiles);
+  const regulationBlocks = asJsonArray<RegulationBlock>(event.regulationBlocks);
+  const waiverFiles = asJsonArray<RegulationFile>(event.waiverFiles);
+  const photoLinks = asJsonArray<PhotoLink>(event.photoLinks);
+  const eventPhotos = asJsonArray<string>(event.eventPhotos);
+  const dayProgram = asJsonArray<DayProgramItem>(event.dayProgram);
+  const distanceEquipment = asJsonRecord<DistanceEquipment>(event.distanceEquipment);
   const { disciplines, noDiscipline: noDisciplineDistances } = groupDistancesByDiscipline(event.distances);
   const heroStats = heroDistanceStats(event.distances);
   const paidCount = event.registrations.length;
   const heroStatCount = heroStats.length + (paidCount > 0 ? 1 : 0);
   const isMass = event.race.isMass;
 
-  const distancesWithProfile: DistanceWithProfile[] = event.distances
-    .filter((d) => d.profileData != null)
-    .map((d) => ({
+  const distancesWithProfile: DistanceWithProfile[] = event.distances.flatMap((d) => {
+    const profileData = asProfileData(d.profileData);
+    if (!profileData) return [];
+    return [{
       id: d.id,
       name: d.name,
       km: d.km,
-      profileData: d.profileData as unknown as ProfileData,
+      profileData,
       gpxUrl: d.gpxUrl ?? null,
-      aidStations: (d.aidStations as AidStation[] | null) ?? [],
+      aidStations: asJsonArray<AidStation>(d.aidStations),
       raceStartMinutes: d.raceStartMinutes ?? null,
-    }));
+    }];
+  });
 
   return (
     <main className="flex-1">
@@ -190,10 +205,23 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
               regulationFiles={regulationFiles}
               regulationBlocks={regulationBlocks}
               waiverFiles={waiverFiles}
-              results={results}
+              results={event.results.map((r) => ({
+                id: r.id,
+                bibNumber: r.bibNumber,
+                name: r.name,
+                place: r.place,
+                time: r.time,
+                category: r.category,
+                distanceId: r.distanceId,
+              }))}
               resultsUrl={event.resultsUrl}
               itraResultsUrl={event.itraResultsUrl}
-              registrations={event.registrations}
+              registrations={event.registrations.map((r) => ({
+                id: r.id,
+                bibNumber: r.bibNumber,
+                user: { firstName: r.user.firstName, lastName: r.user.lastName },
+                distance: r.distance ? { name: r.distance.name } : null,
+              }))}
               distances={distancesWithProfile}
               allDistances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
               isMass={isMass}
