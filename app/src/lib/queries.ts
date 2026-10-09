@@ -39,6 +39,24 @@ export function getArchiveEvents() {
   });
 }
 
+export async function getPublishedEventYears(): Promise<number[]> {
+  const rows = await prisma.event.findMany({
+    where: { isPublished: true },
+    select: { year: true },
+    distinct: ["year"],
+    orderBy: { year: "desc" },
+  });
+  return rows.map((row) => row.year);
+}
+
+export function getEventsByYear(year: number) {
+  return prisma.event.findMany({
+    where: { isPublished: true, year },
+    include: { race: true, distances: true },
+    orderBy: { dateISO: "asc" },
+  });
+}
+
 export async function getNextEvent() {
   const featured = await prisma.event.findFirst({
     where: { isPublished: true, isFeatured: true, status: { in: ["OPEN", "CLOSED"] }, race: { isMass: false } },

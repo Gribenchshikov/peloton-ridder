@@ -52,9 +52,10 @@
   "Events": {
     "eyebrow": "Забеги Peloton Ridder",
     "title": "Календарь и архив стартов",
-    "calendarTab": "Календарь 2026",
+    "calendarTab": "Календарь {year}",
+    "seasonSelectAria": "Календарь сезона",
     "archiveTab": "Архив",
-    "emptyCalendar": "Новые старты появятся здесь после публикации календаря следующего сезона.",
+    "emptyCalendar": "В календаре {year} пока нет опубликованных стартов.",
     "emptyArchive": "Архив пока пуст — ни один забег ещё не завершился."
   },
   "EventDetail": {

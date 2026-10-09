@@ -1,41 +1,47 @@
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
 import { EventCard } from "@/components/EventCard";
-import { getCalendarEvents, getArchiveEvents } from "@/lib/queries";
-import { getSiteSetting } from "@/lib/queries";
+import { getEventsByYear, getPublishedEventYears, getSiteSetting } from "@/lib/queries";
+import { SeasonSelect } from "./SeasonSelect";
+
+function seasonYears(publishedYears: number[], currentYear: number) {
+  const years = new Set(publishedYears);
+  years.add(currentYear);
+  return [...years].sort((a, b) => b - a);
+}
 
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ year?: string }>;
 }) {
-  const { tab } = await searchParams;
-  const isArchive = tab === "archive";
-  const [filtered, bgUrl] = await Promise.all([
-    isArchive ? getArchiveEvents() : getCalendarEvents(),
+  const { year: yearParam } = await searchParams;
+  const currentYear = new Date().getFullYear();
+  const [publishedYears, bgUrl] = await Promise.all([
+    getPublishedEventYears(),
     getSiteSetting("bg_events"),
   ]);
+  const years = seasonYears(publishedYears, currentYear);
+  const requested = Number(yearParam);
+  const selectedYear = years.includes(requested) ? requested : currentYear;
+  const events = await getEventsByYear(selectedYear);
 
-  return <EventsView isArchive={isArchive} events={filtered} bgUrl={bgUrl || null} />;
+  return (
+    <EventsView years={years} selectedYear={selectedYear} events={events} bgUrl={bgUrl || null} />
+  );
 }
 
 function EventsView({
-  isArchive,
+  years,
+  selectedYear,
   events,
   bgUrl,
 }: {
-  isArchive: boolean;
+  years: number[];
+  selectedYear: number;
   bgUrl: string | null;
-  events: Awaited<ReturnType<typeof getArchiveEvents>>;
+  events: Awaited<ReturnType<typeof getEventsByYear>>;
 }) {
   const t = useTranslations("Events");
-
-  const tabClass = (active: boolean) =>
-    `rounded-full px-[18px] py-[9px] text-[.85rem] font-bold transition-colors ${
-      active
-        ? "bg-surface text-ink shadow-[0_1px_4px_rgba(0,0,0,.12)]"
-        : "text-ink-soft hover:text-ink"
-    }`;
 
   return (
     <main
@@ -59,14 +65,7 @@ function EventsView({
             <h1 className={`font-display text-2xl font-bold sm:text-3xl ${bgUrl ? "text-white" : "text-ink"}`}>
               {t("title")}
             </h1>
-            <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface-2 p-1">
-              <Link href="/events" className={tabClass(!isArchive)}>
-                {t("calendarTab")}
-              </Link>
-              <Link href="/events?tab=archive" className={tabClass(isArchive)}>
-                {t("archiveTab")}
-              </Link>
-            </div>
+            <SeasonSelect years={years} selectedYear={selectedYear} />
           </div>
 
           {events.length > 0 ? (
@@ -77,7 +76,7 @@ function EventsView({
             </div>
           ) : (
             <p className={`mt-8 ${bgUrl ? "text-white/70" : "text-ink-faint"}`}>
-              {isArchive ? t("emptyArchive") : t("emptyCalendar")}
+              {t("emptyCalendar", { year: selectedYear })}
             </p>
           )}
         </div>
