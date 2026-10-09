@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { sendRegistrationConfirmationEmail } from "@/lib/mailer";
 
-// Пока нет реального мерчанта (см. .env.example) — вместо вызова Kaspi API работаем
-// в тестовом режиме: страница оплаты показывает баннер и кнопку «Симулировать оплату»
-// вместо реальных диплинка/QR. Как только KASPI_MERCHANT_ID/KASPI_API_KEY заполнены
-// боевыми значениями, тестовая кнопка перестаёт рендериться (см. pay/actions.ts).
+// Оплата идёт через ApiPay (Kaspi QR + ссылка). Пока APIPAY_API_KEY не задан,
+// страница оплаты может показать кнопку «Симулировать оплату» при ALLOW_TEST_PAYMENTS.
 export function isKaspiConfigured() {
-  return Boolean(process.env.KASPI_MERCHANT_ID) && Boolean(process.env.KASPI_API_KEY);
+  return Boolean(process.env.APIPAY_API_KEY);
 }
 
 // Отдельный от isKaspiConfigured() флаг для самой кнопки «Симулировать оплату» —
@@ -15,7 +13,7 @@ export function isKaspiConfigured() {
 // сам выставляет NODE_ENV=production, так что он не отличает "реальный деплой" от
 // "разработчик гоняет прод-сборку у себя". Явный флаг убирает эту двусмысленность: чтобы
 // кнопка утекла в реальный прод, кто-то должен был осознанно оставить ALLOW_TEST_PAYMENTS=true
-// в боевом окружении — недостающий/забытый KASPI_MERCHANT_ID сам по себе этого не сделает.
+// в боевом окружении — недостающий APIPAY_API_KEY сам по себе этого не сделает.
 export function isTestPaymentModeEnabled() {
   return !isKaspiConfigured() && process.env.ALLOW_TEST_PAYMENTS === "true";
 }

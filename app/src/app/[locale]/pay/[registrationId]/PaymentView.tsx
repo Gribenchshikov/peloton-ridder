@@ -1,8 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { getRegistrationForPayment } from "@/lib/queries";
+import type { PaymentInvoiceView } from "@/lib/apipay";
 import { formatKzt } from "@/lib/currency";
-import { simulatePaymentAction, cancelReservationAction } from "./actions";
+import { registrationPaymentAmount } from "@/lib/paymentAmount";
+import { simulatePaymentAction, cancelReservationAction, refreshKaspiQrAction } from "./actions";
 
 type Registration = NonNullable<Awaited<ReturnType<typeof getRegistrationForPayment>>>;
 
@@ -10,17 +16,44 @@ export function PaymentView({
   registration,
   testMode,
   locale,
+  invoice,
 }: {
   registration: Registration;
   testMode: boolean;
   locale: string;
+  invoice: PaymentInvoiceView | null;
 }) {
   const t = useTranslations("Payment");
   const format = useFormatter();
+  const router = useRouter();
+  const [qrExpired, setQrExpired] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (registration.status !== "RESERVED") return;
+    const timer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/pay/${registration.id}/status`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { status?: string; expired?: boolean };
+        if (data.status === "PAID") {
+          router.refresh();
+          return;
+        }
+        if (data.expired) setQrExpired(true);
+      } catch {
+        /* keep waiting */
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [registration.id, registration.status, router]);
+
+  useEffect(() => {
+    if (!invoice?.expiresAt) return;
+    setQrExpired(new Date(invoice.expiresAt).getTime() <= Date.now());
+  }, [invoice?.expiresAt]);
 
   if (registration.status === "PAID") {
-    // Transfer-only payment — send user back to their event registration page
-    // where the slot ticket (with transfer badge) is shown.
     if (registration.isTransferOnly) {
       return (
         <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-4 px-6 py-20 text-center">
@@ -28,8 +61,10 @@ export function PaymentView({
           <h1 className="font-display text-2xl font-bold text-ink">Трансфер оплачен!</h1>
           <p className="text-ink-soft">
             Трансфер добавлен к вашей регистрации на{" "}
-            <span className="font-semibold">{registration.event.race.name} {registration.event.year}</span>.
-            QR-код для посадки — в вашем билете.
+            <span className="font-semibold">
+              {registration.event.race.name} {registration.event.year}
+            </span>
+            . QR-код для посадки — в вашем билете.
           </p>
           <div className="mt-2 flex gap-3">
             <Link
@@ -75,6 +110,22 @@ export function PaymentView({
     return <StatusMessage title={t("cancelledTitle")} />;
   }
 
+  const total = registrationPaymentAmount(registration);
+  const paymentUrl = invoice?.paymentUrl ?? registration.kaspiPaymentUrl;
+  const qrImageUrl = invoice?.qrImageUrl ?? registration.kaspiQrImageUrl;
+  const expiresAt = invoice?.expiresAt ?? registration.kaspiQrExpiresAt?.toISOString() ?? null;
+
+  async function handleRefreshQr() {
+    setRefreshing(true);
+    try {
+      await refreshKaspiQrAction(locale, registration.id);
+      setQrExpired(false);
+      router.refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-6 py-16">
       <div>
@@ -90,7 +141,6 @@ export function PaymentView({
           const slotPrice = registration.distance?.price ?? 0;
           const discount = registration.discountAmount ?? 0;
           const transferAmt = registration.includesTransfer ? (registration.event.transferPrice ?? 0) : 0;
-          const total = slotPrice - discount + transferAmt;
           const showBreakdown = discount > 0 || transferAmt > 0;
           return (
             <div className="mt-2 flex flex-col gap-1">
@@ -124,17 +174,58 @@ export function PaymentView({
         })()}
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
-          {t("optionApp")}
+      {invoice?.error && (
+        <p className="rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 px-5 py-4 text-sm text-danger">
+          {t("invoiceError", { error: invoice.error })}
+        </p>
+      )}
+
+      {(paymentUrl || qrImageUrl) && !qrExpired ? (
+        <div className="flex flex-col items-center gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
+          <p className="text-center text-sm text-ink-soft">{t("qrHint")}</p>
+          {qrImageUrl && (
+            <img src={qrImageUrl} alt="" width={240} height={240} className="h-60 w-60 rounded-[var(--radius-s)] bg-white p-2" />
+          )}
+          {paymentUrl && (
+            <a
+              href={paymentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+            >
+              {t("payInKaspiCta")}
+            </a>
+          )}
+          {expiresAt && (
+            <p className="text-xs text-ink-faint">
+              {t("qrExpires", { time: format.dateTime(new Date(expiresAt), { timeStyle: "short" }) })}
+            </p>
+          )}
+          <p className="text-xs text-ink-faint">{t("waiting")}</p>
         </div>
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
-          {t("optionQr")}
+      ) : qrExpired || invoice?.error ? (
+        <button
+          type="button"
+          onClick={handleRefreshQr}
+          disabled={refreshing}
+          className="w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
+        >
+          {refreshing ? t("waiting") : t("refreshQrCta")}
+        </button>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
+            {t("optionApp")}
+          </div>
+          <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
+            {t("optionQr")}
+          </div>
         </div>
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
-          {t("optionManual")}
-        </div>
-      </div>
+      )}
+
+      {qrExpired && (paymentUrl || qrImageUrl) && (
+        <p className="text-center text-sm text-ink-soft">{t("qrExpired")}</p>
+      )}
 
       <form action={cancelReservationAction.bind(null, locale, registration.id)}>
         <button

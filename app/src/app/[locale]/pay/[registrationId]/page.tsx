@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { getRegistrationForPayment } from "@/lib/queries";
 import { isTestPaymentModeEnabled } from "@/lib/kaspi";
+import { ensureQrInvoice, isApipayConfigured, type PaymentInvoiceView } from "@/lib/apipay";
 import { PaymentView } from "./PaymentView";
 
 export default async function PayPage({
@@ -19,8 +20,24 @@ export default async function PayPage({
     });
   }
 
-  const registration = await getRegistrationForPayment(registrationId);
+  let registration = await getRegistrationForPayment(registrationId);
   if (!registration || registration.userId !== session.user.id) notFound();
 
-  return <PaymentView registration={registration} testMode={isTestPaymentModeEnabled()} locale={locale} />;
+  let invoice: PaymentInvoiceView | null = null;
+  if (registration.status === "RESERVED" && isApipayConfigured()) {
+    invoice = await ensureQrInvoice(registration);
+    if (invoice.amount < 1) {
+      registration = await getRegistrationForPayment(registrationId);
+      if (!registration) notFound();
+    }
+  }
+
+  return (
+    <PaymentView
+      registration={registration}
+      testMode={isTestPaymentModeEnabled() || Boolean(invoice?.sandbox)}
+      locale={locale}
+      invoice={invoice}
+    />
+  );
 }
