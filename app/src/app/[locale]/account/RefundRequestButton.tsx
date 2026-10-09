@@ -4,6 +4,7 @@ import { useEffect, useState, useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { requestRefundAction, type RequestRefundState } from "./actions";
+import { isCurrentRefundStatus, type RegistrationStatusValue } from "@/lib/registrationStatus";
 
 export type RefundRequestView = {
   type: "SLOT" | "TRANSFER";
@@ -13,6 +14,7 @@ export type RefundRequestView = {
 type Props = {
   registrationId: string;
   hasTransfer: boolean;
+  registrationStatus: RegistrationStatusValue;
   requests: RefundRequestView[];
   slotLocked?: boolean;
   canRequest?: boolean;
@@ -45,6 +47,7 @@ function isLocked(status: RefundRequestView["status"] | undefined) {
 export function RefundRequestButton({
   registrationId,
   hasTransfer,
+  registrationStatus,
   requests,
   slotLocked = false,
   canRequest = true,
@@ -55,7 +58,11 @@ export function RefundRequestButton({
   const [reason, setReason] = useState("");
   const [state, formAction, pending] = useActionState(requestRefundAction, initialState);
 
-  const latest = latestByType(requests);
+  const latest = latestByType(
+    requests.filter((request) =>
+      isCurrentRefundStatus(request, { registrationStatus, hasTransfer }),
+    ),
+  );
   if (state.success && state.type) {
     latest[state.type] = { type: state.type, status: "PENDING" };
   }

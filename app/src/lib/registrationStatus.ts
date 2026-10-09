@@ -30,3 +30,14 @@ export function displayRegistrationStatus(
   if (status === "CANCELLED" && hasConfirmedSlotRefund(requests)) return "REFUNDED";
   return status;
 }
+
+/** Одобренный возврат скрываем, если слот/трансфер снова оплачены. */
+export function isCurrentRefundStatus(
+  request: RefundLike,
+  opts: { registrationStatus: RegistrationStatusValue; hasTransfer: boolean },
+) {
+  if (request.status !== "CONFIRMED") return true;
+  if (request.type === "SLOT") return opts.registrationStatus === "CANCELLED";
+  if (request.type === "TRANSFER") return !opts.hasTransfer;
+  return true;
+}
