@@ -39,7 +39,7 @@ function latestByType(requests: RefundRequestView[]) {
 }
 
 function isLocked(status: RefundRequestView["status"] | undefined) {
-  return status === "PENDING" || status === "CONFIRMED";
+  return status === "PENDING";
 }
 
 export function RefundRequestButton({

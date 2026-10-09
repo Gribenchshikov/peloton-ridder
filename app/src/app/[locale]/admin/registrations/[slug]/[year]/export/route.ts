@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { requireOperatorOrAdminId } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
 import { csvDownloadHeaders, csvWindows1251Bytes, toCsv } from "@/lib/csv";
-import { displayRegistrationStatus } from "@/lib/registrationStatus";
+import { displayRegistrationStatus, displayTransferStatus } from "@/lib/registrationStatus";
 
 export async function GET(
   req: Request,
@@ -89,6 +89,8 @@ export async function GET(
   const rows = [
     ["№", "Имя", "Фамилия", "Email", "Телефон", "Дистанция", "Км", "Трансфер", "Статус", "Причина отмены", "Комментарий отмены", "Регистрационный номер", "Дата регистрации", "Беговой клуб", "Промокод", "Скидка (₸)"],
     ...registrations.map((r) => {
+      const transferDisplay = displayTransferStatus(r.includesTransfer || r.isTransferOnly, r.refundRequests);
+      const statusDisplay = displayRegistrationStatus(r.status, r.refundRequests);
       const cancelLabels: Record<string, string> = {
         INJURY: "Травма / болезнь",
         CANT_ATTEND: "Не смогу приехать",
@@ -107,10 +109,10 @@ export async function GET(
         r.user.phone ?? "",
         r.isTransferOnly ? "Только трансфер" : (r.distance?.name ?? ""),
         r.isTransferOnly ? "" : (r.distance?.km ?? ""),
-        r.includesTransfer || r.isTransferOnly ? "Да" : "Нет",
-        displayRegistrationStatus(r.status, r.refundRequests) === "PAID"
+        transferDisplay === "YES" ? "Да" : transferDisplay === "REFUNDED" ? "Возврат" : "Нет",
+        statusDisplay === "PAID"
           ? "Оплачено"
-          : displayRegistrationStatus(r.status, r.refundRequests) === "REFUNDED"
+          : statusDisplay === "REFUNDED"
             ? "Возврат"
             : r.status === "CANCELLED"
               ? "Отменено"

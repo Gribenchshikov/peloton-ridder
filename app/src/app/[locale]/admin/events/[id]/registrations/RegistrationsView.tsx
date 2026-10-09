@@ -9,8 +9,8 @@ import { RefundRequestsSection } from "./RefundRequestsSection";
 import { toggleKitIssuedAction, toggleTransferBoardedAction } from "./actions";
 import {
   displayRegistrationStatus,
+  displayTransferStatus,
   hasConfirmedSlotRefund,
-  hasConfirmedTransferRefund,
 } from "@/lib/registrationStatus";
 
 type EventData = NonNullable<Awaited<ReturnType<typeof getEventWithRegistrations>>>;
@@ -396,7 +396,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
               <tbody>
                 {filtered.map((reg, idx) => {
                   const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
-                  const transferRefunded = hasConfirmedTransferRefund(reg.refundRequests);
+                  const transferDisplay = displayTransferStatus(hasTransfer, reg.refundRequests);
                   const slotRefunded = hasConfirmedSlotRefund(reg.refundRequests);
                   return (
                     <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
@@ -412,13 +412,13 @@ export function RegistrationsView({ event }: { event: EventData }) {
                         {reg.isTransferOnly ? "Только трансфер" : (reg.distance?.name ?? "—")}
                       </td>
                       <td className="px-4 py-2.5">
-                        {transferRefunded ? (
-                          <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-                            {t("regStatusRefunded")}
-                          </span>
-                        ) : hasTransfer ? (
+                        {transferDisplay === "YES" ? (
                           <span className="inline-flex items-center rounded-full bg-spruce/10 px-2 py-0.5 text-xs font-semibold text-spruce">
                             Да
+                          </span>
+                        ) : transferDisplay === "REFUNDED" ? (
+                          <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                            {t("regStatusRefunded")}
                           </span>
                         ) : (
                           <span className="text-xs text-ink-faint">—</span>

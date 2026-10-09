@@ -11,6 +11,18 @@ export function hasConfirmedTransferRefund(requests: RefundLike[] | undefined) {
   return Boolean(requests?.some((r) => r.type === "TRANSFER" && r.status === "CONFIRMED"));
 }
 
+export type DisplayTransferStatus = "YES" | "REFUNDED" | "NONE";
+
+/** Текущий трансфер важнее старой заявки: после повторной оплаты снова «Да». */
+export function displayTransferStatus(
+  hasTransfer: boolean,
+  requests: RefundLike[] | undefined,
+): DisplayTransferStatus {
+  if (hasTransfer) return "YES";
+  if (hasConfirmedTransferRefund(requests)) return "REFUNDED";
+  return "NONE";
+}
+
 export function displayRegistrationStatus(
   status: RegistrationStatusValue,
   requests: RefundLike[] | undefined,

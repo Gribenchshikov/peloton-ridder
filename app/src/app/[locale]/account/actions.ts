@@ -127,7 +127,7 @@ export async function userCancelRegistrationAction(
 export type RequestRefundState = { error?: string; success?: boolean; type?: RefundType };
 
 const VALID_REFUND_TYPES: RefundType[] = ["SLOT", "TRANSFER"];
-const BLOCKING_REFUND_STATUSES = ["PENDING", "CONFIRMED"] as const;
+const BLOCKING_REFUND_STATUSES = ["PENDING"] as const;
 
 export async function requestRefundAction(
   _prevState: RequestRefundState,
