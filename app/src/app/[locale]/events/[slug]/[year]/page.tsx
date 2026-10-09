@@ -3,6 +3,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { getEventDetail } from "@/lib/queries";
+import { repairStalePaidSlotRefunds } from "@/lib/refundPayout";
 import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { groupDistancesByDiscipline, heroDistanceStats } from "@/lib/distanceLabel";
 import { formatKzt } from "@/lib/currency";
@@ -43,8 +44,13 @@ export default async function EventDetailPage({
   params: Promise<{ slug: string; year: string }>;
 }) {
   const { slug, year } = await params;
-  const event = await getEventDetail(slug, Number(year));
+  let event = await getEventDetail(slug, Number(year));
   if (!event) notFound();
+  const repaired = await repairStalePaidSlotRefunds(event.id);
+  if (repaired > 0) {
+    event = await getEventDetail(slug, Number(year));
+    if (!event) notFound();
+  }
 
   const leaderboard = event.race.isChallenge ? await getChallengeLeaderboard(event.id) : null;
 

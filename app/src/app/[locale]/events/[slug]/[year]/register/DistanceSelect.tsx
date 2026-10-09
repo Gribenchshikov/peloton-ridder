@@ -432,9 +432,11 @@ export function DistanceSelect({
       {state.error === "closed" && <p className="text-sm text-danger">{t("errorClosed")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
       {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
-      {state.error === "registration_blocked" && (
+      {(state.error === "registration_blocked" || state.error === "reregistration_not_allowed") && (
         <div className="rounded-[var(--radius-s)] border border-danger/30 bg-danger/5 p-4">
-          <p className="text-sm text-danger">{t("errorRegistrationBlocked")}</p>
+          <p className="text-sm text-danger">
+            {state.error === "reregistration_not_allowed" ? t("errorReregistrationNotAllowed") : t("errorRegistrationBlocked")}
+          </p>
           <div className="mt-3">
             <ContactOrganizerButton eventId={eventId} />
           </div>

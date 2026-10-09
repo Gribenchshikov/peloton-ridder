@@ -20,6 +20,10 @@ export async function GET(_request: Request, context: { params: Promise<{ regist
     return NextResponse.json({ status: "PAID" });
   }
 
+  if (registration.status !== "RESERVED") {
+    return NextResponse.json({ status: registration.status });
+  }
+
   if (isApipayConfigured() && registration.kaspiOrderId) {
     try {
       const invoice = await confirmIfInvoicePaid(registration.id, registration.kaspiOrderId);

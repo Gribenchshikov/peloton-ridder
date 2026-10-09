@@ -7,6 +7,11 @@ import type { getEventWithRegistrations } from "@/lib/queries";
 import { RegistrationActions } from "./RegistrationActions";
 import { RefundRequestsSection } from "./RefundRequestsSection";
 import { toggleKitIssuedAction, toggleTransferBoardedAction } from "./actions";
+import {
+  displayRegistrationStatus,
+  hasConfirmedSlotRefund,
+  hasConfirmedTransferRefund,
+} from "@/lib/registrationStatus";
 
 type EventData = NonNullable<Awaited<ReturnType<typeof getEventWithRegistrations>>>;
 type Registration = EventData["registrations"][number];
@@ -41,27 +46,43 @@ function InlineCheckbox({
   );
 }
 
-function StatusBadge({ status }: { status: Registration["status"] }) {
+function StatusBadge({
+  status,
+  refundRequests,
+}: {
+  status: Registration["status"];
+  refundRequests: Registration["refundRequests"];
+}) {
   const t = useTranslations("Admin");
-  const isPaid = status === "PAID";
-  const isCancelled = status === "CANCELLED";
+  const display = displayRegistrationStatus(status, refundRequests);
+  const isPaid = display === "PAID";
+  const isRefunded = display === "REFUNDED";
+  const isCancelled = display === "CANCELLED";
   return (
     <span
       className={[
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
         isPaid
           ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-          : isCancelled
-            ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
-            : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+          : isRefunded
+            ? "bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300"
+            : isCancelled
+              ? "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+              : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       ].join(" ")}
     >
-      {isPaid ? t("regStatusPaid") : isCancelled ? t("regStatusCancelled") : t("regStatusReserved")}
+      {isPaid
+        ? t("regStatusPaid")
+        : isRefunded
+          ? t("regStatusRefunded")
+          : isCancelled
+            ? t("regStatusCancelled")
+            : t("regStatusReserved")}
     </span>
   );
 }
 
-type StatusFilter = "ALL" | "PAID" | "RESERVED" | "CANCELLED";
+type StatusFilter = "ALL" | "PAID" | "RESERVED" | "CANCELLED" | "REFUNDED";
 type TransferFilter = "ALL" | "YES" | "NO";
 
 function FilterChips<T extends string>({
@@ -127,7 +148,10 @@ export function RegistrationsView({ event }: { event: EventData }) {
 
   const filtered = useMemo(() => {
     return event.registrations.filter((r) => {
-      if (statusFilter !== "ALL" && r.status !== statusFilter) return false;
+      if (statusFilter !== "ALL") {
+        const display = displayRegistrationStatus(r.status, r.refundRequests);
+        if (display !== statusFilter) return false;
+      }
       if (distanceFilter !== "ALL") {
         if (distanceFilter === "TRANSFER_ONLY") {
           if (!r.isTransferOnly) return false;
@@ -152,6 +176,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
     { value: "PAID", label: t("regStatusPaid") },
     { value: "RESERVED", label: t("regStatusReserved") },
     { value: "CANCELLED", label: t("regStatusCancelled") },
+    { value: "REFUNDED", label: t("regStatusRefunded") },
   ];
 
   const distanceOptions: { value: string; label: string }[] = [
@@ -312,10 +337,12 @@ export function RegistrationsView({ event }: { event: EventData }) {
       <RefundRequestsSection
         refunds={event.registrations
           .flatMap((r) =>
-            (r.refundRequests ?? []).map((req) => ({
-              ...req,
-              registration: { id: r.id, eventId: event.id, user: r.user, distance: r.distance },
-            }))
+            (r.refundRequests ?? [])
+              .filter((req) => req.status === "PENDING")
+              .map((req) => ({
+                ...req,
+                registration: { id: r.id, eventId: event.id, user: r.user, distance: r.distance },
+              }))
           )}
       />
 
@@ -369,6 +396,8 @@ export function RegistrationsView({ event }: { event: EventData }) {
               <tbody>
                 {filtered.map((reg, idx) => {
                   const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
+                  const transferRefunded = hasConfirmedTransferRefund(reg.refundRequests);
+                  const slotRefunded = hasConfirmedSlotRefund(reg.refundRequests);
                   return (
                     <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
                       <td className="px-4 py-2.5 tabular-nums text-ink-faint">
@@ -383,7 +412,11 @@ export function RegistrationsView({ event }: { event: EventData }) {
                         {reg.isTransferOnly ? "Только трансфер" : (reg.distance?.name ?? "—")}
                       </td>
                       <td className="px-4 py-2.5">
-                        {hasTransfer ? (
+                        {transferRefunded ? (
+                          <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                            {t("regStatusRefunded")}
+                          </span>
+                        ) : hasTransfer ? (
                           <span className="inline-flex items-center rounded-full bg-spruce/10 px-2 py-0.5 text-xs font-semibold text-spruce">
                             Да
                           </span>
@@ -392,7 +425,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                         )}
                       </td>
                       <td className="px-4 py-2.5">
-                        <StatusBadge status={reg.status} />
+                        <StatusBadge status={reg.status} refundRequests={reg.refundRequests} />
                       </td>
                       <td className="max-w-64 px-4 py-2.5 text-xs text-ink-soft">
                         {reg.status === "CANCELLED" && reg.cancelReason ? (
@@ -451,6 +484,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                           distanceId={reg.distance?.id ?? ""}
                           status={reg.status}
                           allowReregistration={reg.allowReregistration}
+                          slotRefunded={slotRefunded}
                           distances={event.distances}
                         />
                       </td>

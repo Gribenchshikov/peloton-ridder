@@ -25,6 +25,7 @@ export function RegistrationActions({
   distanceId,
   status,
   allowReregistration,
+  slotRefunded = false,
   distances,
 }: {
   registrationId: string;
@@ -32,6 +33,7 @@ export function RegistrationActions({
   distanceId: string;
   status: "RESERVED" | "PAID" | "CANCELLED";
   allowReregistration: boolean;
+  slotRefunded?: boolean;
   distances: { id: string; name: string; km: number }[];
 }) {
   const t = useTranslations("Admin");
@@ -71,10 +73,14 @@ export function RegistrationActions({
                 disabled={restoring || changingPermission}
                 className="min-h-20 resize-y rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1.5 text-xs text-ink"
               />
-              <label className="flex items-center gap-2 text-xs text-ink-soft">
-                <input type="checkbox" name="paid" disabled={restoring || changingPermission} className="accent-ember" />
-                {t("regRestorePaidLabel")}
-              </label>
+              {slotRefunded ? (
+                <p className="text-xs text-ink-soft">{t("regRestoreNeedsPayment")}</p>
+              ) : (
+                <label className="flex items-center gap-2 text-xs text-ink-soft">
+                  <input type="checkbox" name="paid" disabled={restoring || changingPermission} className="accent-ember" />
+                  {t("regRestorePaidLabel")}
+                </label>
+              )}
               <button
                 type="submit"
                 disabled={restoring || changingPermission}

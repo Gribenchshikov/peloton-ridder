@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireOperatorOrAdminId } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
 import { csvDownloadHeaders, csvWindows1251Bytes, toCsv } from "@/lib/csv";
+import { displayRegistrationStatus } from "@/lib/registrationStatus";
 
 export async function GET(
   req: Request,
@@ -72,7 +73,7 @@ export async function GET(
   }
 
   const registrations = event.registrations.filter((r) => {
-    if (statusParam && r.status !== statusParam) return false;
+    if (statusParam && displayRegistrationStatus(r.status, r.refundRequests) !== statusParam) return false;
     if (distanceParam) {
       if (distanceParam === "TRANSFER_ONLY") {
         if (!r.isTransferOnly) return false;
@@ -107,7 +108,13 @@ export async function GET(
         r.isTransferOnly ? "Только трансфер" : (r.distance?.name ?? ""),
         r.isTransferOnly ? "" : (r.distance?.km ?? ""),
         r.includesTransfer || r.isTransferOnly ? "Да" : "Нет",
-        r.status === "PAID" ? "Оплачено" : r.status === "CANCELLED" ? "Отменено" : "Бронь",
+        displayRegistrationStatus(r.status, r.refundRequests) === "PAID"
+          ? "Оплачено"
+          : displayRegistrationStatus(r.status, r.refundRequests) === "REFUNDED"
+            ? "Возврат"
+            : r.status === "CANCELLED"
+              ? "Отменено"
+              : "Бронь",
         r.cancelReason ? (cancelLabels[r.cancelReason] ?? r.cancelReason) : "",
         r.cancelComment ?? "",
         r.bibNumber ?? "",

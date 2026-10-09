@@ -276,7 +276,8 @@
   "RegistrationStatus": {
     "RESERVED": "Брондалды",
     "PAID": "Төленді",
-    "CANCELLED": "Бас тартылды"
+    "CANCELLED": "Бас тартылды",
+    "REFUNDED": "Қайтарылды"
   },
   "Registration": {
     "eyebrow": "Тіркелу",
@@ -294,6 +295,7 @@
     "errorInvalid": "Тізімнен дистанцияны таңдаңыз.",
     "errorEmailUnverified": "Орынды брондамас бұрын email-ды растаңыз.",
     "errorRegistrationBlocked": "Бұл жарысқа қайта тіркелу лимиті сарқылды. Қатысқыңыз келсе, ұйымдастырушыға жазыңыз.",
+    "errorReregistrationNotAllowed": "Қайтарудан кейін қайта тіркелу жабық. Қатысқыңыз келсе, ұйымдастырушыға жазыңыз.",
     "emailVerificationTitle": "Email-ды растаңыз",
     "emailVerificationText": "Жарысқа тіркелу үшін {email} мекенжайына жіберілген хаттағы сілтемеге өтіңіз.",
     "participantTitle": "Қатысушы деректері",
@@ -592,6 +594,8 @@
     "regStatusPaid": "Төленді",
     "regStatusReserved": "Брон",
     "regStatusCancelled": "Қабылданбады",
+    "regStatusRefunded": "Қайтарылды",
+    "regRestoreNeedsPayment": "Қайтарудан кейін төлемді қайта жасау керек.",
     "kitPickupCta": "Жинақ беру",
     "summaryCta": "Қорытынды",
     "exportCsvCta": "CSV жүктеу",

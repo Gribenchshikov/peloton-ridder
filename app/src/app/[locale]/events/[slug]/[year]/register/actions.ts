@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { parseParticipantRules, calcAge } from "@/types/participantRules";
+import { CLEARED_PAYMENT_FIELDS } from "@/lib/refundPayout";
 
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
 const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
@@ -131,6 +132,15 @@ export async function createRegistrationAction(
     if (cancelled && cancelled.reregistrationCount >= 3) {
       return { kind: "error" as const, error: "registration_blocked" as const };
     }
+    if (cancelled) {
+      const slotRefunded = await tx.refundRequest.findFirst({
+        where: { registrationId: cancelled.id, type: "SLOT", status: "CONFIRMED" },
+        select: { id: true },
+      });
+      if (slotRefunded && !cancelled.allowReregistration) {
+        return { kind: "error" as const, error: "reregistration_not_allowed" as const };
+      }
+    }
 
     const activeCount = await tx.registration.count({
       where: {
@@ -225,6 +235,7 @@ export async function createRegistrationAction(
       emergencyContact,
       emergencyContactName,
       additionalParticipants: additionalParticipants ?? undefined,
+      ...CLEARED_PAYMENT_FIELDS,
     };
     const registration = cancelled
       ? await tx.registration.update({ where: { id: cancelled.id }, data: { ...reservationData, reregistrationCount: { increment: 1 } } })

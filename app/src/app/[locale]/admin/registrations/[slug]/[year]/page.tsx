@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
+import { repairStalePaidSlotRefunds } from "@/lib/refundPayout";
 import { RegistrationsView } from "@/app/[locale]/admin/events/[id]/registrations/RegistrationsView";
 
 export default async function RegistrationsBySlugPage({
@@ -16,6 +17,9 @@ export default async function RegistrationsBySlugPage({
 
   const event = await getEventWithRegistrationsBySlug(slug, yearNum);
   if (!event) notFound();
+  const repaired = await repairStalePaidSlotRefunds(event.id);
+  const view = repaired > 0 ? await getEventWithRegistrationsBySlug(slug, yearNum) : event;
+  if (!view) notFound();
 
-  return <RegistrationsView event={event} />;
+  return <RegistrationsView event={view} />;
 }

@@ -6,7 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminId, requireOperatorOrAdminId } from "@/lib/session";
 import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
-import { payoutRegistrationRefund, refundPaidRegistrationOnAdminCancel } from "@/lib/refundPayout";
+import {
+  applySlotRefundToRegistration,
+  CLEARED_PAYMENT_FIELDS,
+  payoutRegistrationRefund,
+  refundPaidRegistrationOnAdminCancel,
+} from "@/lib/refundPayout";
 
 export type RegistrationAdminActionState = {
   error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid";
@@ -82,6 +87,7 @@ export async function cancelRegistrationAction(
         bibNumber: null,
         adminComment: parsed.data.adminComment,
         allowReregistration: parsed.data.allowReregistration,
+        ...(registration.status === "PAID" ? CLEARED_PAYMENT_FIELDS : {}),
       },
     });
     await reassignPaidBibNumbers(tx, eventId);
@@ -135,7 +141,12 @@ export async function restoreRegistrationAction(
     if (hasResults) return { error: "has_results" as const };
     if (registration.status !== "CANCELLED") return { error: "inactive" as const };
 
-    const paid = parsed.data.paid === true;
+    const slotRefunded = await tx.refundRequest.findFirst({
+      where: { registrationId, type: "SLOT", status: "CONFIRMED" },
+      select: { id: true },
+    });
+    // После возврата денег слот нельзя восстановить как оплаченный — нужна новая оплата.
+    const paid = parsed.data.paid === true && !slotRefunded;
     const distance = registration.distanceId
       ? await tx.distance.findUnique({
           where: { id: registration.distanceId },
@@ -168,6 +179,7 @@ export async function restoreRegistrationAction(
         bibNumber: null,
         adminComment: parsed.data.adminComment,
         allowReregistration: false,
+        ...(paid ? {} : CLEARED_PAYMENT_FIELDS),
       },
     });
 
@@ -310,10 +322,7 @@ export async function confirmRefundAction(
       data: { status: "CONFIRMED", resolvedAt: new Date() },
     });
     if (refund.type === "SLOT") {
-      await tx.registration.update({
-        where: { id: refund.registration.id },
-        data: { status: "CANCELLED", reservedUntil: null, bibNumber: null },
-      });
+      await applySlotRefundToRegistration(tx, refund.registration.id);
       await reassignPaidBibNumbers(tx, eventId);
       await tx.refundRequest.updateMany({
         where: { registrationId: refund.registration.id, status: "PENDING", id: { not: refundRequestId } },

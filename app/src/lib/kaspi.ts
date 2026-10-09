@@ -36,6 +36,11 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
     if (registration.status === "PAID") {
       return { reg: registration, justPaid: false };
     }
+    // Возвращённую или отменённую регистрацию нельзя снова пометить оплаченной
+    // по старому счёту — иначе в списке участников снова светится «Оплачено».
+    if (registration.status !== "RESERVED") {
+      return null;
+    }
 
     let bibNumber: number | undefined;
     if (registration.distance && registration.distanceId && registration.distance.bibRangeStart !== null && registration.distance.bibRangeEnd !== null) {

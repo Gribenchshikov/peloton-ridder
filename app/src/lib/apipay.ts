@@ -119,20 +119,26 @@ function qrDescription(params: {
 export async function confirmIfInvoicePaid(registrationId: string, invoiceId: string) {
   const invoice = await getInvoice(invoiceId);
   if (invoice.status === "paid") {
-    await confirmPayment(registrationId);
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      select: { status: true, kaspiOrderId: true },
+    });
+    if (
+      registration?.status === "RESERVED" &&
+      (!registration.kaspiOrderId || registration.kaspiOrderId === invoiceId)
+    ) {
+      await confirmPayment(registrationId);
+    }
   }
   return invoice;
 }
 
 export async function findRegistrationForInvoice(invoice: { id: number; external_order_id?: string | null }) {
-  const byOrder = await prisma.registration.findFirst({
+  // Только текущий kaspiOrderId: после возврата тот же registration.id
+  // не должен закрыться старым счётом при повторной брони.
+  return prisma.registration.findFirst({
     where: { kaspiOrderId: String(invoice.id) },
   });
-  if (byOrder) return byOrder;
-  if (invoice.external_order_id) {
-    return prisma.registration.findUnique({ where: { id: invoice.external_order_id } });
-  }
-  return null;
 }
 
 type EnsureSource = {
@@ -177,7 +183,12 @@ export async function ensureQrInvoice(registration: EnsureSource, forceNew = fal
         await confirmPayment(registration.id);
         return invoiceToView(existing, amount);
       }
-      if ((existing.status === "pending" || existing.status === "processing") && stillValid(existing.qr_expires_at)) {
+      if (
+        existing.status !== "refunded" &&
+        existing.status !== "partially_refunded" &&
+        (existing.status === "pending" || existing.status === "processing") &&
+        stillValid(existing.qr_expires_at)
+      ) {
         await saveInvoice(registration.id, existing);
         return invoiceToView(existing, amount);
       }

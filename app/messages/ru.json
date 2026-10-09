@@ -276,7 +276,8 @@
   "RegistrationStatus": {
     "RESERVED": "Забронировано",
     "PAID": "Оплачено",
-    "CANCELLED": "Отменено"
+    "CANCELLED": "Отменено",
+    "REFUNDED": "Возврат"
   },
   "Registration": {
     "eyebrow": "Регистрация",
@@ -294,6 +295,7 @@
     "errorInvalid": "Выберите дистанцию из списка.",
     "errorEmailUnverified": "Подтвердите email, прежде чем бронировать место.",
     "errorRegistrationBlocked": "Вы исчерпали лимит повторных регистраций на этот забег. Напишите организатору, если хотите участвовать.",
+    "errorReregistrationNotAllowed": "Повторная регистрация после возврата закрыта. Напишите организатору, если хотите участвовать.",
     "emailVerificationTitle": "Подтвердите email",
     "emailVerificationText": "Для регистрации на забег перейдите по ссылке в письме, которое мы отправили на {email}.",
     "participantTitle": "Данные участника",
@@ -592,6 +594,8 @@
     "regStatusPaid": "Оплачено",
     "regStatusReserved": "Бронь",
     "regStatusCancelled": "Отклонено",
+    "regStatusRefunded": "Возврат",
+    "regRestoreNeedsPayment": "После возврата нужна повторная оплата.",
     "kitPickupCta": "Выдача наборов",
     "summaryCta": "Сводка",
     "exportCsvCta": "Скачать CSV",

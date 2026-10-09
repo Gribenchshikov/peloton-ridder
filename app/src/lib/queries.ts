@@ -441,8 +441,7 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
           runningClub: { select: { name: true } },
           promoCode: { select: { code: true } },
           refundRequests: {
-            where: { status: "PENDING" },
-            select: { id: true, type: true, reason: true, requestedAt: true },
+            select: { id: true, type: true, status: true, reason: true, requestedAt: true },
           },
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
@@ -519,8 +518,7 @@ export function getEventWithRegistrations(id: string) {
           user: { select: { firstName: true, lastName: true, email: true, phone: true } },
           distance: { select: { id: true, name: true, km: true } },
           refundRequests: {
-            where: { status: "PENDING" },
-            select: { id: true, type: true, reason: true, requestedAt: true },
+            select: { id: true, type: true, status: true, reason: true, requestedAt: true },
           },
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],

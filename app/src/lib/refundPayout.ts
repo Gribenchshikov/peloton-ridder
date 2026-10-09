@@ -1,6 +1,90 @@
 import { prisma } from "@/lib/prisma";
-import { isApipayConfigured, refundInvoice } from "@/lib/apipay";
+import { getInvoice, isApipayConfigured, refundInvoice } from "@/lib/apipay";
+import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { refundRequestAmount, type PayableRegistration } from "@/lib/paymentAmount";
+
+export const CLEARED_PAYMENT_FIELDS = {
+  kaspiOrderId: null,
+  kaspiPaymentUrl: null,
+  kaspiQrImageUrl: null,
+  kaspiQrExpiresAt: null,
+};
+
+type DbClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0] | typeof prisma;
+
+export async function applySlotRefundToRegistration(db: DbClient, registrationId: string) {
+  await db.registration.update({
+    where: { id: registrationId },
+    data: {
+      status: "CANCELLED",
+      reservedUntil: null,
+      bibNumber: null,
+      ...CLEARED_PAYMENT_FIELDS,
+    },
+  });
+}
+
+function invoiceLooksRefunded(status: string | undefined) {
+  return status === "refunded" || status === "partially_refunded";
+}
+
+/** Сбрасывает зависший PAID после подтверждённого возврата слота. */
+export async function repairStalePaidSlotRefunds(eventId: string) {
+  const candidates = await prisma.registration.findMany({
+    where: {
+      eventId,
+      status: "PAID",
+      refundRequests: { some: { type: "SLOT", status: "CONFIRMED" } },
+    },
+    select: { id: true, distanceId: true, kaspiOrderId: true, reregistrationCount: true },
+  });
+  if (candidates.length === 0) return 0;
+
+  const staleIds: string[] = [];
+  for (const row of candidates) {
+    if (row.reregistrationCount === 0) {
+      staleIds.push(row.id);
+      continue;
+    }
+    if (!row.kaspiOrderId || !isApipayConfigured()) continue;
+    try {
+      const invoice = await getInvoice(row.kaspiOrderId);
+      if (invoiceLooksRefunded(invoice.status)) staleIds.push(row.id);
+    } catch (error) {
+      console.error("[refund] invoice lookup failed:", error);
+    }
+  }
+  if (staleIds.length === 0) return 0;
+
+  const stale = candidates.filter((row) => staleIds.includes(row.id));
+  await prisma.$transaction(async (tx) => {
+    const distanceIds = [...new Set(stale.map((row) => row.distanceId).filter(Boolean))] as string[];
+    for (const id of distanceIds.sort()) {
+      await tx.$queryRaw`SELECT "id" FROM "Distance" WHERE "id" = ${id} FOR UPDATE`;
+    }
+    for (const id of staleIds) {
+      await applySlotRefundToRegistration(tx, id);
+    }
+    await reassignPaidBibNumbers(tx, eventId);
+  });
+  return staleIds.length;
+}
+
+export async function repairUserStalePaidSlotRefunds(userId: string) {
+  const rows = await prisma.registration.findMany({
+    where: {
+      userId,
+      status: "PAID",
+      reregistrationCount: 0,
+      refundRequests: { some: { type: "SLOT", status: "CONFIRMED" } },
+    },
+    select: { eventId: true },
+    distinct: ["eventId"],
+  });
+  for (const row of rows) {
+    await repairStalePaidSlotRefunds(row.eventId);
+  }
+}
 
 export type PayoutResult = {
   amount: number;
@@ -137,7 +221,10 @@ export async function markInvoiceRefunded(invoiceId: string, refundId?: string |
       where: { apipayRefundId: String(refundId) },
       data: { payoutStatus: "completed" },
     });
-    if (byId.count > 0) return;
+    if (byId.count > 0) {
+      await cancelSlotIfRefundedInvoice(invoiceId);
+      return;
+    }
   }
 
   await prisma.refundRequest.updateMany({
@@ -146,6 +233,24 @@ export async function markInvoiceRefunded(invoiceId: string, refundId?: string |
       registration: { kaspiOrderId: invoiceId },
     },
     data: { payoutStatus: "completed" },
+  });
+  await cancelSlotIfRefundedInvoice(invoiceId);
+}
+
+async function cancelSlotIfRefundedInvoice(invoiceId: string) {
+  const registration = await prisma.registration.findFirst({
+    where: {
+      OR: [{ kaspiOrderId: invoiceId }],
+      refundRequests: { some: { type: "SLOT", status: { in: ["PENDING", "CONFIRMED"] } } },
+    },
+    select: { id: true, eventId: true, status: true },
+  });
+  if (!registration) return;
+  if (registration.status !== "PAID" && registration.status !== "RESERVED") return;
+
+  await prisma.$transaction(async (tx) => {
+    await applySlotRefundToRegistration(tx, registration.id);
+    await reassignPaidBibNumbers(tx, registration.eventId);
   });
 }
 

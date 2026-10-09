@@ -15,6 +15,8 @@ import { ClubSection } from "./ClubSection";
 import { SeriesMedals } from "./SeriesMedals";
 import { StravaSection } from "./StravaSection";
 import { logoutAction } from "@/lib/authActions";
+import { displayRegistrationStatus } from "@/lib/registrationStatus";
+import { repairUserStalePaidSlotRefunds } from "@/lib/refundPayout";
 
 export default async function AccountPage({
   params,
@@ -31,6 +33,7 @@ export default async function AccountPage({
   }
 
   const currentYear = new Date().getFullYear();
+  await repairUserStalePaidSlotRefunds(session.user.id);
   const [profile, thresholdSetting, series, clubs] = await Promise.all([
     getUserProfile(session.user.id),
     prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
@@ -287,7 +290,9 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">{tStatus(reg.status)}</span>
+                <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">
+                  {tStatus(displayRegistrationStatus(reg.status, reg.refundRequests))}
+                </span>
                 <span className="text-xs text-ink-faint">{format.dateTime(reg.createdAt, { day: "numeric", month: "short", year: "numeric" })}</span>
                 {reg.status === "PAID" && (
                   <Link

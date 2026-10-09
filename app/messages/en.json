@@ -276,7 +276,8 @@
   "RegistrationStatus": {
     "RESERVED": "Reserved",
     "PAID": "Paid",
-    "CANCELLED": "Cancelled"
+    "CANCELLED": "Cancelled",
+    "REFUNDED": "Refunded"
   },
   "Registration": {
     "eyebrow": "Registration",
@@ -294,6 +295,7 @@
     "errorInvalid": "Pick a distance from the list.",
     "errorEmailUnverified": "Confirm your email before reserving a spot.",
     "errorRegistrationBlocked": "You have reached the re-registration limit for this race. Write to the organizer if you'd like to participate.",
+    "errorReregistrationNotAllowed": "Re-registration after a refund is closed. Write to the organizer if you'd like to participate.",
     "emailVerificationTitle": "Confirm your email",
     "emailVerificationText": "To register for a race, follow the link in the email we sent to {email}.",
     "participantTitle": "Participant details",
@@ -592,6 +594,8 @@
     "regStatusPaid": "Paid",
     "regStatusReserved": "Reserved",
     "regStatusCancelled": "Declined",
+    "regStatusRefunded": "Refunded",
+    "regRestoreNeedsPayment": "After a refund, payment is required again.",
     "kitPickupCta": "Kit Pickup",
     "summaryCta": "Summary",
     "exportCsvCta": "Download CSV",
