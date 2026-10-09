@@ -4,11 +4,13 @@ import { useEffect, useState, useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { requestRefundAction, type RequestRefundState } from "./actions";
-import { isCurrentRefundStatus, type RegistrationStatusValue } from "@/lib/registrationStatus";
+import { visibleAccountRefunds, type RegistrationStatusValue } from "@/lib/registrationStatus";
 
 export type RefundRequestView = {
   type: "SLOT" | "TRANSFER";
   status: "PENDING" | "CONFIRMED" | "REJECTED";
+  requestedAt?: Date | string;
+  resolvedAt?: Date | string | null;
 };
 
 type Props = {
@@ -59,9 +61,7 @@ export function RefundRequestButton({
   const [state, formAction, pending] = useActionState(requestRefundAction, initialState);
 
   const latest = latestByType(
-    requests.filter((request) =>
-      isCurrentRefundStatus(request, { registrationStatus, hasTransfer }),
-    ),
+    visibleAccountRefunds(requests, { registrationStatus, hasTransfer }),
   );
   if (state.success && state.type) {
     latest[state.type] = { type: state.type, status: "PENDING" };

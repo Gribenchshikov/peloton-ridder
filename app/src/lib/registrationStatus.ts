@@ -1,7 +1,12 @@
 export type RegistrationStatusValue = "RESERVED" | "PAID" | "CANCELLED";
 export type DisplayRegistrationStatus = RegistrationStatusValue | "REFUNDED";
 
-type RefundLike = { type: string; status: string };
+type RefundLike = {
+  type: string;
+  status: string;
+  requestedAt?: Date | string;
+  resolvedAt?: Date | string | null;
+};
 
 export function hasConfirmedSlotRefund(requests: RefundLike[] | undefined) {
   return Boolean(requests?.some((r) => r.type === "SLOT" && r.status === "CONFIRMED"));
@@ -40,4 +45,31 @@ export function isCurrentRefundStatus(
   if (request.type === "SLOT") return opts.registrationStatus === "CANCELLED";
   if (request.type === "TRANSFER") return !opts.hasTransfer;
   return true;
+}
+
+function refundTime(value: Date | string | null | undefined) {
+  if (!value) return 0;
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+/** После повторной оплаты не показываем заявки прошлого цикла, в том числе автоотклонения. */
+export function visibleAccountRefunds<T extends RefundLike>(
+  requests: T[] | undefined,
+  opts: { registrationStatus: RegistrationStatusValue; hasTransfer: boolean },
+): T[] {
+  const all = requests ?? [];
+  const current = all.filter((request) => isCurrentRefundStatus(request, opts));
+  if (opts.registrationStatus === "CANCELLED") return current;
+
+  const lastSlotRefund = all
+    .filter((request) => request.type === "SLOT" && request.status === "CONFIRMED")
+    .sort(
+      (a, b) =>
+        refundTime(b.resolvedAt ?? b.requestedAt) - refundTime(a.resolvedAt ?? a.requestedAt),
+    )[0];
+  if (!lastSlotRefund) return current;
+
+  const cutoff = refundTime(lastSlotRefund.resolvedAt ?? lastSlotRefund.requestedAt);
+  return current.filter((request) => refundTime(request.requestedAt) > cutoff);
 }

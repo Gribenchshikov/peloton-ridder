@@ -15,7 +15,7 @@ import { ClubSection } from "./ClubSection";
 import { SeriesMedals } from "./SeriesMedals";
 import { StravaSection } from "./StravaSection";
 import { logoutAction } from "@/lib/authActions";
-import { displayRegistrationStatus, isCurrentRefundStatus } from "@/lib/registrationStatus";
+import { displayRegistrationStatus, visibleAccountRefunds } from "@/lib/registrationStatus";
 import { repairUserStalePaidSlotRefunds } from "@/lib/refundPayout";
 
 export default async function AccountPage({
@@ -332,16 +332,22 @@ function refundControls(reg: RegistrationRow) {
     new Date() <= new Date(reg.event.cancellationDeadline) &&
     !reg.transferUsedAt &&
     !(reg.kitPickedUpAt && !hasTransfer);
-  const currentRequests = reg.refundRequests.filter((r) =>
-    isCurrentRefundStatus(r, { registrationStatus: reg.status, hasTransfer }),
-  );
+  const currentRequests = visibleAccountRefunds(reg.refundRequests, {
+    registrationStatus: reg.status,
+    hasTransfer,
+  });
   if (!canRequest && currentRequests.length === 0) return null;
   return (
     <RefundRequestButton
       registrationId={reg.id}
       hasTransfer={hasTransfer}
       registrationStatus={reg.status}
-      requests={reg.refundRequests.map((r) => ({ type: r.type, status: r.status }))}
+      requests={reg.refundRequests.map((r) => ({
+        type: r.type,
+        status: r.status,
+        requestedAt: r.requestedAt,
+        resolvedAt: r.resolvedAt,
+      }))}
       slotLocked={!!reg.kitPickedUpAt}
       canRequest={canRequest}
     />

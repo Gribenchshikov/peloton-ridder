@@ -204,7 +204,7 @@ export function getUserProfile(userId: string) {
           distance: { select: { name: true, km: true } },
           result: { select: { id: true, place: true, time: true } },
           refundRequests: {
-            select: { type: true, status: true, requestedAt: true },
+            select: { type: true, status: true, requestedAt: true, resolvedAt: true },
             orderBy: { requestedAt: "desc" },
           },
         },
