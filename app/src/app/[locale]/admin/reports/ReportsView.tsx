@@ -70,15 +70,40 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
 
   // By distance breakdown with id
   const byDistance = useMemo(() => {
-    const map = new Map<string, { id: string; name: string; km: number; paid: number; reserved: number; gross: number; discounts: number }>();
+    const map = new Map<string, {
+      id: string;
+      name: string;
+      km: number;
+      eventId: string;
+      eventName: string;
+      year: number;
+      paid: number;
+      reserved: number;
+      gross: number;
+      discounts: number;
+    }>();
     for (const r of registrations) {
-      const key = r.distance?.id ?? "__transfer__";
-      const existing = map.get(key) ?? { id: key, name: r.distance?.name ?? "Трансфер", km: r.distance?.km ?? 0, paid: 0, reserved: 0, gross: 0, discounts: 0 };
+      const distanceKey = r.distance?.id ?? "__transfer__";
+      const key = `${r.event.id}:${distanceKey}`;
+      const existing = map.get(key) ?? {
+        id: distanceKey,
+        name: r.distance?.name ?? "Трансфер",
+        km: r.distance?.km ?? 0,
+        eventId: r.event.id,
+        eventName: r.event.race.name,
+        year: r.event.year,
+        paid: 0,
+        reserved: 0,
+        gross: 0,
+        discounts: 0,
+      };
       if (r.status === "PAID") { existing.paid++; existing.gross += r.distance?.price ?? 0; existing.discounts += r.discountAmount; }
       if (r.status === "RESERVED") existing.reserved++;
       map.set(key, existing);
     }
-    return [...map.values()].sort((a, b) => b.km - a.km);
+    return [...map.values()].sort(
+      (a, b) => b.year - a.year || a.eventName.localeCompare(b.eventName, "ru") || b.km - a.km,
+    );
   }, [registrations]);
 
   // Daily registrations (all statuses, by date)
@@ -132,9 +157,10 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
       {byDistance.length > 0 && (
         <Section title="По дистанциям">
           <div className="overflow-x-auto rounded-[var(--radius-s)] border border-border">
-            <table className="w-full min-w-[540px] text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-surface-2">
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">Забег</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-faint">Дистанция</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Оплачено</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-faint tabular-nums">Бронь</th>
@@ -145,7 +171,8 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
               </thead>
               <tbody>
                 {byDistance.map((d) => (
-                  <tr key={d.name} className="border-b border-border last:border-0 hover:bg-surface-2">
+                  <tr key={`${d.eventId}:${d.id}`} className="border-b border-border last:border-0 hover:bg-surface-2">
+                    <td className="px-4 py-2.5 text-ink">{d.eventName} <span className="tabular-nums text-ink-faint">{d.year}</span></td>
                     <td className="px-4 py-2.5 font-medium text-ink">{d.name} <span className="text-ink-faint">· {d.km} км</span></td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink">{d.paid}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{d.reserved}</td>
@@ -302,7 +329,7 @@ function FinancialSection({
   eventId: string;
   eventLabel: string;
   distanceRows: { id: string; name: string; km: number; paid: number }[];
-  byDistance: { id: string; name: string; km: number; paid: number; reserved: number; gross: number; discounts: number }[];
+  byDistance: { id: string; name: string; km: number; eventName: string; year: number; paid: number; reserved: number; gross: number; discounts: number }[];
   grossRevenue: number;
   totalDiscounts: number;
   netRevenue: number;
@@ -379,9 +406,17 @@ function FinancialSection({
 
     if (byDistance.length > 0) {
       rows.push(["ПО ДИСТАНЦИЯМ"]);
-      rows.push(["Дистанция", "Оплачено", "Бронь", "Выручка (₸)", "Потерянная выгода (₸)", "Чистая (₸)"]);
+      rows.push(["Забег", "Дистанция", "Оплачено", "Бронь", "Выручка (₸)", "Потерянная выгода (₸)", "Чистая (₸)"]);
       for (const d of byDistance) {
-        rows.push([d.name + (d.km ? ` (${d.km} км)` : ""), String(d.paid), String(d.reserved), String(d.gross), String(-d.discounts), String(d.gross - d.discounts)]);
+        rows.push([
+          `${d.eventName} ${d.year}`,
+          d.name + (d.km ? ` (${d.km} км)` : ""),
+          String(d.paid),
+          String(d.reserved),
+          String(d.gross),
+          String(-d.discounts),
+          String(d.gross - d.discounts),
+        ]);
       }
       rows.push([]);
     }
