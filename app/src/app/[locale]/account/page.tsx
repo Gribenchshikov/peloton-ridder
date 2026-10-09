@@ -310,22 +310,31 @@ function RegistrationHistory({ registrations }: { registrations: RegistrationRow
                   new Date() <= new Date(reg.event.cancellationDeadline) && (
                     <CancelRegistrationButton registrationId={reg.id} />
                   )}
-                {reg.status === "PAID" &&
-                  new Date() <= new Date(reg.event.cancellationDeadline) &&
-                  !reg.transferUsedAt &&
-                  !(reg.kitPickedUpAt && !(reg.includesTransfer || reg.isTransferOnly)) && (
-                    <RefundRequestButton
-                      registrationId={reg.id}
-                      hasTransfer={reg.includesTransfer || reg.isTransferOnly}
-                      pendingTypes={reg.refundRequests.map((r) => r.type)}
-                      slotLocked={!!reg.kitPickedUpAt}
-                    />
-                  )}
+                {refundControls(reg)}
               </div>
             </li>
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function refundControls(reg: RegistrationRow) {
+  const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
+  const canRequest =
+    reg.status === "PAID" &&
+    new Date() <= new Date(reg.event.cancellationDeadline) &&
+    !reg.transferUsedAt &&
+    !(reg.kitPickedUpAt && !hasTransfer);
+  if (!canRequest && reg.refundRequests.length === 0) return null;
+  return (
+    <RefundRequestButton
+      registrationId={reg.id}
+      hasTransfer={hasTransfer}
+      requests={reg.refundRequests.map((r) => ({ type: r.type, status: r.status }))}
+      slotLocked={!!reg.kitPickedUpAt}
+      canRequest={canRequest}
+    />
   );
 }

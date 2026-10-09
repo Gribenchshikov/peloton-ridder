@@ -124,9 +124,10 @@ export async function userCancelRegistrationAction(
   return { success: true };
 }
 
-export type RequestRefundState = { error?: string; success?: boolean };
+export type RequestRefundState = { error?: string; success?: boolean; type?: RefundType };
 
 const VALID_REFUND_TYPES: RefundType[] = ["SLOT", "TRANSFER"];
+const BLOCKING_REFUND_STATUSES = ["PENDING", "CONFIRMED"] as const;
 
 export async function requestRefundAction(
   _prevState: RequestRefundState,
@@ -157,7 +158,10 @@ export async function requestRefundAction(
           race: { select: { name: true } },
         },
       },
-      refundRequests: { where: { status: "PENDING" }, select: { id: true, type: true } },
+      refundRequests: {
+        where: { status: { in: [...BLOCKING_REFUND_STATUSES] } },
+        select: { id: true, type: true },
+      },
     },
   });
 
@@ -194,5 +198,5 @@ export async function requestRefundAction(
   }
 
   revalidatePath("/[locale]/account", "page");
-  return { success: true };
+  return { success: true, type: type as RefundType };
 }
