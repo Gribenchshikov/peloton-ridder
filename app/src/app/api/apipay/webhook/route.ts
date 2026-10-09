@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { confirmPayment } from "@/lib/kaspi";
 import { findRegistrationForInvoice, getInvoice, isApipayConfigured } from "@/lib/apipay";
+import { markInvoiceRefunded } from "@/lib/refundPayout";
 
 function verifySignature(rawBody: string, signature: string | null, secret: string) {
   const expected = "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
   let payload: {
     event?: string;
     invoice?: { id: number; status?: string; external_order_id?: string | null };
+    refund?: { id?: number };
   };
   try {
     payload = JSON.parse(rawBody) as typeof payload;
@@ -32,6 +34,22 @@ export async function POST(request: Request) {
   }
 
   if (payload.event === "webhook.test") {
+    return NextResponse.json({ ok: true });
+  }
+
+  const invoiceStatus = payload.invoice?.status;
+  const isRefundEvent =
+    payload.event === "invoice.refunded" ||
+    invoiceStatus === "refunded" ||
+    invoiceStatus === "partially_refunded";
+
+  if (isRefundEvent && payload.invoice?.id != null) {
+    try {
+      await markInvoiceRefunded(String(payload.invoice.id), payload.refund?.id);
+    } catch (error) {
+      console.error("[apipay] refund webhook error:", error);
+      return NextResponse.json({ error: "processing_failed" }, { status: 500 });
+    }
     return NextResponse.json({ ok: true });
   }
 

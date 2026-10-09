@@ -250,7 +250,7 @@
     "cancelError_inactive": "Регистрация не активна.",
     "refundRequestCta": "Запросить возврат",
     "refundDialogTitle": "Запросить возврат",
-    "refundDialogHint": "Администратор вернёт деньги вручную через Kaspi после подтверждения.",
+    "refundDialogHint": "После подтверждения администратором деньги вернутся автоматически через Kaspi.",
     "refundTypeLabel": "Тип возврата",
     "refundTypeSlot": "Слот",
     "refundTypeTransfer": "Трансфер",

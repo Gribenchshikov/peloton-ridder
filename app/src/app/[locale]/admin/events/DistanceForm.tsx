@@ -134,9 +134,9 @@ export function DistanceForm(props: DistanceFormProps) {
         <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-ember/30 bg-ember/5 p-4 sm:col-span-2">
           <p className="text-xs font-bold uppercase tracking-widest text-ember">Правила для участников слота</p>
           {rules.map((rule, idx) => (
-            <div key={idx} className="grid grid-cols-[1fr_80px_80px] gap-2">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-ink-soft">Подпись</label>
+            <div key={idx} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-2">
+              <div className="flex min-w-0 flex-col gap-1">
+                <label className="text-xs font-semibold leading-4 text-ink-soft">Подпись</label>
                 <input
                   type="text"
                   placeholder={idx === 0 ? "Взрослый" : "Ребёнок"}
@@ -145,8 +145,8 @@ export function DistanceForm(props: DistanceFormProps) {
                   className="rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-ember"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-ink-soft">Мин. возраст</label>
+              <div className="flex w-32 flex-col gap-1">
+                <label className="whitespace-nowrap text-xs font-semibold leading-4 text-ink-soft">Мин. возраст</label>
                 <input
                   type="number"
                   min={0}
@@ -157,8 +157,8 @@ export function DistanceForm(props: DistanceFormProps) {
                   className="rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-ember"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-ink-soft">Макс. возраст</label>
+              <div className="flex w-32 flex-col gap-1">
+                <label className="whitespace-nowrap text-xs font-semibold leading-4 text-ink-soft">Макс. возраст</label>
                 <input
                   type="number"
                   min={0}

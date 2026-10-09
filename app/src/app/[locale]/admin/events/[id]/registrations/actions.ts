@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminId, requireOperatorOrAdminId } from "@/lib/session";
 import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
+import { payoutRegistrationRefund, refundPaidRegistrationOnAdminCancel } from "@/lib/refundPayout";
 
 export type RegistrationAdminActionState = {
   error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid";
@@ -38,6 +39,7 @@ function revalidateRegistrationPages() {
   revalidatePath("/[locale]/admin/events/[id]/registrations", "page");
   revalidatePath("/[locale]/admin/registrations/[slug]/[year]", "page");
   revalidatePath("/[locale]/admin/refunds", "page");
+  revalidatePath("/[locale]/admin/reports", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
   revalidatePath("/[locale]/account", "page");
   revalidatePath("/", "layout");
@@ -83,13 +85,24 @@ export async function cancelRegistrationAction(
       },
     });
     await reassignPaidBibNumbers(tx, eventId);
-    return { success: "cancelled" as const, distanceId: registration.distanceId };
+    return {
+      success: "cancelled" as const,
+      distanceId: registration.distanceId,
+      wasPaid: registration.status === "PAID",
+    };
   });
 
   if ("error" in outcome) return outcome;
+  if (outcome.wasPaid) {
+    try {
+      await refundPaidRegistrationOnAdminCancel(registrationId);
+    } catch (error) {
+      console.error("[refund] admin cancel payout failed:", error);
+    }
+  }
   if (outcome.distanceId) void notifyWaitlistForDistance(outcome.distanceId);
   revalidateRegistrationPages();
-  const { distanceId: _, ...rest } = outcome;
+  const { distanceId: _, wasPaid: __, ...rest } = outcome;
   return rest;
 }
 
@@ -281,6 +294,16 @@ export async function confirmRefundAction(
   if (!refund || refund.registration.eventId !== eventId) return { error: "not_found" };
   if (refund.status !== "PENDING") return { error: "already_resolved" };
 
+  const payout = await payoutRegistrationRefund(refund.registration.id, refund.type);
+  await prisma.refundRequest.update({
+    where: { id: refundRequestId },
+    data: {
+      amount: payout.amount,
+      apipayRefundId: payout.apipayRefundId,
+      payoutStatus: payout.payoutStatus,
+    },
+  });
+
   await prisma.$transaction(async (tx) => {
     await tx.refundRequest.update({
       where: { id: refundRequestId },
@@ -292,6 +315,14 @@ export async function confirmRefundAction(
         data: { status: "CANCELLED", reservedUntil: null, bibNumber: null },
       });
       await reassignPaidBibNumbers(tx, eventId);
+      await tx.refundRequest.updateMany({
+        where: { registrationId: refund.registration.id, status: "PENDING", id: { not: refundRequestId } },
+        data: {
+          status: "REJECTED",
+          resolvedAt: new Date(),
+          adminNote: "Слот отменён: возврат уже выполнен",
+        },
+      });
     } else {
       await tx.registration.update({
         where: { id: refund.registration.id },

@@ -250,7 +250,7 @@
     "cancelError_inactive": "Тіркеу белсенді емес.",
     "refundRequestCta": "Қайтаруды сұрау",
     "refundDialogTitle": "Қайтаруды сұрау",
-    "refundDialogHint": "Әкімші растағаннан кейін ақшаны Kaspi арқылы қолмен қайтарады.",
+    "refundDialogHint": "Әкімші растағаннан кейін ақша Kaspi арқылы автоматты түрде қайтарылады.",
     "refundTypeLabel": "Қайтару түрі",
     "refundTypeSlot": "Слот",
     "refundTypeTransfer": "Трансфер",

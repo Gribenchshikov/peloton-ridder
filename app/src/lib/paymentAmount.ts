@@ -1,4 +1,4 @@
-type PayableRegistration = {
+export type PayableRegistration = {
   isTransferOnly: boolean;
   discountAmount: number | null;
   includesTransfer: boolean;
@@ -12,4 +12,12 @@ export function registrationPaymentAmount(registration: PayableRegistration): nu
   const discount = registration.discountAmount ?? 0;
   const transferAmt = registration.includesTransfer ? (registration.event.transferPrice ?? 0) : 0;
   return Math.max(0, slotPrice - discount + transferAmt);
+}
+
+export function refundRequestAmount(registration: PayableRegistration, type: "SLOT" | "TRANSFER"): number {
+  if (type === "TRANSFER") {
+    if (!registration.includesTransfer && !registration.isTransferOnly) return 0;
+    return Math.max(0, registration.event.transferPrice ?? 0);
+  }
+  return registrationPaymentAmount(registration);
 }

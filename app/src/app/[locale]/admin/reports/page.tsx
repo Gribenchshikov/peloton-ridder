@@ -58,6 +58,18 @@ export default async function ReportsPage({
     select: { size: true, merchItem: { select: { name: true } } },
   });
 
+  const confirmedRefunds = await prisma.refundRequest.findMany({
+    where: {
+      status: "CONFIRMED",
+      ...(eventId ? { registration: { eventId } } : {}),
+    },
+    select: { amount: true, type: true },
+  });
+  const totalRefunds = confirmedRefunds.reduce((sum, row) => sum + (row.amount ?? 0), 0);
+  const transferRefunds = confirmedRefunds
+    .filter((row) => row.type === "TRANSFER")
+    .reduce((sum, row) => sum + (row.amount ?? 0), 0);
+
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
@@ -100,6 +112,8 @@ export default async function ReportsPage({
         }
         eventId={eventId}
         initialFinancials={initialFinancials}
+        totalRefunds={totalRefunds}
+        transferRefunds={transferRefunds}
       />
     </main>
   );

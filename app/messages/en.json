@@ -250,7 +250,7 @@
     "cancelError_inactive": "Registration is not active.",
     "refundRequestCta": "Request a refund",
     "refundDialogTitle": "Request a refund",
-    "refundDialogHint": "The organizer will refund via Kaspi after approving the request.",
+    "refundDialogHint": "After the organizer approves the request, money is refunded automatically via Kaspi.",
     "refundTypeLabel": "Refund type",
     "refundTypeSlot": "Slot",
     "refundTypeTransfer": "Transfer",

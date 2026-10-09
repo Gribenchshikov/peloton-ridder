@@ -36,6 +36,8 @@ type Props = {
   selectedEventName: string;
   eventId?: string;
   initialFinancials: FinancialData | null;
+  totalRefunds: number;
+  transferRefunds: number;
 };
 
 const CANCEL_REASON_LABELS: Record<string, string> = {
@@ -57,7 +59,7 @@ function nextId() {
   return Math.random().toString(36).slice(2);
 }
 
-export function ReportsView({ registrations, distances, merch, selectedEventName, eventId, initialFinancials }: Props) {
+export function ReportsView({ registrations, distances, merch, selectedEventName, eventId, initialFinancials, totalRefunds, transferRefunds }: Props) {
   const paid = useMemo(() => registrations.filter((r) => r.status === "PAID"), [registrations]);
   const reserved = useMemo(() => registrations.filter((r) => r.status === "RESERVED"), [registrations]);
   const cancelled = useMemo(() => registrations.filter((r) => r.status === "CANCELLED"), [registrations]);
@@ -118,10 +120,11 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
   return (
     <div className="flex flex-col gap-8">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard label="Всего регистраций" value={registrations.length} sub={`оплачено: ${paid.length} · бронь: ${reserved.length}`} />
         <KpiCard label="Валовая выручка" value={kzt(grossRevenue)} />
         <KpiCard label="Потерянная выгода" value={kzt(totalDiscounts)} />
+        <KpiCard label="Возвраты" value={kzt(totalRefunds)} highlight />
         <KpiCard label="Чистая выручка" value={kzt(netRevenue)} accent />
       </div>
 
@@ -167,6 +170,8 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
           grossRevenue={grossRevenue}
           totalDiscounts={totalDiscounts}
           netRevenue={netRevenue}
+          totalRefunds={totalRefunds}
+          transferRefunds={transferRefunds}
           initialData={initialFinancials}
         />
       )}
@@ -290,6 +295,8 @@ function FinancialSection({
   grossRevenue,
   totalDiscounts,
   netRevenue,
+  totalRefunds,
+  transferRefunds,
   initialData,
 }: {
   eventId: string;
@@ -299,6 +306,8 @@ function FinancialSection({
   grossRevenue: number;
   totalDiscounts: number;
   netRevenue: number;
+  totalRefunds: number;
+  transferRefunds: number;
   initialData: FinancialData | null;
 }) {
   const totalPaid = distanceRows.reduce((s, d) => s + d.paid, 0);
@@ -314,7 +323,7 @@ function FinancialSection({
   const totalExtraExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const totalIncomes = incomes.reduce((s, i) => s + i.amount, 0);
   const totalCosts = totalPackCost + totalExtraExpenses;
-  const profit = netRevenue - totalCosts + totalIncomes;
+  const profit = netRevenue - transferRefunds - totalCosts + totalIncomes;
 
   function addPackItem() {
     setPackItems((prev) => [...prev, { id: nextId(), name: "", price: 0 }]);
@@ -365,6 +374,7 @@ function FinancialSection({
     rows.push(["Валовая выручка", String(grossRevenue)]);
     rows.push(["Потерянная выгода", String(-totalDiscounts)]);
     rows.push(["Чистая выручка", String(netRevenue)]);
+    rows.push(["Возвраты", String(-totalRefunds)]);
     rows.push([]);
 
     if (byDistance.length > 0) {
@@ -406,6 +416,7 @@ function FinancialSection({
 
     rows.push(["ИТОГОВЫЙ РАСЧЁТ"]);
     rows.push(["Чистая выручка (₸)", String(netRevenue)]);
+    rows.push(["− Возвраты (₸)", String(-totalRefunds)]);
     if (totalPackCost > 0) rows.push(["− Стартовый пакет (₸)", String(-totalPackCost)]);
     for (const e of expenses.filter((e) => e.amount > 0)) rows.push([`− ${e.label || "Расход"} (₸)`, String(-e.amount)]);
     for (const i of incomes.filter((i) => i.amount > 0)) rows.push([`+ ${i.label || "Доход"} (₸)`, String(i.amount)]);
@@ -568,6 +579,10 @@ function FinancialSection({
               <span className="text-ink-soft">Чистая выручка (оплачено − скидки)</span>
               <span className="tabular-nums font-semibold text-ink">{kzt(netRevenue)}</span>
             </div>
+            <div className="flex justify-between rounded-[var(--radius-s)] bg-danger/10 px-2 py-1.5 -mx-2">
+              <span className="font-semibold text-danger">− Возвраты</span>
+              <span className="tabular-nums font-semibold text-danger">−{kzt(totalRefunds)}</span>
+            </div>
             {totalPackCost > 0 && (
               <div className="flex justify-between">
                 <span className="text-ink-soft">− Стартовый пакет</span>
@@ -619,11 +634,13 @@ function FinancialSection({
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
+function KpiCard({ label, value, sub, accent, highlight }: { label: string; value: string | number; sub?: string; accent?: boolean; highlight?: boolean }) {
   return (
-    <div className={`rounded-[var(--radius-m)] border p-4 ${accent ? "border-ember/30 bg-ember/5" : "border-border bg-surface"}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">{label}</p>
-      <p className={`mt-1.5 text-xl font-bold tabular-nums ${accent ? "text-ember" : "text-ink"}`}>{value}</p>
+    <div className={`rounded-[var(--radius-m)] border p-4 ${
+      highlight ? "border-danger/40 bg-danger/10" : accent ? "border-ember/30 bg-ember/5" : "border-border bg-surface"
+    }`}>
+      <p className={`text-xs font-semibold uppercase tracking-wide ${highlight ? "text-danger" : "text-ink-faint"}`}>{label}</p>
+      <p className={`mt-1.5 text-xl font-bold tabular-nums ${highlight ? "text-danger" : accent ? "text-ember" : "text-ink"}`}>{value}</p>
       {sub && <p className="mt-1 text-[11px] text-ink-faint">{sub}</p>}
     </div>
   );

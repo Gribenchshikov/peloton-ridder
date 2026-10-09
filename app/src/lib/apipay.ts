@@ -72,6 +72,22 @@ export function simulateInvoicePaid(id: string | number) {
   });
 }
 
+export type ApipayRefund = {
+  id: number;
+  amount?: string;
+  status: string;
+  error_code?: string;
+  error_message?: string;
+};
+
+/** Полный возврат — без amount; частичный — с суммой в тенге. */
+export function refundInvoice(invoiceId: string | number, amount?: number) {
+  return apipay<ApipayRefund>(`/invoices/${invoiceId}/refund`, {
+    method: "POST",
+    body: JSON.stringify(amount != null ? { amount } : {}),
+  });
+}
+
 function invoiceToView(invoice: ApipayInvoice, amount: number, error: string | null = null): PaymentInvoiceView {
   return {
     amount,

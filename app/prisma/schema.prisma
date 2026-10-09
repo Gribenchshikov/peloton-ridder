@@ -273,6 +273,9 @@ model RefundRequest {
   adminNote      String?
   requestedAt    DateTime     @default(now())
   resolvedAt     DateTime?
+  amount         Int?
+  apipayRefundId String?
+  payoutStatus   String?
   registration   Registration @relation(fields: [registrationId], references: [id])
 }
 
