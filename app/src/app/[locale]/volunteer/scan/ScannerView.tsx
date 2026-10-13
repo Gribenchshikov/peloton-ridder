@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, FormEvent } from "react";
 import jsQR from "jsqr";
+import { parseKitLookupQuery } from "@/lib/ticketCode";
 
 type ScanResult = {
   registrationId: string;
@@ -40,7 +41,7 @@ export function ScannerView({ events }: { events: EventOption[] }) {
   const [kitState, setKitState] = useState<ActionState>("idle");
   const [transferState, setTransferState] = useState<ActionState>("idle");
 
-  const [manualBib, setManualBib] = useState("");
+  const [manualQuery, setManualQuery] = useState("");
   const [manualEventId, setManualEventId] = useState(events[0]?.id ?? "");
   const [manualError, setManualError] = useState<string | null>(null);
   const [manualLoading, setManualLoading] = useState(false);
@@ -73,7 +74,7 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     setTransferState("idle");
     setScanning(true);
     setCameraError(null);
-    setManualBib("");
+    setManualQuery("");
     setManualError(null);
 
     try {
@@ -156,7 +157,15 @@ export function ScannerView({ events }: { events: EventOption[] }) {
 
   const handleManualLookup = async (e: FormEvent) => {
     e.preventDefault();
-    if (!manualBib || !manualEventId) return;
+    const parsed = parseKitLookupQuery(manualQuery);
+    if (!parsed) {
+      setManualError("Введите код с билета (ABC-DEF) или стартовый номер");
+      return;
+    }
+    if (parsed.kind === "bib" && !manualEventId) {
+      setManualError("Выберите забег — для поиска по стартовому номеру");
+      return;
+    }
     setManualLoading(true);
     setManualError(null);
     setScanResult(null);
@@ -166,11 +175,19 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     stopCamera();
     setScanning(false);
 
-    const res = await fetch(`/api/scan/bib?bibNumber=${encodeURIComponent(manualBib)}&eventId=${encodeURIComponent(manualEventId)}`);
+    const params = new URLSearchParams({ q: manualQuery.trim() });
+    if (manualEventId) params.set("eventId", manualEventId);
+    const res = await fetch(`/api/scan/bib?${params.toString()}`);
     setManualLoading(false);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setManualError(body.error === "not_found" ? "Участник с таким номером не найден" : "Ошибка поиска");
+      setManualError(
+        body.error === "not_found"
+          ? "Участник не найден"
+          : body.error === "invalid_bib"
+            ? "Введите код с билета (ABC-DEF) или стартовый номер"
+            : "Ошибка поиска",
+      );
       return;
     }
     const data: ScanResult = await res.json();
@@ -213,41 +230,43 @@ export function ScannerView({ events }: { events: EventOption[] }) {
       {/* Hidden canvas for QR processing */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Manual bib number lookup */}
-      {events.length > 0 && (
-        <form onSubmit={handleManualLookup} className="mt-6 flex flex-col gap-3 rounded-[var(--radius-m)] border border-border bg-surface p-4">
-          <p className="text-sm font-semibold text-ink">Ввести номер вручную</p>
-          {events.length > 1 && (
-            <select
-              value={manualEventId}
-              onChange={(e) => setManualEventId(e.target.value)}
-              className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
-            >
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>{ev.label}</option>
-              ))}
-            </select>
-          )}
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min={1}
-              value={manualBib}
-              onChange={(e) => setManualBib(e.target.value)}
-              placeholder="Стартовый номер"
-              className="flex-1 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-ember focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!manualBib || !manualEventId || manualLoading}
-              className="rounded-[var(--radius-s)] bg-ember px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
-            >
-              {manualLoading ? "…" : "Найти"}
-            </button>
-          </div>
-          {manualError && <p className="text-sm text-danger">{manualError}</p>}
-        </form>
-      )}
+      <form onSubmit={handleManualLookup} className="mt-6 flex flex-col gap-3 rounded-[var(--radius-m)] border border-border bg-surface p-4">
+        <p className="text-sm font-semibold text-ink">Ввести код вручную</p>
+        <p className="text-xs text-ink-soft">Код с билета (ABC-DEF) или стартовый номер</p>
+        {events.length > 1 && (
+          <select
+            value={manualEventId}
+            onChange={(e) => setManualEventId(e.target.value)}
+            className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
+          >
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>{ev.label}</option>
+            ))}
+          </select>
+        )}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            inputMode="text"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            maxLength={12}
+            value={manualQuery}
+            onChange={(e) => setManualQuery(e.target.value.toUpperCase())}
+            placeholder="ABC-DEF или 42"
+            className="flex-1 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2.5 font-mono text-sm tracking-widest text-ink placeholder:font-sans placeholder:tracking-normal placeholder:text-ink-faint focus:border-ember focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={!manualQuery.trim() || manualLoading}
+            className="rounded-[var(--radius-s)] bg-ember px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {manualLoading ? "…" : "Найти"}
+          </button>
+        </div>
+        {manualError && <p className="text-sm text-danger">{manualError}</p>}
+      </form>
 
       {fetchError && (
         <div className="mt-6 rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 p-4">

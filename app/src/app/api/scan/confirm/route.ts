@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireKitScanner } from "@/lib/kitPickup";
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { isAdmin: true, isVolunteer: true },
-  });
-  if (!user?.isAdmin && !user?.isVolunteer) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const access = await requireKitScanner();
+  if (!access.ok) {
+    return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
   const body = await req.json().catch(() => null);
@@ -24,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    select: { status: true, kitPickedUpAt: true },
+    select: { status: true, kitPickedUpAt: true, isTransferOnly: true },
   });
 
   if (!reg) {
@@ -32,6 +24,9 @@ export async function POST(req: NextRequest) {
   }
   if (reg.status !== "PAID") {
     return NextResponse.json({ error: "not_paid" }, { status: 422 });
+  }
+  if (reg.isTransferOnly) {
+    return NextResponse.json({ error: "transfer_only" }, { status: 422 });
   }
 
   const updated = await prisma.registration.update({

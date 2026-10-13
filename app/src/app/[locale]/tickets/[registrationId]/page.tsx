@@ -4,6 +4,7 @@ import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { getTranslations } from "next-intl/server";
 import QRCode from "qrcode";
+import { formatTicketShortCode } from "@/lib/ticketCode";
 
 export default async function TicketPage({
   params,
@@ -70,8 +71,7 @@ export default async function TicketPage({
   const qrData = `RIDDER:${registrationId}`;
   const qrDataUrl = await QRCode.toDataURL(qrData, { width: 240, margin: 1 });
 
-  const rawCode = reg.id.slice(-6).toUpperCase();
-  const shortCode = `${rawCode.slice(0, 3)}-${rawCode.slice(3)}`;
+  const shortCode = formatTicketShortCode(reg.id);
 
   const dateStr = new Intl.DateTimeFormat("ru", {
     day: "numeric", month: "long", year: "numeric",

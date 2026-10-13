@@ -20,17 +20,19 @@ function isConfigured() {
 }
 
 function createTransport() {
-  if (authServerConfigured()) {
-    return nodemailer.createTransport(process.env.AUTH_EMAIL_SERVER);
+  // SMTP_HOST — тот же транспорт, которым уже уходят промокоды волонтёрам.
+  // AUTH_EMAIL_SERVER часто остаётся плейсхолдером из примера NextAuth.
+  if (smtpHostConfigured()) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT ?? 587),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: process.env.SMTP_USER
+        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+        : undefined,
+    });
   }
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: process.env.SMTP_USER
-      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      : undefined,
-  });
+  return nodemailer.createTransport(process.env.AUTH_EMAIL_SERVER);
 }
 
 // Ошибку SMTP (обрыв соединения, таймаут, неверные креды) ловим здесь и не пробрасываем
@@ -44,7 +46,7 @@ async function sendMail(to: string, subject: string, text: string, html: string)
     return;
   }
 
-  const from = process.env.AUTH_EMAIL_FROM || process.env.SMTP_FROM;
+  const from = process.env.SMTP_FROM || process.env.AUTH_EMAIL_FROM;
   if (!from) {
     console.error("[mailer] AUTH_EMAIL_FROM / SMTP_FROM не задан — письмо не отправлено.");
     return;
