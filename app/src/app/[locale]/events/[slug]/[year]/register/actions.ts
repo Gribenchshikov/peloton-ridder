@@ -6,6 +6,7 @@ import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { parseParticipantRules, calcAge } from "@/types/participantRules";
 import { CLEARED_PAYMENT_FIELDS } from "@/lib/refundPayout";
+import { notifyFromRegistration } from "@/lib/userMessages";
 
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
 const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
@@ -272,5 +273,8 @@ export async function createRegistrationAction(
   });
 
   if (outcome.kind === "error") return { error: outcome.error };
+  if (outcome.kind === "created") {
+    void notifyFromRegistration(outcome.registrationId, "REGISTRATION");
+  }
   return redirect({ href: `/pay/${outcome.registrationId}`, locale });
 }

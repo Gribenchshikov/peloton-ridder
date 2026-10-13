@@ -2,15 +2,22 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { auth } from "@/auth";
 import { countPendingRefundRequests } from "@/lib/queries";
+import { countUnreadUserMessages } from "@/lib/userMessages";
 import { MobileMenu } from "./MobileMenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { UnreadCountBadge } from "./UnreadCountBadge";
 
 export async function SiteHeader({ locale }: { locale: string }) {
   const [session, t] = await Promise.all([auth(), getTranslations("Nav")]);
   const isAdmin = session?.user?.isAdmin ?? false;
   const isLoggedIn = Boolean(session?.user);
   const firstName = session?.user?.firstName;
-  const pendingRefundCount = isAdmin ? await countPendingRefundRequests() : 0;
+  const [pendingRefundCount, unreadMessageCount] = await Promise.all([
+    isAdmin ? countPendingRefundRequests() : Promise.resolve(0),
+    session?.user?.id ? countUnreadUserMessages(session.user.id) : Promise.resolve(0),
+  ]);
+  const accountHref = unreadMessageCount > 0 ? "/account/messages" : "/account";
+  const unreadLabel = t("unreadMessages", { count: unreadMessageCount });
 
   const navLinks = [
     { href: "/", label: t("home") },
@@ -67,10 +74,11 @@ export async function SiteHeader({ locale }: { locale: string }) {
 
           {isLoggedIn ? (
             <Link
-              href="/account"
-              className="rounded-[var(--radius-s)] border border-border px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+              href={accountHref}
+              className="relative rounded-[var(--radius-s)] border border-border px-3 py-1.5 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
             >
               {firstName ?? t("profile")}
+              <UnreadCountBadge count={unreadMessageCount} label={unreadLabel} />
             </Link>
           ) : (
             <>
@@ -97,11 +105,14 @@ export async function SiteHeader({ locale }: { locale: string }) {
           isLoggedIn={isLoggedIn}
           isAdmin={isAdmin}
           profileLabel={firstName ?? t("profile")}
+          accountHref={accountHref}
           signInLabel={t("signIn")}
           registerLabel={t("register")}
           adminLabel={t("adminPanel")}
           pendingRefundCount={pendingRefundCount}
           pendingRefundsLabel={pendingRefundCount > 0 ? t("pendingRefunds", { count: pendingRefundCount }) : undefined}
+          unreadMessageCount={unreadMessageCount}
+          unreadMessagesLabel={unreadMessageCount > 0 ? unreadLabel : undefined}
         />
       </div>
     </header>

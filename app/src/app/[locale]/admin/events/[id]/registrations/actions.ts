@@ -12,6 +12,7 @@ import {
   payoutRegistrationRefund,
   refundPaidRegistrationOnAdminCancel,
 } from "@/lib/refundPayout";
+import { notifyFromRegistration } from "@/lib/userMessages";
 
 export type RegistrationAdminActionState = {
   error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid";
@@ -47,6 +48,8 @@ function revalidateRegistrationPages() {
   revalidatePath("/[locale]/admin/reports", "page");
   revalidatePath("/[locale]/events/[slug]/[year]", "page");
   revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/account/history", "page");
+  revalidatePath("/[locale]/account/messages", "page");
   revalidatePath("/", "layout");
 }
 
@@ -99,6 +102,10 @@ export async function cancelRegistrationAction(
   });
 
   if ("error" in outcome) return outcome;
+  void notifyFromRegistration(registrationId, "ADMIN_CANCEL");
+  if (parsed.data.allowReregistration) {
+    void notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
+  }
   if (outcome.wasPaid) {
     try {
       await refundPaidRegistrationOnAdminCancel(registrationId);
@@ -270,11 +277,19 @@ export async function toggleReregistrationPermissionAction(
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
 
-  const updated = await prisma.registration.updateMany({
+  const registration = await prisma.registration.findFirst({
     where: { id: registrationId, eventId, status: "CANCELLED" },
+    select: { allowReregistration: true },
+  });
+  if (!registration) return { error: "inactive" };
+
+  await prisma.registration.update({
+    where: { id: registrationId },
     data: { allowReregistration },
   });
-  if (updated.count === 0) return { error: "inactive" };
+  if (allowReregistration && !registration.allowReregistration) {
+    void notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
+  }
 
   revalidateRegistrationPages();
   return { success: "permission_changed" };
@@ -342,6 +357,14 @@ export async function confirmRefundAction(
 
   if (refund.type === "SLOT" && refund.registration.distanceId) {
     void notifyWaitlistForDistance(refund.registration.distanceId);
+  }
+
+  if (payout.amount > 0) {
+    void notifyFromRegistration(
+      refund.registration.id,
+      refund.type === "TRANSFER" ? "REFUND_TRANSFER" : "REFUND_SLOT",
+      { amount: payout.amount },
+    );
   }
 
   revalidateRegistrationPages();

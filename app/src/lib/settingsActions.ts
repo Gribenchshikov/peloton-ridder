@@ -1,8 +1,12 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdminId } from "@/lib/session";
 import { upsertSiteSetting, getSiteSetting } from "@/lib/queries";
 import { saveFile } from "@/lib/storage";
+import { sanitizeContactInfo, type ContactInfo } from "@/lib/contactInfo";
+
+export type { ContactInfo } from "@/lib/contactInfo";
 
 export async function saveHeroBgAction(formData: FormData) {
   const adminId = await requireAdminId();
@@ -50,12 +54,12 @@ export async function saveHomeStatsAction(stats: StatItem[]) {
   return { ok: true };
 }
 
-export type ContactInfo = { phone1: string; phone2: string; email: string };
-
 export async function saveContactInfoAction(info: ContactInfo) {
   const adminId = await requireAdminId();
   if (!adminId) return { error: "unauthorized" };
-  await upsertSiteSetting("contact_info", JSON.stringify(info));
+  await upsertSiteSetting("contact_info", JSON.stringify(sanitizeContactInfo(info)));
+  revalidatePath("/", "layout");
+  revalidatePath("/[locale]/contact", "page");
   return { ok: true };
 }
 

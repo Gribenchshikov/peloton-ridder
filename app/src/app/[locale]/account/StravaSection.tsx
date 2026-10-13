@@ -10,7 +10,7 @@ export function StravaSection({
   status?: string;
 }) {
   return (
-    <div className="mt-10 flex flex-col gap-4 border-t border-border pt-10">
+    <div className="flex flex-col gap-4 border-t border-border pt-10">
       <div className="text-xs font-bold uppercase tracking-widest text-ink-faint">Strava</div>
 
       {stravaAthleteId ? (

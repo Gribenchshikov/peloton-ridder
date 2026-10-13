@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendRegistrationConfirmationEmail } from "@/lib/mailer";
+import { notifyFromRegistration } from "@/lib/userMessages";
 
 // Оплата идёт через ApiPay (Kaspi QR + ссылка). Пока APIPAY_API_KEY не задан,
 // страница оплаты может показать кнопку «Симулировать оплату» при ALLOW_TEST_PAYMENTS.
@@ -82,6 +83,7 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
 
   if (txResult.justPaid) {
     sendConfirmationEmail(txResult.reg.id).catch((e) => console.error("[kaspi] email error:", e));
+    void notifyFromRegistration(txResult.reg.id, "PAYMENT");
   }
 
   return txResult.reg;

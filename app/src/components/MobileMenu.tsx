@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { UnreadCountBadge } from "./UnreadCountBadge";
 
 type NavLink = { href: string; label: string };
 
@@ -11,22 +12,28 @@ export function MobileMenu({
   isLoggedIn,
   isAdmin,
   profileLabel,
+  accountHref = "/account",
   signInLabel,
   registerLabel,
   adminLabel,
   pendingRefundCount = 0,
   pendingRefundsLabel,
+  unreadMessageCount = 0,
+  unreadMessagesLabel,
 }: {
   locale: string;
   navLinks: NavLink[];
   isLoggedIn: boolean;
   isAdmin: boolean;
   profileLabel: string;
+  accountHref?: string;
   signInLabel: string;
   registerLabel: string;
   adminLabel: string;
   pendingRefundCount?: number;
   pendingRefundsLabel?: string;
+  unreadMessageCount?: number;
+  unreadMessagesLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -36,8 +43,9 @@ export function MobileMenu({
         onClick={() => setOpen((v) => !v)}
         aria-label="Меню"
         aria-expanded={open}
-        className="flex h-11 w-11 touch-manipulation items-center justify-center rounded-[var(--radius-s)] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+        className="relative flex h-11 w-11 touch-manipulation items-center justify-center rounded-[var(--radius-s)] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
       >
+        <UnreadCountBadge count={unreadMessageCount} label={unreadMessagesLabel ?? ""} />
         {open ? (
           <svg width="18" height="18" fill="none" viewBox="0 0 18 18" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" d="M3 3l12 12M15 3L3 15" />
@@ -91,11 +99,12 @@ export function MobileMenu({
             )}
             {isLoggedIn ? (
               <Link
-                href="/account"
+                href={accountHref}
                 onClick={() => setOpen(false)}
-                className="rounded-[var(--radius-s)] border border-border px-3 py-2.5 text-center text-sm font-semibold text-ink"
+                className="relative rounded-[var(--radius-s)] border border-border px-3 py-2.5 text-center text-sm font-semibold text-ink"
               >
                 {profileLabel}
+                <UnreadCountBadge count={unreadMessageCount} label={unreadMessagesLabel ?? ""} />
               </Link>
             ) : (
               <>

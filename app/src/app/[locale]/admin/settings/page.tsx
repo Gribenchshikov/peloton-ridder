@@ -15,7 +15,8 @@ import { PartnershipEditor } from "./PartnershipEditor";
 import { SponsorPackagesEditor } from "./SponsorPackagesEditor";
 import { PartnerTypesEditor } from "./PartnerTypesEditor";
 import { PageBackgroundsEditor } from "./PageBackgroundsEditor";
-import type { StatItem, ContactInfo, PartnershipContent } from "@/lib/settingsActions";
+import type { StatItem, PartnershipContent } from "@/lib/settingsActions";
+import { parseContactInfo } from "@/lib/contactInfo";
 import type { SponsorPackage, PartnerType } from "@/lib/sponsorPackages";
 
 const DEFAULT_STATS: StatItem[] = [
@@ -24,12 +25,6 @@ const DEFAULT_STATS: StatItem[] = [
   { value: "1 200+", label: "участников в сезоне" },
   { value: "3", label: "дистанции на каждом старте" },
 ];
-
-const DEFAULT_CONTACT: ContactInfo = {
-  phone1: "+7 700 000 0000",
-  phone2: "+7 700 000 0001",
-  email: "info@ridder.run",
-};
 
 const LEGAL_KEYS = [
   "legal_refund_ru", "legal_refund_kk", "legal_refund_en",
@@ -79,8 +74,7 @@ export default async function SettingsPage({
   let homeStats: StatItem[] = DEFAULT_STATS;
   try { if (homeStatsRaw) homeStats = JSON.parse(homeStatsRaw); } catch { /* use default */ }
 
-  let contactInfo: ContactInfo = DEFAULT_CONTACT;
-  try { if (contactInfoRaw) contactInfo = { ...DEFAULT_CONTACT, ...JSON.parse(contactInfoRaw) }; } catch { /* use default */ }
+  const contactInfo = parseContactInfo(contactInfoRaw);
 
   let partnershipContent: PartnershipContent | null = null;
   try { if (partnershipRaw) partnershipContent = JSON.parse(partnershipRaw); } catch { /* use default */ }

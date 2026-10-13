@@ -289,3 +289,81 @@ export async function sendVolunteerApplicationAdminEmail(
   const html = `<h3 style="margin:0 0 12px">Новая заявка волонтёра</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Участник</td><td style="font-weight:600">${applicantName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${applicantEmail}">${applicantEmail}</a></td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr></table><p style="margin-top:16px"><a href="${volunteersUrl}" style="display:inline-block;padding:8px 16px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Рассмотреть заявки →</a></p><p style="color:#888;font-size:12px;margin-top:12px">Peloton Ridder</p>`;
   await Promise.all(adminEmails.map((to) => sendMail(to, subject, text, html)));
 }
+
+const USER_MESSAGE_COPY: Record<
+  string,
+  { title: string; body: (race: string, amount: string) => string }
+> = {
+  REGISTRATION: {
+    title: "Регистрация на забег",
+    body: (race) => `Вы зарегистрировались на ${race}.`,
+  },
+  PAYMENT: {
+    title: "Оплата получена",
+    body: (race) => `Оплата за ${race} получена.`,
+  },
+  ADMIN_CANCEL: {
+    title: "Регистрация отменена",
+    body: (race) => `Администратор отменил вашу регистрацию на ${race}.`,
+  },
+  REREGISTRATION_ALLOWED: {
+    title: "Повторная регистрация разрешена",
+    body: (race) => `Вам разрешена повторная регистрация на ${race}.`,
+  },
+  REFUND_SLOT: {
+    title: "Возврат за слот",
+    body: (race, amount) => `Произведён возврат за слот на ${race} на сумму ${amount}.`,
+  },
+  REFUND_TRANSFER: {
+    title: "Возврат за трансфер",
+    body: (race, amount) => `Произведён возврат за трансфер на ${race} на сумму ${amount}.`,
+  },
+};
+
+function escapeHtml(value: string) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export async function sendUserMessageEmail(
+  to: string,
+  name: string,
+  type: string,
+  payload: { race: string; amount?: number },
+) {
+  const copy = USER_MESSAGE_COPY[type];
+  if (!copy) return;
+
+  const amount =
+    payload.amount != null
+      ? new Intl.NumberFormat("ru-KZ", {
+          style: "currency",
+          currency: "KZT",
+          maximumFractionDigits: 0,
+        }).format(payload.amount)
+      : "";
+  const body = copy.body(payload.race, amount);
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const messagesUrl = `${appUrl}/ru/account/messages`;
+  const subject = `${copy.title} — ${payload.race}`;
+  const text = [
+    `Здравствуйте, ${name}!`,
+    ``,
+    body,
+    ``,
+    `Сообщение также доступно в личном кабинете: ${messagesUrl}`,
+    ``,
+    `С уважением,`,
+    `Peloton Ridder`,
+  ].join("\n");
+  const html = `
+<p>Здравствуйте, ${escapeHtml(name)}!</p>
+<p>${escapeHtml(body)}</p>
+<p style="margin:20px 0">
+  <a href="${messagesUrl}" style="display:inline-block;padding:10px 20px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
+    Открыть сообщения
+  </a>
+</p>
+<p style="color:#888;font-size:13px">С уважением,<br>Peloton Ridder</p>
+`.trim();
+  await sendMail(to, subject, text, html);
+}

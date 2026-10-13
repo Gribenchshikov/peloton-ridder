@@ -121,6 +121,7 @@ export async function userCancelRegistrationAction(
   }
 
   revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/account/history", "page");
   return { success: true };
 }
 
@@ -198,6 +199,7 @@ export async function requestRefundAction(
   }
 
   revalidatePath("/[locale]/account", "page");
+  revalidatePath("/[locale]/account/history", "page");
   revalidatePath("/[locale]/admin/refunds", "page");
   revalidatePath("/", "layout");
   return { success: true, type: type as RefundType };

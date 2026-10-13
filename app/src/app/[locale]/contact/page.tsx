@@ -1,5 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import { getSiteSetting } from "@/lib/queries";
+import { parseContactInfo, visiblePhones } from "@/lib/contactInfo";
+import { ContactPhoneCards } from "@/components/ContactPhones";
 import { ContactForm } from "./ContactForm";
 
 export default async function ContactPage() {
@@ -7,17 +9,9 @@ export default async function ContactPage() {
     getSiteSetting("contact_info"),
     getSiteSetting("bg_contact"),
   ]);
-  let phone1 = "+7 700 000 0000";
-  let phone2 = "+7 700 000 0001";
-  let email = "info@ridder.run";
-  try {
-    if (contactInfoRaw) {
-      const parsed = JSON.parse(contactInfoRaw);
-      if (parsed.phone1) phone1 = parsed.phone1;
-      if (parsed.phone2) phone2 = parsed.phone2;
-      if (parsed.email) email = parsed.email;
-    }
-  } catch { /* use defaults */ }
+  const contactInfo = parseContactInfo(contactInfoRaw);
+  const phones = visiblePhones(contactInfo);
+  const email = contactInfo.email;
 
   return (
     <main className="flex-1">
@@ -59,21 +53,8 @@ export default async function ContactPage() {
         </div>
       )}
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <a
-          href={`tel:${phone1.replace(/\s/g, "")}`}
-          className="flex flex-col gap-1 rounded-[var(--radius-m)] border border-border bg-surface p-4 transition-colors hover:bg-surface-2"
-        >
-          <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">Телефон</span>
-          <span className="font-semibold text-ink">{phone1}</span>
-        </a>
-        <a
-          href={`tel:${phone2.replace(/\s/g, "")}`}
-          className="flex flex-col gap-1 rounded-[var(--radius-m)] border border-border bg-surface p-4 transition-colors hover:bg-surface-2"
-        >
-          <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">Телефон 2</span>
-          <span className="font-semibold text-ink">{phone2}</span>
-        </a>
+      <div className={`mb-8 grid gap-4 ${phones.length >= 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <ContactPhoneCards phones={phones} />
         <a
           href={`mailto:${email}`}
           className="flex flex-col gap-1 rounded-[var(--radius-m)] border border-border bg-surface p-4 transition-colors hover:bg-surface-2"

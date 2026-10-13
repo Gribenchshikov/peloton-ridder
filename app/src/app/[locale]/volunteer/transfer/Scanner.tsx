@@ -39,7 +39,7 @@ export function Scanner() {
         controls = await reader.decodeFromVideoDevice(
           undefined,
           videoRef.current,
-          (result, error) => {
+          (result) => {
             if (!result || !scanningRef.current) return;
             const text = result.getText();
             if (!text.startsWith("RIDDER:")) return;

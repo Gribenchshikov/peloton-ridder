@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getInvoice, isApipayConfigured, refundInvoice } from "@/lib/apipay";
 import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { refundRequestAmount, type PayableRegistration } from "@/lib/paymentAmount";
+import { notifyFromRegistration } from "@/lib/userMessages";
 
 export const CLEARED_PAYMENT_FIELDS = {
   kaspiOrderId: null,
@@ -213,6 +214,9 @@ export async function refundPaidRegistrationOnAdminCancel(registrationId: string
   }
 
   await rejectLeftoverPending(registrationId);
+  if (payout.amount > 0) {
+    void notifyFromRegistration(registrationId, "REFUND_SLOT", { amount: payout.amount });
+  }
 }
 
 export async function markInvoiceRefunded(invoiceId: string, refundId?: string | number | null) {

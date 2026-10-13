@@ -45,6 +45,7 @@ model User {
   reviewedApplications     VolunteerApplication[]  @relation("Reviewer")
   volunteerApplications    VolunteerApplication[]  @relation("Applicant")
   waitlistEntries          Waitlist[]
+  messages                 UserMessage[]
 }
 
 model VerificationToken {
@@ -346,6 +347,19 @@ model Notification {
   sentBy   User     @relation(fields: [sentById], references: [id])
 }
 
+model UserMessage {
+  id        String          @id @default(cuid())
+  userId    String
+  type      UserMessageType
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
 model PromoCode {
   id            String         @id @default(cuid())
   code          String         @unique
@@ -475,4 +489,13 @@ enum TokenPurpose {
 enum MemberType {
   TEAM
   VOLUNTEER
+}
+
+enum UserMessageType {
+  REGISTRATION
+  PAYMENT
+  ADMIN_CANCEL
+  REREGISTRATION_ALLOWED
+  REFUND_SLOT
+  REFUND_TRANSFER
 }

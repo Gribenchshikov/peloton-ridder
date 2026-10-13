@@ -1,23 +1,16 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getSiteSetting } from "@/lib/queries";
+import { parseContactInfo, visiblePhones } from "@/lib/contactInfo";
+import { FooterPhoneLinks } from "@/components/ContactPhones";
 
 export async function SiteFooter() {
   const t = await getTranslations("Footer");
   const year = new Date().getFullYear();
 
-  let phone1 = t("phone1");
-  let phone2 = t("phone2");
-  let email = t("email");
-  try {
-    const raw = await getSiteSetting("contact_info");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed.phone1) phone1 = parsed.phone1;
-      if (parsed.phone2) phone2 = parsed.phone2;
-      if (parsed.email) email = parsed.email;
-    }
-  } catch { /* fall back to translations */ }
+  const contactInfo = parseContactInfo(await getSiteSetting("contact_info"));
+  const phones = visiblePhones(contactInfo);
+  const email = contactInfo.email || t("email");
 
   return (
     <footer className="border-t border-border bg-surface">
@@ -27,22 +20,11 @@ export async function SiteFooter() {
           <div>
             <div className="font-display text-sm font-bold text-ink">Peloton Ridder</div>
             <div className="mt-0.5 text-xs text-ink-faint">{t("tagline")}</div>
-            <div className="mt-4 flex flex-col gap-1">
+            <div className="mt-4 flex flex-col gap-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">
                 {t("orgCommittee")}
               </span>
-              <a
-                href={`tel:${phone1.replace(/\s/g, "")}`}
-                className="text-sm text-ink-soft transition-colors hover:text-ink"
-              >
-                {phone1}
-              </a>
-              <a
-                href={`tel:${phone2.replace(/\s/g, "")}`}
-                className="text-sm text-ink-soft transition-colors hover:text-ink"
-              >
-                {phone2}
-              </a>
+              <FooterPhoneLinks phones={phones} />
               <a
                 href={`mailto:${email}`}
                 className="text-sm text-ink-soft transition-colors hover:text-ink"

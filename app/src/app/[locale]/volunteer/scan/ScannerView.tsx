@@ -77,9 +77,12 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     setManualError(null);
 
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("unsupported");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
+        video: { facingMode: { ideal: "environment" } },
+      }).catch(() => navigator.mediaDevices.getUserMedia({ video: true }));
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -196,7 +199,14 @@ export function ScannerView({ events }: { events: EventOption[] }) {
 
       {cameraError && (
         <div className="mt-6 rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 p-4 text-sm text-danger">
-          {cameraError}
+          <p>{cameraError}</p>
+          <button
+            type="button"
+            onClick={() => void startCamera()}
+            className="mt-3 text-sm font-semibold text-ember hover:underline"
+          >
+            Попробовать снова
+          </button>
         </div>
       )}
 
