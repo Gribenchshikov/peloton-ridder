@@ -19,9 +19,15 @@ export async function sendContactAction(
   if (!message || message.length < 10) return { error: "message_too_short" };
 
   const topic = subject || "Контактная форма";
-  const delivered = await sendOrganizerMessageEmail(name, email, phone, topic, message);
-  if (!delivered) return { error: "send_failed" };
-
-  await sendContactReceiptEmail(email, name, topic, message);
-  return { success: true };
+  try {
+    const delivered = await sendOrganizerMessageEmail(name, email, phone, topic, message);
+    if (!delivered) return { error: "send_failed" };
+    void sendContactReceiptEmail(email, name, topic, message).catch((error) => {
+      console.error("[contact] receipt email failed:", error);
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("[contact] sendContactAction failed:", error);
+    return { error: "send_failed" };
+  }
 }

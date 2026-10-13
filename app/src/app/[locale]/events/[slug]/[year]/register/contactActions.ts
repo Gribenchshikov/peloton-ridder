@@ -29,15 +29,21 @@ export async function sendMessageToOrganizerAction(
   if (!user || !event) return { ok: false, error: "not_found" };
 
   const raceName = `${event.race.name} ${event.year}`;
-  const delivered = await sendOrganizerMessageEmail(
-    `${user.firstName} ${user.lastName}`,
-    user.email,
-    user.phone ?? null,
-    raceName,
-    trimmed,
-  );
-  if (!delivered) return { ok: false, error: "send_failed" };
-  await sendContactReceiptEmail(user.email, user.firstName, raceName, trimmed);
-
-  return { ok: true };
+  try {
+    const delivered = await sendOrganizerMessageEmail(
+      `${user.firstName} ${user.lastName}`,
+      user.email,
+      user.phone ?? null,
+      raceName,
+      trimmed,
+    );
+    if (!delivered) return { ok: false, error: "send_failed" };
+    void sendContactReceiptEmail(user.email, user.firstName, raceName, trimmed).catch((error) => {
+      console.error("[contact] receipt email failed:", error);
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error("[contact] sendMessageToOrganizerAction failed:", error);
+    return { ok: false, error: "send_failed" };
+  }
 }

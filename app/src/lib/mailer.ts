@@ -21,6 +21,16 @@ function isConfigured() {
   return authServerConfigured() || smtpHostConfigured();
 }
 
+const SMTP_TIMEOUT_MS = 12_000;
+
+function smtpTimeouts() {
+  return {
+    connectionTimeout: SMTP_TIMEOUT_MS,
+    greetingTimeout: SMTP_TIMEOUT_MS,
+    socketTimeout: SMTP_TIMEOUT_MS,
+  };
+}
+
 function createTransport() {
   // SMTP_HOST — тот же транспорт, которым уже уходят промокоды волонтёрам.
   // AUTH_EMAIL_SERVER часто остаётся плейсхолдером из примера NextAuth.
@@ -33,9 +43,13 @@ function createTransport() {
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
+      ...smtpTimeouts(),
     });
   }
-  return nodemailer.createTransport(process.env.AUTH_EMAIL_SERVER);
+  return nodemailer.createTransport({
+    url: process.env.AUTH_EMAIL_SERVER,
+    ...smtpTimeouts(),
+  });
 }
 
 // Ошибку SMTP (обрыв соединения, таймаут, неверные креды) ловим здесь и не пробрасываем
@@ -78,8 +92,9 @@ async function sendMail(
     return false;
   }
 
+  let transport: ReturnType<typeof createTransport> | undefined;
   try {
-    const transport = createTransport();
+    transport = createTransport();
     await transport.sendMail({
       to,
       from: mailFrom(),
@@ -92,6 +107,8 @@ async function sendMail(
   } catch (error) {
     console.error(`[mailer] Не удалось отправить письмо (кому: ${to}, тема: ${subject}):`, error);
     return false;
+  } finally {
+    transport?.close();
   }
 }
 
@@ -134,20 +151,29 @@ export async function sendOrganizerMessageEmail(
   raceName: string,
   message: string,
 ): Promise<boolean> {
-  const recipients = await resolveOrganizerInboxEmails();
-  if (recipients.length === 0) {
-    console.error("[mailer] Нет email организатора в настройках контактов.");
+  try {
+    const recipients = await resolveOrganizerInboxEmails();
+    if (recipients.length === 0) {
+      console.error("[mailer] Нет email организатора в настройках контактов.");
+      return false;
+    }
+    const subject = `[Ridder] Сообщение от участника — ${raceName}`;
+    const phoneRow = userPhone ? `\nТелефон: ${userPhone}` : "";
+    const safeName = escapeHtml(userName);
+    const safeEmail = escapeHtml(userEmail);
+    const safeTopic = escapeHtml(raceName);
+    const safeMessage = escapeHtml(message);
+    const phoneHtmlRow = userPhone ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Телефон</td><td><a href="tel:${escapeHtml(userPhone)}">${escapeHtml(userPhone)}</a></td></tr>` : "";
+    const text = `Сообщение от участника\n\nИмя: ${userName}\nEmail: ${userEmail}${phoneRow}\nТема: ${raceName}\n\n${message}`;
+    const html = `<h3 style="margin:0 0 12px">Сообщение от участника</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Имя</td><td style="font-weight:600">${safeName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${safeEmail}">${safeEmail}</a></td></tr>${phoneHtmlRow}<tr><td style="padding:4px 16px 4px 0;color:#888">Тема</td><td>${safeTopic}</td></tr></table><p style="margin:16px 0;white-space:pre-wrap">${safeMessage}</p><p style="color:#888;font-size:12px">Peloton Ridder</p>`;
+    const results = await Promise.all(
+      recipients.map((to) => sendMail(to, subject, text, html, { replyTo: userEmail })),
+    );
+    return results.some(Boolean);
+  } catch (error) {
+    console.error("[mailer] sendOrganizerMessageEmail failed:", error);
     return false;
   }
-  const subject = `[Ridder] Сообщение от участника — ${raceName}`;
-  const phoneRow = userPhone ? `\nТелефон: ${userPhone}` : "";
-  const phoneHtmlRow = userPhone ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Телефон</td><td><a href="tel:${userPhone}">${userPhone}</a></td></tr>` : "";
-  const text = `Сообщение от участника\n\nИмя: ${userName}\nEmail: ${userEmail}${phoneRow}\nТема: ${raceName}\n\n${message}`;
-  const html = `<h3 style="margin:0 0 12px">Сообщение от участника</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Имя</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr>${phoneHtmlRow}<tr><td style="padding:4px 16px 4px 0;color:#888">Тема</td><td>${raceName}</td></tr></table><p style="margin:16px 0;white-space:pre-wrap">${message}</p><p style="color:#888;font-size:12px">Peloton Ridder</p>`;
-  const results = await Promise.all(
-    recipients.map((to) => sendMail(to, subject, text, html, { replyTo: userEmail })),
-  );
-  return results.some(Boolean);
 }
 
 export async function sendContactReceiptEmail(
