@@ -61,7 +61,7 @@ ssh ${SSH_OPTS} "${SERVER}" "
   git pull --ff-only
   docker compose build migrate
   docker compose run --rm migrate
-  APP_TAG=${SHA} docker compose up -d --no-build --force-recreate app
+  APP_IMAGE=peloton-ridder:${SHA} docker compose up -d --no-build --force-recreate app
   RUNNING=\$(docker inspect ridder-app-1 --format '{{.Config.Image}}')
   echo \"Running: \${RUNNING}\"
   docker image prune -f --filter 'label!=keep'

@@ -1,6 +1,6 @@
 "use server";
 
-import { sendOrganizerMessageEmail } from "@/lib/mailer";
+import { sendContactReceiptEmail, sendOrganizerMessageEmail } from "@/lib/mailer";
 
 type ContactState = { error?: string; success?: boolean };
 
@@ -18,13 +18,10 @@ export async function sendContactAction(
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "invalid_email" };
   if (!message || message.length < 10) return { error: "message_too_short" };
 
-  await sendOrganizerMessageEmail(
-    name,
-    email,
-    phone,
-    subject || "Контактная форма",
-    message,
-  );
+  const topic = subject || "Контактная форма";
+  const delivered = await sendOrganizerMessageEmail(name, email, phone, topic, message);
+  if (!delivered) return { error: "send_failed" };
 
+  await sendContactReceiptEmail(email, name, topic, message);
   return { success: true };
 }

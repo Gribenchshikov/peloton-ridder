@@ -46,7 +46,7 @@ services:
 
   # ── Next.js application ───────────────────────────────────────────────────────
   app:
-    image: ghcr.io/gribenchshikov/peloton-ridder:latest
+    image: ${APP_IMAGE:-ghcr.io/gribenchshikov/peloton-ridder:latest}
     restart: unless-stopped
     environment:
       NODE_ENV: production

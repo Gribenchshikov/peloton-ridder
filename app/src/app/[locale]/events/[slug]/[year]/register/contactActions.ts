@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { sendOrganizerMessageEmail } from "@/lib/mailer";
+import { sendContactReceiptEmail, sendOrganizerMessageEmail } from "@/lib/mailer";
 
 export async function sendMessageToOrganizerAction(
   eventId: string,
@@ -29,13 +29,15 @@ export async function sendMessageToOrganizerAction(
   if (!user || !event) return { ok: false, error: "not_found" };
 
   const raceName = `${event.race.name} ${event.year}`;
-  await sendOrganizerMessageEmail(
+  const delivered = await sendOrganizerMessageEmail(
     `${user.firstName} ${user.lastName}`,
     user.email,
     user.phone ?? null,
     raceName,
     trimmed,
   );
+  if (!delivered) return { ok: false, error: "send_failed" };
+  await sendContactReceiptEmail(user.email, user.firstName, raceName, trimmed);
 
   return { ok: true };
 }

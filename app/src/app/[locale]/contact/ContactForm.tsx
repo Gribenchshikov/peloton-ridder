@@ -7,6 +7,7 @@ const ERRORS: Record<string, string> = {
   invalid_name: "Введите ваше имя (минимум 2 символа).",
   invalid_email: "Введите корректный email.",
   message_too_short: "Сообщение слишком короткое (минимум 10 символов).",
+  send_failed: "Не удалось отправить письмо. Напишите нам на email или попробуйте позже.",
 };
 
 export function ContactForm() {
@@ -16,7 +17,7 @@ export function ContactForm() {
     return (
       <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-6 text-center">
         <p className="text-lg font-semibold text-spruce">Сообщение отправлено ✓</p>
-        <p className="mt-2 text-sm text-ink-soft">Мы ответим вам в ближайшее время.</p>
+        <p className="mt-2 text-sm text-ink-soft">Копия отправлена на ваш email. Мы ответим в ближайшее время.</p>
       </div>
     );
   }

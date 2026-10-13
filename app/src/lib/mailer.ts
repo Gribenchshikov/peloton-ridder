@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 import QRCode from "qrcode";
+import { parseContactInfo } from "@/lib/contactInfo";
+import { getSiteSetting } from "@/lib/queries";
 
 function isRealSmtpValue(value: string | undefined) {
   return Boolean(value) && !value!.includes("smtp.example.com");
@@ -23,10 +25,11 @@ function createTransport() {
   // SMTP_HOST — тот же транспорт, которым уже уходят промокоды волонтёрам.
   // AUTH_EMAIL_SERVER часто остаётся плейсхолдером из примера NextAuth.
   if (smtpHostConfigured()) {
+    const port = Number(process.env.SMTP_PORT ?? 587);
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT ?? 587),
-      secure: process.env.SMTP_SECURE === "true",
+      port,
+      secure: process.env.SMTP_SECURE === "true" || port === 465,
       auth: process.env.SMTP_USER
         ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
         : undefined,
@@ -40,23 +43,55 @@ function createTransport() {
 // одинаковый ответ независимо от того, найден ли аккаунт — необработанное исключение
 // именно на «письмо отправляется только если аккаунт существует» стало бы отдельным
 // способом отличить один случай от другого. Сбой всё равно виден в логах сервера.
-async function sendMail(to: string, subject: string, text: string, html: string) {
-  if (!isConfigured()) {
-    console.log(`[mailer] SMTP не настроен — письмо не отправлено.\n[mailer] Кому: ${to}\n[mailer] Тема: ${subject}\n[mailer] Текст: ${text}`);
-    return;
-  }
+function mailFrom() {
+  return (
+    process.env.SMTP_FROM
+    || process.env.AUTH_EMAIL_FROM
+    || "Peloton Ridder <noreply@peloton-ridder.kz>"
+  );
+}
 
-  const from = process.env.SMTP_FROM || process.env.AUTH_EMAIL_FROM;
-  if (!from) {
-    console.error("[mailer] AUTH_EMAIL_FROM / SMTP_FROM не задан — письмо не отправлено.");
-    return;
+function addEmail(list: string[], value: string | null | undefined) {
+  const email = value?.trim();
+  if (email && email.includes("@") && !list.includes(email)) list.push(email);
+}
+
+export async function resolveOrganizerInboxEmails() {
+  const emails: string[] = [];
+  const info = parseContactInfo(await getSiteSetting("contact_info"));
+  addEmail(emails, info.email);
+  addEmail(emails, process.env.ORGANIZER_EMAIL);
+  return emails;
+}
+
+async function sendMail(
+  to: string,
+  subject: string,
+  text: string,
+  html: string,
+  options?: { replyTo?: string },
+): Promise<boolean> {
+  if (!isConfigured()) {
+    console.error(
+      `[mailer] SMTP не настроен (SMTP_HOST=${process.env.SMTP_HOST || "—"}, AUTH_EMAIL_SERVER=${authServerConfigured() ? "задан" : "нет"}). Письмо не отправлено.\n[mailer] Кому: ${to}\n[mailer] Тема: ${subject}`,
+    );
+    return false;
   }
 
   try {
     const transport = createTransport();
-    await transport.sendMail({ to, from, subject, text, html });
+    await transport.sendMail({
+      to,
+      from: mailFrom(),
+      subject,
+      text,
+      html,
+      replyTo: options?.replyTo,
+    });
+    return true;
   } catch (error) {
-    console.error(`[mailer] Не удалось отправить письмо (тема: ${subject}):`, error);
+    console.error(`[mailer] Не удалось отправить письмо (кому: ${to}, тема: ${subject}):`, error);
+    return false;
   }
 }
 
@@ -98,14 +133,52 @@ export async function sendOrganizerMessageEmail(
   userPhone: string | null,
   raceName: string,
   message: string,
-) {
-  const to = process.env.ORGANIZER_EMAIL ?? process.env.AUTH_EMAIL_FROM ?? "info@ridder.run";
+): Promise<boolean> {
+  const recipients = await resolveOrganizerInboxEmails();
+  if (recipients.length === 0) {
+    console.error("[mailer] Нет email организатора в настройках контактов.");
+    return false;
+  }
   const subject = `[Ridder] Сообщение от участника — ${raceName}`;
   const phoneRow = userPhone ? `\nТелефон: ${userPhone}` : "";
   const phoneHtmlRow = userPhone ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Телефон</td><td><a href="tel:${userPhone}">${userPhone}</a></td></tr>` : "";
-  const text = `Сообщение от участника\n\nИмя: ${userName}\nEmail: ${userEmail}${phoneRow}\nЗабег: ${raceName}\n\n${message}`;
-  const html = `<h3 style="margin:0 0 12px">Сообщение от участника</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Имя</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr>${phoneHtmlRow}<tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr></table><p style="margin:16px 0;white-space:pre-wrap">${message}</p><p style="color:#888;font-size:12px">Peloton Ridder</p>`;
-  await sendMail(to, subject, text, html);
+  const text = `Сообщение от участника\n\nИмя: ${userName}\nEmail: ${userEmail}${phoneRow}\nТема: ${raceName}\n\n${message}`;
+  const html = `<h3 style="margin:0 0 12px">Сообщение от участника</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Имя</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr>${phoneHtmlRow}<tr><td style="padding:4px 16px 4px 0;color:#888">Тема</td><td>${raceName}</td></tr></table><p style="margin:16px 0;white-space:pre-wrap">${message}</p><p style="color:#888;font-size:12px">Peloton Ridder</p>`;
+  const results = await Promise.all(
+    recipients.map((to) => sendMail(to, subject, text, html, { replyTo: userEmail })),
+  );
+  return results.some(Boolean);
+}
+
+export async function sendContactReceiptEmail(
+  to: string,
+  name: string,
+  topic: string,
+  message: string,
+): Promise<boolean> {
+  const subject = `Ваше сообщение получено — Peloton Ridder`;
+  const text = [
+    `Здравствуйте, ${name}!`,
+    ``,
+    `Мы получили ваше сообщение и ответим на ${to}.`,
+    ``,
+    `Тема: ${topic}`,
+    ``,
+    message,
+    ``,
+    `С уважением,`,
+    `Peloton Ridder`,
+  ].join("\n");
+  const html = `
+<p>Здравствуйте, ${escapeHtml(name)}!</p>
+<p>Мы получили ваше сообщение и ответим на <a href="mailto:${escapeHtml(to)}">${escapeHtml(to)}</a>.</p>
+<table style="border-collapse:collapse;font-size:14px;margin:16px 0">
+  <tr><td style="padding:4px 16px 4px 0;color:#888">Тема</td><td>${escapeHtml(topic)}</td></tr>
+</table>
+<p style="white-space:pre-wrap">${escapeHtml(message)}</p>
+<p style="color:#888;font-size:13px">С уважением,<br>Peloton Ridder</p>
+`.trim();
+  return sendMail(to, subject, text, html);
 }
 
 export async function sendBroadcastEmail(to: string, name: string, subject: string, body: string) {
