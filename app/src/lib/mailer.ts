@@ -1,12 +1,36 @@
 import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 
-// Без настоящего SMTP (AUTH_EMAIL_SERVER не задан или дефолтный плейсхолдер из .env.example)
-// письмо просто печатается в консоль сервера — чтобы можно было тестировать регистрацию
-// в дев-окружении без реального почтового ящика. В проде переменная обязана быть настоящей.
+function isRealSmtpValue(value: string | undefined) {
+  return Boolean(value) && !value!.includes("smtp.example.com");
+}
+
+function authServerConfigured() {
+  return isRealSmtpValue(process.env.AUTH_EMAIL_SERVER);
+}
+
+function smtpHostConfigured() {
+  return isRealSmtpValue(process.env.SMTP_HOST);
+}
+
+// AUTH_EMAIL_SERVER — URL для NextAuth; SMTP_HOST — тот же SMTP, которым шлются
+// промокоды волонтёрам. На тесте часто заполнен только второй блок.
 function isConfigured() {
-  const server = process.env.AUTH_EMAIL_SERVER;
-  return Boolean(server) && !server!.includes("smtp.example.com");
+  return authServerConfigured() || smtpHostConfigured();
+}
+
+function createTransport() {
+  if (authServerConfigured()) {
+    return nodemailer.createTransport(process.env.AUTH_EMAIL_SERVER);
+  }
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: process.env.SMTP_USER
+      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      : undefined,
+  });
 }
 
 // Ошибку SMTP (обрыв соединения, таймаут, неверные креды) ловим здесь и не пробрасываем
@@ -16,13 +40,19 @@ function isConfigured() {
 // способом отличить один случай от другого. Сбой всё равно виден в логах сервера.
 async function sendMail(to: string, subject: string, text: string, html: string) {
   if (!isConfigured()) {
-    console.log(`[mailer] AUTH_EMAIL_SERVER не настроен — письмо не отправлено.\n[mailer] Кому: ${to}\n[mailer] Тема: ${subject}\n[mailer] Текст: ${text}`);
+    console.log(`[mailer] SMTP не настроен — письмо не отправлено.\n[mailer] Кому: ${to}\n[mailer] Тема: ${subject}\n[mailer] Текст: ${text}`);
+    return;
+  }
+
+  const from = process.env.AUTH_EMAIL_FROM || process.env.SMTP_FROM;
+  if (!from) {
+    console.error("[mailer] AUTH_EMAIL_FROM / SMTP_FROM не задан — письмо не отправлено.");
     return;
   }
 
   try {
-    const transport = nodemailer.createTransport(process.env.AUTH_EMAIL_SERVER);
-    await transport.sendMail({ to, from: process.env.AUTH_EMAIL_FROM, subject, text, html });
+    const transport = createTransport();
+    await transport.sendMail({ to, from, subject, text, html });
   } catch (error) {
     console.error(`[mailer] Не удалось отправить письмо (тема: ${subject}):`, error);
   }

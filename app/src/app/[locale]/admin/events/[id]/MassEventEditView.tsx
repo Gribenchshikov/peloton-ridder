@@ -24,7 +24,9 @@ export function MassEventEditView({
   return (
     <EventSaveShell>
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-6 py-16">
-      <AdminFormHeader title={`${event.race.name} ${event.year}`} />
+      <AdminFormHeader title={`${event.race.name} ${event.year}`}>
+        <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
+      </AdminFormHeader>
 
       <MassEventForm
         mode="edit"
@@ -76,10 +78,6 @@ export function MassEventEditView({
           initialUrl={event.howToGetUrl ?? null}
         />
       </section>
-
-      <div className="border-t border-border pt-6">
-        <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
-      </div>
 
       <div className="border-t border-danger/20 pt-6">
         <div className="mb-3 text-xs font-bold uppercase tracking-wide text-danger/60">Опасная зона</div>

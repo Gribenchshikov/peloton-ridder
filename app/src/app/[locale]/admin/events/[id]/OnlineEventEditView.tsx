@@ -28,9 +28,9 @@ export function OnlineEventEditView({
   return (
     <EventSaveShell>
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-6 py-16">
-      <AdminFormHeader
-        title={`${event.race.name} ${event.year}`}
-      />
+      <AdminFormHeader title={`${event.race.name} ${event.year}`}>
+        <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
+      </AdminFormHeader>
 
       <OnlineEventForm
         mode="edit"
@@ -66,10 +66,6 @@ export function OnlineEventEditView({
           initialLinks={(event.photoLinks as PhotoLink[] | null) ?? []}
         />
       </section>
-
-      <div className="border-t border-border pt-6">
-        <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
-      </div>
 
       <div className="border-t border-border pt-6">
         <NotifySection eventId={event.id} lastNotification={lastNotification} />

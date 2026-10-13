@@ -1,7 +1,18 @@
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-export function AdminFormHeader({ title, backHref, backLabel }: { title: string; backHref?: string; backLabel?: string }) {
+export function AdminFormHeader({
+  title,
+  backHref,
+  backLabel,
+  children,
+}: {
+  title: string;
+  backHref?: string;
+  backLabel?: string;
+  children?: ReactNode;
+}) {
   const t = useTranslations("Admin");
 
   return (
@@ -12,6 +23,7 @@ export function AdminFormHeader({ title, backHref, backLabel }: { title: string;
       <div className="mt-4">
         <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
         <h1 className="mt-2 font-display text-2xl font-bold text-ink">{title}</h1>
+        {children}
       </div>
     </div>
   );

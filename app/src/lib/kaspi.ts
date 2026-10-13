@@ -83,7 +83,7 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
 
   if (txResult.justPaid) {
     sendConfirmationEmail(txResult.reg.id).catch((e) => console.error("[kaspi] email error:", e));
-    void notifyFromRegistration(txResult.reg.id, "PAYMENT");
+    await notifyFromRegistration(txResult.reg.id, "PAYMENT");
   }
 
   return txResult.reg;

@@ -49,12 +49,12 @@ export async function notifyFromRegistration(
     revalidatePath("/", "layout");
     revalidatePath("/[locale]/account", "page");
     revalidatePath("/[locale]/account/messages", "page");
-    void sendUserMessageEmail(
+    await sendUserMessageEmail(
       registration.user.email,
       registration.user.firstName,
       type,
       payload,
-    ).catch((error) => console.error("[userMessage] email failed:", error));
+    );
   } catch (error) {
     console.error("[userMessage] notify failed:", error);
   }

@@ -102,9 +102,9 @@ export async function cancelRegistrationAction(
   });
 
   if ("error" in outcome) return outcome;
-  void notifyFromRegistration(registrationId, "ADMIN_CANCEL");
+  await notifyFromRegistration(registrationId, "ADMIN_CANCEL");
   if (parsed.data.allowReregistration) {
-    void notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
+    await notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
   }
   if (outcome.wasPaid) {
     try {
@@ -288,7 +288,7 @@ export async function toggleReregistrationPermissionAction(
     data: { allowReregistration },
   });
   if (allowReregistration && !registration.allowReregistration) {
-    void notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
+    await notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
   }
 
   revalidateRegistrationPages();
@@ -360,7 +360,7 @@ export async function confirmRefundAction(
   }
 
   if (payout.amount > 0) {
-    void notifyFromRegistration(
+    await notifyFromRegistration(
       refund.registration.id,
       refund.type === "TRANSFER" ? "REFUND_TRANSFER" : "REFUND_SLOT",
       { amount: payout.amount },

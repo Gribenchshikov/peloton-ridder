@@ -128,7 +128,9 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
     <EventSaveShell>
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-6 py-16">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <AdminFormHeader title={t("editEventTitle", { name: `${event.race.name} ${event.year}` })} />
+        <AdminFormHeader title={t("editEventTitle", { name: `${event.race.name} ${event.year}` })}>
+          <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
+        </AdminFormHeader>
         <Link
           href={`/admin/events/${event.id}/registrations`}
           className="shrink-0 rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
@@ -238,10 +240,6 @@ export function EventEditView({ event, allPartners, allRaces, wizard, locale, la
         initialItraResultsUrl={event.itraResultsUrl ?? null}
         distances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
       />
-
-      <div className="border-t border-border pt-6">
-        <PublishToggle eventId={event.id} initialIsPublished={event.isPublished} />
-      </div>
 
       <div className="border-t border-border pt-6">
         <NotifySection eventId={event.id} lastNotification={lastNotification} />

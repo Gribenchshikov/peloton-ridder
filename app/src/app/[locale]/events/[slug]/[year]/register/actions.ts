@@ -274,7 +274,7 @@ export async function createRegistrationAction(
 
   if (outcome.kind === "error") return { error: outcome.error };
   if (outcome.kind === "created") {
-    void notifyFromRegistration(outcome.registrationId, "REGISTRATION");
+    await notifyFromRegistration(outcome.registrationId, "REGISTRATION");
   }
   return redirect({ href: `/pay/${outcome.registrationId}`, locale });
 }

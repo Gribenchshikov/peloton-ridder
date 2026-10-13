@@ -215,7 +215,7 @@ export async function refundPaidRegistrationOnAdminCancel(registrationId: string
 
   await rejectLeftoverPending(registrationId);
   if (payout.amount > 0) {
-    void notifyFromRegistration(registrationId, "REFUND_SLOT", { amount: payout.amount });
+    await notifyFromRegistration(registrationId, "REFUND_SLOT", { amount: payout.amount });
   }
 }
 
