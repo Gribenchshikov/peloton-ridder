@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useActionState } from "react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { requestRefundAction, type RequestRefundState } from "./actions";
 import { visibleAccountRefunds, type RegistrationStatusValue } from "@/lib/registrationStatus";
+import { formatKzt } from "@/lib/currency";
 
 export type RefundRequestView = {
   type: "SLOT" | "TRANSFER";
@@ -16,6 +17,9 @@ export type RefundRequestView = {
 type Props = {
   registrationId: string;
   hasTransfer: boolean;
+  hasSlot?: boolean;
+  slotAmount?: number;
+  transferAmount?: number;
   registrationStatus: RegistrationStatusValue;
   requests: RefundRequestView[];
   slotLocked?: boolean;
@@ -28,6 +32,9 @@ const ERROR_KEYS = new Set([
   "deadline_passed",
   "already_requested",
   "no_transfer",
+  "no_slot",
+  "slot_locked",
+  "nothing_selected",
   "invalid",
   "unauthorized",
   "not_found",
@@ -49,37 +56,45 @@ function isLocked(status: RefundRequestView["status"] | undefined) {
 export function RefundRequestButton({
   registrationId,
   hasTransfer,
+  hasSlot = true,
+  slotAmount = 0,
+  transferAmount = 0,
   registrationStatus,
   requests,
   slotLocked = false,
   canRequest = true,
 }: Props) {
   const t = useTranslations("Account");
+  const format = useFormatter();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [state, formAction, pending] = useActionState(requestRefundAction, initialState);
 
   const latest = latestByType(
-    visibleAccountRefunds(requests, { registrationStatus, hasTransfer }),
+    visibleAccountRefunds(requests, { registrationStatus, hasTransfer, hasSlot }),
   );
-  if (state.success && state.type) {
-    latest[state.type] = { type: state.type, status: "PENDING" };
+  if (state.success) {
+    for (const type of state.types ?? (state.type ? [state.type] : [])) {
+      latest[type] = { type, status: "PENDING" };
+    }
   }
 
   const slotStatus = latest.SLOT?.status;
   const transferStatus = latest.TRANSFER?.status;
   const slotPending = isLocked(slotStatus);
   const transferPending = isLocked(transferStatus);
-  const slotAvailable = canRequest && !slotLocked && !slotPending;
+  const slotAvailable = canRequest && hasSlot && !slotLocked && !slotPending;
   const transferAvailable = canRequest && hasTransfer && !transferPending;
 
-  const [type, setType] = useState<"SLOT" | "TRANSFER">(slotAvailable ? "SLOT" : "TRANSFER");
-  const canSubmit = (type === "SLOT" && slotAvailable) || (type === "TRANSFER" && transferAvailable);
+  const [slotChecked, setSlotChecked] = useState(slotAvailable);
+  const [transferChecked, setTransferChecked] = useState(!slotAvailable && transferAvailable);
+  const canSubmit =
+    (slotChecked && slotAvailable) || (transferChecked && transferAvailable);
 
   useEffect(() => {
-    if (slotAvailable) setType("SLOT");
-    else if (transferAvailable) setType("TRANSFER");
+    setSlotChecked(slotAvailable);
+    setTransferChecked(!slotAvailable && transferAvailable);
   }, [slotAvailable, transferAvailable]);
 
   useEffect(() => {
@@ -109,7 +124,7 @@ export function RefundRequestButton({
         </div>
       )}
 
-      {canRequest && (
+      {canRequest && (slotAvailable || transferAvailable) && (
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -128,35 +143,48 @@ export function RefundRequestButton({
 
             <form action={formAction} className="flex flex-col gap-4">
               <input type="hidden" name="registrationId" value={registrationId} />
-              <input type="hidden" name="refundType" value={type} />
 
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">{t("refundTypeLabel")}</span>
-                {!slotLocked && (
-                  <label className={`flex cursor-pointer items-center gap-2.5 text-sm ${slotPending ? "opacity-40" : "text-ink"}`}>
+                {hasSlot && !slotLocked && (
+                  <label className={`flex cursor-pointer items-start gap-2.5 ${slotPending ? "opacity-40" : "text-ink"}`}>
                     <input
-                      type="radio"
-                      checked={type === "SLOT"}
-                      onChange={() => setType("SLOT")}
-                      disabled={slotPending}
-                      className="accent-ember"
+                      type="checkbox"
+                      name="refundType"
+                      value="SLOT"
+                      checked={slotChecked && slotAvailable}
+                      onChange={(e) => setSlotChecked(e.target.checked)}
+                      disabled={!slotAvailable}
+                      className="mt-1 accent-ember"
                     />
-                    {t("refundOptionSlot")}
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-sm font-medium">{t("refundOptionSlot")}</span>
+                      <span className="text-xs tabular-nums text-ink-soft">
+                        {t("refundOptionSlotPrice", { amount: formatKzt(format, slotAmount) })}
+                      </span>
+                    </span>
                   </label>
                 )}
-                {slotLocked && (
+                {slotLocked && hasSlot && (
                   <p className="text-xs text-ink-faint">{t("refundSlotLocked")}</p>
                 )}
                 {hasTransfer && (
-                  <label className={`flex cursor-pointer items-center gap-2.5 text-sm ${transferPending ? "opacity-40" : "text-ink"}`}>
+                  <label className={`flex cursor-pointer items-start gap-2.5 ${transferPending ? "opacity-40" : "text-ink"}`}>
                     <input
-                      type="radio"
-                      checked={type === "TRANSFER"}
-                      onChange={() => setType("TRANSFER")}
-                      disabled={transferPending}
-                      className="accent-ember"
+                      type="checkbox"
+                      name="refundType"
+                      value="TRANSFER"
+                      checked={transferChecked && transferAvailable}
+                      onChange={(e) => setTransferChecked(e.target.checked)}
+                      disabled={!transferAvailable}
+                      className="mt-1 accent-ember"
                     />
-                    {t("refundOptionTransfer")}
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="text-sm font-medium">{t("refundOptionTransfer")}</span>
+                      <span className="text-xs tabular-nums text-ink-soft">
+                        {t("refundOptionTransferPrice", { amount: formatKzt(format, transferAmount) })}
+                      </span>
+                    </span>
                   </label>
                 )}
               </div>

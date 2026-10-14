@@ -303,9 +303,11 @@ export function ScannerView({ events }: { events: EventOption[] }) {
           <div className="rounded-[var(--radius-m)] border border-border bg-surface">
             {/* Bib header */}
             <div className="flex items-center gap-4 border-b border-border px-5 py-4">
-              <span className="font-display text-5xl font-extrabold text-ember">
-                #{scanResult.bibNumber ?? "—"}
-              </span>
+              {scanResult.bibNumber != null && (
+                <span className="font-display text-5xl font-extrabold text-ember">
+                  #{scanResult.bibNumber}
+                </span>
+              )}
               <div>
                 <p className="font-display text-lg font-bold text-ink">
                   {scanResult.participant.firstName} {scanResult.participant.lastName}

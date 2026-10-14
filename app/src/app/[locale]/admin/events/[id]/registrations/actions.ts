@@ -90,7 +90,6 @@ export async function cancelRegistrationAction(
         bibNumber: null,
         adminComment: parsed.data.adminComment,
         allowReregistration: parsed.data.allowReregistration,
-        ...(registration.status === "PAID" ? CLEARED_PAYMENT_FIELDS : {}),
       },
     });
     await reassignPaidBibNumbers(tx, eventId);
@@ -314,7 +313,14 @@ export async function confirmRefundAction(
       status: true,
       type: true,
       registration: {
-        select: { id: true, eventId: true, distanceId: true, status: true, includesTransfer: true },
+        select: {
+          id: true,
+          eventId: true,
+          distanceId: true,
+          status: true,
+          includesTransfer: true,
+          isTransferOnly: true,
+        },
       },
     },
   });
@@ -337,21 +343,26 @@ export async function confirmRefundAction(
       data: { status: "CONFIRMED", resolvedAt: new Date() },
     });
     if (refund.type === "SLOT") {
-      await applySlotRefundToRegistration(tx, refund.registration.id);
+      const keepTransfer = refund.registration.includesTransfer && !refund.registration.isTransferOnly;
+      await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer });
       await reassignPaidBibNumbers(tx, eventId);
-      await tx.refundRequest.updateMany({
-        where: { registrationId: refund.registration.id, status: "PENDING", id: { not: refundRequestId } },
-        data: {
-          status: "REJECTED",
-          resolvedAt: new Date(),
-          adminNote: "Слот отменён: возврат уже выполнен",
-        },
-      });
     } else {
       await tx.registration.update({
         where: { id: refund.registration.id },
         data: { includesTransfer: false, transferUsedAt: null },
       });
+      const remaining = await tx.registration.findUnique({
+        where: { id: refund.registration.id },
+        select: { isTransferOnly: true, distanceId: true, status: true },
+      });
+      if (
+        remaining &&
+        remaining.status !== "CANCELLED" &&
+        (remaining.isTransferOnly || !remaining.distanceId)
+      ) {
+        await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer: false });
+        await reassignPaidBibNumbers(tx, eventId);
+      }
     }
   });
 
@@ -359,12 +370,18 @@ export async function confirmRefundAction(
     void notifyWaitlistForDistance(refund.registration.distanceId);
   }
 
-  if (payout.amount > 0) {
+  if (payout.amount > 0 && (payout.payoutStatus === "pending" || payout.payoutStatus === "completed")) {
     await notifyFromRegistration(
       refund.registration.id,
       refund.type === "TRANSFER" ? "REFUND_TRANSFER" : "REFUND_SLOT",
       { amount: payout.amount },
     );
+  } else if (payout.payoutStatus === "skipped" || payout.payoutStatus === "failed") {
+    console.error("[apipay] refund confirmed locally but payout did not reach ApiPay", {
+      refundRequestId,
+      type: refund.type,
+      payout,
+    });
   }
 
   revalidateRegistrationPages();

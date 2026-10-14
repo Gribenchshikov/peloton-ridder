@@ -70,6 +70,9 @@ export function RegistrationHistory({ registrations }: { registrations: Registra
 
 function refundControls(reg: RegistrationRow) {
   const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
+  const hasSlot = !reg.isTransferOnly && !!reg.distance;
+  const slotAmount = Math.max(0, (reg.distance?.price ?? 0) - (reg.discountAmount ?? 0));
+  const transferAmount = Math.max(0, reg.event.transferPrice ?? 0);
   const canRequest =
     reg.status === "PAID" &&
     new Date() <= new Date(reg.event.cancellationDeadline) &&
@@ -78,12 +81,16 @@ function refundControls(reg: RegistrationRow) {
   const currentRequests = visibleAccountRefunds(reg.refundRequests, {
     registrationStatus: reg.status,
     hasTransfer,
+    hasSlot,
   });
   if (!canRequest && currentRequests.length === 0) return null;
   return (
     <RefundRequestButton
       registrationId={reg.id}
       hasTransfer={hasTransfer}
+      hasSlot={hasSlot}
+      slotAmount={slotAmount}
+      transferAmount={transferAmount}
       registrationStatus={reg.status}
       requests={reg.refundRequests.map((r) => ({
         type: r.type,

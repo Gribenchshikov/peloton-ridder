@@ -194,14 +194,16 @@ export function getUserProfile(userId: string) {
           cancelReason: true,
           includesTransfer: true,
           isTransferOnly: true,
+          discountAmount: true,
           event: {
             select: {
               year: true,
               cancellationDeadline: true,
+              transferPrice: true,
               race: { select: { name: true, slug: true } },
             },
           },
-          distance: { select: { name: true, km: true } },
+          distance: { select: { name: true, km: true, price: true } },
           result: { select: { id: true, place: true, time: true } },
           refundRequests: {
             select: { type: true, status: true, requestedAt: true, resolvedAt: true },

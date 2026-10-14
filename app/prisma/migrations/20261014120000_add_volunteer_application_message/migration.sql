@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "UserMessageType" ADD VALUE 'VOLUNTEER_APPLICATION';

@@ -39,10 +39,13 @@ export function displayRegistrationStatus(
 /** Одобренный возврат скрываем, если слот/трансфер снова оплачены. */
 export function isCurrentRefundStatus(
   request: RefundLike,
-  opts: { registrationStatus: RegistrationStatusValue; hasTransfer: boolean },
+  opts: { registrationStatus: RegistrationStatusValue; hasTransfer: boolean; hasSlot?: boolean },
 ) {
   if (request.status !== "CONFIRMED") return true;
-  if (request.type === "SLOT") return opts.registrationStatus === "CANCELLED";
+  if (request.type === "SLOT") {
+    if (opts.registrationStatus === "CANCELLED") return true;
+    return opts.registrationStatus === "PAID" && opts.hasSlot === false;
+  }
   if (request.type === "TRANSFER") return !opts.hasTransfer;
   return true;
 }
@@ -56,11 +59,12 @@ function refundTime(value: Date | string | null | undefined) {
 /** После повторной оплаты не показываем заявки прошлого цикла, в том числе автоотклонения. */
 export function visibleAccountRefunds<T extends RefundLike>(
   requests: T[] | undefined,
-  opts: { registrationStatus: RegistrationStatusValue; hasTransfer: boolean },
+  opts: { registrationStatus: RegistrationStatusValue; hasTransfer: boolean; hasSlot?: boolean },
 ): T[] {
   const all = requests ?? [];
   const current = all.filter((request) => isCurrentRefundStatus(request, opts));
   if (opts.registrationStatus === "CANCELLED") return current;
+  if (opts.hasSlot === false) return current;
 
   const lastSlotRefund = all
     .filter((request) => request.type === "SLOT" && request.status === "CONFIRMED")

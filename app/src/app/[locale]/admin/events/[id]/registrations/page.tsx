@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/session";
 import { getEventWithRegistrations } from "@/lib/queries";
-import { repairStalePaidSlotRefunds } from "@/lib/refundPayout";
+import { repairStalePaidSlotRefunds, retrySkippedRefundPayouts } from "@/lib/refundPayout";
 import { RegistrationsView } from "./RegistrationsView";
 
 export default async function RegistrationsPage({
@@ -13,6 +13,7 @@ export default async function RegistrationsPage({
   await requireAdminPage(locale, `/admin/events/${id}/registrations`);
 
   await repairStalePaidSlotRefunds(id);
+  await retrySkippedRefundPayouts();
   const event = await getEventWithRegistrations(id);
   if (!event) notFound();
 

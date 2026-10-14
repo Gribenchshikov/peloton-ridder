@@ -7,3 +7,15 @@ nginx/ssl/
 # Server/database backups
 *.dump
 *.tar.gz
+
+
+@"
+
+# Production environment files
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+!.env.*.example
+"@ | Add-Content .gitignore

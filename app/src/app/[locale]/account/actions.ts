@@ -9,6 +9,7 @@ import { safeRelativePath } from "@/lib/safeRedirect";
 import { CancelReason, RefundType } from "@/generated/prisma/client";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
 import { sendRefundRequestEmail } from "@/lib/mailer";
+import { findPaidInvoiceForOrder, isApipayConfigured } from "@/lib/apipay";
 
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -125,10 +126,21 @@ export async function userCancelRegistrationAction(
   return { success: true };
 }
 
-export type RequestRefundState = { error?: string; success?: boolean; type?: RefundType };
+export type RequestRefundState = { error?: string; success?: boolean; type?: RefundType; types?: RefundType[] };
 
 const VALID_REFUND_TYPES: RefundType[] = ["SLOT", "TRANSFER"];
 const BLOCKING_REFUND_STATUSES = ["PENDING"] as const;
+
+function parseRefundTypes(formData: FormData): RefundType[] {
+  const raw = formData.getAll("refundType");
+  const unique = new Set<RefundType>();
+  for (const value of raw) {
+    if (typeof value === "string" && VALID_REFUND_TYPES.includes(value as RefundType)) {
+      unique.add(value as RefundType);
+    }
+  }
+  return [...unique];
+}
 
 export async function requestRefundAction(
   _prevState: RequestRefundState,
@@ -138,11 +150,11 @@ export async function requestRefundAction(
   if (!userId) return { error: "unauthorized" };
 
   const registrationId = formData.get("registrationId");
-  const type = formData.get("refundType");
+  const types = parseRefundTypes(formData);
   const reason = formData.get("reason");
 
   if (typeof registrationId !== "string") return { error: "invalid" };
-  if (typeof type !== "string" || !VALID_REFUND_TYPES.includes(type as RefundType)) return { error: "invalid" };
+  if (types.length === 0) return { error: "nothing_selected" };
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
@@ -151,6 +163,8 @@ export async function requestRefundAction(
       status: true,
       includesTransfer: true,
       isTransferOnly: true,
+      kitPickedUpAt: true,
+      kaspiOrderId: true,
       distance: { select: { name: true } },
       event: {
         select: {
@@ -169,15 +183,34 @@ export async function requestRefundAction(
   if (!reg || reg.userId !== userId) return { error: "not_found" };
   if (reg.status !== "PAID") return { error: "not_paid" };
   if (new Date() > reg.event.cancellationDeadline) return { error: "deadline_passed" };
-  if (type === "TRANSFER" && !reg.includesTransfer && !reg.isTransferOnly) return { error: "no_transfer" };
-  if (reg.refundRequests.some((r) => r.type === type)) return { error: "already_requested" };
+  if (types.includes("TRANSFER") && !reg.includesTransfer && !reg.isTransferOnly) return { error: "no_transfer" };
+  if (types.includes("SLOT") && (reg.isTransferOnly || !reg.distance)) return { error: "no_slot" };
+  if (types.includes("SLOT") && reg.kitPickedUpAt) return { error: "slot_locked" };
 
-  await prisma.refundRequest.create({
-    data: {
+  const pendingTypes = new Set(reg.refundRequests.map((r) => r.type));
+  const toCreate = types.filter((type) => !pendingTypes.has(type));
+  if (toCreate.length === 0) return { error: "already_requested" };
+
+  const reasonText = typeof reason === "string" && reason.trim() ? reason.trim() : null;
+  if (isApipayConfigured()) {
+    try {
+      const invoice = await findPaidInvoiceForOrder(registrationId, reg.kaspiOrderId);
+      if (invoice && reg.kaspiOrderId !== String(invoice.id)) {
+        await prisma.registration.update({
+          where: { id: registrationId },
+          data: { kaspiOrderId: String(invoice.id) },
+        });
+      }
+    } catch (error) {
+      console.error("[apipay] restore invoice before refund request failed:", error);
+    }
+  }
+  await prisma.refundRequest.createMany({
+    data: toCreate.map((type) => ({
       registrationId,
-      type: type as RefundType,
-      reason: typeof reason === "string" && reason.trim() ? reason.trim() : null,
-    },
+      type,
+      reason: reasonText,
+    })),
   });
 
   const [adminEmails, user] = await Promise.all([
@@ -186,21 +219,23 @@ export async function requestRefundAction(
   ]);
 
   if (user && adminEmails.length > 0) {
-    void sendRefundRequestEmail(
-      adminEmails,
-      `${user.firstName} ${user.lastName}`,
-      user.email,
-      `${reg.event.race.name} ${reg.event.year}`,
-      reg.distance?.name ?? "Трансфер",
-      type as RefundType,
-      typeof reason === "string" && reason.trim() ? reason.trim() : null,
-      registrationId,
-    );
+    for (const type of toCreate) {
+      void sendRefundRequestEmail(
+        adminEmails,
+        `${user.firstName} ${user.lastName}`,
+        user.email,
+        `${reg.event.race.name} ${reg.event.year}`,
+        reg.distance?.name ?? "Трансфер",
+        type,
+        reasonText,
+        registrationId,
+      );
+    }
   }
 
   revalidatePath("/[locale]/account", "page");
   revalidatePath("/[locale]/account/history", "page");
   revalidatePath("/[locale]/admin/refunds", "page");
   revalidatePath("/", "layout");
-  return { success: true, type: type as RefundType };
+  return { success: true, type: toCreate[0], types: toCreate };
 }

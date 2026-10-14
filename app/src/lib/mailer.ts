@@ -449,6 +449,10 @@ const USER_MESSAGE_COPY: Record<
     title: "Возврат за трансфер",
     body: (race, amount) => `Произведён возврат за трансфер на ${race} на сумму ${amount}.`,
   },
+  VOLUNTEER_APPLICATION: {
+    title: "Заявка волонтёра",
+    body: (race) => `Поступила новая заявка волонтёра на ${race}.`,
+  },
 };
 
 function escapeHtml(value: string) {

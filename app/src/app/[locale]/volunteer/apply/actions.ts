@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { sendVolunteerApplicationAdminEmail } from "@/lib/mailer";
+import { notifyAdminsVolunteerApplication } from "@/lib/userMessages";
 import { redirect } from "@/i18n/navigation";
 import { getLocale } from "next-intl/server";
 
@@ -55,15 +56,18 @@ export async function applyVolunteerAction(
     data: { userId, eventId, motivation, experience, stravaUrl, availability: "" },
   });
 
+  const raceName = `${event.race.name} ${event.year}`;
+  const applicantName = `${user.firstName} ${user.lastName}`;
   const adminEmails = (
     await prisma.user.findMany({ where: { isAdmin: true }, select: { email: true } })
   ).map((u) => u.email);
 
+  await notifyAdminsVolunteerApplication(applicantName, raceName);
   await sendVolunteerApplicationAdminEmail(
     adminEmails,
-    `${user.firstName} ${user.lastName}`,
+    applicantName,
     user.email,
-    `${event.race.name} ${event.year}`,
+    raceName,
   );
 
   const locale = await getLocale();

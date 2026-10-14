@@ -64,7 +64,11 @@ export function MessagesInbox({ messages }: { messages: MessageRow[] }) {
               )}
             </div>
             <p className="mt-1 text-sm leading-6 text-ink-soft">
-              {t(`message_${message.type}_body`, { race: message.payload.race, amount })}
+              {t(`message_${message.type}_body`, {
+                race: message.payload.race,
+                amount,
+                applicant: message.payload.applicant ?? "",
+              })}
             </p>
             <p className="mt-1 text-xs text-ink-faint">
               {format.dateTime(new Date(message.createdAt), {

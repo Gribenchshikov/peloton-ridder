@@ -6,15 +6,17 @@ import { prisma } from "@/lib/prisma";
 export type UserMessagePayload = {
   race: string;
   amount?: number;
+  applicant?: string;
 };
 
 export function parseUserMessagePayload(value: unknown): UserMessagePayload {
   if (!value || typeof value !== "object") return { race: "" };
-  const row = value as { race?: unknown; amount?: unknown };
+  const row = value as { race?: unknown; amount?: unknown; applicant?: unknown };
   const amount = typeof row.amount === "number" ? row.amount : Number(row.amount);
   return {
     race: typeof row.race === "string" ? row.race : "",
     amount: Number.isFinite(amount) ? amount : undefined,
+    applicant: typeof row.applicant === "string" ? row.applicant : undefined,
   };
 }
 
@@ -57,6 +59,29 @@ export async function notifyFromRegistration(
     );
   } catch (error) {
     console.error("[userMessage] notify failed:", error);
+  }
+}
+
+export async function notifyAdminsVolunteerApplication(applicantName: string, race: string) {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { isAdmin: true },
+      select: { id: true },
+    });
+    if (admins.length === 0) return;
+
+    await prisma.userMessage.createMany({
+      data: admins.map((admin) => ({
+        userId: admin.id,
+        type: "VOLUNTEER_APPLICATION",
+        payload: { race, applicant: applicantName },
+      })),
+    });
+    revalidatePath("/", "layout");
+    revalidatePath("/[locale]/account", "page");
+    revalidatePath("/[locale]/account/messages", "page");
+  } catch (error) {
+    console.error("[userMessage] volunteer application notify failed:", error);
   }
 }
 

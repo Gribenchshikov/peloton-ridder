@@ -18,6 +18,9 @@ export type ApipayInvoice = {
   is_sandbox?: boolean;
   is_qr_token?: boolean;
   external_order_id?: string | null;
+  is_fully_refunded?: boolean;
+  available_for_refund?: number | string;
+  total_refunded?: string;
   error?: string;
   error_code?: string;
   error_message?: string;
@@ -80,12 +83,75 @@ export type ApipayRefund = {
   error_message?: string;
 };
 
+type RefundCreateResponse = {
+  id?: number;
+  status?: string;
+  refund?: ApipayRefund | string | null;
+  invoice?: { id?: number };
+  error_code?: string;
+  error_message?: string;
+};
+
+function asRefund(data: RefundCreateResponse): ApipayRefund {
+  if (data.refund && typeof data.refund === "object" && data.refund.id != null) {
+    return data.refund;
+  }
+  if (data.id != null) {
+    return { id: data.id, status: data.status ?? "pending" };
+  }
+  return { id: data.invoice?.id ?? 0, status: data.status ?? "pending" };
+}
+
 /** Полный возврат — без amount; частичный — с суммой в тенге. */
-export function refundInvoice(invoiceId: string | number, amount?: number) {
-  return apipay<ApipayRefund>(`/invoices/${invoiceId}/refund`, {
+export async function refundInvoice(invoiceId: string | number, amount?: number) {
+  const data = await apipay<RefundCreateResponse>(`/invoices/${invoiceId}/refund`, {
     method: "POST",
     body: JSON.stringify(amount != null ? { amount } : {}),
   });
+  return asRefund(data);
+}
+
+export function invoiceAvailableForRefund(invoice: ApipayInvoice): number {
+  if (invoice.is_fully_refunded) return 0;
+  const raw = invoice.available_for_refund;
+  if (typeof raw === "number" && Number.isFinite(raw)) return Math.max(0, Math.floor(raw));
+  if (typeof raw === "string") {
+    const parsed = Number.parseFloat(raw);
+    if (Number.isFinite(parsed)) return Math.max(0, Math.floor(parsed));
+  }
+  return Number.POSITIVE_INFINITY;
+}
+
+export async function findPaidInvoiceForOrder(
+  externalOrderId: string,
+  knownId?: string | null,
+): Promise<ApipayInvoice | null> {
+  if (knownId) {
+    try {
+      const invoice = await getInvoice(knownId);
+      if (invoice.status === "paid" || invoice.status === "partially_refunded") return invoice;
+    } catch (error) {
+      console.error("[apipay] get invoice failed:", error);
+    }
+  }
+
+  const params = new URLSearchParams();
+  params.set("search", externalOrderId);
+  params.set("per_page", "50");
+  try {
+    const list = await apipay<{ data?: ApipayInvoice[] }>(`/invoices?${params.toString()}`);
+    const rows = list.data ?? [];
+    const paid = rows.filter(
+      (row) =>
+        (row.external_order_id === externalOrderId || !row.external_order_id) &&
+        (row.status === "paid" || row.status === "partially_refunded") &&
+        !row.is_fully_refunded,
+    );
+    return paid.find((row) => row.external_order_id === externalOrderId) ?? paid[0] ?? null;
+  } catch (error) {
+    console.error("[apipay] list invoices failed:", error);
+    return null;
+  }
 }
 
 function invoiceToView(invoice: ApipayInvoice, amount: number, error: string | null = null): PaymentInvoiceView {

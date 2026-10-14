@@ -2,6 +2,7 @@ import { requireAdminPage } from "@/lib/session";
 import { getPendingRefundRequests } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
 import { RefundRequestsSection } from "../events/[id]/registrations/RefundRequestsSection";
+import { retrySkippedRefundPayouts } from "@/lib/refundPayout";
 
 export default async function AdminRefundsPage({
   params,
@@ -11,6 +12,7 @@ export default async function AdminRefundsPage({
   const { locale } = await params;
   await requireAdminPage(locale, "/admin/refunds");
 
+  await retrySkippedRefundPayouts();
   const refunds = await getPendingRefundRequests();
 
   return (
