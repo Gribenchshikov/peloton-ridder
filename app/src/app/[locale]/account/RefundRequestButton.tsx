@@ -12,6 +12,8 @@ export type RefundRequestView = {
   status: "PENDING" | "CONFIRMED" | "REJECTED";
   requestedAt?: Date | string;
   resolvedAt?: Date | string | null;
+  amount?: number | null;
+  invoiceId?: string | null;
 };
 
 type Props = {
@@ -24,6 +26,7 @@ type Props = {
   requests: RefundRequestView[];
   slotLocked?: boolean;
   canRequest?: boolean;
+  invoiceId?: string | null;
 };
 
 const initialState: RequestRefundState = {};
@@ -63,6 +66,7 @@ export function RefundRequestButton({
   requests,
   slotLocked = false,
   canRequest = true,
+  invoiceId = null,
 }: Props) {
   const t = useTranslations("Account");
   const format = useFormatter();
@@ -76,7 +80,12 @@ export function RefundRequestButton({
   );
   if (state.success) {
     for (const type of state.types ?? (state.type ? [state.type] : [])) {
-      latest[type] = { type, status: "PENDING" };
+      latest[type] = {
+        type,
+        status: "PENDING",
+        amount: type === "SLOT" ? slotAmount : transferAmount,
+        invoiceId,
+      };
     }
   }
 
@@ -91,6 +100,9 @@ export function RefundRequestButton({
   const [transferChecked, setTransferChecked] = useState(!slotAvailable && transferAvailable);
   const canSubmit =
     (slotChecked && slotAvailable) || (transferChecked && transferAvailable);
+  const selectedAmount =
+    (slotChecked && slotAvailable ? slotAmount : 0) +
+    (transferChecked && transferAvailable ? transferAmount : 0);
 
   useEffect(() => {
     setSlotChecked(slotAvailable);
@@ -114,11 +126,31 @@ export function RefundRequestButton({
           {latest.SLOT && (
             <span className={`text-xs font-semibold ${statusClass(latest.SLOT.status)}`}>
               {t("refundTypeSlot")}: {t(`refundStatus_${latest.SLOT.status}`)}
+              {(latest.SLOT.amount ?? slotAmount) > 0 && (
+                <span className="ml-1 font-normal tabular-nums">
+                  · {formatKzt(format, latest.SLOT.amount ?? slotAmount)}
+                </span>
+              )}
+              {(latest.SLOT.invoiceId ?? invoiceId) && (
+                <span className="ml-1 font-normal tabular-nums text-ink-faint">
+                  · {t("invoiceNumber")} {latest.SLOT.invoiceId ?? invoiceId}
+                </span>
+              )}
             </span>
           )}
           {latest.TRANSFER && (
             <span className={`text-xs font-semibold ${statusClass(latest.TRANSFER.status)}`}>
               {t("refundTypeTransfer")}: {t(`refundStatus_${latest.TRANSFER.status}`)}
+              {(latest.TRANSFER.amount ?? transferAmount) > 0 && (
+                <span className="ml-1 font-normal tabular-nums">
+                  · {formatKzt(format, latest.TRANSFER.amount ?? transferAmount)}
+                </span>
+              )}
+              {(latest.TRANSFER.invoiceId ?? invoiceId) && (
+                <span className="ml-1 font-normal tabular-nums text-ink-faint">
+                  · {t("invoiceNumber")} {latest.TRANSFER.invoiceId ?? invoiceId}
+                </span>
+              )}
             </span>
           )}
         </div>
@@ -140,6 +172,11 @@ export function RefundRequestButton({
           <div className="relative z-10 w-full max-w-md rounded-[var(--radius-l)] border border-border bg-surface p-6 shadow-xl">
             <h2 className="mb-1 font-display text-lg font-bold text-ink">{t("refundDialogTitle")}</h2>
             <p className="mb-5 text-sm text-ink-soft">{t("refundDialogHint")}</p>
+            {invoiceId && (
+              <p className="mb-4 text-sm tabular-nums text-ink">
+                {t("invoiceNumber")} {invoiceId}
+              </p>
+            )}
 
             <form action={formAction} className="flex flex-col gap-4">
               <input type="hidden" name="registrationId" value={registrationId} />
@@ -205,6 +242,12 @@ export function RefundRequestButton({
                   className="w-full resize-y rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
                 />
               </div>
+
+              {selectedAmount > 0 && (
+                <p className="text-sm font-semibold tabular-nums text-ink">
+                  {t("refundSelectedTotal", { amount: formatKzt(format, selectedAmount) })}
+                </p>
+              )}
 
               {state.error && (
                 <p className="text-sm text-danger">

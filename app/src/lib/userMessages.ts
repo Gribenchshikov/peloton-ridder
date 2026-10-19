@@ -1,21 +1,33 @@
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { UserMessageType } from "@/generated/prisma/client";
 import { sendUserMessageEmail } from "@/lib/mailer";
+import { ticketPaymentSummary, type TicketPaymentKind } from "@/lib/paymentAmount";
 import { prisma } from "@/lib/prisma";
+
+const PAYMENT_KINDS = new Set<TicketPaymentKind>(["slot", "slotAndTransfer", "transfer"]);
 
 export type UserMessagePayload = {
   race: string;
   amount?: number;
+  kind?: TicketPaymentKind;
   applicant?: string;
 };
 
+function parsePaymentKind(value: unknown): TicketPaymentKind | undefined {
+  return typeof value === "string" && PAYMENT_KINDS.has(value as TicketPaymentKind)
+    ? (value as TicketPaymentKind)
+    : undefined;
+}
+
 export function parseUserMessagePayload(value: unknown): UserMessagePayload {
   if (!value || typeof value !== "object") return { race: "" };
-  const row = value as { race?: unknown; amount?: unknown; applicant?: unknown };
+  const row = value as { race?: unknown; amount?: unknown; kind?: unknown; applicant?: unknown };
   const amount = typeof row.amount === "number" ? row.amount : Number(row.amount);
   return {
     race: typeof row.race === "string" ? row.race : "",
     amount: Number.isFinite(amount) ? amount : undefined,
+    kind: parsePaymentKind(row.kind),
     applicant: typeof row.applicant === "string" ? row.applicant : undefined,
   };
 }
@@ -30,8 +42,12 @@ export async function notifyFromRegistration(
       where: { id: registrationId },
       select: {
         userId: true,
+        isTransferOnly: true,
+        includesTransfer: true,
+        discountAmount: true,
         user: { select: { email: true, firstName: true } },
-        event: { select: { year: true, race: { select: { name: true } } } },
+        distance: { select: { price: true } },
+        event: { select: { year: true, transferPrice: true, race: { select: { name: true } } } },
       },
     });
     if (!registration) return;
@@ -39,7 +55,13 @@ export async function notifyFromRegistration(
     const payload: UserMessagePayload = {
       race: `${registration.event.race.name} ${registration.event.year}`,
     };
-    if (extra?.amount != null) payload.amount = extra.amount;
+    if (type === "PAYMENT") {
+      const payment = ticketPaymentSummary(registration);
+      payload.amount = extra?.amount ?? payment.amount;
+      payload.kind = payment.kind;
+    } else if (extra?.amount != null) {
+      payload.amount = extra.amount;
+    }
 
     await prisma.userMessage.create({
       data: {
@@ -48,15 +70,32 @@ export async function notifyFromRegistration(
         payload,
       },
     });
-    revalidatePath("/", "layout");
-    revalidatePath("/[locale]/account", "page");
-    revalidatePath("/[locale]/account/messages", "page");
-    await sendUserMessageEmail(
-      registration.user.email,
-      registration.user.firstName,
-      type,
-      payload,
-    );
+
+    const sendEmail = () =>
+      sendUserMessageEmail(
+        registration.user.email,
+        registration.user.firstName,
+        type,
+        payload,
+      ).catch((error) => {
+        console.error("[userMessage] email failed:", type, registration.user.email, error);
+      });
+    try {
+      after(async () => {
+        await sendEmail();
+      });
+    } catch (error) {
+      console.error("[userMessage] after() unavailable, sending email inline:", error);
+      await sendEmail();
+    }
+
+    try {
+      revalidatePath("/", "layout");
+      revalidatePath("/[locale]/account", "page");
+      revalidatePath("/[locale]/account/messages", "page");
+    } catch (error) {
+      console.error("[userMessage] revalidate failed:", error);
+    }
   } catch (error) {
     console.error("[userMessage] notify failed:", error);
   }

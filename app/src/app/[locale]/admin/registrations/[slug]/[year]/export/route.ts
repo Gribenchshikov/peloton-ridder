@@ -58,7 +58,7 @@ export async function GET(
   // ── Transfer CSV ────────────────────────────────────────────────────────────
   if (typeParam === "transfer") {
     const withTransfer = event.registrations.filter(
-      (r) => r.status === "PAID" && (r.includesTransfer || r.isTransferOnly),
+      (r) => r.status === "PAID" && (r.isTransferOnly || r.includesTransfer),
     );
     withTransfer.sort((a, b) => (a.user.lastName ?? "").localeCompare(b.user.lastName ?? "", "ru"));
 
@@ -73,16 +73,19 @@ export async function GET(
   }
 
   const registrations = event.registrations.filter((r) => {
-    if (statusParam && displayRegistrationStatus(r.status, r.refundRequests) !== statusParam) return false;
-    if (distanceParam) {
-      if (distanceParam === "TRANSFER_ONLY") {
-        if (!r.isTransferOnly) return false;
-      } else {
-        if (r.distance?.id !== distanceParam) return false;
-      }
+    const statusDisplay = displayRegistrationStatus(r.status, r.refundRequests, {
+      invoiceId: r.kaspiOrderId,
+      reregistrationCount: r.reregistrationCount,
+    });
+    if (r.isTransferOnly && statusDisplay !== "REFUNDED") return false;
+    if (statusParam) {
+      if (statusDisplay !== statusParam) return false;
+    } else if (r.status !== "PAID") {
+      return false;
     }
-    if (transferParam === "yes" && !r.includesTransfer && !r.isTransferOnly) return false;
-    if (transferParam === "no" && (r.includesTransfer || r.isTransferOnly)) return false;
+    if (distanceParam && r.distance?.id !== distanceParam && r.distanceId !== distanceParam) return false;
+    if (transferParam === "yes" && !r.includesTransfer) return false;
+    if (transferParam === "no" && r.includesTransfer) return false;
     return true;
   });
 
@@ -90,7 +93,10 @@ export async function GET(
     ["№", "Имя", "Фамилия", "Email", "Телефон", "Дистанция", "Км", "Трансфер", "Статус", "Причина отмены", "Комментарий отмены", "Регистрационный номер", "Дата регистрации", "Беговой клуб", "Промокод", "Скидка (₸)"],
     ...registrations.map((r) => {
       const transferDisplay = displayTransferStatus(r.includesTransfer || r.isTransferOnly, r.refundRequests);
-      const statusDisplay = displayRegistrationStatus(r.status, r.refundRequests);
+      const statusDisplay = displayRegistrationStatus(r.status, r.refundRequests, {
+        invoiceId: r.kaspiOrderId,
+        reregistrationCount: r.reregistrationCount,
+      });
       const cancelLabels: Record<string, string> = {
         INJURY: "Травма / болезнь",
         CANT_ATTEND: "Не смогу приехать",
@@ -107,8 +113,8 @@ export async function GET(
         r.user.lastName ?? "",
         r.user.email,
         r.user.phone ?? "",
-        r.isTransferOnly ? "Только трансфер" : (r.distance?.name ?? ""),
-        r.isTransferOnly ? "" : (r.distance?.km ?? ""),
+        r.distance?.name ?? (r.isTransferOnly ? "Только трансфер" : ""),
+        r.distance?.km ?? "",
         transferDisplay === "YES" ? "Да" : transferDisplay === "REFUNDED" ? "Возврат" : "Нет",
         statusDisplay === "PAID"
           ? "Оплачено"

@@ -10,6 +10,7 @@ import { CancelReason, RefundType } from "@/generated/prisma/client";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
 import { sendRefundRequestEmail } from "@/lib/mailer";
 import { findPaidInvoiceForOrder, isApipayConfigured } from "@/lib/apipay";
+import { refundRequestAmount } from "@/lib/paymentAmount";
 
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -163,13 +164,15 @@ export async function requestRefundAction(
       status: true,
       includesTransfer: true,
       isTransferOnly: true,
+      discountAmount: true,
       kitPickedUpAt: true,
       kaspiOrderId: true,
-      distance: { select: { name: true } },
+      distance: { select: { name: true, price: true } },
       event: {
         select: {
           cancellationDeadline: true,
           year: true,
+          transferPrice: true,
           race: { select: { name: true } },
         },
       },
@@ -210,6 +213,8 @@ export async function requestRefundAction(
       registrationId,
       type,
       reason: reasonText,
+      amount: refundRequestAmount(reg, type),
+      invoiceId: reg.kaspiOrderId,
     })),
   });
 
@@ -220,7 +225,7 @@ export async function requestRefundAction(
 
   if (user && adminEmails.length > 0) {
     for (const type of toCreate) {
-      void sendRefundRequestEmail(
+        void sendRefundRequestEmail(
         adminEmails,
         `${user.firstName} ${user.lastName}`,
         user.email,
@@ -229,6 +234,7 @@ export async function requestRefundAction(
         type,
         reasonText,
         registrationId,
+        reg.kaspiOrderId,
       );
     }
   }

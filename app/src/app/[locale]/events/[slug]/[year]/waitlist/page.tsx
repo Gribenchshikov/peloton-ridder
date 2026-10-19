@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { getEventForRegistration } from "@/lib/queries";
+import { capacityTakenWhere } from "@/lib/slotOccupancy";
 import { prisma } from "@/lib/prisma";
 import { WaitlistForm } from "./WaitlistForm";
 
@@ -28,7 +29,7 @@ export default async function WaitlistPage({
   const now = new Date();
   const slotCounts = await prisma.registration.groupBy({
     by: ["distanceId"],
-    where: { eventId: event.id, OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: now } }] },
+    where: { eventId: event.id, isTransferOnly: false, ...capacityTakenWhere(event.race.isMass, now) },
     _count: { id: true },
   });
   const slotCountMap = Object.fromEntries(slotCounts.map((s) => [s.distanceId, s._count.id]));

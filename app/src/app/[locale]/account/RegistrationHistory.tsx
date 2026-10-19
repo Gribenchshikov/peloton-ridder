@@ -1,6 +1,7 @@
 import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getUserProfile } from "@/lib/queries";
+import { compareInvoiceDesc, expandRegistrationPayments } from "@/lib/invoiceDisplay";
 import { displayRegistrationStatus, visibleAccountRefunds } from "@/lib/registrationStatus";
 import { CancelRegistrationButton } from "./CancelRegistrationButton";
 import { RefundRequestButton } from "./RefundRequestButton";
@@ -22,11 +23,23 @@ export function RegistrationHistory({ registrations }: { registrations: Registra
     );
   }
 
+  const rows = registrations
+    .flatMap((reg) => expandRegistrationPayments(reg).map((payment) => ({ reg, payment })))
+    .sort((a, b) => compareInvoiceDesc(a.payment.invoiceId, b.payment.invoiceId));
+
   return (
     <ul className="flex flex-col gap-3">
-      {registrations.map((reg) => (
+      {rows.map(({ reg, payment }) => {
+        const statusLabel =
+          !payment.isCurrent
+            ? tStatus(payment.paymentStatus === "paid" ? "PAID" : payment.paymentStatus === "reserved" ? "RESERVED" : "CANCELLED")
+            : tStatus(displayRegistrationStatus(reg.status, reg.refundRequests, {
+                invoiceId: payment.invoiceId ?? reg.kaspiOrderId,
+                reregistrationCount: reg.reregistrationCount,
+              }));
+        return (
         <li
-          key={reg.id}
+          key={`${reg.id}-${payment.invoiceId ?? "none"}`}
           className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-m)] border border-border bg-surface p-4"
         >
           <div>
@@ -34,36 +47,51 @@ export function RegistrationHistory({ registrations }: { registrations: Registra
               {reg.event.race.name} {reg.event.year}
             </Link>
             <p className="mt-0.5 text-sm text-ink-soft">
-              {reg.distance ? `${reg.distance.name}${reg.distance.km > 0 ? ` · ${reg.distance.km} ${tCommon("km")}` : ""}` : "Трансфер"}
-              {reg.bibNumber && ` · №${reg.bibNumber}`}
+              {reg.distance
+                ? `${reg.distance.name}${reg.distance.km > 0 ? ` · ${reg.distance.km} ${tCommon("km")}` : ""}`
+                : reg.isTransferOnly
+                  ? "Трансфер"
+                  : "—"}
+              {payment.isCurrent && reg.bibNumber && ` · №${reg.bibNumber}`}
             </p>
+            {payment.invoiceId && (
+              <p className="mt-0.5 text-xs tabular-nums text-ink-faint">
+                {t("invoiceNumber")} {payment.invoiceId}
+              </p>
+            )}
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <span className="text-xs font-bold uppercase tracking-wide text-ink-faint">
-              {tStatus(displayRegistrationStatus(reg.status, reg.refundRequests))}
+              {statusLabel}
             </span>
             <span className="text-xs text-ink-faint">
-              {format.dateTime(reg.createdAt, { day: "numeric", month: "short", year: "numeric" })}
+              {payment.paidAt
+                ? format.dateTime(payment.paidAt, { day: "numeric", month: "short", year: "numeric" })
+                : payment.invoiceId
+                  ? "—"
+                  : format.dateTime(reg.createdAt, { day: "numeric", month: "short", year: "numeric" })}
             </span>
-            {reg.status === "PAID" && (
+            {payment.isCurrent && (reg.status === "PAID" || (reg.status === "RESERVED" && reg.event.race.isMass)) && (
               <Link href={`/tickets/${reg.id}`} className="text-xs font-semibold text-ember hover:underline">
                 {t("showQrCta")}
               </Link>
             )}
-            {reg.result && (
+            {payment.isCurrent && reg.result && (
               <Link href={`/certificate/${reg.result.id}`} className="text-xs font-semibold text-spruce hover:underline">
                 🏅 {tCert("downloadCta")}
               </Link>
             )}
-            {reg.status === "RESERVED" &&
+            {payment.isCurrent &&
+              reg.status === "RESERVED" &&
               !reg.kitPickedUpAt &&
               new Date() <= new Date(reg.event.cancellationDeadline) && (
                 <CancelRegistrationButton registrationId={reg.id} />
               )}
-            {refundControls(reg)}
+            {payment.isCurrent && refundControls(reg)}
           </div>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
@@ -97,9 +125,12 @@ function refundControls(reg: RegistrationRow) {
         status: r.status,
         requestedAt: r.requestedAt,
         resolvedAt: r.resolvedAt,
+        amount: r.amount ?? (r.type === "TRANSFER" ? transferAmount : slotAmount),
+        invoiceId: r.invoiceId ?? reg.kaspiOrderId,
       }))}
       slotLocked={!!reg.kitPickedUpAt}
       canRequest={canRequest}
+      invoiceId={reg.kaspiOrderId}
     />
   );
 }

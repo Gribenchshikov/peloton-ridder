@@ -3,6 +3,7 @@
 //   */5 * * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://ridder.run/api/cron/expire-reservations
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { confirmIfInvoicePaid } from "@/lib/apipay";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
 
 export async function GET(request: Request) {
@@ -15,14 +16,23 @@ export async function GET(request: Request) {
 
   const expired = await prisma.registration.findMany({
     where: { status: "RESERVED", reservedUntil: { lte: now } },
-    select: { id: true, distanceId: true },
+    select: { id: true, distanceId: true, kaspiOrderId: true },
   });
 
   if (expired.length === 0) {
     return NextResponse.json({ cancelled: 0 });
   }
 
-  // Cancel all expired reservations first so freed slots are visible immediately
+  for (const row of expired) {
+    if (!row.kaspiOrderId) continue;
+    try {
+      await confirmIfInvoicePaid(row.id, row.kaspiOrderId);
+    } catch (error) {
+      console.error("[cron] confirm paid invoice before expire failed:", row.id, error);
+    }
+  }
+
+  // Cancel remaining unpaid reservations so freed slots are visible immediately
   await prisma.registration.updateMany({
     where: { status: "RESERVED", reservedUntil: { lte: now } },
     data: { status: "CANCELLED", reservedUntil: null },

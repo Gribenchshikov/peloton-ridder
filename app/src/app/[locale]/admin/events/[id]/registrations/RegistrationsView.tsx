@@ -6,12 +6,15 @@ import { Link } from "@/i18n/navigation";
 import type { getEventWithRegistrations } from "@/lib/queries";
 import { RegistrationActions } from "./RegistrationActions";
 import { RefundRequestsSection } from "./RefundRequestsSection";
-import { toggleKitIssuedAction, toggleTransferBoardedAction } from "./actions";
+import { TransferPassengersSection } from "./TransferPassengersSection";
+import { compareInvoiceDesc, expandRegistrationPayments } from "@/lib/invoiceDisplay";
+import { toggleKitIssuedAction } from "./actions";
 import {
   displayRegistrationStatus,
-  displayTransferStatus,
   hasConfirmedSlotRefund,
+  isTransferPassengerRegistration,
 } from "@/lib/registrationStatus";
+import { registrationDistanceLabel, resolveRegistrationDistance } from "@/lib/registrationDistance";
 
 type EventData = NonNullable<Awaited<ReturnType<typeof getEventWithRegistrations>>>;
 type Registration = EventData["registrations"][number];
@@ -49,12 +52,26 @@ function InlineCheckbox({
 function StatusBadge({
   status,
   refundRequests,
+  paymentStatus,
+  isCurrent = true,
+  invoiceId = null,
+  reregistrationCount = 0,
 }: {
   status: Registration["status"];
   refundRequests: Registration["refundRequests"];
+  paymentStatus?: "paid" | "cancelled" | "reserved";
+  isCurrent?: boolean;
+  invoiceId?: string | null;
+  reregistrationCount?: number;
 }) {
   const t = useTranslations("Admin");
-  const display = displayRegistrationStatus(status, refundRequests);
+  const display = !isCurrent && paymentStatus
+    ? paymentStatus === "paid"
+      ? "PAID"
+      : paymentStatus === "reserved"
+        ? "RESERVED"
+        : "CANCELLED"
+    : displayRegistrationStatus(status, refundRequests, { invoiceId, reregistrationCount });
   const isPaid = display === "PAID";
   const isRefunded = display === "REFUNDED";
   const isCancelled = display === "CANCELLED";
@@ -83,7 +100,7 @@ function StatusBadge({
 }
 
 type StatusFilter = "ALL" | "PAID" | "RESERVED" | "CANCELLED" | "REFUNDED";
-type TransferFilter = "ALL" | "YES" | "NO";
+type ListTab = "participants" | "transfer";
 
 function FilterChips<T extends string>({
   options,
@@ -129,12 +146,15 @@ export function RegistrationsView({ event }: { event: EventData }) {
   const t = useTranslations("Admin");
   const format = useFormatter();
 
+  const [tab, setTab] = useState<ListTab>("participants");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [distanceFilter, setDistanceFilter] = useState<string>("ALL");
-  const [transferFilter, setTransferFilter] = useState<TransferFilter>("ALL");
 
-  const paid = event.registrations.filter((r) => r.status === "PAID");
-  const reserved = event.registrations.filter((r) => r.status === "RESERVED");
+  const participants = event.registrations.filter(
+    (r) => !r.isTransferOnly || hasConfirmedSlotRefund(r.refundRequests),
+  );
+  const paid = participants.filter((r) => r.status === "PAID");
+  const reserved = participants.filter((r) => r.status === "RESERVED");
 
   const capacityByDistance = Object.fromEntries(
     event.distances.map((d) => {
@@ -143,33 +163,36 @@ export function RegistrationsView({ event }: { event: EventData }) {
     })
   );
   const paidByDistance = Object.fromEntries(
-    event.distances.map((d) => [d.id, paid.filter((r) => r.distance?.id === d.id).length])
+    event.distances.map((d) => [d.id, paid.filter((r) => resolveRegistrationDistance(r, event.distances)?.id === d.id).length])
   );
 
   const filtered = useMemo(() => {
-    return event.registrations.filter((r) => {
+    return participants.filter((r) => {
       if (statusFilter !== "ALL") {
-        const display = displayRegistrationStatus(r.status, r.refundRequests);
+        const display = displayRegistrationStatus(r.status, r.refundRequests, {
+          invoiceId: r.kaspiOrderId,
+          reregistrationCount: r.reregistrationCount,
+        });
         if (display !== statusFilter) return false;
       }
-      if (distanceFilter !== "ALL") {
-        if (distanceFilter === "TRANSFER_ONLY") {
-          if (!r.isTransferOnly) return false;
-        } else {
-          if (r.distance?.id !== distanceFilter) return false;
-        }
-      }
-      if (transferFilter === "YES" && !r.includesTransfer && !r.isTransferOnly) return false;
-      if (transferFilter === "NO" && (r.includesTransfer || r.isTransferOnly)) return false;
+      if (distanceFilter !== "ALL" && resolveRegistrationDistance(r, event.distances)?.id !== distanceFilter) return false;
       return true;
     });
-  }, [event.registrations, statusFilter, distanceFilter, transferFilter]);
+  }, [participants, statusFilter, distanceFilter]);
+
+  const displayRows = useMemo(
+    () =>
+      filtered
+        .flatMap((reg) => expandRegistrationPayments(reg).map((payment) => ({ reg, payment })))
+        .sort((a, b) => compareInvoiceDesc(a.payment.invoiceId, b.payment.invoiceId)),
+    [filtered],
+  );
 
   const exportParams = new URLSearchParams();
   if (statusFilter !== "ALL") exportParams.set("status", statusFilter);
   if (distanceFilter !== "ALL") exportParams.set("distanceId", distanceFilter);
-  if (transferFilter !== "ALL") exportParams.set("transfer", transferFilter === "YES" ? "yes" : "no");
   const exportHref = `/admin/registrations/${event.race.slug}/${event.year}/export${exportParams.size > 0 ? "?" + exportParams.toString() : ""}`;
+  const transferCount = event.registrations.filter(isTransferPassengerRegistration).length;
 
   const statusOptions: { value: StatusFilter; label: string }[] = [
     { value: "ALL", label: "Все" },
@@ -182,13 +205,6 @@ export function RegistrationsView({ event }: { event: EventData }) {
   const distanceOptions: { value: string; label: string }[] = [
     { value: "ALL", label: "Все" },
     ...event.distances.map((d) => ({ value: d.id, label: `${d.name} (${d.km} км)` })),
-    { value: "TRANSFER_ONLY", label: "Только трансфер" },
-  ];
-
-  const transferOptions: { value: TransferFilter; label: string }[] = [
-    { value: "ALL", label: "Все" },
-    { value: "YES", label: "Да" },
-    { value: "NO", label: "Нет" },
   ];
 
   return (
@@ -241,6 +257,29 @@ export function RegistrationsView({ event }: { event: EventData }) {
         </div>
       </div>
 
+      <div className="flex gap-2 border-b border-border">
+        <button
+          type="button"
+          onClick={() => setTab("participants")}
+          className={`-mb-px border-b-2 pb-3 pr-2 text-sm font-semibold transition-colors ${
+            tab === "participants" ? "border-ember text-ember" : "border-transparent text-ink-soft hover:text-ink"
+          }`}
+        >
+          Участники ({participants.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("transfer")}
+          className={`-mb-px border-b-2 pb-3 pr-2 text-sm font-semibold transition-colors ${
+            tab === "transfer" ? "border-ember text-ember" : "border-transparent text-ink-soft hover:text-ink"
+          }`}
+        >
+          Трансфер ({transferCount})
+        </button>
+      </div>
+
+      {tab === "participants" && (
+      <>
       {/* Stats */}
       <div className="flex flex-wrap gap-3">
         <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4">
@@ -252,14 +291,8 @@ export function RegistrationsView({ event }: { event: EventData }) {
           <div className="mt-0.5 text-xs text-ink-soft">{t("regStatusReserved")}</div>
         </div>
         <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4">
-          <div className="text-2xl font-bold text-ink">{event.registrations.length}</div>
+          <div className="text-2xl font-bold text-ink">{participants.length}</div>
           <div className="mt-0.5 text-xs text-ink-soft">{t("regColTotal")}</div>
-        </div>
-        <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4">
-          <div className="text-2xl font-bold text-ink">
-            {paid.filter((r) => r.includesTransfer || r.isTransferOnly).length}
-          </div>
-          <div className="mt-0.5 text-xs text-ink-soft">С трансфером</div>
         </div>
       </div>
 
@@ -341,7 +374,18 @@ export function RegistrationsView({ event }: { event: EventData }) {
               .filter((req) => req.status === "PENDING")
               .map((req) => ({
                 ...req,
-                registration: { id: r.id, eventId: event.id, user: r.user, distance: r.distance },
+                invoiceId: req.invoiceId ?? r.kaspiOrderId,
+                registration: {
+                  id: r.id,
+                  eventId: event.id,
+                  user: r.user,
+                  distance: resolveRegistrationDistance(r, event.distances),
+                  includesTransfer: r.includesTransfer,
+                  isTransferOnly: r.isTransferOnly,
+                  discountAmount: r.discountAmount,
+                  kaspiOrderId: r.kaspiOrderId,
+                  event: { transferPrice: event.transferPrice },
+                },
               }))
           )}
       />
@@ -357,25 +401,21 @@ export function RegistrationsView({ event }: { event: EventData }) {
             <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Дистанция</span>
             <FilterChips options={distanceOptions} value={distanceFilter} onChange={setDistanceFilter} />
           </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Трансфер</span>
-            <FilterChips options={transferOptions} value={transferFilter} onChange={setTransferFilter} />
-          </div>
         </div>
       </div>
 
       {/* Registrations table */}
       {filtered.length === 0 ? (
         <p className="text-sm text-ink-faint">
-          {event.registrations.length === 0 ? t("registrationsEmpty") : "Нет участников по выбранным фильтрам."}
+          {participants.length === 0 ? t("registrationsEmpty") : "Нет участников по выбранным фильтрам."}
         </p>
       ) : (
         <div>
           <p className="mb-3 text-sm text-ink-faint">
-            Показано: <span className="font-semibold text-ink">{filtered.length}</span> из {event.registrations.length}
+            Показано: <span className="font-semibold text-ink">{displayRows.length}</span> из {participants.length}
           </p>
           <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
-            <table className="w-full min-w-[1180px] text-sm">
+            <table className="w-full min-w-[1080px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-surface-2">
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColBib")}</th>
@@ -383,23 +423,23 @@ export function RegistrationsView({ event }: { event: EventData }) {
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColEmail")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColPhone")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColDistance")}</th>
-                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Трансфер</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColStatus")}</th>
+                  <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColInvoice")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">{t("regColComment")}</th>
                   <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Квалификация</th>
                   <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">Пакет</th>
-                  <th className="px-4 py-2.5 text-center font-semibold text-ink-soft">Посадка</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColDate")}</th>
                   <th className="px-4 py-2.5 text-right font-semibold text-ink-soft">{t("regColActions")}</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((reg, idx) => {
-                  const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
-                  const transferDisplay = displayTransferStatus(hasTransfer, reg.refundRequests);
-                  const slotRefunded = hasConfirmedSlotRefund(reg.refundRequests);
+                {displayRows.map(({ reg, payment }, idx) => {
+                  const slotRefunded = hasConfirmedSlotRefund(reg.refundRequests, {
+                    invoiceId: payment.invoiceId ?? reg.kaspiOrderId,
+                    reregistrationCount: reg.reregistrationCount,
+                  });
                   return (
-                    <tr key={reg.id} className="border-b border-border last:border-0 hover:bg-surface-2">
+                    <tr key={`${reg.id}-${payment.invoiceId ?? "none"}`} className="border-b border-border last:border-0 hover:bg-surface-2">
                       <td className="px-4 py-2.5 tabular-nums text-ink-faint">
                         {idx + 1}
                       </td>
@@ -409,26 +449,23 @@ export function RegistrationsView({ event }: { event: EventData }) {
                       <td className="px-4 py-2.5 text-ink-soft">{reg.user.email}</td>
                       <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
                       <td className="px-4 py-2.5 text-ink-soft">
-                        {reg.isTransferOnly ? "Только трансфер" : (reg.distance?.name ?? "—")}
+                        {registrationDistanceLabel(reg, event.distances)}
                       </td>
                       <td className="px-4 py-2.5">
-                        {transferDisplay === "YES" ? (
-                          <span className="inline-flex items-center rounded-full bg-spruce/10 px-2 py-0.5 text-xs font-semibold text-spruce">
-                            Да
-                          </span>
-                        ) : transferDisplay === "REFUNDED" ? (
-                          <span className="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-                            {t("regStatusRefunded")}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-ink-faint">—</span>
-                        )}
+                        <StatusBadge
+                          status={reg.status}
+                          refundRequests={reg.refundRequests}
+                          paymentStatus={payment.paymentStatus}
+                          isCurrent={payment.isCurrent}
+                          invoiceId={payment.invoiceId ?? reg.kaspiOrderId}
+                          reregistrationCount={reg.reregistrationCount}
+                        />
                       </td>
-                      <td className="px-4 py-2.5">
-                        <StatusBadge status={reg.status} refundRequests={reg.refundRequests} />
+                      <td className="px-4 py-2.5 tabular-nums text-ink-soft">
+                        {payment.invoiceId ?? "—"}
                       </td>
                       <td className="max-w-64 px-4 py-2.5 text-xs text-ink-soft">
-                        {reg.status === "CANCELLED" && reg.cancelReason ? (
+                        {payment.isCurrent && reg.status === "CANCELLED" && reg.cancelReason ? (
                           <div className="flex flex-col gap-1">
                             <span className="inline-block w-fit rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-950 dark:text-red-300">
                               {CANCEL_REASON_LABELS[reg.cancelReason] ?? reg.cancelReason}
@@ -440,12 +477,14 @@ export function RegistrationsView({ event }: { event: EventData }) {
                               <span className="text-ink-faint italic">{reg.adminComment}</span>
                             )}
                           </div>
-                        ) : (
+                        ) : payment.isCurrent ? (
                           reg.adminComment ?? "—"
+                        ) : (
+                          "—"
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-xs">
-                        {reg.qualificationUrl ? (
+                        {payment.isCurrent && reg.qualificationUrl ? (
                           <a
                             href={reg.qualificationUrl}
                             target="_blank"
@@ -459,34 +498,36 @@ export function RegistrationsView({ event }: { event: EventData }) {
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-center">
-                        <InlineCheckbox
-                          checked={reg.kitPickedUpAt !== null}
-                          onToggle={(v) => toggleKitIssuedAction(reg.id, event.id, v)}
-                        />
-                      </td>
-                      <td className="px-4 py-2.5 text-center">
-                        {(reg.includesTransfer || reg.isTransferOnly) ? (
+                        {payment.isCurrent && reg.status === "PAID" && !reg.isTransferOnly ? (
                           <InlineCheckbox
-                            checked={reg.transferUsedAt !== null}
-                            onToggle={(v) => toggleTransferBoardedAction(reg.id, event.id, v)}
+                            checked={reg.kitPickedUpAt !== null}
+                            onToggle={(v) => toggleKitIssuedAction(reg.id, event.id, v)}
                           />
                         ) : (
                           <span className="text-xs text-ink-faint">—</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ink-faint">
-                        {format.dateTime(reg.createdAt, { day: "numeric", month: "short" })}
+                        {payment.paidAt
+                          ? format.dateTime(payment.paidAt, { day: "numeric", month: "short" })
+                          : payment.invoiceId
+                            ? "—"
+                            : format.dateTime(reg.createdAt, { day: "numeric", month: "short" })}
                       </td>
                       <td className="px-4 py-2.5">
-                        <RegistrationActions
-                          registrationId={reg.id}
-                          eventId={event.id}
-                          distanceId={reg.distance?.id ?? ""}
-                          status={reg.status}
-                          allowReregistration={reg.allowReregistration}
-                          slotRefunded={slotRefunded}
-                          distances={event.distances}
-                        />
+                        {payment.isCurrent ? (
+                          <RegistrationActions
+                            registrationId={reg.id}
+                            eventId={event.id}
+                            distanceId={resolveRegistrationDistance(reg, event.distances)?.id ?? ""}
+                            status={reg.status}
+                            allowReregistration={reg.allowReregistration}
+                            slotRefunded={slotRefunded}
+                            distances={event.distances}
+                          />
+                        ) : (
+                          <span className="text-xs text-ink-faint">—</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -495,6 +536,12 @@ export function RegistrationsView({ event }: { event: EventData }) {
             </table>
           </div>
         </div>
+      )}
+      </>
+      )}
+
+      {tab === "transfer" && (
+        <TransferPassengersSection eventId={event.id} registrations={event.registrations} />
       )}
     </main>
   );

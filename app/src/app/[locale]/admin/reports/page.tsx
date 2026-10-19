@@ -53,7 +53,7 @@ export default async function ReportsPage({
   const distances = eventId
     ? await prisma.distance.findMany({
         where: { eventId },
-        select: { id: true, name: true, km: true, maxSlots: true, _count: { select: { registrations: { where: { status: "PAID" } } } } },
+        select: { id: true, name: true, km: true, maxSlots: true, _count: { select: { registrations: { where: { status: "PAID", isTransferOnly: false } } } } },
         orderBy: { km: "asc" },
       })
     : [];

@@ -220,6 +220,8 @@ model Registration {
   kaspiPaymentUrl        String?
   kaspiQrImageUrl        String?
   kaspiQrExpiresAt       DateTime?
+  paidInvoiceIds         String[]            @default([])
+  paidInvoiceAt          Json                @default("{}")
   createdAt              DateTime            @default(now())
   adminComment           String?
   allowReregistration    Boolean             @default(false)
@@ -275,6 +277,7 @@ model RefundRequest {
   requestedAt    DateTime     @default(now())
   resolvedAt     DateTime?
   amount         Int?
+  invoiceId      String?
   apipayRefundId String?
   payoutStatus   String?
   registration   Registration @relation(fields: [registrationId], references: [id])

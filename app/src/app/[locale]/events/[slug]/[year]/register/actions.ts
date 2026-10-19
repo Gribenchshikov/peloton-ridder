@@ -6,7 +6,9 @@ import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { parseParticipantRules, calcAge } from "@/types/participantRules";
 import { CLEARED_PAYMENT_FIELDS } from "@/lib/refundPayout";
+import { confirmPendingPaidInvoices } from "@/lib/apipay";
 import { notifyFromRegistration } from "@/lib/userMessages";
+import { activeRegistrationOrDraftWhere, capacityTakenWhere } from "@/lib/slotOccupancy";
 
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
 const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
@@ -60,6 +62,8 @@ export async function createRegistrationAction(
   }
 
   const now = new Date();
+  const includesTransfer = formData.get("includesTransfer") === "true";
+  await confirmPendingPaidInvoices(eventId);
   const outcome = await prisma.$transaction(async (tx) => {
     // Одна учётная запись может иметь только одну активную регистрацию на
     // событие. Блокировка пользователя сериализует одновременные запросы в
@@ -76,7 +80,10 @@ export async function createRegistrationAction(
     await tx.$queryRaw`SELECT "id" FROM "Distance" WHERE "id" = ${distanceId} FOR UPDATE`;
 
     const [event, distance] = await Promise.all([
-      tx.event.findUnique({ where: { id: eventId } }),
+      tx.event.findUnique({
+        where: { id: eventId },
+        include: { race: { select: { isMass: true, slug: true } } },
+      }),
       tx.distance.findUnique({ where: { id: distanceId } }),
     ]);
     if (!event || event.status !== "OPEN") {
@@ -118,21 +125,85 @@ export async function createRegistrationAction(
         userId,
         eventId,
         isTransferOnly: false,
-        OR: [
-          { status: "PAID" },
-          { status: "RESERVED", reservedUntil: { gt: now } },
-        ],
+        ...activeRegistrationOrDraftWhere(now),
       },
     });
-    if (existing) return { kind: "existing" as const, registrationId: existing.id };
+    if (existing?.status === "PAID") {
+      return {
+        kind: "existing" as const,
+        registrationId: existing.id,
+        isMass: event.race.isMass,
+        slug: event.race.slug,
+        year: event.year,
+      };
+    }
+
+    let qualificationUrl: string | null = null;
+    if (distance.requiresQualification) {
+      const raw = String(formData.get("qualificationUrl") ?? "").trim();
+      if (!raw) return { kind: "error" as const, error: "qualification_missing" };
+      qualificationUrl = raw;
+    }
+
+    type ExtraParticipant = { firstName: string; lastName: string; birthDate: string };
+    let additionalParticipants: ExtraParticipant[] | null = null;
+    const extraCount = (distance.participantsPerSlot ?? 1) - 1;
+    if (extraCount > 0 && rules) {
+      const extras: ExtraParticipant[] = [];
+      for (let i = 0; i < extraCount; i++) {
+        const firstName = String(formData.get(`extra_firstName_${i}`) ?? "").trim();
+        const lastName = String(formData.get(`extra_lastName_${i}`) ?? "").trim();
+        const birthDateStr = String(formData.get(`extra_birthDate_${i}`) ?? "").trim();
+        const birthDate = new Date(birthDateStr);
+        if (!firstName || !lastName || !birthDateStr || isNaN(birthDate.getTime())) {
+          return { kind: "error" as const, error: "extra_age_required" };
+        }
+        const rule = rules[i + 1];
+        if (rule) {
+          const age = calcAge(birthDate, raceDate);
+          if (rule.minAge !== null && age < rule.minAge) return { kind: "error" as const, error: "extra_age_too_young" };
+          if (rule.maxAge !== null && age > rule.maxAge) return { kind: "error" as const, error: "extra_age_too_old" };
+        }
+        extras.push({ firstName, lastName, birthDate: birthDateStr });
+      }
+      additionalParticipants = extras;
+    }
+
+    const emergencyContact = String(formData.get("emergencyContact") ?? "").trim() || null;
+    const emergencyContactName = String(formData.get("emergencyContactName") ?? "").trim() || null;
+
+    if (existing?.status === "RESERVED") {
+      const amountChanged =
+        existing.distanceId !== distanceId || existing.includesTransfer !== includesTransfer;
+      const registration = await tx.registration.update({
+        where: { id: existing.id },
+        data: {
+          distanceId,
+          includesTransfer,
+          runningClubId,
+          qualificationUrl,
+          emergencyContact,
+          emergencyContactName,
+          additionalParticipants: additionalParticipants ?? undefined,
+          reservedUntil: event.race.isMass ? null : new Date(now.getTime() + RESERVATION_TTL_MS),
+          ...(amountChanged ? CLEARED_PAYMENT_FIELDS : {}),
+        },
+      });
+      const merchError = await upsertRegistrationMerch(tx, eventId, registration.id, formData);
+      if (merchError) return merchError;
+      return {
+        kind: "created" as const,
+        registrationId: registration.id,
+        isMass: event.race.isMass,
+        slug: event.race.slug,
+        year: event.year,
+      };
+    }
 
     const cancelled = await tx.registration.findFirst({
       where: { userId, eventId, status: "CANCELLED", isTransferOnly: false },
       orderBy: { createdAt: "desc" },
     });
-    if (cancelled && cancelled.reregistrationCount >= 3) {
-      return { kind: "error" as const, error: "registration_blocked" as const };
-    }
     if (cancelled) {
       const slotRefunded = await tx.refundRequest.findFirst({
         where: { registrationId: cancelled.id, type: "SLOT", status: "CONFIRMED" },
@@ -146,10 +217,8 @@ export async function createRegistrationAction(
     const activeCount = await tx.registration.count({
       where: {
         distanceId,
-        OR: [
-          { status: "PAID" },
-          { status: "RESERVED", reservedUntil: { gt: now } },
-        ],
+        isTransferOnly: false,
+        ...capacityTakenWhere(event.race.isMass, now),
       },
     });
     const bibCapacity = (distance.bibRangeStart !== null && distance.bibRangeEnd !== null) ? distance.bibRangeEnd - distance.bibRangeStart + 1 : null;
@@ -182,50 +251,12 @@ export async function createRegistrationAction(
       await tx.promoCode.update({ where: { id: promo.id }, data: { usedCount: { increment: 1 } } });
     }
 
-    const includesTransfer = formData.get("includesTransfer") === "true";
-
-    // Если дистанция требует квалификации — поле обязательно
-    let qualificationUrl: string | null = null;
-    if (distance.requiresQualification) {
-      const raw = String(formData.get("qualificationUrl") ?? "").trim();
-      if (!raw) return { kind: "error" as const, error: "qualification_missing" };
-      qualificationUrl = raw;
-    }
-
-    // Парсим доп. участников для семейных/командных дистанций
-    type ExtraParticipant = { firstName: string; lastName: string; birthDate: string };
-    let additionalParticipants: ExtraParticipant[] | null = null;
-    const extraCount = (distance.participantsPerSlot ?? 1) - 1;
-    if (extraCount > 0 && rules) {
-      const extras: ExtraParticipant[] = [];
-      for (let i = 0; i < extraCount; i++) {
-        const firstName = String(formData.get(`extra_firstName_${i}`) ?? "").trim();
-        const lastName = String(formData.get(`extra_lastName_${i}`) ?? "").trim();
-        const birthDateStr = String(formData.get(`extra_birthDate_${i}`) ?? "").trim();
-        const birthDate = new Date(birthDateStr);
-        if (!firstName || !lastName || !birthDateStr || isNaN(birthDate.getTime())) {
-          return { kind: "error" as const, error: "extra_age_required" };
-        }
-        const rule = rules[i + 1];
-        if (rule) {
-          const age = calcAge(birthDate, raceDate);
-          if (rule.minAge !== null && age < rule.minAge) return { kind: "error" as const, error: "extra_age_too_young" };
-          if (rule.maxAge !== null && age > rule.maxAge) return { kind: "error" as const, error: "extra_age_too_old" };
-        }
-        extras.push({ firstName, lastName, birthDate: birthDateStr });
-      }
-      additionalParticipants = extras;
-    }
-
-    const emergencyContact = String(formData.get("emergencyContact") ?? "").trim() || null;
-    const emergencyContactName = String(formData.get("emergencyContactName") ?? "").trim() || null;
-
     const reservationData = {
       isTransferOnly: false,
       distanceId,
       status: "RESERVED" as const,
       bibNumber: null,
-      reservedUntil: new Date(now.getTime() + RESERVATION_TTL_MS),
+      reservedUntil: event.race.isMass ? null : new Date(now.getTime() + RESERVATION_TTL_MS),
       adminComment: null,
       allowReregistration: false,
       runningClubId,
@@ -242,39 +273,57 @@ export async function createRegistrationAction(
       ? await tx.registration.update({ where: { id: cancelled.id }, data: { ...reservationData, reregistrationCount: { increment: 1 } } })
       : await tx.registration.create({ data: { userId, eventId, ...reservationData } });
 
-    // Create RegistrationMerch entries for this event's merch items
-    const eventMerch = await tx.event.findUnique({
-      where: { id: eventId },
-      select: { merchItems: { select: { id: true, requiresSize: true } } },
-    });
-    if (eventMerch?.merchItems.length) {
-      const merchData: { registrationId: string; merchItemId: string; size: string | null }[] = [];
-      for (const item of eventMerch.merchItems) {
-        if (item.requiresSize) {
-          const size = formData.get(`merch_size_${item.id}`);
-          if (typeof size !== "string" || !VALID_SIZES.has(size)) {
-            return { kind: "error" as const, error: "missing_size" as const };
-          }
-          merchData.push({ registrationId: registration.id, merchItemId: item.id, size });
-        } else {
-          merchData.push({ registrationId: registration.id, merchItemId: item.id, size: null });
-        }
-      }
-      for (const merch of merchData) {
-        await tx.registrationMerch.upsert({
-          where: { registrationId_merchItemId: { registrationId: registration.id, merchItemId: merch.merchItemId } },
-          create: merch,
-          update: { size: merch.size },
-        });
-      }
-    }
+    const merchError = await upsertRegistrationMerch(tx, eventId, registration.id, formData);
+    if (merchError) return merchError;
 
-    return { kind: "created" as const, registrationId: registration.id };
+    return {
+      kind: "created" as const,
+      registrationId: registration.id,
+      isMass: event.race.isMass,
+      slug: event.race.slug,
+      year: event.year,
+    };
   });
 
   if (outcome.kind === "error") return { error: outcome.error };
-  if (outcome.kind === "created") {
-    await notifyFromRegistration(outcome.registrationId, "REGISTRATION");
+  if (outcome.isMass) {
+    if (outcome.kind === "created") {
+      await notifyFromRegistration(outcome.registrationId, "REGISTRATION");
+    }
+    return redirect({ href: `/events/${outcome.slug}/${outcome.year}/register`, locale });
   }
   return redirect({ href: `/pay/${outcome.registrationId}`, locale });
+}
+
+async function upsertRegistrationMerch(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  eventId: string,
+  registrationId: string,
+  formData: FormData,
+): Promise<{ kind: "error"; error: "missing_size" } | null> {
+  const eventMerch = await tx.event.findUnique({
+    where: { id: eventId },
+    select: { merchItems: { select: { id: true, requiresSize: true } } },
+  });
+  if (!eventMerch?.merchItems.length) return null;
+  const merchData: { registrationId: string; merchItemId: string; size: string | null }[] = [];
+  for (const item of eventMerch.merchItems) {
+    if (item.requiresSize) {
+      const size = formData.get(`merch_size_${item.id}`);
+      if (typeof size !== "string" || !VALID_SIZES.has(size)) {
+        return { kind: "error", error: "missing_size" };
+      }
+      merchData.push({ registrationId, merchItemId: item.id, size });
+    } else {
+      merchData.push({ registrationId, merchItemId: item.id, size: null });
+    }
+  }
+  for (const merch of merchData) {
+    await tx.registrationMerch.upsert({
+      where: { registrationId_merchItemId: { registrationId, merchItemId: merch.merchItemId } },
+      create: merch,
+      update: { size: merch.size },
+    });
+  }
+  return null;
 }

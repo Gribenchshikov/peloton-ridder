@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { formatKzt } from "@/lib/currency";
+import { displayRefundAmount } from "@/lib/paymentAmount";
 import { confirmRefundAction, rejectRefundAction, type RefundActionState } from "./actions";
 
 export type RefundRow = {
@@ -10,12 +12,22 @@ export type RefundRow = {
   type: "SLOT" | "TRANSFER";
   reason: string | null;
   requestedAt: Date;
+  amount?: number | null;
+  invoiceId?: string | null;
   registration: {
     id: string;
     eventId: string;
     user: { firstName: string; lastName: string; email: string };
-    distance: { name: string } | null;
-    event?: { year: number; race: { name: string; slug: string } };
+    distance: { name: string; price?: number } | null;
+    includesTransfer?: boolean;
+    isTransferOnly?: boolean;
+    discountAmount?: number | null;
+    kaspiOrderId?: string | null;
+    event?: {
+      year?: number;
+      transferPrice?: number | null;
+      race?: { name: string; slug: string };
+    };
   };
 };
 
@@ -38,12 +50,25 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
   const error = confirmState.error ?? rejectState.error;
 
   const event = refund.registration.event;
+  const amount = displayRefundAmount(
+    refund.amount,
+    {
+      isTransferOnly: refund.registration.isTransferOnly ?? false,
+      discountAmount: refund.registration.discountAmount ?? 0,
+      includesTransfer: refund.registration.includesTransfer ?? refund.type === "TRANSFER",
+      distance: refund.registration.distance?.price != null
+        ? { price: refund.registration.distance.price }
+        : null,
+      event: { transferPrice: refund.registration.event?.transferPrice ?? null },
+    },
+    refund.type,
+  );
 
   return (
     <tr className="border-b border-border last:border-0 hover:bg-surface-2">
       {showEvent && (
         <td className="px-4 py-3">
-          {event ? (
+          {event?.race && event.year != null ? (
             <Link
               href={`/admin/registrations/${event.race.slug}/${event.year}`}
               className="font-semibold text-ink hover:text-ember"
@@ -60,7 +85,7 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
         <div className="text-xs text-ink-faint">{refund.registration.user.email}</div>
       </td>
       <td className="px-4 py-3 text-ink-soft">
-        {refund.registration.distance?.name ?? "Трансфер"}
+        {refund.registration.distance?.name ?? "—"}
       </td>
       <td className="px-4 py-3">
         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
@@ -70,6 +95,12 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
         }`}>
           {TYPE_LABELS[refund.type]}
         </span>
+      </td>
+      <td className="px-4 py-3 text-sm font-semibold tabular-nums text-ink">
+        {amount > 0 ? formatKzt(format, amount) : "—"}
+      </td>
+      <td className="px-4 py-3 text-sm tabular-nums text-ink-soft">
+        {refund.invoiceId ?? refund.registration.kaspiOrderId ?? "—"}
       </td>
       <td className="max-w-48 px-4 py-3 text-xs text-ink-soft">{refund.reason ?? "—"}</td>
       <td className="px-4 py-3 text-xs tabular-nums text-ink-faint">
@@ -96,7 +127,13 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
             </button>
           </form>
         </div>
-        {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+        {error && (
+          <p className="mt-1 text-xs text-danger">
+            {error === "payout_failed"
+              ? "Не удалось отправить возврат в ApiPay. Нажмите «Подтвердить» ещё раз."
+              : error}
+          </p>
+        )}
       </td>
     </tr>
   );
@@ -129,6 +166,8 @@ export function RefundRequestsSection({
               <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Участник</th>
               <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Дистанция</th>
               <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Тип</th>
+              <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Сумма</th>
+              <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Счёт</th>
               <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Причина</th>
               <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Дата</th>
               <th className="px-4 py-2.5 text-left font-semibold text-ink-soft">Действие</th>

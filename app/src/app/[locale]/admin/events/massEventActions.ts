@@ -6,6 +6,7 @@ import { prisma, isUniqueConstraintError } from "@/lib/prisma";
 import { requireAdminId } from "@/lib/session";
 import { saveFile } from "@/lib/storage";
 import { slugify } from "@/lib/slugify";
+import { ensureMassAttendanceDistance } from "@/lib/massAttendance";
 import { localDateSchema } from "@/lib/dates";
 
 export type MassActionState = { error?: string; success?: boolean; eventId?: string };
@@ -115,6 +116,7 @@ export async function createMassEventAction(
         ...coverResult,
       },
     });
+    await ensureMassAttendanceDistance(event.id);
     revalidatePath("/[locale]/admin", "page");
     revalidatePath("/[locale]/events", "page");
     return { eventId: event.id };

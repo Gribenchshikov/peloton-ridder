@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { getEventForRegistration, getActiveRegistration, getUserContactInfo } from "@/lib/queries";
+import { ensureMassAttendanceDistance } from "@/lib/massAttendance";
+import { capacityTakenWhere } from "@/lib/slotOccupancy";
 import { parseSizeTable } from "@/types/sizeTable";
 import { prisma } from "@/lib/prisma";
 import { RegisterView } from "./RegisterView";
@@ -12,17 +14,23 @@ import { BuyTransferButton } from "./BuyTransferButton";
 
 export default async function EventRegisterPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; slug: string; year: string }>;
+  searchParams: Promise<{ fromPay?: string }>;
 }) {
   const { locale, slug, year } = await params;
+  const { fromPay } = await searchParams;
 
-  const [session, event] = await Promise.all([auth(), getEventForRegistration(slug, Number(year))]);
+  const [session, initialEvent] = await Promise.all([auth(), getEventForRegistration(slug, Number(year))]);
 
-  if (!event) notFound();
-  if (event.race.isMass) {
-    return redirect({ href: `/events/${slug}/${year}`, locale });
+  if (!initialEvent) notFound();
+  if (initialEvent.race.isMass) {
+    await ensureMassAttendanceDistance(initialEvent.id);
   }
+  const event = initialEvent.race.isMass
+    ? (await getEventForRegistration(slug, Number(year))) ?? initialEvent
+    : initialEvent;
 
   if (!session?.user?.id) {
     return redirect({
@@ -45,7 +53,8 @@ export default async function EventRegisterPage({
       by: ["distanceId"],
       where: {
         eventId: event.id,
-        OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: now } }],
+        isTransferOnly: false,
+        ...capacityTakenWhere(event.race.isMass, now),
       },
       _count: { id: true },
     }),
@@ -62,10 +71,31 @@ export default async function EventRegisterPage({
     return { ...d, capacity, taken };
   });
   if (existing) {
-    if (existing.status === "PAID") {
-      return <AlreadyRegistered event={event} registration={existing} locale={locale} />;
+    if (existing.status === "PAID" || event.race.isMass) {
+      const alreadyHasTransfer = Boolean(
+        existing.includesTransfer ||
+          (await prisma.registration.findFirst({
+            where: {
+              userId: session.user.id,
+              eventId: event.id,
+              isTransferOnly: true,
+              status: "PAID",
+            },
+            select: { id: true },
+          })),
+      );
+      return (
+        <AlreadyRegistered
+          event={event}
+          registration={existing}
+          locale={locale}
+          alreadyHasTransfer={alreadyHasTransfer}
+        />
+      );
     }
-    return redirect({ href: `/pay/${existing.id}`, locale });
+    if (!fromPay) {
+      return redirect({ href: `/pay/${existing.id}`, locale });
+    }
   }
   if (!profile) {
     return redirect({ href: "/login", locale });
@@ -74,7 +104,7 @@ export default async function EventRegisterPage({
     return <EmailConfirmationRequired email={profile.email} />;
   }
 
-  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} sizeTableRows={sizeTableRows} hasBirthDate={!!profile.birthDate} defaultTshirtSize={profile.tshirtSize} defaultClubId={profile.runningClubId} isChallenge={event.race.isChallenge} hasStrava={!!profile.stravaAthleteId} />;
+  return <RegisterView event={{ ...event, distances: distancesWithSlots }} profile={profile} locale={locale} clubs={clubs} callbackPath={`/events/${slug}/${year}/register`} sizeTableRows={sizeTableRows} hasBirthDate={!!profile.birthDate} defaultTshirtSize={profile.tshirtSize} defaultClubId={profile.runningClubId} defaultIncludesTransfer={Boolean(fromPay && existing?.includesTransfer)} isChallenge={event.race.isChallenge} isMass={event.race.isMass} hasStrava={!!profile.stravaAthleteId} />;
 }
 
 type ActiveReg = NonNullable<Awaited<ReturnType<typeof getActiveRegistration>>>;
@@ -83,10 +113,12 @@ function AlreadyRegistered({
   event,
   registration,
   locale,
+  alreadyHasTransfer,
 }: {
   event: NonNullable<Awaited<ReturnType<typeof getEventForRegistration>>>;
   registration: ActiveReg;
   locale: string;
+  alreadyHasTransfer: boolean;
 }) {
   const t = useTranslations("Registration");
   return (
@@ -125,18 +157,14 @@ function AlreadyRegistered({
           </Link>
           <ContactOrganizerButton eventId={event.id} />
         </div>
-        {!registration.includesTransfer && event.transferPrice && event.location && (
+        {event.transferPrice && event.location && !event.race.isMass && (
           <BuyTransferButton
             registrationId={registration.id}
             price={event.transferPrice}
             location={event.location}
             locale={locale}
+            alreadyHasTransfer={alreadyHasTransfer}
           />
-        )}
-        {registration.includesTransfer && (
-          <div className="mt-4 rounded-[var(--radius-s)] border border-spruce/30 bg-spruce/5 px-4 py-3 text-sm font-semibold text-spruce">
-            ✓ {t("transferIncluded")}
-          </div>
         )}
       </section>
     </main>

@@ -8,7 +8,7 @@ import type { getRegistrationForPayment } from "@/lib/queries";
 import type { PaymentInvoiceView } from "@/lib/apipay";
 import { formatKzt } from "@/lib/currency";
 import { registrationPaymentAmount } from "@/lib/paymentAmount";
-import { simulatePaymentAction, cancelReservationAction, refreshKaspiQrAction } from "./actions";
+import { simulatePaymentAction, refreshKaspiQrAction, startKaspiPaymentAction } from "./actions";
 
 type Registration = NonNullable<Awaited<ReturnType<typeof getRegistrationForPayment>>>;
 
@@ -27,31 +27,53 @@ export function PaymentView({
   const format = useFormatter();
   const router = useRouter();
   const [qrExpired, setQrExpired] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
+  const [payBusy, setPayBusy] = useState(false);
 
   useEffect(() => {
     if (registration.status !== "RESERVED") return;
+    if (!invoice?.invoiceId && !registration.kaspiOrderId) return;
     const timer = setInterval(async () => {
       try {
         const res = await fetch(`/api/pay/${registration.id}/status`);
         if (!res.ok) return;
-        const data = (await res.json()) as { status?: string; expired?: boolean };
+        const data = (await res.json()) as {
+          status?: string;
+          expired?: boolean;
+          invoiceStatus?: string;
+        };
         if (data.status === "PAID") {
           router.refresh();
           return;
         }
-        if (data.expired) setQrExpired(true);
+        if (data.expired) {
+          setQrExpired(true);
+          return;
+        }
+        const invoiceStatus = data.invoiceStatus?.toLowerCase();
+        if (
+          invoiceStatus &&
+          invoiceStatus !== "pending" &&
+          invoiceStatus !== "processing" &&
+          invoiceStatus !== "paid"
+        ) {
+          setPaymentFailed(true);
+        }
       } catch {
         /* keep waiting */
       }
     }, 4000);
     return () => clearInterval(timer);
-  }, [registration.id, registration.status, router]);
+  }, [invoice?.invoiceId, registration.id, registration.kaspiOrderId, registration.status, router]);
 
   useEffect(() => {
     if (!invoice?.expiresAt) return;
     setQrExpired(new Date(invoice.expiresAt).getTime() <= Date.now());
   }, [invoice?.expiresAt]);
+
+  useEffect(() => {
+    setPayBusy(false);
+  }, [invoice?.invoiceId, invoice?.error, qrExpired]);
 
   if (registration.status === "PAID") {
     if (registration.isTransferOnly) {
@@ -111,18 +133,35 @@ export function PaymentView({
   }
 
   const total = registrationPaymentAmount(registration);
-  const paymentUrl = invoice?.paymentUrl ?? registration.kaspiPaymentUrl;
-  const qrImageUrl = invoice?.qrImageUrl ?? registration.kaspiQrImageUrl;
-  const expiresAt = invoice?.expiresAt ?? registration.kaspiQrExpiresAt?.toISOString() ?? null;
+  const paymentUrl = invoice?.paymentUrl ?? null;
+  const qrImageUrl = invoice?.qrImageUrl ?? null;
+  const expiresAt = invoice?.expiresAt ?? null;
+  const hasInvoice = Boolean(paymentUrl || qrImageUrl);
+  const waitingForPayment = hasInvoice && !qrExpired && !paymentFailed && !invoice?.error;
+  const payDisabled = waitingForPayment || payBusy;
 
-  async function handleRefreshQr() {
-    setRefreshing(true);
+  async function handlePayClick() {
+    if (payDisabled) return;
+    setPayBusy(true);
+    setPaymentFailed(false);
     try {
-      await refreshKaspiQrAction(locale, registration.id);
+      const result = hasInvoice
+        ? await refreshKaspiQrAction(locale, registration.id)
+        : await startKaspiPaymentAction(locale, registration.id);
+      if (result.error) {
+        setPaymentFailed(true);
+        setPayBusy(false);
+        return;
+      }
       setQrExpired(false);
+      if (result.paymentUrl && window.matchMedia("(pointer: coarse), (max-width: 640px)").matches) {
+        window.location.assign(result.paymentUrl);
+        return;
+      }
       router.refresh();
-    } finally {
-      setRefreshing(false);
+    } catch {
+      setPaymentFailed(true);
+      setPayBusy(false);
     }
   }
 
@@ -131,7 +170,7 @@ export function PaymentView({
       <div>
         <span className="text-xs font-bold uppercase tracking-wide text-ember">{t("eyebrow")}</span>
         <h1 className="mt-2 font-display text-2xl font-bold text-ink">
-          {registration.event.race.name} {registration.event.year} · {registration.distance?.name ?? "Трансфер"}
+          {registration.event.race.name} {registration.event.year} · {registration.distance?.name ?? (registration.isTransferOnly ? "Трансфер" : "—")}
         </h1>
         {registration.isTransferOnly ? (
           <p className="mt-2 text-2xl font-bold text-ink">
@@ -180,61 +219,39 @@ export function PaymentView({
         </p>
       )}
 
-      {(paymentUrl || qrImageUrl) && !qrExpired ? (
+      {waitingForPayment && (
         <div className="flex flex-col items-center gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
           <p className="text-center text-sm text-ink-soft">{t("qrHint")}</p>
           {qrImageUrl && (
             <img src={qrImageUrl} alt="" width={240} height={240} className="h-60 w-60 rounded-[var(--radius-s)] bg-white p-2" />
-          )}
-          {paymentUrl && (
-            <a
-              href={paymentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-ember-strong"
-            >
-              {t("payInKaspiCta")}
-            </a>
           )}
           {expiresAt && (
             <p className="text-xs text-ink-faint">
               {t("qrExpires", { time: format.dateTime(new Date(expiresAt), { timeStyle: "short" }) })}
             </p>
           )}
-          <p className="text-xs text-ink-faint">{t("waiting")}</p>
-        </div>
-      ) : qrExpired || invoice?.error ? (
-        <button
-          type="button"
-          onClick={handleRefreshQr}
-          disabled={refreshing}
-          className="w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
-        >
-          {refreshing ? t("waiting") : t("refreshQrCta")}
-        </button>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
-            {t("optionApp")}
-          </div>
-          <div className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-5 py-4 text-sm text-ink-faint">
-            {t("optionQr")}
-          </div>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={handlePayClick}
+        disabled={payDisabled}
+        className="w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:pointer-events-none disabled:opacity-60"
+      >
+        {payDisabled ? t("waiting") : t("payInKaspiCta")}
+      </button>
 
       {qrExpired && (paymentUrl || qrImageUrl) && (
         <p className="text-center text-sm text-ink-soft">{t("qrExpired")}</p>
       )}
 
-      <form action={cancelReservationAction.bind(null, locale, registration.id)}>
-        <button
-          type="submit"
-          className="w-full rounded-[var(--radius-s)] border border-border px-5 py-3 text-sm font-semibold text-ink-soft transition-colors hover:border-danger hover:text-danger"
-        >
-          {t("cancelReservationCta")}
-        </button>
-      </form>
+      <Link
+        href={`/events/${registration.event.race.slug}/${registration.event.year}/register?fromPay=1`}
+        className="block w-full rounded-[var(--radius-s)] border border-border px-5 py-3 text-center text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+      >
+        {t("backToRegisterCta")}
+      </Link>
 
       {testMode && (
         <div className="rounded-[var(--radius-m)] border border-dashed border-warn bg-warn-tint p-5">

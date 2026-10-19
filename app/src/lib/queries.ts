@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { publicAssetUrl } from "@/lib/publicAssetUrl";
+import { refundRequestAmount } from "@/lib/paymentAmount";
+import { withResolvedRegistrationDistances } from "@/lib/registrationDistance";
+import { activeRegistrationOrDraftWhere } from "@/lib/slotOccupancy";
 
 export function getSiteSetting(key: string) {
   return prisma.siteSetting.findUnique({ where: { key } }).then((r) => {
@@ -157,8 +160,8 @@ export async function getUserSeriesProgress(userId: string, seriesId: string, ye
 
 const REGISTRATION_HISTORY_LIMIT = 20;
 
-export function getUserProfile(userId: string) {
-  return prisma.user.findUnique({
+export async function getUserProfile(userId: string) {
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       firstName: true,
@@ -195,18 +198,23 @@ export function getUserProfile(userId: string) {
           includesTransfer: true,
           isTransferOnly: true,
           discountAmount: true,
+          kaspiOrderId: true,
+          paidInvoiceIds: true,
+          paidInvoiceAt: true,
+          reregistrationCount: true,
+          distanceId: true,
           event: {
             select: {
               year: true,
               cancellationDeadline: true,
               transferPrice: true,
-              race: { select: { name: true, slug: true } },
+              race: { select: { name: true, slug: true, isMass: true } },
             },
           },
-          distance: { select: { name: true, km: true, price: true } },
+          distance: { select: { id: true, name: true, km: true, price: true } },
           result: { select: { id: true, place: true, time: true } },
           refundRequests: {
-            select: { type: true, status: true, requestedAt: true, resolvedAt: true },
+            select: { type: true, status: true, requestedAt: true, resolvedAt: true, amount: true, invoiceId: true },
             orderBy: { requestedAt: "desc" },
           },
         },
@@ -231,6 +239,29 @@ export function getUserProfile(userId: string) {
       },
     },
   });
+  if (!user) return user;
+
+  const missingDistanceIds = [
+    ...new Set(
+      user.registrations
+        .filter((reg) => !reg.distance?.name && reg.distanceId)
+        .map((reg) => reg.distanceId as string),
+    ),
+  ];
+  if (missingDistanceIds.length === 0) return user;
+
+  const extraDistances = await prisma.distance.findMany({
+    where: { id: { in: missingDistanceIds } },
+    select: { id: true, name: true, km: true, price: true },
+  });
+  const byId = new Map(extraDistances.map((distance) => [distance.id, distance]));
+  return {
+    ...user,
+    registrations: user.registrations.map((reg) => ({
+      ...reg,
+      distance: reg.distance?.name ? reg.distance : (reg.distanceId ? byId.get(reg.distanceId) ?? null : null),
+    })),
+  };
 }
 
 // Лёгкая версия getUserProfile для карточки «данные участника» на странице регистрации —
@@ -250,10 +281,7 @@ export function getActiveRegistration(userId: string, eventId: string) {
       userId,
       eventId,
       isTransferOnly: false,
-      OR: [
-        { status: "PAID" },
-        { status: "RESERVED", reservedUntil: { gt: new Date() } },
-      ],
+      ...activeRegistrationOrDraftWhere(),
     },
     select: {
       id: true,
@@ -268,7 +296,11 @@ export function getActiveRegistration(userId: string, eventId: string) {
 export function getRegistrationForPayment(id: string) {
   return prisma.registration.findUnique({
     where: { id },
-    include: { distance: true, event: { include: { race: true } } },
+    include: {
+      distance: true,
+      event: { include: { race: true } },
+      user: { select: { firstName: true, lastName: true } },
+    },
   });
 }
 
@@ -294,8 +326,8 @@ export function getEventForRegistration(slug: string, year: number) {
   });
 }
 
-export function getKitPickupListBySlug(slug: string, year: number) {
-  return prisma.event.findFirst({
+export async function getKitPickupListBySlug(slug: string, year: number) {
+  const event = await prisma.event.findFirst({
     where: { year, race: { slug } },
     select: {
       id: true,
@@ -303,11 +335,12 @@ export function getKitPickupListBySlug(slug: string, year: number) {
       race: { select: { name: true, slug: true } },
       distances: { orderBy: { km: "asc" }, select: { id: true, name: true, km: true } },
       registrations: {
-        where: { status: "PAID" },
+        where: { status: "PAID", isTransferOnly: false },
         select: {
           id: true,
           bibNumber: true,
           kitPickedUpAt: true,
+          distanceId: true,
           distance: { select: { id: true, name: true } },
           user: { select: { firstName: true, lastName: true, phone: true, email: true } },
         },
@@ -315,6 +348,7 @@ export function getKitPickupListBySlug(slug: string, year: number) {
       },
     },
   });
+  return event ? withResolvedRegistrationDistances(event) : event;
 }
 
 export function getUsersForAdmin() {
@@ -403,16 +437,17 @@ export function getEventForAdmin(id: string) {
   });
 }
 
-export function getEventWithRegistrationsBySlug(slug: string, year: number) {
-  return prisma.event.findFirst({
+export async function getEventWithRegistrationsBySlug(slug: string, year: number) {
+  const event = await prisma.event.findFirst({
     where: { year, race: { slug } },
     select: {
       id: true,
       year: true,
+      transferPrice: true,
       race: { select: { name: true, slug: true } },
       distances: {
         orderBy: { km: "asc" },
-        select: { id: true, name: true, km: true, bibRangeStart: true, bibRangeEnd: true },
+        select: { id: true, name: true, km: true, price: true, bibRangeStart: true, bibRangeEnd: true },
       },
       registrations: {
         where: {
@@ -438,12 +473,17 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
           kitPickedUpAt: true,
           transferUsedAt: true,
           emergencyContact: true,
+          kaspiOrderId: true,
+          paidInvoiceIds: true,
+          paidInvoiceAt: true,
+          reregistrationCount: true,
+          distanceId: true,
           user: { select: { firstName: true, lastName: true, email: true, phone: true, birthDate: true } },
-          distance: { select: { id: true, name: true, km: true } },
+          distance: { select: { id: true, name: true, km: true, price: true } },
           runningClub: { select: { name: true } },
           promoCode: { select: { code: true } },
           refundRequests: {
-            select: { id: true, type: true, status: true, reason: true, requestedAt: true },
+            select: { id: true, type: true, status: true, reason: true, requestedAt: true, amount: true, invoiceId: true },
           },
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
@@ -457,6 +497,7 @@ export function getEventWithRegistrationsBySlug(slug: string, year: number) {
       },
     },
   });
+  return event ? withResolvedRegistrationDistances(event) : event;
 }
 
 export function getEventSummary(slug: string, year: number) {
@@ -470,7 +511,10 @@ export function getEventSummary(slug: string, year: number) {
       race: { select: { name: true, slug: true } },
       distances: { orderBy: { km: "asc" }, select: { id: true, name: true, km: true, bibRangeStart: true, bibRangeEnd: true, maxSlots: true } },
       registrations: {
-        where: { OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: new Date() } }] },
+        where: {
+          isTransferOnly: false,
+          OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: new Date() } }],
+        },
         select: {
           id: true,
           status: true,
@@ -484,16 +528,17 @@ export function getEventSummary(slug: string, year: number) {
   });
 }
 
-export function getEventWithRegistrations(id: string) {
-  return prisma.event.findUnique({
+export async function getEventWithRegistrations(id: string) {
+  const event = await prisma.event.findUnique({
     where: { id },
     select: {
       id: true,
       year: true,
+      transferPrice: true,
       race: { select: { name: true, slug: true } },
       distances: {
         orderBy: { km: "asc" },
-        select: { id: true, name: true, km: true, bibRangeStart: true, bibRangeEnd: true },
+        select: { id: true, name: true, km: true, price: true, bibRangeStart: true, bibRangeEnd: true },
       },
       registrations: {
         where: {
@@ -515,22 +560,29 @@ export function getEventWithRegistrations(id: string) {
           allowReregistration: true,
           createdAt: true,
           qualificationUrl: true,
+          discountAmount: true,
           kitPickedUpAt: true,
           transferUsedAt: true,
+          kaspiOrderId: true,
+          paidInvoiceIds: true,
+          paidInvoiceAt: true,
+          reregistrationCount: true,
+          distanceId: true,
           user: { select: { firstName: true, lastName: true, email: true, phone: true } },
-          distance: { select: { id: true, name: true, km: true } },
+          distance: { select: { id: true, name: true, km: true, price: true } },
           refundRequests: {
-            select: { id: true, type: true, status: true, reason: true, requestedAt: true },
+            select: { id: true, type: true, status: true, reason: true, requestedAt: true, amount: true, invoiceId: true },
           },
         },
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       },
     },
   });
+  return event ? withResolvedRegistrationDistances(event) : event;
 }
 
-export function getEventDetail(slug: string, year: number) {
-  return prisma.event.findFirst({
+export async function getEventDetail(slug: string, year: number) {
+  const event = await prisma.event.findFirst({
     where: { year, race: { slug }, isPublished: true },
     include: {
       race: true,
@@ -545,12 +597,13 @@ export function getEventDetail(slug: string, year: number) {
       // Явный select: не тянем весь User и колонки Registration, которых
       // может ещё не быть в БД (kaspiQr*), и не отдаём их в client component.
       registrations: {
-        where: { status: "PAID" },
+        where: { status: "PAID", isTransferOnly: false },
         select: {
           id: true,
           bibNumber: true,
+          distanceId: true,
           user: { select: { firstName: true, lastName: true } },
-          distance: { select: { name: true } },
+          distance: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -568,6 +621,7 @@ export function getEventDetail(slug: string, year: number) {
       },
     },
   });
+  return event ? withResolvedRegistrationDistances(event) : event;
 }
 
 export async function getChallengeLeaderboard(eventId: string) {
@@ -607,24 +661,72 @@ export function countPendingRefundRequests() {
   return prisma.refundRequest.count({ where: { status: "PENDING" } });
 }
 
-export function getPendingRefundRequests() {
-  return prisma.refundRequest.findMany({
+export async function getPendingRefundRequests() {
+  const rows = await prisma.refundRequest.findMany({
     where: { status: "PENDING" },
     select: {
       id: true,
       type: true,
       reason: true,
       requestedAt: true,
+      amount: true,
+      invoiceId: true,
       registration: {
         select: {
           id: true,
           eventId: true,
+          includesTransfer: true,
+          isTransferOnly: true,
+          discountAmount: true,
+          kaspiOrderId: true,
+          distanceId: true,
           user: { select: { firstName: true, lastName: true, email: true } },
-          distance: { select: { name: true } },
-          event: { select: { year: true, race: { select: { name: true, slug: true } } } },
+          distance: { select: { id: true, name: true, price: true } },
+          event: {
+            select: {
+              year: true,
+              transferPrice: true,
+              race: { select: { name: true, slug: true } },
+            },
+          },
         },
       },
     },
     orderBy: { requestedAt: "asc" },
+  });
+
+  const missingDistanceIds = [
+    ...new Set(
+      rows
+        .filter((row) => !row.registration.distance?.name && row.registration.distanceId)
+        .map((row) => row.registration.distanceId as string),
+    ),
+  ];
+  const extraDistances =
+    missingDistanceIds.length > 0
+      ? await prisma.distance.findMany({
+          where: { id: { in: missingDistanceIds } },
+          select: { id: true, name: true, price: true },
+        })
+      : [];
+  const byId = new Map(extraDistances.map((distance) => [distance.id, distance]));
+
+  return rows.map((row) => {
+    const distance =
+      row.registration.distance?.name
+        ? row.registration.distance
+        : row.registration.distanceId
+          ? byId.get(row.registration.distanceId) ?? null
+          : null;
+    const registration = { ...row.registration, distance };
+    return {
+      ...row,
+      registration,
+      invoiceId: row.invoiceId ?? row.registration.kaspiOrderId,
+      amount:
+        row.amount && row.amount > 0
+          ? row.amount
+          : refundRequestAmount(registration, row.type),
+    };
   });
 }

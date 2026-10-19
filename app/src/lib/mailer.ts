@@ -223,11 +223,13 @@ export async function sendRefundRequestEmail(
   type: "SLOT" | "TRANSFER",
   reason: string | null,
   registrationId: string,
+  invoiceId?: string | null,
 ) {
   if (adminEmails.length === 0) return;
   const typeLabel = type === "SLOT" ? "слот" : "трансфер";
   const adminUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const subject = `[Ridder] Запрос на возврат — ${userName} (${typeLabel})`;
+  const invoiceLine = invoiceId ? `Счёт: ${invoiceId}` : "";
   const text = [
     `Запрос на возврат (${typeLabel})`,
     ``,
@@ -235,11 +237,12 @@ export async function sendRefundRequestEmail(
     `Забег: ${raceName}`,
     `Дистанция: ${distanceName}`,
     `Тип возврата: ${typeLabel}`,
+    invoiceLine,
     reason ? `Причина: ${reason}` : "",
     ``,
     `Подтвердить или отклонить: ${adminUrl}/admin`,
-  ].filter((l) => l !== undefined).join("\n");
-  const html = `<h3 style="margin:0 0 12px">Запрос на возврат (${typeLabel})</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Участник</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Дистанция</td><td>${distanceName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Тип</td><td>${typeLabel}</td></tr>${reason ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Причина</td><td>${reason}</td></tr>` : ""}</table><p style="margin-top:16px"><a href="${adminUrl}/admin" style="display:inline-block;padding:8px 16px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Перейти в панель</a></p><p style="color:#888;font-size:12px;margin-top:12px">Peloton Ridder</p>`;
+  ].filter((l) => l !== undefined && l !== "").join("\n");
+  const html = `<h3 style="margin:0 0 12px">Запрос на возврат (${typeLabel})</h3><table style="border-collapse:collapse;font-size:14px"><tr><td style="padding:4px 16px 4px 0;color:#888">Участник</td><td style="font-weight:600">${userName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Email</td><td><a href="mailto:${userEmail}">${userEmail}</a></td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Забег</td><td>${raceName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Дистанция</td><td>${distanceName}</td></tr><tr><td style="padding:4px 16px 4px 0;color:#888">Тип</td><td>${typeLabel}</td></tr>${invoiceId ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Счёт</td><td style="font-variant-numeric:tabular-nums">${invoiceId}</td></tr>` : ""}${reason ? `<tr><td style="padding:4px 16px 4px 0;color:#888">Причина</td><td>${reason}</td></tr>` : ""}</table><p style="margin-top:16px"><a href="${adminUrl}/admin" style="display:inline-block;padding:8px 16px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px">Перейти в панель</a></p><p style="color:#888;font-size:12px;margin-top:12px">Peloton Ridder</p>`;
   await Promise.all(adminEmails.map((to) => sendMail(to, subject, text, html)));
 }
 
@@ -421,9 +424,15 @@ export async function sendVolunteerApplicationAdminEmail(
   await Promise.all(adminEmails.map((to) => sendMail(to, subject, text, html)));
 }
 
+const PAYMENT_KIND_LABEL_RU: Record<string, string> = {
+  slot: "Слот",
+  slotAndTransfer: "Слот + трансфер",
+  transfer: "Трансфер",
+};
+
 const USER_MESSAGE_COPY: Record<
   string,
-  { title: string; body: (race: string, amount: string) => string }
+  { title: string; body: (race: string, amount: string, kind: string) => string }
 > = {
   REGISTRATION: {
     title: "Регистрация на забег",
@@ -431,7 +440,10 @@ const USER_MESSAGE_COPY: Record<
   },
   PAYMENT: {
     title: "Оплата получена",
-    body: (race) => `Оплата за ${race} получена.`,
+    body: (race, amount, kind) =>
+      amount
+        ? `Оплата за ${race} получена: ${amount}${kind ? ` · ${kind}` : ""}.`
+        : `Оплата за ${race} получена.`,
   },
   ADMIN_CANCEL: {
     title: "Регистрация отменена",
@@ -463,7 +475,7 @@ export async function sendUserMessageEmail(
   to: string,
   name: string,
   type: string,
-  payload: { race: string; amount?: number },
+  payload: { race: string; amount?: number; kind?: string },
 ) {
   const copy = USER_MESSAGE_COPY[type];
   if (!copy) return;
@@ -476,7 +488,8 @@ export async function sendUserMessageEmail(
           maximumFractionDigits: 0,
         }).format(payload.amount)
       : "";
-  const body = copy.body(payload.race, amount);
+  const kind = payload.kind ? PAYMENT_KIND_LABEL_RU[payload.kind] ?? "" : "";
+  const body = copy.body(payload.race, amount, kind);
   const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
   const messagesUrl = `${appUrl}/ru/account/messages`;
   const subject = `${copy.title} — ${payload.race}`;

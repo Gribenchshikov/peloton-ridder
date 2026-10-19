@@ -7,6 +7,28 @@ import { confirmIfInvoicePaid, ensureQrInvoice, isApipayConfigured, simulateInvo
 import { getRegistrationForPayment } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 
+export async function startKaspiPaymentAction(
+  locale: string,
+  registrationId: string,
+): Promise<{ paymentUrl: string | null; error?: string }> {
+  const userId = await requireUserId();
+  if (!userId) throw new Error("startKaspiPaymentAction: no session");
+
+  const registration = await getRegistrationForPayment(registrationId);
+  if (!registration || registration.userId !== userId) {
+    throw new Error("startKaspiPaymentAction: registration not found or not owned by user");
+  }
+  if (registration.status !== "RESERVED") {
+    redirect({ href: `/pay/${registrationId}`, locale });
+  }
+  if (!isApipayConfigured()) {
+    redirect({ href: `/pay/${registrationId}`, locale });
+  }
+
+  const invoice = await ensureQrInvoice(registration);
+  return { paymentUrl: invoice.paymentUrl, error: invoice.error ?? undefined };
+}
+
 export async function simulatePaymentAction(locale: string, registrationId: string) {
   const userId = await requireUserId();
   if (!userId) {
@@ -42,41 +64,18 @@ export async function simulatePaymentAction(locale: string, registrationId: stri
   redirect({ href: `/pay/${registrationId}`, locale });
 }
 
-export async function refreshKaspiQrAction(locale: string, registrationId: string) {
+export async function refreshKaspiQrAction(
+  locale: string,
+  registrationId: string,
+): Promise<{ paymentUrl: string | null; error?: string }> {
   const userId = await requireUserId();
   if (!userId) throw new Error("refreshKaspiQrAction: no session");
 
   const registration = await getRegistrationForPayment(registrationId);
   if (!registration || registration.userId !== userId) throw new Error("refreshKaspiQrAction: not found");
-  if (registration.status !== "RESERVED") return;
+  if (registration.status !== "RESERVED") return { paymentUrl: null };
 
-  await ensureQrInvoice(registration, true);
-  redirect({ href: `/pay/${registrationId}`, locale });
+  const invoice = await ensureQrInvoice(registration, true);
+  return { paymentUrl: invoice.paymentUrl, error: invoice.error ?? undefined };
 }
 
-export async function cancelReservationAction(locale: string, registrationId: string) {
-  const userId = await requireUserId();
-  if (!userId) throw new Error("cancelReservationAction: no session");
-
-  const registration = await prisma.registration.findUnique({
-    where: { id: registrationId },
-    select: {
-      userId: true,
-      status: true,
-      event: { select: { year: true, race: { select: { slug: true } } } },
-    },
-  });
-
-  if (!registration || registration.userId !== userId) throw new Error("cancelReservationAction: not found");
-
-  const backHref = `/events/${registration.event.race.slug}/${registration.event.year}`;
-
-  if (registration.status === "RESERVED") {
-    await prisma.registration.update({
-      where: { id: registrationId },
-      data: { status: "CANCELLED", reservedUntil: null },
-    });
-  }
-
-  redirect({ href: backHref, locale });
-}

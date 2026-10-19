@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { countUnreadUserMessages } from "@/lib/userMessages";
-import { repairUserStalePaidSlotRefunds } from "@/lib/refundPayout";
+import { repairUserStalePaidSlotRefunds, restorePaidSlotAfterTransferRefund } from "@/lib/refundPayout";
 import { AccountHeader } from "./AccountHeader";
 import { AccountNav } from "./AccountNav";
 
@@ -20,6 +20,7 @@ export default async function AccountLayout({
   }
 
   await repairUserStalePaidSlotRefunds(session.user.id);
+  await restorePaidSlotAfterTransferRefund(undefined, session.user.id);
   const [user, unreadCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },

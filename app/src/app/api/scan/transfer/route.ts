@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireKitScanner } from "@/lib/kitPickup";
+import { canBoardTransfer, isTransferRefunded } from "@/lib/registrationStatus";
 
 export async function POST(req: NextRequest) {
   const access = await requireKitScanner();
@@ -16,13 +17,21 @@ export async function POST(req: NextRequest) {
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    select: { status: true, includesTransfer: true, isTransferOnly: true, transferUsedAt: true },
+    select: {
+      status: true,
+      includesTransfer: true,
+      isTransferOnly: true,
+      transferUsedAt: true,
+      refundRequests: { select: { type: true, status: true } },
+    },
   });
 
   if (!reg) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  if (reg.status !== "PAID") return NextResponse.json({ error: "not_paid" }, { status: 422 });
-  if (!reg.includesTransfer && !reg.isTransferOnly) {
-    return NextResponse.json({ error: "no_transfer" }, { status: 422 });
+  if (isTransferRefunded(reg)) {
+    return NextResponse.json({ error: "transfer_refunded" }, { status: 422 });
+  }
+  if (!canBoardTransfer(reg)) {
+    return NextResponse.json({ error: "not_available" }, { status: 422 });
   }
 
   const updated = await prisma.registration.update({

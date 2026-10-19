@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { confirmPayment } from "@/lib/kaspi";
-import { findRegistrationForInvoice, getInvoice, isApipayConfigured } from "@/lib/apipay";
+import { findRegistrationForInvoice, getInvoice, invoicePaidAt, isApipayConfigured } from "@/lib/apipay";
 import { markInvoiceRefunded } from "@/lib/refundPayout";
 
 function verifySignature(rawBody: string, signature: string | null, secret: string) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   let payload: {
     event?: string;
     invoice?: { id: number; status?: string; external_order_id?: string | null };
-    refund?: { id?: number };
+    refund?: { id?: number; status?: string };
   };
   try {
     payload = JSON.parse(rawBody) as typeof payload;
@@ -37,15 +37,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const invoiceStatus = payload.invoice?.status;
-  const isRefundEvent =
-    payload.event === "invoice.refunded" ||
-    invoiceStatus === "refunded" ||
-    invoiceStatus === "partially_refunded";
-
-  if (isRefundEvent && payload.invoice?.id != null) {
+  if (payload.event === "invoice.refunded" && payload.invoice?.id != null) {
     try {
-      await markInvoiceRefunded(String(payload.invoice.id), payload.refund?.id);
+      console.info("[apipay]", {
+        event: "webhook_invoice_refunded",
+        invoiceId: payload.invoice.id,
+        refundId: payload.refund?.id ?? null,
+        refundStatus: payload.refund?.status ?? null,
+      });
+      await markInvoiceRefunded(String(payload.invoice.id), payload.refund);
     } catch (error) {
       console.error("[apipay] refund webhook error:", error);
       return NextResponse.json({ error: "processing_failed" }, { status: 500 });
@@ -53,7 +53,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (payload.event !== "invoice.status_changed" || payload.invoice?.status !== "paid") {
+  const paidEvent =
+    (payload.event === "invoice.status_changed" && payload.invoice?.status === "paid") ||
+    payload.event === "invoice.paid";
+  if (!paidEvent || payload.invoice?.id == null) {
     return NextResponse.json({ ok: true });
   }
 
@@ -65,8 +68,21 @@ export async function POST(request: Request) {
     const invoice = await getInvoice(payload.invoice.id);
     if (invoice.status !== "paid") return NextResponse.json({ ok: true });
 
-    const registration = await findRegistrationForInvoice(invoice);
-    if (registration) await confirmPayment(registration.id);
+    const registration = await findRegistrationForInvoice({
+      ...invoice,
+      external_order_id: invoice.external_order_id ?? payload.invoice.external_order_id,
+    });
+    if (!registration) {
+      console.info("[apipay]", { event: "webhook_paid_registration_not_found", invoiceId: invoice.id });
+      return NextResponse.json({ ok: true });
+    }
+    await confirmPayment(
+      registration.id,
+      undefined,
+      String(invoice.id),
+      Number(invoice.amount),
+      invoicePaidAt(invoice),
+    );
   } catch (error) {
     console.error("[apipay] webhook error:", error);
     return NextResponse.json({ error: "processing_failed" }, { status: 500 });

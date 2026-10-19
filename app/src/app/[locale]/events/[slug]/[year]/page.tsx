@@ -76,6 +76,8 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
   const paidCount = event.registrations.length;
   const heroStatCount = heroStats.length + (paidCount > 0 ? 1 : 0);
   const isMass = event.race.isMass;
+  const showMassRegister = isMass && event.status === "OPEN";
+  const showSidebar = !isMass || event.eventPartners.length > 0 || showMassRegister;
 
   const distancesWithProfile: DistanceWithProfile[] = event.distances.flatMap((d) => {
     const profileData = asProfileData(d.profileData);
@@ -192,7 +194,7 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
         </div>
 
         {/* Content grid */}
-        <div className={`grid gap-6 pb-16 lg:items-start lg:gap-8 ${isMass && event.eventPartners.length === 0 ? "" : "lg:grid-cols-[1fr_340px]"}`}>
+        <div className={`grid gap-6 pb-16 lg:items-start lg:gap-8 ${showSidebar ? "lg:grid-cols-[1fr_340px]" : ""}`}>
           {/* LEFT: Tabs + Challenge Leaderboard */}
           <div className="flex min-w-0 flex-col gap-6">
             {leaderboard && event.challengeWindowEnd && (
@@ -222,12 +224,16 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
               }))}
               resultsUrl={event.resultsUrl}
               itraResultsUrl={event.itraResultsUrl}
-              registrations={event.registrations.map((r) => ({
-                id: r.id,
-                bibNumber: r.bibNumber,
-                user: { firstName: r.user.firstName, lastName: r.user.lastName },
-                distance: r.distance ? { name: r.distance.name } : null,
-              }))}
+              registrations={event.registrations.map((r) => {
+                const distanceName =
+                  r.distance?.name ?? event.distances.find((d) => d.id === r.distanceId)?.name ?? null;
+                return {
+                  id: r.id,
+                  bibNumber: r.bibNumber,
+                  user: { firstName: r.user.firstName, lastName: r.user.lastName },
+                  distance: distanceName ? { name: distanceName } : null,
+                };
+              })}
               distances={distancesWithProfile}
               allDistances={event.distances.map((d) => ({ id: d.id, name: d.name, km: d.km }))}
               isMass={isMass}
@@ -235,8 +241,18 @@ function EventDetailView({ event, leaderboard }: { event: NonNullable<Awaited<Re
           </div>
 
           {/* RIGHT: sticky sidebar */}
-          {(!isMass || event.eventPartners.length > 0) && (
+          {showSidebar && (
           <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
+            {isMass && showMassRegister && (
+              <div className="rounded-[var(--radius-m)] border border-border bg-surface p-5">
+                <Link
+                  href={`/events/${event.race.slug}/${event.year}/register`}
+                  className="flex w-full items-center justify-center rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong"
+                >
+                  {t("registerCta")}
+                </Link>
+              </div>
+            )}
             {!isMass && (
               <>
             {/* 1. Distances + Register CTA */}

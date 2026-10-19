@@ -31,3 +31,28 @@ export function transferRefundAmount(registration: PayableRegistration): number 
 export function refundRequestAmount(registration: PayableRegistration, type: "SLOT" | "TRANSFER"): number {
   return type === "TRANSFER" ? transferRefundAmount(registration) : slotRefundAmount(registration);
 }
+
+export function displayRefundAmount(
+  stored: number | null | undefined,
+  registration: PayableRegistration,
+  type: "SLOT" | "TRANSFER",
+): number {
+  if (typeof stored === "number" && stored > 0) return stored;
+  return refundRequestAmount(registration, type);
+}
+
+export type TicketPaymentKind = "slot" | "slotAndTransfer" | "transfer";
+
+export function ticketPaymentSummary(
+  registration: PayableRegistration,
+  options?: { transferPaidSeparately?: boolean },
+): { kind: TicketPaymentKind; amount: number } {
+  if (registration.isTransferOnly) {
+    return { kind: "transfer", amount: transferRefundAmount(registration) };
+  }
+  const slot = slotRefundAmount(registration);
+  if (registration.includesTransfer && !options?.transferPaidSeparately) {
+    return { kind: "slotAndTransfer", amount: slot + transferRefundAmount(registration) };
+  }
+  return { kind: "slot", amount: slot };
+}

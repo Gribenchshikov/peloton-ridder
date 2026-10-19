@@ -68,7 +68,7 @@ export function KitPickupSearch({ regs }: { regs: Reg[] }) {
                     <div className="text-xs text-ink-faint">{reg.user.email}</div>
                   </td>
                   <td className="px-4 py-2.5 text-ink-soft">{reg.user.phone ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-ink-soft">{reg.distance?.name ?? "Трансфер"}</td>
+                  <td className="px-4 py-2.5 text-ink-soft">{reg.distance?.name ?? "—"}</td>
                 </tr>
               ))
             )}

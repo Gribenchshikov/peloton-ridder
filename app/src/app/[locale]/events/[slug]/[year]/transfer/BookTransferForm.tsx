@@ -6,7 +6,6 @@ import { bookTransferAction, type BookTransferState } from "./bookTransferAction
 const ERRORS: Record<string, string> = {
   unavailable: "Трансфер недоступен для этого забега.",
   closed: "Регистрация уже закрыта.",
-  already_booked: "У вас уже есть активная запись на этот старт.",
   invalid: "Ошибка запроса. Попробуйте снова.",
 };
 

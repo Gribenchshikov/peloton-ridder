@@ -6,10 +6,28 @@ type RefundLike = {
   status: string;
   requestedAt?: Date | string;
   resolvedAt?: Date | string | null;
+  invoiceId?: string | null;
 };
 
-export function hasConfirmedSlotRefund(requests: RefundLike[] | undefined) {
-  return Boolean(requests?.some((r) => r.type === "SLOT" && r.status === "CONFIRMED"));
+export function refundMatchesCurrentInvoice(
+  request: { invoiceId?: string | null },
+  invoiceId: string | null | undefined,
+  reregistrationCount = 0,
+) {
+  if (request.invoiceId) return request.invoiceId === invoiceId;
+  return Boolean(invoiceId) && reregistrationCount === 0;
+}
+
+export function hasConfirmedSlotRefund(
+  requests: RefundLike[] | undefined,
+  opts?: { invoiceId?: string | null; reregistrationCount?: number },
+) {
+  const confirmed = requests?.filter((r) => r.type === "SLOT" && r.status === "CONFIRMED") ?? [];
+  if (confirmed.length === 0) return false;
+  if (!opts) return true;
+  return confirmed.some((r) =>
+    refundMatchesCurrentInvoice(r, opts.invoiceId, opts.reregistrationCount ?? 0),
+  );
 }
 
 export function hasConfirmedTransferRefund(requests: RefundLike[] | undefined) {
@@ -18,7 +36,19 @@ export function hasConfirmedTransferRefund(requests: RefundLike[] | undefined) {
 
 export type DisplayTransferStatus = "YES" | "REFUNDED" | "NONE";
 
-/** Текущий трансфер важнее старой заявки: после повторной оплаты снова «Да». */
+/** Трансфер куплен вместе со слотом или отдельной оплатой. */
+export function isTransferPassengerRegistration(reg: {
+  includesTransfer: boolean;
+  isTransferOnly: boolean;
+  refundRequests?: { type: string }[];
+}) {
+  return (
+    reg.isTransferOnly ||
+    reg.includesTransfer ||
+    Boolean(reg.refundRequests?.some((req) => req.type === "TRANSFER"))
+  );
+}
+
 export function displayTransferStatus(
   hasTransfer: boolean,
   requests: RefundLike[] | undefined,
@@ -28,11 +58,36 @@ export function displayTransferStatus(
   return "NONE";
 }
 
+/** Активный оплаченный трансфер, по которому можно отметить посадку. */
+export function canBoardTransfer(reg: {
+  status: string;
+  includesTransfer: boolean;
+}): boolean {
+  return reg.status === "PAID" && reg.includesTransfer;
+}
+
+export const TRANSFER_REFUNDED_BOARDING_MESSAGE =
+  "Был произведён возврат оплаты за трансфер";
+
+export function isTransferRefunded(reg: {
+  status: string;
+  includesTransfer: boolean;
+  isTransferOnly: boolean;
+  refundRequests?: RefundLike[];
+}): boolean {
+  if (canBoardTransfer(reg)) return false;
+  return (
+    hasConfirmedTransferRefund(reg.refundRequests) ||
+    (reg.isTransferOnly && reg.status === "CANCELLED")
+  );
+}
+
 export function displayRegistrationStatus(
   status: RegistrationStatusValue,
   requests: RefundLike[] | undefined,
+  opts?: { invoiceId?: string | null; reregistrationCount?: number },
 ): DisplayRegistrationStatus {
-  if (status === "CANCELLED" && hasConfirmedSlotRefund(requests)) return "REFUNDED";
+  if (status === "CANCELLED" && hasConfirmedSlotRefund(requests, opts)) return "REFUNDED";
   return status;
 }
 

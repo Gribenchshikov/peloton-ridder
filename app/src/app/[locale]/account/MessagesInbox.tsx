@@ -47,6 +47,16 @@ export function MessagesInbox({ messages }: { messages: MessageRow[] }) {
                 maximumFractionDigits: 0,
               })
             : "";
+        const kind =
+          message.payload.kind === "slot" ||
+          message.payload.kind === "slotAndTransfer" ||
+          message.payload.kind === "transfer"
+            ? t(`messagePaymentKind_${message.payload.kind}`)
+            : "";
+        const bodyKey =
+          message.type === "PAYMENT" && amount && kind
+            ? "message_PAYMENT_body_details"
+            : `message_${message.type}_body`;
         const unread = message.readAt == null;
         return (
           <li
@@ -64,9 +74,10 @@ export function MessagesInbox({ messages }: { messages: MessageRow[] }) {
               )}
             </div>
             <p className="mt-1 text-sm leading-6 text-ink-soft">
-              {t(`message_${message.type}_body`, {
+              {t(bodyKey, {
                 race: message.payload.race,
                 amount,
+                kind,
                 applicant: message.payload.applicant ?? "",
               })}
             </p>

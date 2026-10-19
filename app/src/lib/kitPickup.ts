@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { KitLookupQuery } from "@/lib/ticketCode";
+import { canBoardTransfer, isTransferRefunded } from "@/lib/registrationStatus";
 
 const kitRegistrationSelect = {
   id: true,
@@ -14,6 +15,7 @@ const kitRegistrationSelect = {
   event: { select: { year: true, race: { select: { name: true } } } },
   distance: { select: { name: true, km: true } },
   registrationMerch: { select: { size: true, merchItem: { select: { name: true, requiresSize: true } } } },
+  refundRequests: { select: { type: true, status: true } },
 } as const;
 
 type KitRegistration = {
@@ -34,6 +36,7 @@ type KitRegistration = {
   event: { year: number; race: { name: string } };
   distance: { name: string; km: number } | null;
   registrationMerch: { size: string | null; merchItem: { name: string; requiresSize: boolean } }[];
+  refundRequests: { type: string; status: string }[];
 };
 
 export async function requireKitScanner(): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
@@ -52,14 +55,16 @@ export async function requireKitScanner(): Promise<{ ok: true } | { ok: false; s
 }
 
 export function toKitScanPayload(reg: KitRegistration) {
+  const transferRefunded = isTransferRefunded(reg);
   return {
     registrationId: reg.id,
     status: reg.status,
     bibNumber: reg.bibNumber,
     kitPickedUpAt: reg.kitPickedUpAt,
     transferUsedAt: reg.transferUsedAt,
-    includesTransfer: reg.includesTransfer || reg.isTransferOnly,
+    includesTransfer: canBoardTransfer(reg),
     isTransferOnly: reg.isTransferOnly,
+    transferRefunded,
     participant: {
       firstName: reg.user.firstName,
       lastName: reg.user.lastName,
@@ -89,20 +94,26 @@ export async function findRegistrationByQrToken(token: string) {
     where: { id: registrationId },
     select: kitRegistrationSelect,
   });
-  return reg ?? { error: "not_found" as const };
+  if (!reg) return { error: "not_found" as const };
+  if (reg.status === "PAID") return reg;
+  if (reg.isTransferOnly && reg.status === "CANCELLED") return reg;
+  return { error: "not_found" as const };
 }
 
 export async function findRegistrationForKitLookup(query: KitLookupQuery, eventId: string | null) {
   if (query.kind === "code") {
     return prisma.registration.findFirst({
-      where: { id: { endsWith: query.suffix } },
+      where: {
+        id: { endsWith: query.suffix },
+        OR: [{ status: "PAID" }, { status: "CANCELLED", isTransferOnly: true }],
+      },
       orderBy: { createdAt: "desc" },
       select: kitRegistrationSelect,
     });
   }
   if (!eventId) return null;
   return prisma.registration.findFirst({
-    where: { eventId, bibNumber: query.bibNumber },
+    where: { eventId, bibNumber: query.bibNumber, status: "PAID", isTransferOnly: false },
     orderBy: { createdAt: "desc" },
     select: kitRegistrationSelect,
   });

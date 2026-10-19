@@ -112,14 +112,12 @@ export function AdminEventsTable({ events }: { events: EventRow[] }) {
                     <td className="px-4 py-2.5 text-ink-faint">{tStatus(event.status)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <div className="flex items-center justify-end gap-4">
-                        {!event.race.isMass && (
-                          <Link
-                            href={`/admin/registrations/${event.race.slug}/${event.year}`}
-                            className="text-sm font-semibold text-ink-soft hover:text-ink"
-                          >
-                            {t("viewRegistrationsCta")}
-                          </Link>
-                        )}
+                        <Link
+                          href={`/admin/registrations/${event.race.slug}/${event.year}`}
+                          className="text-sm font-semibold text-ink-soft hover:text-ink"
+                        >
+                          {t("viewRegistrationsCta")}
+                        </Link>
                         <Link
                           href={`/events/${event.race.slug}/${event.year}`}
                           title={t("viewOnSiteCta")}

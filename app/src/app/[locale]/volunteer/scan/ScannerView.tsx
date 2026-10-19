@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, FormEvent } from "react";
 import jsQR from "jsqr";
+import { TRANSFER_REFUNDED_BOARDING_MESSAGE } from "@/lib/registrationStatus";
 import { parseKitLookupQuery } from "@/lib/ticketCode";
 
 type ScanResult = {
@@ -12,6 +13,7 @@ type ScanResult = {
   transferUsedAt: string | null;
   includesTransfer: boolean;
   isTransferOnly: boolean;
+  transferRefunded?: boolean;
   participant: {
     firstName: string;
     lastName: string;
@@ -33,6 +35,8 @@ export function ScannerView({ events }: { events: EventOption[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const cameraGenRef = useRef(0);
+  const handleTokenRef = useRef<(token: string) => Promise<void>>(async () => {});
 
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -47,8 +51,14 @@ export function ScannerView({ events }: { events: EventOption[] }) {
   const [manualLoading, setManualLoading] = useState(false);
 
   const stopCamera = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraGenRef.current += 1;
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
   const handleToken = useCallback(async (token: string) => {
@@ -56,6 +66,8 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     stopCamera();
     setFetchError(null);
     setScanResult(null);
+    setKitState("idle");
+    setTransferState("idle");
 
     const res = await fetch(`/api/scan?token=${encodeURIComponent(token)}`);
     if (!res.ok) {
@@ -66,8 +78,12 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     const data: ScanResult = await res.json();
     setScanResult(data);
   }, [stopCamera]);
+  handleTokenRef.current = handleToken;
 
   const startCamera = useCallback(async () => {
+    const gen = ++cameraGenRef.current;
+    const stillActive = () => gen === cameraGenRef.current;
+
     setScanResult(null);
     setFetchError(null);
     setKitState("idle");
@@ -77,51 +93,87 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     setManualQuery("");
     setManualError(null);
 
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error("unsupported");
+    const openStream = async () => {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error("unsupported");
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+        });
+      } catch {
+        return await navigator.mediaDevices.getUserMedia({ video: true });
       }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-      }).catch(() => navigator.mediaDevices.getUserMedia({ video: true }));
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+    };
+
+    try {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      if (!stillActive()) return;
+
+      let stream: MediaStream;
+      try {
+        stream = await openStream();
+      } catch (error) {
+        const name = error instanceof DOMException ? error.name : "";
+        if (name !== "NotReadableError" && name !== "AbortError") throw error;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        if (!stillActive()) return;
+        stream = await openStream();
+      }
+      if (!stillActive()) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
       }
 
+      streamRef.current = stream;
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        video.muted = true;
+        video.playsInline = true;
+        try {
+          await video.play();
+        } catch {
+          // Автозапуск без жеста может быть запрещён — поток уже идёт.
+        }
+      }
+      if (!stillActive()) return;
+
       const tick = () => {
-        const video = videoRef.current;
+        if (!stillActive()) return;
+        const currentVideo = videoRef.current;
         const canvas = canvasRef.current;
-        if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        if (!currentVideo || !canvas || currentVideo.readyState !== currentVideo.HAVE_ENOUGH_DATA) {
           rafRef.current = requestAnimationFrame(tick);
           return;
         }
         const ctx = canvas.getContext("2d");
-        if (!ctx) { rafRef.current = requestAnimationFrame(tick); return; }
+        if (!ctx) {
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.width = currentVideo.videoWidth;
+        canvas.height = currentVideo.videoHeight;
+        ctx.drawImage(currentVideo, 0, 0, canvas.width, canvas.height);
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
 
         if (code && code.data.startsWith("RIDDER:")) {
-          handleToken(code.data);
+          void handleTokenRef.current(code.data);
           return;
         }
         rafRef.current = requestAnimationFrame(tick);
       };
       rafRef.current = requestAnimationFrame(tick);
     } catch {
+      if (!stillActive()) return;
       setCameraError("Не удалось открыть камеру. Убедитесь, что сайт открыт по HTTPS и доступ к камере разрешён.");
       setScanning(false);
     }
-  }, [handleToken]);
+  }, []);
 
   useEffect(() => {
-    startCamera();
+    void startCamera();
     return () => stopCamera();
   }, [startCamera, stopCamera]);
 
@@ -151,6 +203,14 @@ export function ScannerView({ events }: { events: EventOption[] }) {
     if (res.ok) {
       setTransferState("done");
     } else {
+      const body = await res.json().catch(() => ({}));
+      if (body.error === "transfer_refunded") {
+        setScanResult((prev) =>
+          prev ? { ...prev, transferRefunded: true, includesTransfer: false } : prev,
+        );
+        setTransferState("idle");
+        return;
+      }
       setTransferState("error");
     }
   };
@@ -196,23 +256,27 @@ export function ScannerView({ events }: { events: EventOption[] }) {
 
   const alreadyPickedUp = scanResult?.kitPickedUpAt != null;
   const alreadyBoarded = scanResult?.transferUsedAt != null;
-  const notPaid = scanResult && scanResult.status !== "PAID";
+  const transferRefunded = Boolean(scanResult?.transferRefunded);
+  const notPaid = scanResult && scanResult.status !== "PAID" && !transferRefunded;
+  const canIssueKit = Boolean(scanResult && !notPaid && !scanResult.isTransferOnly);
+  const canShowBoarding = Boolean(scanResult?.includesTransfer && !transferRefunded);
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-10">
       <h1 className="font-display text-xl font-bold text-ink">Выдача стартового набора</h1>
-      <p className="mt-1 text-sm text-ink-soft">Направьте камеру на QR-код участника</p>
+      <p className="mt-1 text-sm text-ink-soft">Направьте камеру на QR-код участника или билета на трансфер</p>
 
-      {/* Camera view */}
-      {scanning && !cameraError && (
-        <div className="relative mt-6 overflow-hidden rounded-[var(--radius-m)] border border-border bg-black">
-          <video ref={videoRef} playsInline muted className="w-full" />
-          {/* Targeting reticle */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="h-48 w-48 rounded-lg border-2 border-white/60 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
-          </div>
+      {/* Camera view — video always mounted so the ref is ready on first open */}
+      <div
+        className={`relative mt-6 overflow-hidden rounded-[var(--radius-m)] border border-border bg-black ${
+          scanning && !cameraError ? "" : "hidden"
+        }`}
+      >
+        <video ref={videoRef} playsInline muted autoPlay className="w-full" />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-48 w-48 rounded-lg border-2 border-white/60 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
         </div>
-      )}
+      </div>
 
       {cameraError && (
         <div className="mt-6 rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 p-4 text-sm text-danger">
@@ -288,7 +352,7 @@ export function ScannerView({ events }: { events: EventOption[] }) {
             </div>
           )}
 
-          {alreadyPickedUp && (
+          {alreadyPickedUp && !scanResult.isTransferOnly && (
             <div className="rounded-[var(--radius-m)] border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
               <p className="font-semibold text-amber-700 dark:text-amber-300">Набор уже выдан</p>
               <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
@@ -299,15 +363,32 @@ export function ScannerView({ events }: { events: EventOption[] }) {
             </div>
           )}
 
+          {scanResult.isTransferOnly && !transferRefunded && (
+            <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-4">
+              <p className="font-semibold text-spruce">Билет на трансфер</p>
+            </div>
+          )}
+
+          {transferRefunded && (
+            <div className="rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 p-4">
+              <p className="font-semibold text-danger">{TRANSFER_REFUNDED_BOARDING_MESSAGE}</p>
+              <p className="mt-0.5 text-xs text-danger/80">Посадка невозможна</p>
+            </div>
+          )}
+
           {/* Participant card */}
           <div className="rounded-[var(--radius-m)] border border-border bg-surface">
             {/* Bib header */}
             <div className="flex items-center gap-4 border-b border-border px-5 py-4">
-              {scanResult.bibNumber != null && (
+              {scanResult.bibNumber != null ? (
                 <span className="font-display text-5xl font-extrabold text-ember">
                   #{scanResult.bibNumber}
                 </span>
-              )}
+              ) : scanResult.isTransferOnly ? (
+                <span className="rounded-full bg-spruce/10 px-3 py-1 text-sm font-bold uppercase tracking-wide text-spruce">
+                  Трансфер
+                </span>
+              ) : null}
               <div>
                 <p className="font-display text-lg font-bold text-ink">
                   {scanResult.participant.firstName} {scanResult.participant.lastName}
@@ -344,10 +425,10 @@ export function ScannerView({ events }: { events: EventOption[] }) {
           </div>
 
           {/* Actions */}
-          {!notPaid && (
+          {(canIssueKit || canShowBoarding) && (
             <div className="flex flex-col gap-3">
               {/* Kit pickup */}
-              {!scanResult.isTransferOnly && (
+              {canIssueKit && (
                 <>
                   {kitState === "done" ? (
                     <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-4 text-center">
@@ -375,7 +456,7 @@ export function ScannerView({ events }: { events: EventOption[] }) {
               )}
 
               {/* Transfer boarding */}
-              {scanResult.includesTransfer && (
+              {canShowBoarding && (
                 <>
                   {transferState === "done" ? (
                     <div className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-4 text-center">

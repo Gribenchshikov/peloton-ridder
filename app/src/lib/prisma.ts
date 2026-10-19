@@ -5,17 +5,31 @@ export function isUniqueConstraintError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
-// Singleton через globalThis — иначе в dev-режиме Next.js (hot reload) плодятся
-// новые подключения к базе на каждое сохранение файла.
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+// После `prisma generate` список полей меняется, а HMR Next оставляет старый
+// PrismaClient на globalThis — тогда select по новым колонкам падает в runtime.
+const SCHEMA_STAMP = Object.values(Prisma.RegistrationScalarFieldEnum).join(",");
+
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+  prismaSchemaStamp?: string;
+};
 
 function createClient() {
   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+function getClient() {
+  if (globalForPrisma.prisma && globalForPrisma.prismaSchemaStamp === SCHEMA_STAMP) {
+    return globalForPrisma.prisma;
+  }
+  if (globalForPrisma.prisma) {
+    void globalForPrisma.prisma.$disconnect();
+  }
+  const client = createClient();
+  globalForPrisma.prisma = client;
+  globalForPrisma.prismaSchemaStamp = SCHEMA_STAMP;
+  return client;
 }
+
+export const prisma = getClient();

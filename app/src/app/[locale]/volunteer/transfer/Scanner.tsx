@@ -17,6 +17,7 @@ type ScanState =
   | { phase: "loading" }
   | { phase: "error"; message: string }
   | { phase: "info"; reg: RegInfo }
+  | { phase: "refunded"; reg: RegInfo; message: string }
   | { phase: "used"; reg: RegInfo; usedAt: Date };
 
 export function Scanner() {
@@ -54,6 +55,10 @@ export function Scanner() {
               if (!mounted) return;
               if (res.kind === "error") {
                 setState({ phase: "error", message: res.message });
+                return;
+              }
+              if (res.kind === "refunded") {
+                setState({ phase: "refunded", reg: res, message: res.message });
                 return;
               }
               if (res.transferUsedAt) {
@@ -144,6 +149,27 @@ export function Scanner() {
             className="mt-3 rounded-[var(--radius-s)] border border-border px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-2"
           >
             Сканировать снова
+          </button>
+        </div>
+      )}
+
+      {/* Refunded transfer — boarding forbidden */}
+      {state.phase === "refunded" && (
+        <div className="rounded-[var(--radius-m)] border border-danger/30 bg-danger/5 p-5">
+          <p className="text-lg font-bold text-ink">{state.reg.name}</p>
+          {state.reg.bibNumber && (
+            <p className="mt-0.5 font-mono text-2xl font-bold text-ember">#{state.reg.bibNumber}</p>
+          )}
+          <div className="mt-4 rounded-[var(--radius-s)] border border-danger/30 bg-surface p-3">
+            <p className="text-sm font-semibold text-danger">{state.message}</p>
+            <p className="mt-0.5 text-xs text-danger/80">Посадка невозможна</p>
+          </div>
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-4 w-full rounded-[var(--radius-s)] border border-border px-5 py-2.5 text-sm font-semibold text-ink hover:bg-surface-2"
+          >
+            Сканировать следующего
           </button>
         </div>
       )}

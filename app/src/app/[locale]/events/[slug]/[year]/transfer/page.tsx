@@ -6,8 +6,9 @@ import { Icon } from "@/components/IconSprite";
 import { getEventForRegistration } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { formatKzt } from "@/lib/currency";
-import { useFormatter } from "next-intl";
+import { getFormatter } from "next-intl/server";
 import { BookTransferForm } from "./BookTransferForm";
+import { hasPaidTransferWhere } from "@/lib/transferReservation";
 
 export default async function TransferPage({
   params,
@@ -15,7 +16,11 @@ export default async function TransferPage({
   params: Promise<{ locale: string; slug: string; year: string }>;
 }) {
   const { locale, slug, year } = await params;
-  const [session, event] = await Promise.all([auth(), getEventForRegistration(slug, Number(year))]);
+  const [session, event, format] = await Promise.all([
+    auth(),
+    getEventForRegistration(slug, Number(year)),
+    getFormatter({ locale }),
+  ]);
 
   if (!session?.user?.id) {
     return redirect({
@@ -31,14 +36,12 @@ export default async function TransferPage({
     return redirect({ href: `/events/${slug}/${year}`, locale });
   }
 
-  // Проверяем есть ли уже активная запись
-  const existing = await prisma.registration.findFirst({
-    where: {
-      userId: session.user.id,
-      eventId: event.id,
-      status: { in: ["RESERVED", "PAID"] },
-    },
-  });
+  const alreadyHasTransfer = Boolean(
+    await prisma.registration.findFirst({
+      where: hasPaidTransferWhere(session.user.id, event.id),
+      select: { id: true },
+    }),
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-16">
@@ -56,51 +59,32 @@ export default async function TransferPage({
         </h1>
       </div>
 
-      {existing?.isTransferOnly || existing?.includesTransfer ? (
+      {alreadyHasTransfer && (
         <section className="rounded-[var(--radius-m)] border border-spruce/30 bg-spruce/5 p-6">
           <p className="font-semibold text-spruce">✓ Трансфер уже оформлен</p>
-          <p className="mt-1 text-sm text-ink-soft">
-            {existing.isTransferOnly
-              ? "Вы заказали трансфер без участия в забеге."
-              : "Трансфер включён в вашу регистрацию."}
-          </p>
-          <Link
-            href={`/events/${event.race.slug}/${event.year}`}
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-ember hover:underline"
-          >
-            К странице забега →
-          </Link>
-        </section>
-      ) : (
-        <section className="rounded-[var(--radius-m)] border border-border bg-surface p-6">
-          <h2 className="font-display text-base font-bold text-ink">Детали трансфера</h2>
-          <dl className="mt-4 flex flex-col gap-3 text-sm">
-            <div className="flex justify-between gap-4">
-              <dt className="text-ink-faint">Маршрут</dt>
-              <dd className="text-right font-semibold text-ink">
-                {event.location
-                  ? `${event.location} → место старта и обратно`
-                  : "Риддер → место старта и обратно"}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-4 border-t border-border pt-3">
-              <dt className="font-semibold text-ink">Стоимость</dt>
-              <dd className="text-right font-bold text-ink">
-                <TransferPrice price={event.transferPrice} />
-              </dd>
-            </div>
-          </dl>
-          <p className="mt-4 text-xs text-ink-faint">
-            Место в трансфере можно заказать отдельно — без регистрации на дистанцию.
-          </p>
-          <BookTransferForm eventId={event.id} locale={locale} />
+          <p className="mt-1 text-sm text-ink-soft">Можно оформить ещё одно место.</p>
         </section>
       )}
+
+      <section className="rounded-[var(--radius-m)] border border-border bg-surface p-6">
+        <h2 className="font-display text-base font-bold text-ink">Детали трансфера</h2>
+        <dl className="mt-4 flex flex-col gap-3 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-ink-faint">Маршрут</dt>
+            <dd className="text-right font-semibold text-ink">
+              {`Риддер → ${event.location || "место старта"} и обратно`}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4 border-t border-border pt-3">
+            <dt className="font-semibold text-ink">Стоимость</dt>
+            <dd className="text-right font-bold text-ink">{formatKzt(format, event.transferPrice)}</dd>
+          </div>
+        </dl>
+        <p className="mt-4 text-xs text-ink-faint">
+          Место в трансфере можно заказать отдельно — без регистрации на дистанцию.
+        </p>
+        <BookTransferForm eventId={event.id} locale={locale} />
+      </section>
     </main>
   );
-}
-
-function TransferPrice({ price }: { price: number }) {
-  const format = useFormatter();
-  return <>{formatKzt(format, price)}</>;
 }

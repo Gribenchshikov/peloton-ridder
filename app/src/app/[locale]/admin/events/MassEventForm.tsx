@@ -69,7 +69,7 @@ export function MassEventForm(props: Props) {
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
       <p className="text-sm text-ink-soft">
-        Культмассовое мероприятие без регистрации, результатов и финишного протокола. На странице — описание, фото и видео.
+        Культмассовое мероприятие: участники регистрируются с бронью места. На странице — описание, фото, видео и кнопка регистрации.
       </p>
 
       {props.mode === "create" && massRaces.length > 0 && (

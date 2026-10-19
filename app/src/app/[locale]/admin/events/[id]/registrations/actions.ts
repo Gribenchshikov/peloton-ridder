@@ -8,14 +8,19 @@ import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
 import {
   applySlotRefundToRegistration,
+  apipayAccepted,
+  canApplyLocalRefund,
   CLEARED_PAYMENT_FIELDS,
   payoutRegistrationRefund,
   refundPaidRegistrationOnAdminCancel,
+  refundTransferByAdmin,
 } from "@/lib/refundPayout";
 import { notifyFromRegistration } from "@/lib/userMessages";
+import { capacityTakenWhere } from "@/lib/slotOccupancy";
+import { canBoardTransfer } from "@/lib/registrationStatus";
 
 export type RegistrationAdminActionState = {
-  error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid";
+  error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid" | "payout_failed";
   success?: "cancelled" | "distance_changed" | "permission_changed" | "restored";
 };
 
@@ -73,7 +78,13 @@ export async function cancelRegistrationAction(
   const outcome = await prisma.$transaction(async (tx) => {
     const registration = await tx.registration.findUnique({
       where: { id: registrationId },
-      select: { eventId: true, distanceId: true, status: true },
+      select: {
+        eventId: true,
+        distanceId: true,
+        status: true,
+        includesTransfer: true,
+        isTransferOnly: true,
+      },
     });
     if (!registration || registration.eventId !== eventId) return { error: "not_found" as const };
 
@@ -81,36 +92,49 @@ export async function cancelRegistrationAction(
     const hasResults = await tx.result.findFirst({ where: { eventId }, select: { id: true } });
     if (hasResults) return { error: "has_results" as const };
     if (!isActiveStatus(registration.status)) return { error: "inactive" as const };
+    if (registration.isTransferOnly) return { error: "inactive" as const };
 
+    const wasPaid = registration.status === "PAID";
     await tx.registration.update({
       where: { id: registrationId },
-      data: {
-        status: "CANCELLED",
-        reservedUntil: null,
-        bibNumber: null,
-        adminComment: parsed.data.adminComment,
-        allowReregistration: parsed.data.allowReregistration,
-      },
+      data: wasPaid
+        ? {
+            adminComment: parsed.data.adminComment,
+            allowReregistration: parsed.data.allowReregistration,
+          }
+        : {
+            status: "CANCELLED",
+            reservedUntil: null,
+            bibNumber: null,
+            adminComment: parsed.data.adminComment,
+            allowReregistration: parsed.data.allowReregistration,
+          },
     });
-    await reassignPaidBibNumbers(tx, eventId);
+    if (!wasPaid) await reassignPaidBibNumbers(tx, eventId);
     return {
       success: "cancelled" as const,
       distanceId: registration.distanceId,
-      wasPaid: registration.status === "PAID",
+      wasPaid,
     };
   });
 
   if ("error" in outcome) return outcome;
+  if (outcome.wasPaid) {
+    try {
+      const payout = await refundPaidRegistrationOnAdminCancel(registrationId);
+      if (!canApplyLocalRefund(payout)) {
+        revalidateRegistrationPages();
+        return { error: "payout_failed" };
+      }
+    } catch (error) {
+      console.error("[refund] admin cancel payout failed:", error);
+      revalidateRegistrationPages();
+      return { error: "payout_failed" };
+    }
+  }
   await notifyFromRegistration(registrationId, "ADMIN_CANCEL");
   if (parsed.data.allowReregistration) {
     await notifyFromRegistration(registrationId, "REREGISTRATION_ALLOWED");
-  }
-  if (outcome.wasPaid) {
-    try {
-      await refundPaidRegistrationOnAdminCancel(registrationId);
-    } catch (error) {
-      console.error("[refund] admin cancel payout failed:", error);
-    }
   }
   if (outcome.distanceId) void notifyWaitlistForDistance(outcome.distanceId);
   revalidateRegistrationPages();
@@ -141,6 +165,11 @@ export async function restoreRegistrationAction(
       select: { eventId: true, distanceId: true, status: true },
     });
     if (!registration || registration.eventId !== eventId) return { error: "not_found" as const };
+    const eventMeta = await tx.event.findUnique({
+      where: { id: eventId },
+      select: { race: { select: { isMass: true } } },
+    });
+    const holdsReservation = Boolean(eventMeta?.race.isMass);
 
     if (registration.distanceId) await lockDistances(tx, [registration.distanceId]);
     const hasResults = await tx.result.findFirst({ where: { eventId }, select: { id: true } });
@@ -166,10 +195,8 @@ export async function restoreRegistrationAction(
       where: {
         distanceId: registration.distanceId,
         id: { not: registrationId },
-        OR: [
-          { status: "PAID" },
-          { status: "RESERVED", reservedUntil: { gt: new Date() } },
-        ],
+        isTransferOnly: false,
+        ...capacityTakenWhere(holdsReservation),
       },
     }) : 0;
     if (distance && distance.bibRangeStart !== null && distance.bibRangeEnd !== null) {
@@ -181,7 +208,7 @@ export async function restoreRegistrationAction(
       where: { id: registrationId },
       data: {
         status: paid ? "PAID" : "RESERVED",
-        reservedUntil: paid ? null : new Date(Date.now() + RESERVATION_TTL_MS),
+        reservedUntil: paid || holdsReservation ? null : new Date(Date.now() + RESERVATION_TTL_MS),
         bibNumber: null,
         adminComment: parsed.data.adminComment,
         allowReregistration: false,
@@ -235,14 +262,16 @@ export async function changeRegistrationDistanceAction(
     if (hasResults) return { error: "has_results" as const };
     if (!isActiveStatus(registration.status)) return { error: "inactive" as const };
 
+    const eventMeta = await tx.event.findUnique({
+      where: { id: eventId },
+      select: { race: { select: { isMass: true } } },
+    });
     const activeOnTarget = await tx.registration.count({
       where: {
         distanceId: parsed.data.distanceId,
         id: { not: registrationId },
-        OR: [
-          { status: "PAID" },
-          { status: "RESERVED", reservedUntil: { gt: new Date() } },
-        ],
+        isTransferOnly: false,
+        ...capacityTakenWhere(Boolean(eventMeta?.race.isMass)),
       },
     });
     if (targetDistance.bibRangeStart !== null && targetDistance.bibRangeEnd !== null) {
@@ -312,6 +341,9 @@ export async function confirmRefundAction(
     select: {
       status: true,
       type: true,
+      payoutStatus: true,
+      apipayRefundId: true,
+      amount: true,
       registration: {
         select: {
           id: true,
@@ -327,15 +359,68 @@ export async function confirmRefundAction(
   if (!refund || refund.registration.eventId !== eventId) return { error: "not_found" };
   if (refund.status !== "PENDING") return { error: "already_resolved" };
 
-  const payout = await payoutRegistrationRefund(refund.registration.id, refund.type);
+  const alreadyAccepted = apipayAccepted({
+    amount: refund.amount ?? 0,
+    payoutStatus: (refund.payoutStatus ?? "skipped") as
+      | "skipped"
+      | "pending"
+      | "processing"
+      | "failed"
+      | "completed",
+    apipayRefundId: refund.apipayRefundId,
+  });
+
+  let payout = alreadyAccepted
+    ? {
+        amount: refund.amount ?? 0,
+        payoutStatus: (refund.payoutStatus ?? "pending") as
+          | "skipped"
+          | "pending"
+          | "processing"
+          | "failed"
+          | "completed",
+        apipayRefundId: refund.apipayRefundId,
+      }
+    : null;
+
+  if (!payout) {
+    const claimed = await prisma.refundRequest.updateMany({
+      where: {
+        id: refundRequestId,
+        status: "PENDING",
+        OR: [{ payoutStatus: null }, { payoutStatus: { in: ["skipped", "failed"] } }],
+      },
+      data: { payoutStatus: "processing" },
+    });
+    if (claimed.count === 0) {
+      return { error: "payout_failed" };
+    }
+    payout = await payoutRegistrationRefund(
+      refund.registration.id,
+      refund.type,
+      refund.amount,
+      refundRequestId,
+    );
+  }
   await prisma.refundRequest.update({
     where: { id: refundRequestId },
     data: {
-      amount: payout.amount,
+      amount: payout.amount || refund.amount,
       apipayRefundId: payout.apipayRefundId,
       payoutStatus: payout.payoutStatus,
     },
   });
+
+  if (!apipayAccepted(payout)) {
+    console.error("[apipay] refund not accepted by ApiPay; local request stays pending", {
+      refundRequestId,
+      type: refund.type,
+      payoutStatus: payout.payoutStatus,
+      apipayRefundId: payout.apipayRefundId,
+      amount: payout.amount,
+    });
+    return { error: "payout_failed" };
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.refundRequest.update({
@@ -353,13 +438,9 @@ export async function confirmRefundAction(
       });
       const remaining = await tx.registration.findUnique({
         where: { id: refund.registration.id },
-        select: { isTransferOnly: true, distanceId: true, status: true },
+        select: { isTransferOnly: true, status: true },
       });
-      if (
-        remaining &&
-        remaining.status !== "CANCELLED" &&
-        (remaining.isTransferOnly || !remaining.distanceId)
-      ) {
+      if (remaining?.isTransferOnly && remaining.status !== "CANCELLED") {
         await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer: false });
         await reassignPaidBibNumbers(tx, eventId);
       }
@@ -370,18 +451,12 @@ export async function confirmRefundAction(
     void notifyWaitlistForDistance(refund.registration.distanceId);
   }
 
-  if (payout.amount > 0 && (payout.payoutStatus === "pending" || payout.payoutStatus === "completed")) {
+  if (payout.amount > 0) {
     await notifyFromRegistration(
       refund.registration.id,
       refund.type === "TRANSFER" ? "REFUND_TRANSFER" : "REFUND_SLOT",
       { amount: payout.amount },
     );
-  } else if (payout.payoutStatus === "skipped" || payout.payoutStatus === "failed") {
-    console.error("[apipay] refund confirmed locally but payout did not reach ApiPay", {
-      refundRequestId,
-      type: refund.type,
-      payout,
-    });
   }
 
   revalidateRegistrationPages();
@@ -398,9 +473,10 @@ export async function toggleKitIssuedAction(
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    select: { eventId: true },
+    select: { eventId: true, status: true, isTransferOnly: true },
   });
   if (!reg || reg.eventId !== eventId) return { error: "not_found" };
+  if (reg.status !== "PAID" || reg.isTransferOnly) return { error: "inactive" };
 
   await prisma.registration.update({
     where: { id: registrationId },
@@ -409,6 +485,33 @@ export async function toggleKitIssuedAction(
 
   revalidateRegistrationPages();
   return {};
+}
+
+export async function adminRefundTransferAction(
+  registrationId: string,
+  eventId: string,
+  _prevState: { error?: string; success?: boolean } = {},
+  _formData?: FormData,
+): Promise<{ error?: string; success?: boolean }> {
+  void _prevState;
+  void _formData;
+  const adminId = await requireAdminId();
+  if (!adminId) return { error: "unauthorized" };
+
+  const registration = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    select: { eventId: true, includesTransfer: true, isTransferOnly: true, status: true },
+  });
+  if (!registration || registration.eventId !== eventId) return { error: "not_found" };
+  if (registration.status !== "PAID" && registration.status !== "CANCELLED") return { error: "inactive" };
+  if (!registration.includesTransfer && !registration.isTransferOnly) return { error: "inactive" };
+
+  const payout = await refundTransferByAdmin(registrationId);
+  if (!apipayAccepted(payout) && payout.payoutStatus !== "skipped") {
+    return { error: "payout_failed" };
+  }
+  revalidateRegistrationPages();
+  return { success: true };
 }
 
 export async function toggleTransferBoardedAction(
@@ -421,9 +524,16 @@ export async function toggleTransferBoardedAction(
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    select: { eventId: true },
+    select: {
+      eventId: true,
+      status: true,
+      includesTransfer: true,
+      isTransferOnly: true,
+      refundRequests: { select: { type: true, status: true } },
+    },
   });
   if (!reg || reg.eventId !== eventId) return { error: "not_found" };
+  if (boarded && !canBoardTransfer(reg)) return { error: "transfer_refunded" };
 
   await prisma.registration.update({
     where: { id: registrationId },

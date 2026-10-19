@@ -3,7 +3,9 @@ import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { getRegistrationForPayment } from "@/lib/queries";
 import { isTestPaymentModeEnabled } from "@/lib/kaspi";
-import { ensureQrInvoice, isApipayConfigured, type PaymentInvoiceView } from "@/lib/apipay";
+import { ensurePaidBibNumber } from "@/lib/bibNumbers";
+import { ensureQrInvoice, isApipayConfigured, peekQrInvoice, type PaymentInvoiceView } from "@/lib/apipay";
+import { registrationPaymentAmount } from "@/lib/paymentAmount";
 import { PaymentView } from "./PaymentView";
 
 export default async function PayPage({
@@ -22,11 +24,21 @@ export default async function PayPage({
 
   let registration = await getRegistrationForPayment(registrationId);
   if (!registration || registration.userId !== session.user.id) notFound();
+  if (registration.status === "PAID" && !registration.isTransferOnly && registration.bibNumber == null) {
+    const bibNumber = await ensurePaidBibNumber(registration.id);
+    registration = { ...registration, bibNumber };
+  }
 
   let invoice: PaymentInvoiceView | null = null;
   if (registration.status === "RESERVED" && isApipayConfigured()) {
-    invoice = await ensureQrInvoice(registration);
-    if (invoice.amount < 1) {
+    const amount = registrationPaymentAmount(registration);
+    // Счёт в ApiPay создаём только по кнопке «Оплатить в Kaspi».
+    if (amount < 1) {
+      invoice = await ensureQrInvoice(registration);
+      registration = await getRegistrationForPayment(registrationId);
+      if (!registration) notFound();
+    } else if (registration.kaspiOrderId) {
+      invoice = await peekQrInvoice(registration);
       registration = await getRegistrationForPayment(registrationId);
       if (!registration) notFound();
     }

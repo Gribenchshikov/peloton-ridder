@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { sendRegistrationConfirmationEmail } from "@/lib/mailer";
 import { notifyFromRegistration } from "@/lib/userMessages";
+import { withPaidInvoiceAt } from "@/lib/invoiceDisplay";
+import { assignPaidBibInTx, ensurePaidBibNumber } from "@/lib/bibNumbers";
 
 // Оплата идёт через ApiPay (Kaspi QR + ссылка). Пока APIPAY_API_KEY не задан,
 // страница оплаты может показать кнопку «Симулировать оплату» при ALLOW_TEST_PAYMENTS.
@@ -25,17 +27,38 @@ export function isTestPaymentModeEnabled() {
 // вызов на уже оплаченной регистрации ничего не меняет — вебхуки могут дублироваться.
 // ownerUserId необязателен — реальный вебхук Kaspi его не знает, а тестовая кнопка
 // передаёт его, чтобы проверка владения тоже была внутри транзакции, без отдельного чтения.
-export async function confirmPayment(registrationId: string, ownerUserId?: string) {
+function withPaidInvoiceId(
+  existing: string[],
+  invoiceId: string | null | undefined,
+): { paidInvoiceIds?: { push: string } } {
+  if (!invoiceId || existing.includes(invoiceId)) return {};
+  return { paidInvoiceIds: { push: invoiceId } };
+}
+
+export async function confirmPayment(
+  registrationId: string,
+  ownerUserId?: string,
+  paidInvoiceId?: string,
+  _paidAmount?: number,
+  paidAt?: Date,
+) {
+  const paidAtValue = paidAt && !Number.isNaN(paidAt.getTime()) ? paidAt : new Date();
   const txResult = await prisma.$transaction(async (tx) => {
     const registration = await tx.registration.findUnique({
       where: { id: registrationId },
-      include: { distance: true },
+      include: { distance: true, event: { select: { transferPrice: true } } },
     });
     if (!registration || (ownerUserId && registration.userId !== ownerUserId)) {
       return null;
     }
+    const invoiceId = paidInvoiceId || registration.kaspiOrderId;
+    const paidInvoiceAt = withPaidInvoiceAt(registration.paidInvoiceAt, invoiceId, paidAtValue);
     if (registration.status === "PAID") {
-      return { reg: registration, justPaid: false };
+      await tx.registration.update({
+        where: { id: registrationId },
+        data: { paidInvoiceAt },
+      });
+      return { reg: registration, justPaid: false, invoiceId, paidInvoiceIds: registration.paidInvoiceIds };
     }
     // Возвращённую или отменённую регистрацию нельзя снова пометить оплаченной
     // по старому счёту — иначе в списке участников снова светится «Оплачено».
@@ -43,46 +66,45 @@ export async function confirmPayment(registrationId: string, ownerUserId?: strin
       return null;
     }
 
-    let bibNumber: number | undefined;
-    if (registration.distance && registration.distanceId && registration.distance.bibRangeStart !== null && registration.distance.bibRangeEnd !== null) {
-      const taken = await tx.registration.findMany({
-        where: { distanceId: registration.distanceId, status: "PAID" },
-        select: { bibNumber: true },
-      });
-      const takenNumbers = new Set(taken.map((r) => r.bibNumber));
-      let candidate: number = registration.distance.bibRangeStart;
-      while (takenNumbers.has(candidate) && candidate <= registration.distance.bibRangeEnd!) {
-        candidate++;
-      }
-      bibNumber = candidate;
-    }
-
     const updated = await tx.registration.update({
       where: { id: registrationId },
-      data: { status: "PAID", ...(bibNumber !== undefined ? { bibNumber } : {}) },
+      data: {
+        status: "PAID",
+        reservedUntil: null,
+        paidInvoiceAt,
+      },
     });
+    const bibNumber = await assignPaidBibInTx(tx, updated);
 
-    // Если оплатили transfer-only регистрацию — проставляем includesTransfer на основной слот
-    if (registration.isTransferOnly) {
-      await tx.registration.updateMany({
-        where: {
-          userId: registration.userId,
-          eventId: registration.eventId,
-          isTransferOnly: false,
-          status: "PAID",
-          includesTransfer: false,
-        },
-        data: { includesTransfer: true },
-      });
-    }
-
-    return { reg: updated, justPaid: true };
+    return {
+      reg: { ...updated, bibNumber },
+      justPaid: true,
+      invoiceId,
+      paidInvoiceIds: registration.paidInvoiceIds,
+    };
   });
 
   if (!txResult) return null;
 
+  try {
+    const extra = withPaidInvoiceId(txResult.paidInvoiceIds, txResult.invoiceId);
+    if (extra.paidInvoiceIds) {
+      await prisma.registration.update({ where: { id: registrationId }, data: extra });
+    }
+  } catch (error) {
+    console.error("[kaspi] paidInvoiceIds update failed:", registrationId, error);
+  }
+
   if (txResult.justPaid) {
+    if (!txResult.reg.isTransferOnly && txResult.reg.bibNumber == null) {
+      await ensurePaidBibNumber(txResult.reg.id).catch((error) => {
+        console.error("[kaspi] bib assign failed:", registrationId, error);
+      });
+    }
     sendConfirmationEmail(txResult.reg.id).catch((e) => console.error("[kaspi] email error:", e));
+    if (!txResult.reg.isTransferOnly) {
+      await notifyFromRegistration(txResult.reg.id, "REGISTRATION");
+    }
     await notifyFromRegistration(txResult.reg.id, "PAYMENT");
   }
 

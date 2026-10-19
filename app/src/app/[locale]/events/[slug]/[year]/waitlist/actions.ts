@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { revalidatePath } from "next/cache";
+import { activeRegistrationOrDraftWhere } from "@/lib/slotOccupancy";
 
 const JoinWaitlistSchema = z.object({
   eventId: z.string().min(1),
@@ -32,7 +33,7 @@ export async function joinWaitlistAction(
   const [distance, existing, alreadyOnList] = await Promise.all([
     prisma.distance.findUnique({ where: { id: distanceId }, select: { eventId: true } }),
     prisma.registration.findFirst({
-      where: { userId, eventId, OR: [{ status: "PAID" }, { status: "RESERVED", reservedUntil: { gt: new Date() } }] },
+      where: { userId, eventId, isTransferOnly: false, ...activeRegistrationOrDraftWhere() },
     }),
     prisma.waitlist.findFirst({ where: { userId, distanceId } }),
   ]);

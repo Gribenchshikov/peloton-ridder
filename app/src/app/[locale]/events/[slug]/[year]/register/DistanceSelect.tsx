@@ -56,7 +56,9 @@ export function DistanceSelect({
   transferPrice,
   location,
   defaultClubId,
+  defaultIncludesTransfer,
   isChallenge,
+  isMass,
   hasStrava,
 }: {
   eventId: string;
@@ -70,13 +72,17 @@ export function DistanceSelect({
   transferPrice?: number | null;
   location?: string | null;
   defaultClubId?: string | null;
+  defaultIncludesTransfer?: boolean;
   isChallenge?: boolean;
+  isMass?: boolean;
   hasStrava?: boolean;
 }) {
   const t = useTranslations("Registration");
   const boundAction = createRegistrationAction.bind(null, locale);
   const [state, formAction, pending] = useActionState(boundAction, initialState);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(
+    isMass && distances.length === 1 ? distances[0].id : null,
+  );
   const [sizes, setSizes] = useState<Record<string, Size>>(() => {
     const valid = SIZES.find((s) => s === defaultTshirtSize);
     if (!valid) return {};
@@ -92,7 +98,7 @@ export function DistanceSelect({
     discountValue?: number;
   } | null>(null);
   const [promoChecking, startPromoCheck] = useTransition();
-  const [transferChecked, setTransferChecked] = useState(false);
+  const [transferChecked, setTransferChecked] = useState(Boolean(defaultIncludesTransfer));
 
   const selectedDistance = distances.find((d) => d.id === selected);
   const extraCount = selectedDistance ? (selectedDistance.participantsPerSlot ?? 1) - 1 : 0;
@@ -142,8 +148,12 @@ export function DistanceSelect({
   return (
     <form action={formAction} className="flex flex-col gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
       <input type="hidden" name="eventId" value={eventId} />
+      {isMass && distances.length === 1 && (
+        <input type="hidden" name="distanceId" value={distances[0].id} />
+      )}
 
       {/* Distance selection */}
+      {!(isMass && distances.length === 1) && (
       <div className="flex flex-col gap-4">
         {disciplines.map((discipline) => (
           <div key={discipline}>
@@ -175,6 +185,7 @@ export function DistanceSelect({
           </div>
         )}
       </div>
+      )}
 
       {/* Merch — shown after a distance is selected */}
       {selected !== null && merchItems.length > 0 && (
@@ -286,6 +297,7 @@ export function DistanceSelect({
       })}
 
       {/* Promo code */}
+      {!isMass && (
       <div className="flex flex-col gap-1.5">
         <label className="text-sm font-semibold text-ink-soft">
           {t("promoLabel")}
@@ -315,6 +327,7 @@ export function DistanceSelect({
           </p>
         )}
       </div>
+      )}
 
       {/* Running club (optional) */}
       {clubs.length > 0 && (
@@ -432,11 +445,9 @@ export function DistanceSelect({
       {state.error === "closed" && <p className="text-sm text-danger">{t("errorClosed")}</p>}
       {state.error === "invalid" && <p className="text-sm text-danger">{t("errorInvalid")}</p>}
       {state.error === "unverified" && <p className="text-sm text-danger">{t("errorEmailUnverified")}</p>}
-      {(state.error === "registration_blocked" || state.error === "reregistration_not_allowed") && (
+      {state.error === "reregistration_not_allowed" && (
         <div className="rounded-[var(--radius-s)] border border-danger/30 bg-danger/5 p-4">
-          <p className="text-sm text-danger">
-            {state.error === "reregistration_not_allowed" ? t("errorReregistrationNotAllowed") : t("errorRegistrationBlocked")}
-          </p>
+          <p className="text-sm text-danger">{t("errorReregistrationNotAllowed")}</p>
           <div className="mt-3">
             <ContactOrganizerButton eventId={eventId} />
           </div>
@@ -455,7 +466,7 @@ export function DistanceSelect({
       {state.error === "qualification_missing" && <p className="text-sm text-danger">{t("qualificationUrlRequired")}</p>}
 
       {/* Transfer option — below errors, before submit */}
-      {transferPrice && location && (
+      {transferPrice && location && !isMass && (
         <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-s)] border border-ember/30 bg-ember/5 px-4 py-3 transition-colors has-[:checked]:border-ember has-[:checked]:bg-ember/10">
           <input
             type="checkbox"
@@ -476,7 +487,7 @@ export function DistanceSelect({
       )}
 
       {/* Price summary + submit */}
-      {selected !== null && (
+      {selected !== null && !isMass && (
         <div className="flex flex-col gap-3 rounded-[var(--radius-s)] border border-border bg-surface-2 px-4 py-3">
           <div className="flex flex-col gap-1.5 text-sm">
             <div className="flex justify-between text-ink-soft">
@@ -508,7 +519,7 @@ export function DistanceSelect({
         disabled={pending || !canSubmit}
         className="rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
       >
-        {pending ? t("submitting") : t("submitCta")}
+        {pending ? t("submitting") : isMass ? t("reserveCta") : t("submitCta")}
       </button>
     </form>
   );
