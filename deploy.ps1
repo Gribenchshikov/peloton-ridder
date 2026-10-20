@@ -75,7 +75,18 @@ git diff --cached --quiet
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "No changes to commit." -ForegroundColor Yellow
-    exit 0
+}
+elseif ($LASTEXITCODE -eq 1) {
+    git commit -m $Message
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "git commit failed." -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+}
+else {
+    Write-Host "Git diff failed." -ForegroundColor Red
+    exit $LASTEXITCODE
 }
 
 git commit -m $Message
