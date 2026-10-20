@@ -94,3 +94,152 @@ else {
 # ------------------------------------------------------------
 
 Write-Host ""
+
+Write-Host ""
+Write-Host "=== 5. Git push ===" -ForegroundColor Cyan
+
+git push origin main
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "PUSH FAILED" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
+
+Write-Host ""
+Write-Host "PUSH OK" -ForegroundColor Green
+
+
+# ------------------------------------------------------------
+# 6. FIND GITHUB ACTIONS RUN
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "=== 6. Waiting for GitHub Actions ===" -ForegroundColor Cyan
+
+$CommitSha = (git rev-parse HEAD).Trim()
+
+Write-Host "Commit: $CommitSha"
+Write-Host "Waiting for workflow to appear..."
+
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    Write-Host "GitHub CLI (gh) is not installed or not in PATH." -ForegroundColor Red
+    exit 1
+}
+
+$RunId = $null
+
+for ($i = 1; $i -le 30; $i++) {
+
+    $RunId = gh run list `
+        --workflow docker.yml `
+        --commit $CommitSha `
+        --limit 1 `
+        --json databaseId `
+        --jq '.[0].databaseId'
+
+    if ($LASTEXITCODE -eq 0 -and $RunId -and $RunId -ne "null") {
+        break
+    }
+
+    $RunId = $null
+    Start-Sleep -Seconds 2
+}
+
+if (-not $RunId) {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "GITHUB ACTIONS RUN NOT FOUND" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "GitHub Actions Run: $RunId" -ForegroundColor Cyan
+
+
+# ------------------------------------------------------------
+# 7. WAIT FOR DEPLOY
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "=== 7. Build & Deploy ===" -ForegroundColor Cyan
+Write-Host ""
+
+gh run watch $RunId --exit-status
+
+if ($LASTEXITCODE -ne 0) {
+
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "DEPLOY FAILED" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+
+    Write-Host ""
+    Write-Host "Showing failed GitHub Actions logs..."
+    Write-Host ""
+
+    gh run view $RunId --log-failed
+
+    exit 1
+}
+
+
+# ------------------------------------------------------------
+# 8. CHECK REAL WEBSITE
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "=== 8. Checking website ===" -ForegroundColor Cyan
+
+$SiteOK = $false
+
+for ($i = 1; $i -le 10; $i++) {
+
+    try {
+
+        $Response = Invoke-WebRequest `
+            -Uri $Site `
+            -Method Head `
+            -TimeoutSec 15 `
+            -UseBasicParsing
+
+        if ($Response.StatusCode -ge 200 -and $Response.StatusCode -lt 400) {
+            $SiteOK = $true
+            break
+        }
+
+    }
+    catch {
+        Write-Host "Site not ready yet... attempt $i/10"
+    }
+
+    if ($i -lt 10) { Start-Sleep -Seconds 3 }
+}
+
+
+# ------------------------------------------------------------
+# RESULT
+# ------------------------------------------------------------
+
+Write-Host ""
+
+if (-not $SiteOK) {
+
+    Write-Host "========================================" -ForegroundColor Yellow
+    Write-Host "DEPLOY COMPLETED, BUT SITE CHECK FAILED" -ForegroundColor Yellow
+    Write-Host "========================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host $Site
+
+    exit 1
+}
+
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "DEPLOY SUCCESSFUL" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Commit : $CommitSha"
+Write-Host "Run ID : $RunId"
+Write-Host "Site   : $Site"
+Write-Host ""
+Write-Host "Site responded successfully." -ForegroundColor Green

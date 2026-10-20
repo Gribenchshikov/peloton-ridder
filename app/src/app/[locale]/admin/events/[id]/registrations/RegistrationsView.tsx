@@ -13,6 +13,7 @@ import {
   displayRegistrationStatus,
   hasConfirmedSlotRefund,
   isTransferPassengerRegistration,
+  type DisplayRegistrationStatus,
 } from "@/lib/registrationStatus";
 import { registrationDistanceLabel, resolveRegistrationDistance } from "@/lib/registrationDistance";
 
@@ -49,33 +50,37 @@ function InlineCheckbox({
   );
 }
 
+function paymentDisplayStatus(
+  reg: Registration,
+  payment: { isCurrent: boolean; paymentStatus: "paid" | "cancelled" | "reserved"; invoiceId: string | null },
+): DisplayRegistrationStatus {
+  const invoiceId = payment.invoiceId ?? reg.kaspiOrderId;
+  const slotRefunded = hasConfirmedSlotRefund(reg.refundRequests, {
+    invoiceId,
+    reregistrationCount: reg.reregistrationCount,
+  });
+  if ((reg.isTransferOnly || reg.status === "CANCELLED") && slotRefunded) return "REFUNDED";
+  if (!payment.isCurrent) {
+    if (payment.paymentStatus === "paid") return "PAID";
+    if (payment.paymentStatus === "reserved") return "RESERVED";
+    if (slotRefunded) return "REFUNDED";
+    return "CANCELLED";
+  }
+  return displayRegistrationStatus(reg.status, reg.refundRequests, {
+    invoiceId,
+    reregistrationCount: reg.reregistrationCount,
+  });
+}
+
 function StatusBadge({
-  status,
-  refundRequests,
-  paymentStatus,
-  isCurrent = true,
-  invoiceId = null,
-  reregistrationCount = 0,
-  slotReleased = false,
+  reg,
+  payment,
 }: {
-  status: Registration["status"];
-  refundRequests: Registration["refundRequests"];
-  paymentStatus?: "paid" | "cancelled" | "reserved";
-  isCurrent?: boolean;
-  invoiceId?: string | null;
-  reregistrationCount?: number;
-  slotReleased?: boolean;
+  reg: Registration;
+  payment: { isCurrent: boolean; paymentStatus: "paid" | "cancelled" | "reserved"; invoiceId: string | null };
 }) {
   const t = useTranslations("Admin");
-  const display = slotReleased
-    ? "REFUNDED"
-    : !isCurrent && paymentStatus
-    ? paymentStatus === "paid"
-      ? "PAID"
-      : paymentStatus === "reserved"
-        ? "RESERVED"
-        : "CANCELLED"
-    : displayRegistrationStatus(status, refundRequests, { invoiceId, reregistrationCount });
+  const display = paymentDisplayStatus(reg, payment);
   const isPaid = display === "PAID";
   const isRefunded = display === "REFUNDED";
   const isCancelled = display === "CANCELLED";
@@ -120,6 +125,7 @@ function FilterChips<T extends string>({
       {options.map((o) => (
         <button
           key={o.value}
+          type="button"
           onClick={() => onChange(o.value)}
           className={[
             "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
@@ -170,27 +176,25 @@ export function RegistrationsView({ event }: { event: EventData }) {
     event.distances.map((d) => [d.id, paid.filter((r) => resolveRegistrationDistance(r, event.distances)?.id === d.id).length])
   );
 
-  const filtered = useMemo(() => {
+  const distanceFiltered = useMemo(() => {
     return participants.filter((r) => {
-      if (statusFilter !== "ALL") {
-        const display = displayRegistrationStatus(r.status, r.refundRequests, {
-          invoiceId: r.kaspiOrderId,
-          reregistrationCount: r.reregistrationCount,
-        });
-        if (display !== statusFilter) return false;
-      }
-      if (distanceFilter !== "ALL" && resolveRegistrationDistance(r, event.distances)?.id !== distanceFilter) return false;
-      return true;
+      if (distanceFilter === "ALL") return true;
+      return resolveRegistrationDistance(r, event.distances)?.id === distanceFilter;
     });
-  }, [participants, statusFilter, distanceFilter]);
+  }, [participants, distanceFilter, event.distances]);
 
-  const displayRows = useMemo(
+  const allRows = useMemo(
     () =>
-      filtered
+      distanceFiltered
         .flatMap((reg) => expandRegistrationPayments(reg).map((payment) => ({ reg, payment })))
         .sort((a, b) => compareInvoiceDesc(a.payment.invoiceId, b.payment.invoiceId)),
-    [filtered],
+    [distanceFiltered],
   );
+
+  const displayRows = useMemo(() => {
+    if (statusFilter === "ALL") return allRows;
+    return allRows.filter(({ reg, payment }) => paymentDisplayStatus(reg, payment) === statusFilter);
+  }, [allRows, statusFilter]);
 
   const exportParams = new URLSearchParams();
   if (statusFilter !== "ALL") exportParams.set("status", statusFilter);
@@ -409,14 +413,14 @@ export function RegistrationsView({ event }: { event: EventData }) {
       </div>
 
       {/* Registrations table */}
-      {filtered.length === 0 ? (
+      {displayRows.length === 0 ? (
         <p className="text-sm text-ink-faint">
           {participants.length === 0 ? t("registrationsEmpty") : "Нет участников по выбранным фильтрам."}
         </p>
       ) : (
         <div>
           <p className="mb-3 text-sm text-ink-faint">
-            Показано: <span className="font-semibold text-ink">{displayRows.length}</span> из {participants.length}
+            Показано: <span className="font-semibold text-ink">{displayRows.length}</span> из {allRows.length}
           </p>
           <div className="overflow-x-auto rounded-[var(--radius-m)] border border-border">
             <table className="w-full min-w-[1080px] text-sm">
@@ -456,15 +460,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                         {registrationDistanceLabel(reg, event.distances)}
                       </td>
                       <td className="px-4 py-2.5">
-                        <StatusBadge
-                          status={reg.status}
-                          refundRequests={reg.refundRequests}
-                          paymentStatus={payment.paymentStatus}
-                          isCurrent={payment.isCurrent}
-                          invoiceId={payment.invoiceId ?? reg.kaspiOrderId}
-                          reregistrationCount={reg.reregistrationCount}
-                          slotReleased={reg.isTransferOnly && slotRefunded}
-                        />
+                        <StatusBadge reg={reg} payment={payment} />
                       </td>
                       <td className="px-4 py-2.5 tabular-nums text-ink-soft">
                         {payment.invoiceId ?? "—"}
