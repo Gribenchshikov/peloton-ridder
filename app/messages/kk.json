@@ -222,6 +222,7 @@
     "countryEmpty": "Таңдалмаған",
     "profileSaved": "Өзгерістер сақталды.",
     "historyTitle": "Тіркелулер тарихы",
+    "volunteerTitle": "Волонтерлік",
     "historyEmpty": "Әзірге ешбір стартқа тіркелген жоқсыз — тіркелген соң осында пайда болады.",
     "showQrCta": "QR-код көрсету",
     "invoiceNumbers": "ApiPay шоттары: {numbers}",

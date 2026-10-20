@@ -1,32 +1,21 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-import { useFormatter, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
-import { markUserMessagesReadAction } from "./messageActions";
-import type { UserMessagePayload } from "@/lib/userMessages";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 type MessageRow = {
   id: string;
   type: string;
-  payload: UserMessagePayload;
+  payload: {
+    race: string;
+    amount?: number;
+    kind?: "slot" | "slotAndTransfer" | "transfer";
+    applicant?: string;
+  };
   readAt: string | null;
   createdAt: string;
 };
 
-export function MessagesInbox({ messages }: { messages: MessageRow[] }) {
-  const t = useTranslations("Account");
-  const format = useFormatter();
-  const router = useRouter();
-  const markedKey = useRef<string>("");
-
-  useEffect(() => {
-    const ids = messages.filter((message) => message.readAt == null).map((message) => message.id);
-    const key = ids.join(",");
-    if (ids.length === 0 || markedKey.current === key) return;
-    markedKey.current = key;
-    void markUserMessagesReadAction(ids).then(() => router.refresh());
-  }, [messages, router]);
+export async function MessagesInbox({ messages }: { messages: MessageRow[] }) {
+  const t = await getTranslations("Account");
+  const format = await getFormatter();
 
   if (messages.length === 0) {
     return (
@@ -88,6 +77,7 @@ export function MessagesInbox({ messages }: { messages: MessageRow[] }) {
                 year: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
+                timeZone: "Asia/Almaty",
               })}
             </p>
           </li>

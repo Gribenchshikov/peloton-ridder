@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
-import { listUserMessages, parseUserMessagePayload } from "@/lib/userMessages";
+import { listUserMessages, markUserMessagesRead, parseUserMessagePayload } from "@/lib/userMessages";
 import { MessagesInbox } from "../MessagesInbox";
 import { MessagesPagination } from "../MessagesPagination";
 
@@ -27,16 +27,17 @@ export default async function AccountMessagesPage({
 
   const requestedPage = parsePage(pageParam);
   const { items, total, page, pageCount } = await listUserMessages(session.user.id, requestedPage);
-  if (requestedPage !== page) {
-    if (page <= 1) return redirect({ href: "/account/messages", locale });
-    return redirect({ href: { pathname: "/account/messages", query: { page: String(page) } }, locale });
+  const unreadIds = items.filter((row) => row.readAt == null).map((row) => row.id);
+  if (unreadIds.length > 0) {
+    await markUserMessagesRead(session.user.id, unreadIds);
   }
+  const readAt = new Date().toISOString();
 
   const messages = items.map((row) => ({
     id: row.id,
     type: row.type,
     payload: parseUserMessagePayload(row.payload),
-    readAt: row.readAt?.toISOString() ?? null,
+    readAt: row.readAt?.toISOString() ?? readAt,
     createdAt: row.createdAt.toISOString(),
   }));
 

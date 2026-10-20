@@ -43,8 +43,10 @@ export default async function ReportsPage({
       discountAmount: true,
       cancelReason: true,
       reservedUntil: true,
+      includesTransfer: true,
+      isTransferOnly: true,
       distance: { select: { price: true, name: true, km: true, maxSlots: true, id: true } },
-      event: { select: { id: true, year: true, race: { select: { name: true } } } },
+      event: { select: { id: true, year: true, transferPrice: true, race: { select: { name: true } } } },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -62,9 +64,9 @@ export default async function ReportsPage({
   const financialsRaw = eventId ? await getSiteSetting(`report_financials_${eventId}`) : null;
   const initialFinancials: FinancialData | null = financialsRaw ? JSON.parse(financialsRaw) : null;
 
-  // Merch orders (only PAID)
+  // Мерч только у оплаченного слота. Трансфер и возвращённый слот набор не получают.
   const merch = await prisma.registrationMerch.findMany({
-    where: { registration: { status: "PAID", ...whereEvent } },
+    where: { registration: { status: "PAID", isTransferOnly: false, ...whereEvent } },
     select: { size: true, merchItem: { select: { name: true } } },
   });
 

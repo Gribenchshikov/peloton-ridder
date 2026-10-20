@@ -56,6 +56,7 @@ function StatusBadge({
   isCurrent = true,
   invoiceId = null,
   reregistrationCount = 0,
+  slotReleased = false,
 }: {
   status: Registration["status"];
   refundRequests: Registration["refundRequests"];
@@ -63,9 +64,12 @@ function StatusBadge({
   isCurrent?: boolean;
   invoiceId?: string | null;
   reregistrationCount?: number;
+  slotReleased?: boolean;
 }) {
   const t = useTranslations("Admin");
-  const display = !isCurrent && paymentStatus
+  const display = slotReleased
+    ? "REFUNDED"
+    : !isCurrent && paymentStatus
     ? paymentStatus === "paid"
       ? "PAID"
       : paymentStatus === "reserved"
@@ -153,7 +157,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
   const participants = event.registrations.filter(
     (r) => !r.isTransferOnly || hasConfirmedSlotRefund(r.refundRequests),
   );
-  const paid = participants.filter((r) => r.status === "PAID");
+  const paid = participants.filter((r) => r.status === "PAID" && !r.isTransferOnly);
   const reserved = participants.filter((r) => r.status === "RESERVED");
 
   const capacityByDistance = Object.fromEntries(
@@ -459,6 +463,7 @@ export function RegistrationsView({ event }: { event: EventData }) {
                           isCurrent={payment.isCurrent}
                           invoiceId={payment.invoiceId ?? reg.kaspiOrderId}
                           reregistrationCount={reg.reregistrationCount}
+                          slotReleased={reg.isTransferOnly && slotRefunded}
                         />
                       </td>
                       <td className="px-4 py-2.5 tabular-nums text-ink-soft">

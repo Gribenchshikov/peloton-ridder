@@ -13,9 +13,22 @@ type Reg = {
   discountAmount: number;
   cancelReason: CancelReason | null;
   reservedUntil: Date | null;
+  includesTransfer: boolean;
+  isTransferOnly: boolean;
   distance: { price: number; name: string; km: number; maxSlots: number | null; id: string } | null;
-  event: { id: string; year: number; race: { name: string } };
+  event: { id: string; year: number; transferPrice: number | null; race: { name: string } };
 };
+
+function paidSlotAmount(reg: Reg): number {
+  if (reg.status !== "PAID" || reg.isTransferOnly) return 0;
+  return reg.distance?.price ?? 0;
+}
+
+function paidTransferAmount(reg: Reg): number {
+  if (reg.status !== "PAID") return 0;
+  if (!reg.includesTransfer && !reg.isTransferOnly) return 0;
+  return reg.event.transferPrice ?? 0;
+}
 
 function isActiveReserved(reg: Reg, now = Date.now()) {
   if (reg.status !== "RESERVED") return false;
@@ -72,7 +85,10 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
   const cancelled = useMemo(() => registrations.filter((r) => r.status === "CANCELLED"), [registrations]);
   const active = useMemo(() => [...paid, ...reserved], [paid, reserved]);
 
-  const grossRevenue = useMemo(() => paid.reduce((s, r) => s + (r.distance?.price ?? 0), 0), [paid]);
+  const grossRevenue = useMemo(
+    () => paid.reduce((s, r) => s + paidSlotAmount(r) + paidTransferAmount(r), 0),
+    [paid],
+  );
   const totalDiscounts = useMemo(() => paid.reduce((s, r) => s + r.discountAmount, 0), [paid]);
   const netRevenue = grossRevenue - totalDiscounts;
 
@@ -91,23 +107,52 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
       discounts: number;
     }>();
     for (const r of registrations) {
-      const distanceKey = r.distance?.id ?? "__transfer__";
-      const key = `${r.event.id}:${distanceKey}`;
-      const existing = map.get(key) ?? {
-        id: distanceKey,
-        name: r.distance?.name ?? "Трансфер",
-        km: r.distance?.km ?? 0,
-        eventId: r.event.id,
-        eventName: r.event.race.name,
-        year: r.event.year,
-        paid: 0,
-        reserved: 0,
-        gross: 0,
-        discounts: 0,
-      };
-      if (r.status === "PAID") { existing.paid++; existing.gross += r.distance?.price ?? 0; existing.discounts += r.discountAmount; }
-      if (isActiveReserved(r)) existing.reserved++;
-      map.set(key, existing);
+      if (!r.isTransferOnly && r.distance) {
+        const key = `${r.event.id}:${r.distance.id}`;
+        const existing = map.get(key) ?? {
+          id: r.distance.id,
+          name: r.distance.name,
+          km: r.distance.km,
+          eventId: r.event.id,
+          eventName: r.event.race.name,
+          year: r.event.year,
+          paid: 0,
+          reserved: 0,
+          gross: 0,
+          discounts: 0,
+        };
+        if (r.status === "PAID") {
+          existing.paid++;
+          existing.gross += paidSlotAmount(r);
+          existing.discounts += r.discountAmount;
+        }
+        if (isActiveReserved(r)) existing.reserved++;
+        map.set(key, existing);
+      }
+
+      const transferPaid = r.status === "PAID" && (r.includesTransfer || r.isTransferOnly);
+      const transferReserved = r.isTransferOnly && isActiveReserved(r);
+      if (transferPaid || transferReserved) {
+        const key = `${r.event.id}:__transfer__`;
+        const existing = map.get(key) ?? {
+          id: "__transfer__",
+          name: "Трансфер",
+          km: 0,
+          eventId: r.event.id,
+          eventName: r.event.race.name,
+          year: r.event.year,
+          paid: 0,
+          reserved: 0,
+          gross: 0,
+          discounts: 0,
+        };
+        if (r.status === "PAID" && (r.includesTransfer || r.isTransferOnly)) {
+          existing.paid++;
+          existing.gross += r.event.transferPrice ?? 0;
+        }
+        if (transferReserved) existing.reserved++;
+        map.set(key, existing);
+      }
     }
     return [...map.values()]
       .filter((row) => row.paid > 0 || row.reserved > 0)
@@ -183,7 +228,10 @@ export function ReportsView({ registrations, distances, merch, selectedEventName
                 {byDistance.map((d) => (
                   <tr key={`${d.eventId}:${d.id}`} className="border-b border-border last:border-0 hover:bg-surface-2">
                     <td className="px-4 py-2.5 text-ink">{d.eventName} <span className="tabular-nums text-ink-faint">{d.year}</span></td>
-                    <td className="px-4 py-2.5 font-medium text-ink">{d.name} <span className="text-ink-faint">· {d.km} км</span></td>
+                    <td className="px-4 py-2.5 font-medium text-ink">
+                      {d.name}
+                      {d.km > 0 && <span className="text-ink-faint"> · {d.km} км</span>}
+                    </td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink">{d.paid}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink-soft">{d.reserved}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums text-ink">{kzt(d.gross)}</td>

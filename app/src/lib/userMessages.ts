@@ -1,5 +1,4 @@
 import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import type { UserMessageType } from "@/generated/prisma/client";
 import { sendUserMessageEmail } from "@/lib/mailer";
 import { ticketPaymentSummary, type TicketPaymentKind } from "@/lib/paymentAmount";
@@ -71,23 +70,14 @@ export async function notifyFromRegistration(
       },
     });
 
-    const sendEmail = () =>
-      sendUserMessageEmail(
-        registration.user.email,
-        registration.user.firstName,
-        type,
-        payload,
-      ).catch((error) => {
-        console.error("[userMessage] email failed:", type, registration.user.email, error);
-      });
-    try {
-      after(async () => {
-        await sendEmail();
-      });
-    } catch (error) {
-      console.error("[userMessage] after() unavailable, sending email inline:", error);
-      await sendEmail();
-    }
+    void sendUserMessageEmail(
+      registration.user.email,
+      registration.user.firstName,
+      type,
+      payload,
+    ).catch((error) => {
+      console.error("[userMessage] email failed:", type, registration.user.email, error);
+    });
 
     try {
       revalidatePath("/", "layout");
@@ -155,6 +145,4 @@ export async function markUserMessagesRead(userId: string, ids?: string[]) {
     },
     data: { readAt: new Date() },
   });
-  revalidatePath("/", "layout");
-  revalidatePath("/[locale]/account/messages", "page");
 }

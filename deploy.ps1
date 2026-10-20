@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$Root = "C:\GDrive\_CloudGDrive\development\peloton-ridder"
+$Root = "C:\dev\peloton-ridder"
 $App  = Join-Path $Root "app"
 $Site = "https://test.peloton-ridder.kz/ru"
 

@@ -4,18 +4,27 @@ import { useSelectedLayoutSegment } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-export function AccountNav({ unreadCount }: { unreadCount: number }) {
+export function AccountNav({
+  unreadCount,
+  showVolunteer,
+}: {
+  unreadCount: number;
+  showVolunteer: boolean;
+}) {
   const t = useTranslations("Account");
   const segment = useSelectedLayoutSegment();
   const items = [
-    { href: "/account", label: t("profileTitle"), active: segment == null },
+    { href: "/account" as const, label: t("profileTitle"), active: segment == null },
     {
-      href: "/account/messages",
+      href: "/account/messages" as const,
       label: t("messagesTitle"),
       active: segment === "messages",
       unreadCount,
     },
-    { href: "/account/history", label: t("historyTitle"), active: segment === "history" },
+    { href: "/account/history" as const, label: t("historyTitle"), active: segment === "history" },
+    ...(showVolunteer
+      ? [{ href: "/account/volunteer" as const, label: t("volunteerTitle"), active: segment === "volunteer" }]
+      : []),
   ];
 
   return (

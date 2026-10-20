@@ -90,3 +90,92 @@ export async function updateRaceAction(
     throw e;
   }
 }
+
+export type RaceDangerState = { error?: string; cleared?: boolean };
+
+async function raceHasLinkedData(raceId: string): Promise<boolean> {
+  const [events, seriesLinks] = await Promise.all([
+    prisma.event.count({ where: { raceId } }),
+    prisma.seriesRace.count({ where: { raceId } }),
+  ]);
+  return events > 0 || seriesLinks > 0;
+}
+
+/** События трассы и всё, что на них ссылается: регистрации, трансфер, оплаты, дистанции, результаты. */
+async function deleteLinkedRaceData(raceId: string) {
+  await prisma.$transaction(async (tx) => {
+    const events = await tx.event.findMany({ where: { raceId }, select: { id: true } });
+    const registrationWhere = { registration: { event: { raceId } } };
+
+    await tx.challengeActivity.deleteMany({ where: registrationWhere });
+    await tx.registrationMerch.deleteMany({ where: registrationWhere });
+    await tx.refundRequest.deleteMany({ where: registrationWhere });
+    await tx.result.deleteMany({ where: { event: { raceId } } });
+    await tx.registration.deleteMany({ where: { event: { raceId } } });
+    await tx.waitlist.deleteMany({ where: { event: { raceId } } });
+    await tx.notification.deleteMany({ where: { event: { raceId } } });
+    await tx.volunteerApplication.deleteMany({ where: { event: { raceId } } });
+    await tx.eventPartner.deleteMany({ where: { event: { raceId } } });
+    await tx.promoCode.deleteMany({ where: { event: { raceId } } });
+    await tx.merchItem.deleteMany({ where: { event: { raceId } } });
+    await tx.distance.deleteMany({ where: { event: { raceId } } });
+    if (events.length > 0) {
+      await tx.siteSetting.deleteMany({
+        where: { key: { in: events.map((event) => `report_financials_${event.id}`) } },
+      });
+    }
+    await tx.event.deleteMany({ where: { raceId } });
+    await tx.seriesRace.deleteMany({ where: { raceId } });
+  }, { timeout: 30_000 });
+}
+
+function revalidateRace(id: string) {
+  revalidatePath("/admin/races");
+  revalidatePath(`/admin/races/${id}`);
+  revalidatePath("/admin/events");
+  revalidatePath("/admin");
+}
+
+export async function clearRaceDataAction(
+  id: string,
+  _prev: RaceDangerState,
+  _formData: FormData,
+): Promise<RaceDangerState> {
+  void _prev;
+  void _formData;
+  if (!(await requireAdminId())) return { error: "unauthorized" };
+
+  const race = await prisma.race.findUnique({ where: { id }, select: { id: true } });
+  if (!race) return { error: "not_found" };
+
+  await deleteLinkedRaceData(id);
+  revalidateRace(id);
+  return { cleared: true };
+}
+
+export async function deleteRaceAction(
+  id: string,
+  locale: string,
+  _prev: RaceDangerState,
+  _formData: FormData,
+): Promise<RaceDangerState> {
+  void _prev;
+  void _formData;
+  if (!(await requireAdminId())) return { error: "unauthorized" };
+
+  if (await raceHasLinkedData(id)) return { error: "hasLinkedData" };
+
+  try {
+    await prisma.race.delete({ where: { id } });
+  } catch (e: unknown) {
+    if ((e as { code?: string }).code === "P2003" || (e as { code?: string }).code === "P2025") {
+      return { error: (e as { code?: string }).code === "P2025" ? "not_found" : "hasLinkedData" };
+    }
+    throw e;
+  }
+
+  revalidatePath("/admin/races");
+  revalidatePath("/admin");
+  redirect({ href: "/admin/races", locale });
+  return {};
+}

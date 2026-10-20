@@ -4,7 +4,8 @@ import { getRaceForAdmin } from "@/lib/queries";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { RaceForm } from "../RaceForm";
-import { updateRaceAction } from "../actions";
+import { RaceDangerActions } from "../RaceDangerActions";
+import { clearRaceDataAction, deleteRaceAction, updateRaceAction } from "../actions";
 
 export default async function EditRacePage({
   params,
@@ -39,6 +40,10 @@ export default async function EditRacePage({
           isChallenge: race.isChallenge,
           isMass: race.isMass,
         }}
+      />
+      <RaceDangerActions
+        clearAction={clearRaceDataAction.bind(null, id)}
+        deleteAction={deleteRaceAction.bind(null, id, locale)}
       />
     </main>
   );

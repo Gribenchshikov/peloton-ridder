@@ -13,6 +13,7 @@ type ScanResult = {
   transferUsedAt: string | null;
   includesTransfer: boolean;
   isTransferOnly: boolean;
+  slotCancelled?: boolean;
   transferRefunded?: boolean;
   participant: {
     firstName: string;
@@ -258,7 +259,8 @@ export function ScannerView({ events }: { events: EventOption[] }) {
   const alreadyBoarded = scanResult?.transferUsedAt != null;
   const transferRefunded = Boolean(scanResult?.transferRefunded);
   const notPaid = scanResult && scanResult.status !== "PAID" && !transferRefunded;
-  const canIssueKit = Boolean(scanResult && !notPaid && !scanResult.isTransferOnly);
+  const slotCancelled = Boolean(scanResult?.slotCancelled);
+  const canIssueKit = Boolean(scanResult && !notPaid && !scanResult.isTransferOnly && !slotCancelled);
   const canShowBoarding = Boolean(scanResult?.includesTransfer && !transferRefunded);
 
   return (
@@ -425,6 +427,12 @@ export function ScannerView({ events }: { events: EventOption[] }) {
           </div>
 
           {/* Actions */}
+          {slotCancelled && (
+            <p className="rounded-[var(--radius-m)] border border-border bg-surface-2 px-4 py-3 text-sm text-ink">
+              Регистрация на слот отменена. Стартовый набор не выдаётся.
+            </p>
+          )}
+
           {(canIssueKit || canShowBoarding) && (
             <div className="flex flex-col gap-3">
               {/* Kit pickup */}

@@ -11,6 +11,7 @@ import { notifyFromRegistration } from "@/lib/userMessages";
 import { activeRegistrationOrDraftWhere, capacityTakenWhere } from "@/lib/slotOccupancy";
 
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
+const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
 const VALID_SIZES = new Set(["XS", "S", "M", "L", "XL", "XXL"]);
 
 const emptyToNull = (v: unknown) => (v === "" || v == null ? null : v);
@@ -157,6 +158,9 @@ export async function createRegistrationAction(
         const birthDate = new Date(birthDateStr);
         if (!firstName || !lastName || !birthDateStr || isNaN(birthDate.getTime())) {
           return { kind: "error" as const, error: "extra_age_required" };
+        }
+        if (!LATIN_NAME.test(firstName) || !LATIN_NAME.test(lastName)) {
+          return { kind: "error" as const, error: "extra_name_latin" };
         }
         const rule = rules[i + 1];
         if (rule) {

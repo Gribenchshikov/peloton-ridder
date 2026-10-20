@@ -222,6 +222,7 @@
     "countryEmpty": "Not selected",
     "profileSaved": "Changes saved.",
     "historyTitle": "Registration history",
+    "volunteerTitle": "Volunteering",
     "historyEmpty": "No race registrations yet — once you sign up, they'll show up here.",
     "showQrCta": "Show QR code",
     "invoiceNumbers": "ApiPay invoices: {numbers}",

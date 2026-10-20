@@ -14,6 +14,7 @@ import { ContactOrganizerButton } from "./ContactOrganizerButton";
 import { SizeGuideModal } from "./SizeGuideModal";
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
 type Size = (typeof SIZES)[number];
 
 type ParticipantRule = { label: string; minAge: number | null; maxAge: number | null };
@@ -263,10 +264,17 @@ export function DistanceSelect({
                   type="text"
                   name={`extra_firstName_${idx}`}
                   required
+                  lang="en"
+                  autoComplete="given-name"
+                  pattern="[A-Za-z][A-Za-z \-]*"
+                  title="Имя и фамилия — только латинские буквы, дефис и пробел."
                   value={p.firstName}
                   onChange={(e) => setExtraParticipants((prev) => prev.map((x, i) => i === idx ? { ...x, firstName: e.target.value } : x))}
                   className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
                 />
+                {p.firstName.trim() !== "" && !LATIN_NAME.test(p.firstName.trim()) && (
+                  <p className="text-xs text-danger">Только латинские буквы, дефис и пробел.</p>
+                )}
               </div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-ink-soft">Фамилия *</label>
@@ -274,10 +282,17 @@ export function DistanceSelect({
                   type="text"
                   name={`extra_lastName_${idx}`}
                   required
+                  lang="en"
+                  autoComplete="family-name"
+                  pattern="[A-Za-z][A-Za-z \-]*"
+                  title="Имя и фамилия — только латинские буквы, дефис и пробел."
                   value={p.lastName}
                   onChange={(e) => setExtraParticipants((prev) => prev.map((x, i) => i === idx ? { ...x, lastName: e.target.value } : x))}
                   className="rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none"
                 />
+                {p.lastName.trim() !== "" && !LATIN_NAME.test(p.lastName.trim()) && (
+                  <p className="text-xs text-danger">Только латинские буквы, дефис и пробел.</p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-1">
@@ -457,6 +472,7 @@ export function DistanceSelect({
       {state.error === "age_required" && <p className="text-sm text-danger">{t("errorAgeRequired")}</p>}
       {state.error === "age_too_young" && <p className="text-sm text-danger">{t("errorAgeTooYoung")}</p>}
       {state.error === "age_too_old" && <p className="text-sm text-danger">{t("errorAgeTooOld")}</p>}
+      {state.error === "extra_name_latin" && <p className="text-sm text-danger">Имя и фамилия дополнительного участника — только латинские буквы, дефис и пробел.</p>}
       {state.error === "extra_age_required" && <p className="text-sm text-danger">Укажите дату рождения для всех участников слота.</p>}
       {state.error === "extra_age_too_young" && <p className="text-sm text-danger">Один из дополнительных участников не соответствует минимальному возрасту для этой дистанции.</p>}
       {state.error === "extra_age_too_old" && <p className="text-sm text-danger">Один из дополнительных участников превышает максимальный возраст для этой дистанции.</p>}

@@ -4,7 +4,38 @@ import { NextResponse } from "next/server";
 import { requireOperatorOrAdminId } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
 import { csvDownloadHeaders, csvWindows1251Bytes, toCsv } from "@/lib/csv";
-import { displayRegistrationStatus, displayTransferStatus } from "@/lib/registrationStatus";
+import { collectPaidInvoices } from "@/lib/invoiceDisplay";
+import { displayRegistrationStatus, hasConfirmedTransferRefund } from "@/lib/registrationStatus";
+import { slotRefundAmount } from "@/lib/paymentAmount";
+
+type InvoiceRegistration = {
+  status: string;
+  kaspiOrderId: string | null;
+  paidInvoiceIds: string[];
+  refundRequests?: { type: string; status: string; invoiceId: string | null }[];
+  includesTransfer: boolean;
+  isTransferOnly: boolean;
+};
+
+function currentPaidInvoiceId(reg: InvoiceRegistration): string {
+  return collectPaidInvoices(reg).find((invoice) => invoice.status === "paid")?.id ?? "";
+}
+
+/** Оплаченный или возвращённый трансфер. Неоплаченная бронь в выгрузку не попадает. */
+function transferCsvPayment(reg: InvoiceRegistration): "Оплачено" | "Возврат" | null {
+  if (reg.status === "PAID" && (reg.includesTransfer || reg.isTransferOnly)) return "Оплачено";
+  if (hasConfirmedTransferRefund(reg.refundRequests)) return "Возврат";
+  if (reg.isTransferOnly && reg.status === "CANCELLED" && collectPaidInvoices(reg).length > 0) return "Возврат";
+  return null;
+}
+
+function transferCsvInvoiceId(reg: InvoiceRegistration, payment: "Оплачено" | "Возврат"): string {
+  if (payment === "Оплачено") return currentPaidInvoiceId(reg);
+  const refunded = reg.refundRequests?.find(
+    (request) => request.type === "TRANSFER" && request.status === "CONFIRMED" && request.invoiceId,
+  );
+  return refunded?.invoiceId ?? collectPaidInvoices(reg).at(-1)?.id ?? "";
+}
 
 export async function GET(
   req: Request,
@@ -39,7 +70,7 @@ export async function GET(
     paid.sort((a, b) => (a.user.lastName ?? "").localeCompare(b.user.lastName ?? "", "ru"));
 
     const rows = [
-      ["Оплата", "Фамилия", "Имя", "Рег. номер", "Экстренный контакт", "Дата рождения"],
+      ["Оплата", "Фамилия", "Имя", "Рег. номер", "Экстренный контакт", "Дата рождения", "Стартовый набор", "Номер счёта"],
       ...paid.map((r) => [
         "✓",
         r.user.lastName,
@@ -47,6 +78,8 @@ export async function GET(
         r.bibNumber ?? "",
         r.emergencyContact ?? "",
         r.user.birthDate ? new Date(r.user.birthDate).toLocaleDateString("ru-RU") : "",
+        r.kitPickedUpAt ? "Да" : "Нет",
+        currentPaidInvoiceId(r),
       ]),
     ];
     const csv = toCsv(rows);
@@ -57,14 +90,23 @@ export async function GET(
 
   // ── Transfer CSV ────────────────────────────────────────────────────────────
   if (typeParam === "transfer") {
-    const withTransfer = event.registrations.filter(
-      (r) => r.status === "PAID" && (r.isTransferOnly || r.includesTransfer),
-    );
-    withTransfer.sort((a, b) => (a.user.lastName ?? "").localeCompare(b.user.lastName ?? "", "ru"));
+    const withTransfer = event.registrations.flatMap((r) => {
+      const payment = transferCsvPayment(r);
+      return payment ? [{ reg: r, payment }] : [];
+    });
+    withTransfer.sort((a, b) => (a.reg.user.lastName ?? "").localeCompare(b.reg.user.lastName ?? "", "ru"));
 
     const rows = [
-      ["Рег. номер", "Фамилия", "Имя", "Телефон", "Отметка"],
-      ...withTransfer.map((r) => [r.bibNumber ?? "", r.user.lastName, r.user.firstName, r.user.phone ?? "", ""]),
+      ["Рег. номер", "Фамилия", "Имя", "Телефон", "Посадка", "Оплата", "Номер счёта"],
+      ...withTransfer.map(({ reg, payment }) => [
+        reg.bibNumber ?? "",
+        reg.user.lastName,
+        reg.user.firstName,
+        reg.user.phone ?? "",
+        reg.transferUsedAt ? "Да" : "Нет",
+        payment,
+        transferCsvInvoiceId(reg, payment),
+      ]),
     ];
     const csv = toCsv(rows);
     return new NextResponse(Buffer.from(csvWindows1251Bytes(csv)), {
@@ -90,9 +132,24 @@ export async function GET(
   });
 
   const rows = [
-    ["№", "Имя", "Фамилия", "Email", "Телефон", "Дистанция", "Км", "Трансфер", "Статус", "Причина отмены", "Комментарий отмены", "Регистрационный номер", "Дата регистрации", "Беговой клуб", "Промокод", "Скидка (₸)"],
+    [
+      "Регистрационный номер",
+      "Имя",
+      "Фамилия",
+      "Email",
+      "Телефон",
+      "Дистанция",
+      "Км",
+      "Статус",
+      "Сумма оплаты",
+      "Промокод",
+      "Скидка (тг)",
+      "Беговой клуб",
+      "Дата регистрации",
+      "Причина отмены",
+      "Комментарий отмены",
+    ],
     ...registrations.map((r) => {
-      const transferDisplay = displayTransferStatus(r.includesTransfer || r.isTransferOnly, r.refundRequests);
       const statusDisplay = displayRegistrationStatus(r.status, r.refundRequests, {
         invoiceId: r.kaspiOrderId,
         reregistrationCount: r.reregistrationCount,
@@ -107,6 +164,13 @@ export async function GET(
         DEFER: "Перенесу на след. год",
         OTHER: "Другое",
       };
+      const paidAmount = slotRefundAmount({
+        isTransferOnly: r.isTransferOnly,
+        discountAmount: r.discountAmount,
+        includesTransfer: r.includesTransfer,
+        distance: r.distance,
+        event: { transferPrice: event.transferPrice },
+      });
       return [
         r.bibNumber ?? "",
         r.user.firstName ?? "",
@@ -115,7 +179,6 @@ export async function GET(
         r.user.phone ?? "",
         r.distance?.name ?? (r.isTransferOnly ? "Только трансфер" : ""),
         r.distance?.km ?? "",
-        transferDisplay === "YES" ? "Да" : transferDisplay === "REFUNDED" ? "Возврат" : "Нет",
         statusDisplay === "PAID"
           ? "Оплачено"
           : statusDisplay === "REFUNDED"
@@ -123,13 +186,13 @@ export async function GET(
             : r.status === "CANCELLED"
               ? "Отменено"
               : "Бронь",
-        r.cancelReason ? (cancelLabels[r.cancelReason] ?? r.cancelReason) : "",
-        r.cancelComment ?? "",
-        r.bibNumber ?? "",
-        new Date(r.createdAt).toLocaleDateString("ru-RU"),
-        r.runningClub?.name ?? "",
+        paidAmount,
         r.promoCode?.code ?? "",
         r.discountAmount ?? 0,
+        r.runningClub?.name ?? "",
+        new Date(r.createdAt).toLocaleDateString("ru-RU"),
+        r.cancelReason ? (cancelLabels[r.cancelReason] ?? r.cancelReason) : "",
+        r.cancelComment ?? "",
       ];
     }),
   ];

@@ -2,7 +2,11 @@ import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
 import { countUnreadUserMessages } from "@/lib/userMessages";
-import { repairUserStalePaidSlotRefunds, restorePaidSlotAfterTransferRefund } from "@/lib/refundPayout";
+import {
+  repairUserStalePaidSlotRefunds,
+  restorePaidSlotAfterTransferRefund,
+  restorePaidTransferAfterSlotRefund,
+} from "@/lib/refundPayout";
 import { AccountHeader } from "./AccountHeader";
 import { AccountNav } from "./AccountNav";
 
@@ -21,10 +25,11 @@ export default async function AccountLayout({
 
   await repairUserStalePaidSlotRefunds(session.user.id);
   await restorePaidSlotAfterTransferRefund(undefined, session.user.id);
+  await restorePaidTransferAfterSlotRefund(undefined, session.user.id);
   const [user, unreadCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { firstName: true, lastName: true, avatarUrl: true, isAdmin: true },
+      select: { firstName: true, lastName: true, avatarUrl: true, isAdmin: true, isVolunteer: true },
     }),
     countUnreadUserMessages(session.user.id),
   ]);
@@ -39,7 +44,7 @@ export default async function AccountLayout({
         isAdmin={user.isAdmin}
         avatarUrl={user.avatarUrl}
       />
-      <AccountNav unreadCount={unreadCount} />
+      <AccountNav unreadCount={unreadCount} showVolunteer={user.isVolunteer} />
       <div className="mt-8">{children}</div>
     </main>
   );

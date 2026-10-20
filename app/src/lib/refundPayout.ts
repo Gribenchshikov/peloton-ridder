@@ -29,16 +29,29 @@ type DbClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0] | typeo
 export async function applySlotRefundToRegistration(
   db: DbClient,
   registrationId: string,
-  _options?: { keepTransfer?: boolean },
+  options?: { keepTransfer?: boolean },
 ) {
-  void _options;
   const registration = await db.registration.findUnique({
     where: { id: registrationId },
-    select: { isTransferOnly: true, distanceId: true },
+    select: { isTransferOnly: true, distanceId: true, includesTransfer: true },
   });
   if (!registration) return;
 
-  // Слот снимаем, но строку оставляем в списке участников (кроме чистого трансфера).
+  const keepTransfer = Boolean(options?.keepTransfer && registration.includesTransfer);
+  if (keepTransfer) {
+    await db.registration.update({
+      where: { id: registrationId },
+      data: {
+        status: "PAID",
+        reservedUntil: null,
+        bibNumber: null,
+        includesTransfer: true,
+        isTransferOnly: true,
+      },
+    });
+    return;
+  }
+
   await db.registration.update({
     where: { id: registrationId },
     data: {
@@ -61,6 +74,8 @@ export async function repairStalePaidSlotRefunds(eventId: string) {
     select: {
       id: true,
       distanceId: true,
+      includesTransfer: true,
+      isTransferOnly: true,
       kaspiOrderId: true,
       reregistrationCount: true,
       refundRequests: { select: { type: true, status: true, invoiceId: true } },
@@ -68,30 +83,29 @@ export async function repairStalePaidSlotRefunds(eventId: string) {
   });
   if (candidates.length === 0) return 0;
 
-  const staleIds = candidates
-    .filter((row) =>
+  const stale = candidates.filter(
+    (row) =>
+      !row.isTransferOnly &&
       row.refundRequests.some(
         (request) =>
           request.type === "SLOT" &&
           request.status === "CONFIRMED" &&
           refundMatchesCurrentInvoice(request, row.kaspiOrderId, row.reregistrationCount),
       ),
-    )
-    .map((row) => row.id);
-  if (staleIds.length === 0) return 0;
+  );
+  if (stale.length === 0) return 0;
 
-  const stale = candidates.filter((row) => staleIds.includes(row.id));
   await prisma.$transaction(async (tx) => {
     const distanceIds = [...new Set(stale.map((row) => row.distanceId).filter(Boolean))] as string[];
     for (const id of distanceIds.sort()) {
       await tx.$queryRaw`SELECT "id" FROM "Distance" WHERE "id" = ${id} FOR UPDATE`;
     }
-    for (const id of staleIds) {
-      await applySlotRefundToRegistration(tx, id, { keepTransfer: false });
+    for (const row of stale) {
+      await applySlotRefundToRegistration(tx, row.id, { keepTransfer: row.includesTransfer });
     }
     await reassignPaidBibNumbers(tx, eventId);
   });
-  return staleIds.length;
+  return stale.length;
 }
 
 /** Если вернули только трансфер, слот остаётся оплаченным. */
@@ -143,6 +157,56 @@ export async function restorePaidSlotAfterTransferRefund(eventId?: string, userI
       console.error("[refund] bib restore failed:", id, error);
     });
   }
+  return restoreIds.length;
+}
+
+/** Возврат только слота: трансфер остаётся оплаченным, слот больше не занимает место. */
+export async function restorePaidTransferAfterSlotRefund(eventId?: string, userId?: string) {
+  const rows = await prisma.registration.findMany({
+    where: {
+      ...(eventId ? { eventId } : {}),
+      ...(userId ? { userId } : {}),
+      status: "CANCELLED",
+      includesTransfer: true,
+      isTransferOnly: false,
+      cancelReason: null,
+    },
+    select: {
+      id: true,
+      kaspiOrderId: true,
+      reregistrationCount: true,
+      refundRequests: { select: { type: true, status: true, invoiceId: true } },
+    },
+  });
+
+  const restoreIds = rows.filter((row) => {
+    const slotRefunded = row.refundRequests.some(
+      (request) =>
+        request.type === "SLOT" &&
+        request.status === "CONFIRMED" &&
+        refundMatchesCurrentInvoice(request, row.kaspiOrderId, row.reregistrationCount),
+    );
+    if (!slotRefunded) return false;
+    return !row.refundRequests.some(
+      (request) =>
+        request.type === "TRANSFER" &&
+        request.status === "CONFIRMED" &&
+        refundMatchesCurrentInvoice(request, row.kaspiOrderId, row.reregistrationCount),
+    );
+  }).map((row) => row.id);
+
+  if (restoreIds.length === 0) return 0;
+
+  await prisma.registration.updateMany({
+    where: { id: { in: restoreIds } },
+    data: {
+      status: "PAID",
+      isTransferOnly: true,
+      includesTransfer: true,
+      bibNumber: null,
+      reservedUntil: null,
+    },
+  });
   return restoreIds.length;
 }
 
@@ -491,7 +555,7 @@ export async function refundPaidRegistrationOnAdminCancel(registrationId: string
   const keepTransfer = Boolean(registration?.includesTransfer && !registration.isTransferOnly);
   if (registration && registration.status !== "CANCELLED") {
     await prisma.$transaction(async (tx) => {
-      await applySlotRefundToRegistration(tx, registrationId);
+      await applySlotRefundToRegistration(tx, registrationId, { keepTransfer });
       await reassignPaidBibNumbers(tx, registration.eventId);
     });
   }

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { KitLookupQuery } from "@/lib/ticketCode";
-import { canBoardTransfer, isTransferRefunded } from "@/lib/registrationStatus";
+import { canBoardTransfer, hasConfirmedSlotRefund, isTransferRefunded } from "@/lib/registrationStatus";
 
 const kitRegistrationSelect = {
   id: true,
@@ -64,6 +64,7 @@ export function toKitScanPayload(reg: KitRegistration) {
     transferUsedAt: reg.transferUsedAt,
     includesTransfer: canBoardTransfer(reg),
     isTransferOnly: reg.isTransferOnly,
+    slotCancelled: reg.isTransferOnly && hasConfirmedSlotRefund(reg.refundRequests),
     transferRefunded,
     participant: {
       firstName: reg.user.firstName,

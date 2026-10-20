@@ -222,6 +222,7 @@
     "countryEmpty": "Не выбрана",
     "profileSaved": "Изменения сохранены.",
     "historyTitle": "История регистраций",
+    "volunteerTitle": "Волонтёрство",
     "historyEmpty": "Пока нет ни одной регистрации на забег — когда запишешься, она появится здесь.",
     "showQrCta": "Показать QR-код",
     "invoiceNumbers": "Счета ApiPay: {numbers}",
