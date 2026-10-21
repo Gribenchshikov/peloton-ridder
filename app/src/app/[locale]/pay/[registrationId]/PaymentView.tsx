@@ -267,13 +267,6 @@ export function PaymentView({
         <p className="text-center text-sm text-ink-soft">{t("qrExpired")}</p>
       )}
 
-      <Link
-        href={`/events/${registration.event.race.slug}/${registration.event.year}/register?fromPay=1`}
-        className="block w-full rounded-[var(--radius-s)] border border-border px-5 py-3 text-center text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
-      >
-        {t("backToRegisterCta")}
-      </Link>
-
       {testMode && (
         <div className="rounded-[var(--radius-m)] border border-dashed border-warn bg-warn-tint p-5">
           <p className="text-sm font-semibold text-warn">{t("testModeTitle")}</p>
@@ -288,6 +281,13 @@ export function PaymentView({
           </form>
         </div>
       )}
+
+      <Link
+        href={`/events/${registration.event.race.slug}/${registration.event.year}/register?fromPay=1`}
+        className="block w-full rounded-[var(--radius-s)] border border-border px-5 py-3 text-center text-sm font-semibold text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink"
+      >
+        {t("backToRegisterCta")}
+      </Link>
     </main>
   );
 }

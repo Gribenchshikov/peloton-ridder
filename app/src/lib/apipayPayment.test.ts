@@ -38,6 +38,7 @@ test("sandbox simulation needs the server flag and a sandbox invoice, not a requ
   assert.equal(providerSimulationAllowed(sandbox, false), false);
   assert.equal(providerSimulationAllowed(sandbox, true), true);
   assert.equal(showPaymentSimulation(false, sandbox), false);
+  assert.equal(showPaymentSimulation(null, sandbox), true);
   assert.equal(showPaymentSimulation(true, sandbox), true);
   assert.equal(simulationGate({ ...sandbox, ALLOW_TEST_PAYMENTS: "false" }), "forbidden");
 });

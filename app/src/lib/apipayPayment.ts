@@ -55,7 +55,8 @@ export function paymentModeMatches(serverSandbox: boolean, isSandbox: boolean | 
 export function showPaymentSimulation(invoiceIsSandbox: boolean | null, env: PaymentEnv) {
   const gate = simulationGate(env);
   if (gate === "local_stub") return true;
-  if (gate === "provider_sandbox") return invoiceIsSandbox === true;
+  // Ответ создания QR может не содержать is_sandbox. Боевой счёт (false) кнопку не получает.
+  if (gate === "provider_sandbox") return invoiceIsSandbox !== false;
   return false;
 }
 

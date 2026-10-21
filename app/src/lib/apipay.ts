@@ -53,7 +53,7 @@ export type PaymentInvoiceView = {
   paymentUrl: string | null;
   qrImageUrl: string | null;
   expiresAt: string | null;
-  sandbox: boolean;
+  sandbox: boolean | null;
   error: string | null;
 };
 
@@ -298,7 +298,7 @@ function invoiceToView(invoice: ApipayInvoice, amount: number, error: string | n
     paymentUrl: invoice.qr_token_url ?? null,
     qrImageUrl: kaspiQrImageUrl(invoice, BASE),
     expiresAt: invoice.qr_expires_at ?? null,
-    sandbox: Boolean(invoice.is_sandbox),
+    sandbox: typeof invoice.is_sandbox === "boolean" ? invoice.is_sandbox : null,
     error,
   };
 }
@@ -546,7 +546,9 @@ export async function ensureQrInvoice(registration: EnsureSource, forceNew = fal
       }),
     });
     await saveInvoice(registration.id, created);
-    return invoiceToView(created, amount);
+    const createdWithMode =
+      typeof created.is_sandbox === "boolean" ? created : await getInvoice(created.id).catch(() => created);
+    return invoiceToView({ ...created, is_sandbox: createdWithMode.is_sandbox }, amount);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[apipay] create QR invoice failed:", error);
