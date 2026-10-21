@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { UserMessageType } from "@/generated/prisma/client";
 import { sendUserMessageEmail } from "@/lib/mailer";
 import { ticketPaymentSummary, type TicketPaymentKind } from "@/lib/paymentAmount";
@@ -11,6 +12,9 @@ export type UserMessagePayload = {
   amount?: number;
   kind?: TicketPaymentKind;
   applicant?: string;
+  email?: string;
+  phone?: string;
+  text?: string;
 };
 
 function parsePaymentKind(value: unknown): TicketPaymentKind | undefined {
@@ -19,15 +23,40 @@ function parsePaymentKind(value: unknown): TicketPaymentKind | undefined {
     : undefined;
 }
 
+function revalidateUserMessageViews() {
+  // Страницы админки дочитывают возврат во время рендера. revalidatePath в этой
+  // фазе роняет ответ, поэтому сброс кэша откладывается до конца запроса.
+  try {
+    after(() => {
+      revalidatePath("/", "layout");
+      revalidatePath("/[locale]/account", "page");
+      revalidatePath("/[locale]/account/messages", "page");
+    });
+  } catch (error) {
+    console.error("[userMessage] revalidate failed:", error);
+  }
+}
+
 export function parseUserMessagePayload(value: unknown): UserMessagePayload {
   if (!value || typeof value !== "object") return { race: "" };
-  const row = value as { race?: unknown; amount?: unknown; kind?: unknown; applicant?: unknown };
+  const row = value as {
+    race?: unknown;
+    amount?: unknown;
+    kind?: unknown;
+    applicant?: unknown;
+    email?: unknown;
+    phone?: unknown;
+    text?: unknown;
+  };
   const amount = typeof row.amount === "number" ? row.amount : Number(row.amount);
   return {
     race: typeof row.race === "string" ? row.race : "",
     amount: Number.isFinite(amount) ? amount : undefined,
     kind: parsePaymentKind(row.kind),
     applicant: typeof row.applicant === "string" ? row.applicant : undefined,
+    email: typeof row.email === "string" ? row.email : undefined,
+    phone: typeof row.phone === "string" ? row.phone : undefined,
+    text: typeof row.text === "string" ? row.text : undefined,
   };
 }
 
@@ -79,13 +108,7 @@ export async function notifyFromRegistration(
       console.error("[userMessage] email failed:", type, registration.user.email, error);
     });
 
-    try {
-      revalidatePath("/", "layout");
-      revalidatePath("/[locale]/account", "page");
-      revalidatePath("/[locale]/account/messages", "page");
-    } catch (error) {
-      console.error("[userMessage] revalidate failed:", error);
-    }
+    revalidateUserMessageViews();
   } catch (error) {
     console.error("[userMessage] notify failed:", error);
   }
@@ -106,11 +129,43 @@ export async function notifyAdminsVolunteerApplication(applicantName: string, ra
         payload: { race, applicant: applicantName },
       })),
     });
-    revalidatePath("/", "layout");
-    revalidatePath("/[locale]/account", "page");
-    revalidatePath("/[locale]/account/messages", "page");
+    revalidateUserMessageViews();
   } catch (error) {
     console.error("[userMessage] volunteer application notify failed:", error);
+  }
+}
+
+export async function notifyAdminsOrganizerMessage(input: {
+  name: string;
+  email: string;
+  phone?: string | null;
+  topic: string;
+  text: string;
+}) {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { isAdmin: true },
+      select: { id: true },
+    });
+    if (admins.length === 0) return;
+
+    const payload: UserMessagePayload = {
+      race: input.topic,
+      applicant: input.name,
+      email: input.email,
+      phone: input.phone?.trim() || undefined,
+      text: input.text,
+    };
+    await prisma.userMessage.createMany({
+      data: admins.map((admin) => ({
+        userId: admin.id,
+        type: "ORGANIZER_MESSAGE" as const,
+        payload,
+      })),
+    });
+    revalidateUserMessageViews();
+  } catch (error) {
+    console.error("[userMessage] organizer message notify failed:", error);
   }
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findRegistrationForKitLookup, requireKitScanner, toKitScanPayload } from "@/lib/kitPickup";
+import { findRegistrationForKitLookup, requireKitScanner, scannerCanAccessEvent, toKitScanPayload } from "@/lib/kitPickup";
 import { parseKitLookupQuery } from "@/lib/ticketCode";
 
 export async function GET(req: NextRequest) {
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   }
 
   const reg = await findRegistrationForKitLookup(query, eventId);
-  if (!reg) {
+  if (!reg || !scannerCanAccessEvent(access, reg.eventId)) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
   return NextResponse.json(toKitScanPayload(reg));

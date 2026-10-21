@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useFormatter } from "next-intl";
 import { compareInvoiceDesc, expandRegistrationPayments } from "@/lib/invoiceDisplay";
-import { canBoardTransfer, displayTransferStatus, isTransferPassengerRegistration, isTransferRefunded, TRANSFER_REFUNDED_BOARDING_MESSAGE } from "@/lib/registrationStatus";
+import { canBoardTransfer, displayTransferStatus, isTransferPassengerRegistration, isTransferRefunded, TRANSFER_REFUNDED_BOARDING_MESSAGE, transferPassengerBadge } from "@/lib/registrationStatus";
 import { adminRefundTransferAction, toggleTransferBoardedAction } from "./actions";
 
 type TransferRow = {
@@ -63,18 +64,14 @@ function TransferStatusBadge({
   paymentStatus: "paid" | "cancelled" | "reserved";
   isCurrent: boolean;
 }) {
-  const hasTransfer = reg.includesTransfer || reg.isTransferOnly;
-  const transferDisplay = displayTransferStatus(hasTransfer, reg.refundRequests);
-  const kind =
-    !isCurrent || paymentStatus === "cancelled"
-      ? "cancelled"
-      : paymentStatus === "reserved" || reg.status === "RESERVED"
-        ? "reserved"
-        : transferDisplay === "REFUNDED"
-          ? "refunded"
-          : reg.refundRequests?.some((r) => r.type === "TRANSFER" && r.status === "PENDING")
-            ? "pending"
-            : "paid";
+  const kind = transferPassengerBadge({
+    status: reg.status,
+    includesTransfer: reg.includesTransfer,
+    isTransferOnly: reg.isTransferOnly,
+    refundRequests: reg.refundRequests,
+    paymentStatus,
+    isCurrent,
+  });
   const styles: Record<typeof kind, string> = {
     paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
     cancelled: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
@@ -99,9 +96,32 @@ function TransferStatusBadge({
 function RefundButton({ registrationId, eventId }: { registrationId: string; eventId: string }) {
   const bound = adminRefundTransferAction.bind(null, registrationId, eventId);
   const [state, action, pending] = useActionState(bound, {});
+  const router = useRouter();
+  const waitingForApipay = state.error === "payout_pending";
+
+  useEffect(() => {
+    if (!waitingForApipay) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      router.refresh();
+      if (tries >= 24) clearInterval(timer);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [router, waitingForApipay]);
+
   if (state.success) return <span className="text-xs font-semibold text-spruce">Возврат отправлен</span>;
   return (
-    <form action={action}>
+    <form action={action} className="flex flex-col items-start gap-1">
+      <input
+        name="totp"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        required
+        placeholder="Код 2FA"
+        className="w-24 rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1 text-xs text-ink"
+      />
       <button
         type="submit"
         disabled={pending}
@@ -109,7 +129,17 @@ function RefundButton({ registrationId, eventId }: { registrationId: string; eve
       >
         {pending ? "…" : "Возврат"}
       </button>
-      {state.error && <p className="mt-1 text-[11px] text-danger">{state.error === "payout_failed" ? "Не удалось отправить возврат в ApiPay" : "Ошибка"}</p>}
+      {state.error && (
+        <p className="mt-1 text-[11px] text-danger">
+          {state.error === "payout_failed"
+            ? "Не удалось отправить возврат в ApiPay"
+            : state.error === "payout_pending"
+              ? "Возврат отправлен в ApiPay. Статус обновится после подтверждения."
+              : state.error === "invalid_2fa"
+                ? "Неверный код 2FA"
+                : "Ошибка"}
+        </p>
+      )}
     </form>
   );
 }
@@ -146,8 +176,16 @@ export function TransferPassengersSection({
           <tbody>
             {rows.flatMap((reg) => {
               const hasTransfer = displayTransferStatus(reg.includesTransfer, reg.refundRequests) === "YES";
-              return expandRegistrationPayments(reg).map((payment) => ({ reg, payment, hasTransfer }));
-            }).sort((a, b) => compareInvoiceDesc(a.payment.invoiceId, b.payment.invoiceId)).map(({ reg, payment, hasTransfer }, idx) => {
+              const transferRefundPending = reg.refundRequests?.some(
+                (request) => request.type === "TRANSFER" && request.status === "PENDING",
+              );
+              return expandRegistrationPayments(reg).map((payment) => ({
+                reg,
+                payment,
+                hasTransfer,
+                transferRefundPending,
+              }));
+            }).sort((a, b) => compareInvoiceDesc(a.payment.invoiceId, b.payment.invoiceId)).map(({ reg, payment, hasTransfer, transferRefundPending }, idx) => {
               const canBoard =
                 payment.isCurrent &&
                 payment.paymentStatus !== "cancelled" &&
@@ -195,7 +233,7 @@ export function TransferPassengersSection({
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    {payment.isCurrent && reg.status === "PAID" && hasTransfer ? (
+                    {payment.isCurrent && reg.status === "PAID" && hasTransfer && !transferRefundPending ? (
                       <RefundButton registrationId={reg.id} eventId={eventId} />
                     ) : (
                       <span className="text-xs text-ink-faint">—</span>

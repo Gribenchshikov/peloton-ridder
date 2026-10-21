@@ -156,6 +156,7 @@
     "errorInvalid": "Проверьте заполненные поля — что-то указано неверно.",
     "errorNameLatinOnly": "Имя и фамилия — только латинские буквы, дефис и пробел.",
     "errorInvalidCredentials": "Неверный email или пароль.",
+    "errorGoogleNotConfigured": "Вход через Google не настроен: на сервере не задан AUTH_GOOGLE_ID.",
     "errorBotCheck": "Не удалось пройти проверку на бота. Обновите страницу и попробуйте ещё раз.",
     "checkEmailTitle": "Проверьте почту",
     "checkEmailText": "Мы отправили ссылку для подтверждения регистрации. Перейдите по ней, чтобы активировать аккаунт.",
@@ -304,7 +305,9 @@
     "message_REFUND_TRANSFER_title": "Возврат за трансфер",
     "message_REFUND_TRANSFER_body": "Произведён возврат за трансфер на {race} на сумму {amount}.",
     "message_VOLUNTEER_APPLICATION_title": "Заявка волонтёра",
-    "message_VOLUNTEER_APPLICATION_body": "{applicant} подал(а) заявку волонтёром на {race}."
+    "message_VOLUNTEER_APPLICATION_body": "{applicant} подал(а) заявку волонтёром на {race}.",
+    "message_ORGANIZER_MESSAGE_title": "Сообщение от участника",
+    "message_ORGANIZER_MESSAGE_body": "{applicant} ({email}) — {race}"
   },
   "RegistrationStatus": {
     "RESERVED": "Забронировано",
@@ -359,6 +362,7 @@
     "clubNone": "Не указан",
     "promoLabel": "Промокод",
     "promoApply": "Применить",
+    "promoAccepted": "Промокод принят. Скидка посчитается при отправке заявки.",
     "promoError_not_found": "Промокод не найден или недействителен",
     "promoError_inactive": "Промокод деактивирован",
     "promoError_expired": "Срок действия промокода истёк",
@@ -408,7 +412,7 @@
     "qrExpires": "QR действует до {time}",
     "qrExpired": "Время QR истекло — получите новый код.",
     "refreshQrCta": "Получить новый QR",
-    "waiting": "Ждём оплату…",
+    "waiting": "Ожидаем оплату…",
     "invoiceError": "Не удалось создать счёт: {error}",
     "testModeTitle": "Тестовый режим",
     "testModeText": "Кабинет ApiPay в тестовом режиме: деньги не списываются. После оплаты статус обновится сам, либо нажмите кнопку ниже.",
@@ -656,6 +660,7 @@
     "regActionErrorHasResults": "Нельзя изменить регистрацию после загрузки результатов.",
     "regActionErrorInvalid": "Выберите дистанцию этого забега.",
     "regActionErrorPayoutFailed": "Не удалось вернуть оплату за слот в ApiPay. Статус участника не изменён — повторите отмену.",
+    "regActionErrorPayoutPending": "Возврат отправлен в ApiPay и ещё не подтверждён. Статус участника изменится после подтверждения провайдером. Повторно отменять не нужно.",
     "regManageCta": "Управлять",
     "regChangeDistanceLabel": "Дистанция",
     "regCancelCommentLabel": "Комментарий для участника",

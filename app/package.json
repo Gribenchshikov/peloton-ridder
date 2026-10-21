@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --import tsx --test src/lib/mailer.test.ts src/lib/itraResults.test.ts src/lib/apipayPayment.test.ts src/lib/accessControl.test.ts src/lib/googleOAuth.test.ts src/lib/registrationStatus.test.ts",
     "admin:grant": "tsx scripts/grant-admin.ts",
     "smoke": "tsx scripts/smoke-test.ts"
   },
@@ -22,21 +23,21 @@
     "bcryptjs": "^3.0.3",
     "jsqr": "^1.4.0",
     "leaflet": "^1.9.4",
-    "next": "16.2.10",
+    "next": "^16.4.2",
     "next-auth": "^5.0.0-beta.31",
     "next-intl": "^4.13.2",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.1.7",
     "otplib": "^13.4.1",
     "pdf-lib": "^1.17.1",
     "pg": "^8.22.0",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.4.3"
   },
   "overrides": {
-    "nodemailer": "^9.0.3"
+    "nodemailer": "$nodemailer"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

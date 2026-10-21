@@ -12,6 +12,7 @@ import type { AidStation } from "@/types/aidStation";
 import type { RegulationFile, RegulationBlock } from "@/types/regulation";
 import type { PhotoLink, DayProgramItem, DistanceEquipment } from "@/types/eventContent";
 import { localDateSchema } from "@/lib/dates";
+import { parseItraRows, readItraSheet } from "@/lib/itraResults";
 
 const emptyToUndefined = (value: unknown) => (value === "" || value == null ? undefined : value);
 
@@ -776,52 +777,17 @@ export async function importItraResultsAction(
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  // Dynamic import — xlsx пакет тяжёлый, только в server action
-  const XLSX = await import("xlsx");
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  // header:1 даёт массив массивов; первая строка — заголовки
-  const rawRows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false });
-
-  if (rawRows.length < 2) return { error: "empty_file" };
-
-  // Определяем индексы по заголовкам (регистронезависимо)
-  const headers = (rawRows[0] as string[]).map((h) => String(h ?? "").trim().toLowerCase());
-  const col = (name: string) => headers.findIndex((h) => h.includes(name));
-
-  const idxRanking  = col("ranking");
-  const idxTime     = col("time");
-  const idxFamily   = col("family");
-  const idxFirst    = col("first");
-  const idxGender   = col("gender");
-  const idxNat      = col("nationality");
-  const idxBib      = col("bib");
-
-  if (idxBib === -1 || idxFamily === -1) return { error: "invalid" };
-
-  type ResultRow = { bibNumber: number; name: string; place: number | null; time: string | null; category: string | null };
-  const rows: ResultRow[] = [];
-
-  for (const raw of rawRows.slice(1) as string[][]) {
-    const bib = Number(raw[idxBib]);
-    if (!bib || isNaN(bib)) continue;
-
-    const family = String(raw[idxFamily] ?? "").trim();
-    const first  = String(raw[idxFirst] ?? "").trim();
-    const name   = [family, first].filter(Boolean).join(" ");
-
-    const place  = idxRanking !== -1 ? (Number(raw[idxRanking]) || null) : null;
-    const time   = idxTime !== -1 ? (String(raw[idxTime] ?? "").trim() || null) : null;
-
-    // category — пол + национальность: "M · KAZ"
-    const gender = idxGender !== -1 ? String(raw[idxGender] ?? "").trim() : "";
-    const nat    = idxNat    !== -1 ? String(raw[idxNat]    ?? "").trim() : "";
-    const category = [gender, nat].filter(Boolean).join(" · ") || null;
-
-    rows.push({ bibNumber: bib, name, place, time, category });
+  let rawRows: unknown[];
+  try {
+    rawRows = await readItraSheet(buffer);
+  } catch (error) {
+    console.error("[itra] не удалось прочитать xlsx:", error);
+    return { error: "invalid" };
   }
 
-  if (rows.length === 0) return { error: "no_rows" };
+  const parsed = parseItraRows(rawRows);
+  if ("error" in parsed) return { error: parsed.error };
+  const rows = parsed.rows;
 
   await prisma.$transaction([
     prisma.result.deleteMany({ where: { eventId, source: "ITRA", ...(distId ? { distanceId: distId } : {}) } }),

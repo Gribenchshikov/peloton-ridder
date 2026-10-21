@@ -17,20 +17,20 @@ export default async function KitPickupListPage({
     redirect(`/${locale}/login?callbackUrl=/admin/registrations/${slug}/${year}/kit`);
   }
 
-  const isStaff = session.user.isAdmin || session.user.isOperator;
-  if (!isStaff) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isVolunteer: true },
-    });
-    if (!user?.isVolunteer) redirect(`/${locale}`);
-  }
-
   const yearNum = Number(year);
   if (!Number.isInteger(yearNum)) notFound();
 
   const event = await getKitPickupListBySlug(slug, yearNum);
   if (!event) notFound();
+
+  const isStaff = session.user.isAdmin || session.user.isOperator;
+  if (!isStaff) {
+    const application = await prisma.volunteerApplication.findFirst({
+      where: { userId: session.user.id, eventId: event.id, status: "APPROVED" },
+      select: { id: true },
+    });
+    if (!application) redirect(`/${locale}`);
+  }
 
   const regs = event.registrations;
   const pickedUp = regs.filter((r) => r.kitPickedUpAt !== null);

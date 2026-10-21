@@ -18,6 +18,7 @@ const ERROR_KEYS: Record<NonNullable<RegistrationAdminActionState["error"]>, str
   has_results: "regActionErrorHasResults",
   invalid: "regActionErrorInvalid",
   payout_failed: "regActionErrorPayoutFailed",
+  payout_pending: "regActionErrorPayoutPending",
 };
 
 export function RegistrationActions({

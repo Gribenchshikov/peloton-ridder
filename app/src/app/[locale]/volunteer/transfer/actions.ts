@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { canBoardTransfer, isTransferRefunded, TRANSFER_REFUNDED_BOARDING_MESSAGE } from "@/lib/registrationStatus";
-import { requireUserId } from "@/lib/session";
+import { requireKitScanner, scannerCanAccessEvent } from "@/lib/kitPickup";
+import { kitScanSecret, registrationIdFromKitScanToken } from "@/lib/ticketCode";
 
 type TransferInfo = {
   registrationId: string;
@@ -39,17 +40,13 @@ function toTransferInfo(reg: {
   };
 }
 
-export async function lookupTransferAction(registrationId: string): Promise<ScanResult> {
-  const userId = await requireUserId();
-  if (!userId) return { kind: "error", message: "Необходима авторизация" };
+export async function lookupTransferAction(token: string): Promise<ScanResult> {
+  const access = await requireKitScanner();
+  if (!access.ok) return { kind: "error", message: "Доступ только для волонтёров этого забега" };
 
-  const volunteer = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isVolunteer: true, isAdmin: true },
-  });
-  if (!volunteer?.isVolunteer && !volunteer?.isAdmin) {
-    return { kind: "error", message: "Доступ только для волонтёров" };
-  }
+  const secret = kitScanSecret();
+  const registrationId = secret ? registrationIdFromKitScanToken(token, secret) : null;
+  if (!registrationId) return { kind: "error", message: "Регистрация не найдена" };
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
@@ -58,6 +55,7 @@ export async function lookupTransferAction(registrationId: string): Promise<Scan
       bibNumber: true,
       transferUsedAt: true,
       status: true,
+      eventId: true,
       includesTransfer: true,
       isTransferOnly: true,
       refundRequests: { select: { type: true, status: true } },
@@ -67,7 +65,7 @@ export async function lookupTransferAction(registrationId: string): Promise<Scan
     },
   });
 
-  if (!reg) return { kind: "error", message: "Регистрация не найдена" };
+  if (!reg || !scannerCanAccessEvent(access, reg.eventId)) return { kind: "error", message: "Регистрация не найдена" };
   if (isTransferRefunded(reg)) {
     return { kind: "refunded", message: TRANSFER_REFUNDED_BOARDING_MESSAGE, ...toTransferInfo(reg) };
   }
@@ -82,20 +80,13 @@ export async function lookupTransferAction(registrationId: string): Promise<Scan
 type MarkResult = { ok: true; usedAt: Date } | { error: string };
 
 export async function markTransferUsedAction(registrationId: string): Promise<MarkResult> {
-  const userId = await requireUserId();
-  if (!userId) return { error: "Необходима авторизация" };
-
-  const volunteer = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isVolunteer: true, isAdmin: true },
-  });
-  if (!volunteer?.isVolunteer && !volunteer?.isAdmin) {
-    return { error: "Доступ только для волонтёров" };
-  }
+  const access = await requireKitScanner();
+  if (!access.ok) return { error: "Доступ только для волонтёров этого забега" };
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
     select: {
+      eventId: true,
       transferUsedAt: true,
       status: true,
       includesTransfer: true,
@@ -103,7 +94,7 @@ export async function markTransferUsedAction(registrationId: string): Promise<Ma
       refundRequests: { select: { type: true, status: true } },
     },
   });
-  if (!reg) return { error: "Регистрация не найдена" };
+  if (!reg || !scannerCanAccessEvent(access, reg.eventId)) return { error: "Регистрация не найдена" };
   if (isTransferRefunded(reg)) return { error: TRANSFER_REFUNDED_BOARDING_MESSAGE };
   if (!canBoardTransfer(reg)) return { error: "Трансфер недоступен" };
   if (reg.transferUsedAt) return { error: "already_used" };

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { sendAdminAlertEmail } from "@/lib/mailer";
 import { revalidatePath } from "next/cache";
+import { canClaimVolunteerReward, volunteerThreshold } from "@/lib/volunteerReward";
 
 export type ClaimRewardState = { error?: string; code?: string };
 
@@ -17,28 +18,35 @@ function generateCode(): string {
 }
 
 export async function claimVolunteerRewardAction(
-  threshold: number,
   _prev: ClaimRewardState,
   _formData: FormData,
 ): Promise<ClaimRewardState> {
   const userId = await requireUserId();
   if (!userId) return { error: "unauthorized" };
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      email: true,
-      firstName: true,
-      lastName: true,
-      volunteerRewardClaimedAt: true,
-      volunteerApplications: { select: { creditedAt: true } },
-    },
-  });
+  const [user, thresholdSetting] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        isVolunteer: true,
+        volunteerRewardClaimedAt: true,
+        volunteerApplications: { select: { creditedAt: true } },
+      },
+    }),
+    prisma.siteSetting.findUnique({ where: { key: "volunteer_slots_threshold" } }),
+  ]);
   if (!user) return { error: "not_found" };
-  if (user.volunteerRewardClaimedAt) return { error: "already_claimed" };
 
-  const credited = user.volunteerApplications.filter((a) => a.creditedAt).length;
-  if (credited < threshold) return { error: "not_reached" };
+  const decision = canClaimVolunteerReward({
+    isVolunteer: user.isVolunteer,
+    alreadyClaimed: Boolean(user.volunteerRewardClaimedAt),
+    credited: user.volunteerApplications.filter((application) => application.creditedAt).length,
+    threshold: volunteerThreshold(thresholdSetting?.value),
+  });
+  if (decision !== "ok") return { error: decision };
 
   const code = generateCode();
 

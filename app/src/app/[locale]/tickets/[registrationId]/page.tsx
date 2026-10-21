@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { getPathname, redirect } from "@/i18n/navigation";
 import { getTranslations, getFormatter } from "next-intl/server";
 import QRCode from "qrcode";
-import { formatTicketShortCode } from "@/lib/ticketCode";
+import { formatTicketShortCode, kitScanSecret, kitScanToken } from "@/lib/ticketCode";
 import { ticketPaymentSummary } from "@/lib/paymentAmount";
 import {
   extraParticipantsOf,
@@ -61,8 +61,9 @@ export default async function TicketPage({
     ? `${reg.distance?.name ?? "—"}${reg.distance?.km ? ` · ${reg.distance.km} km` : ""}`
     : t("distanceTransfer");
 
-  const qrData = `RIDDER:${registrationId}`;
-  const qrDataUrl = await QRCode.toDataURL(qrData, { width: 240, margin: 1 });
+  const scanSecret = kitScanSecret();
+  const qrData = scanSecret ? kitScanToken(registrationId, scanSecret) : null;
+  const qrDataUrl = qrData ? await QRCode.toDataURL(qrData, { width: 240, margin: 1 }) : null;
   const shortCode = formatTicketShortCode(reg.id);
   const dateStr = new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -87,12 +88,16 @@ export default async function TicketPage({
         </div>
 
         <div className="flex flex-col items-center gap-3 border-b border-border px-6 py-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={qrDataUrl}
-            alt={reg.isTransferOnly ? "QR-код трансфера" : "QR-код билета"}
-            className="h-48 w-48"
-          />
+          {qrDataUrl && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrDataUrl}
+                alt={reg.isTransferOnly ? "QR-код трансфера" : "QR-код билета"}
+                className="h-48 w-48"
+              />
+            </>
+          )}
           <p className="text-xs text-ink-faint">{reg.isTransferOnly ? t("qrHintTransfer") : t("qrHint")}</p>
           <div className="mt-1 flex flex-col items-center gap-0.5">
             <span className="text-[0.68rem] font-bold uppercase tracking-wide text-ink-faint">{t("shortCodeLabel")}</span>

@@ -22,18 +22,23 @@ function GoogleIcon() {
 export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const t = useTranslations("Auth");
   const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const [googleState, googleAction, googlePending] = useActionState(googleSignInAction, initialState);
 
   return (
     <div className="flex flex-col gap-5">
       {/* Google */}
-      <form action={googleSignInAction}>
+      <form action={googleAction} className="flex flex-col gap-2">
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-3 rounded-[var(--radius-s)] border border-border bg-surface px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface-2"
+          disabled={googlePending}
+          className="flex w-full items-center justify-center gap-3 rounded-[var(--radius-s)] border border-border bg-surface px-5 py-3 text-sm font-semibold text-ink transition-colors hover:bg-surface-2 disabled:opacity-60"
         >
           <GoogleIcon />
           Войти через Google
         </button>
+        {googleState.error === "google_not_configured" && (
+          <p className="text-sm text-danger">{t("errorGoogleNotConfigured")}</p>
+        )}
       </form>
 
       {/* Divider */}

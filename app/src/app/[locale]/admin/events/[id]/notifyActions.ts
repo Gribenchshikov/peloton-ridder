@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { requireAdminId } from "@/lib/session";
+import { requireAdminStepUp } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { sendBroadcastEmail } from "@/lib/mailer";
 
@@ -17,8 +17,9 @@ export async function sendNotificationAction(
   _prev: NotifyState,
   formData: FormData,
 ): Promise<NotifyState> {
-  const adminId = await requireAdminId();
-  if (!adminId) return { error: "unauthorized" };
+  const stepUp = await requireAdminStepUp(String(formData.get("totp") ?? ""));
+  if (!stepUp.ok) return { error: stepUp.error };
+  const adminId = stepUp.adminId;
 
   const parsed = Schema.safeParse({
     subject: formData.get("subject"),

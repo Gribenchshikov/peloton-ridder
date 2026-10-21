@@ -41,9 +41,14 @@ export function PaymentView({
           status?: string;
           expired?: boolean;
           invoiceStatus?: string;
+          error?: string;
         };
+        if (data.error) {
+          setPaymentFailed(true);
+          return;
+        }
         if (data.status === "PAID") {
-          router.refresh();
+          window.location.reload();
           return;
         }
         if (data.expired) {
@@ -136,16 +141,21 @@ export function PaymentView({
   const paymentUrl = invoice?.paymentUrl ?? null;
   const qrImageUrl = invoice?.qrImageUrl ?? null;
   const expiresAt = invoice?.expiresAt ?? null;
-  const hasInvoice = Boolean(paymentUrl || qrImageUrl);
-  const waitingForPayment = hasInvoice && !qrExpired && !paymentFailed && !invoice?.error;
-  const payDisabled = waitingForPayment || payBusy;
+  const qrVisible = Boolean(qrImageUrl) && !qrExpired && !paymentFailed && !invoice?.error;
+  const canOpenExisting = Boolean(paymentUrl) && qrVisible;
 
   async function handlePayClick() {
-    if (payDisabled) return;
+    if (payBusy) return;
+    if (canOpenExisting && paymentUrl) {
+      const mobile = window.matchMedia("(pointer: coarse), (max-width: 640px)").matches;
+      if (mobile) window.location.assign(paymentUrl);
+      else window.open(paymentUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
     setPayBusy(true);
     setPaymentFailed(false);
     try {
-      const result = hasInvoice
+      const result = invoice?.invoiceId
         ? await refreshKaspiQrAction(locale, registration.id)
         : await startKaspiPaymentAction(locale, registration.id);
       if (result.error) {
@@ -154,10 +164,6 @@ export function PaymentView({
         return;
       }
       setQrExpired(false);
-      if (result.paymentUrl && window.matchMedia("(pointer: coarse), (max-width: 640px)").matches) {
-        window.location.assign(result.paymentUrl);
-        return;
-      }
       router.refresh();
     } catch {
       setPaymentFailed(true);
@@ -219,12 +225,10 @@ export function PaymentView({
         </p>
       )}
 
-      {waitingForPayment && (
+      {qrVisible && (
         <div className="flex flex-col items-center gap-4 rounded-[var(--radius-m)] border border-border bg-surface p-5">
           <p className="text-center text-sm text-ink-soft">{t("qrHint")}</p>
-          {qrImageUrl && (
-            <img src={qrImageUrl} alt="" width={240} height={240} className="h-60 w-60 rounded-[var(--radius-s)] bg-white p-2" />
-          )}
+          <img src={qrImageUrl ?? ""} alt="" width={240} height={240} className="h-60 w-60 rounded-[var(--radius-s)] bg-white p-2" />
           {expiresAt && (
             <p className="text-xs text-ink-faint">
               {t("qrExpires", { time: format.dateTime(new Date(expiresAt), { timeStyle: "short" }) })}
@@ -233,13 +237,17 @@ export function PaymentView({
         </div>
       )}
 
+      {(invoice?.invoiceId || registration.kaspiOrderId) && (
+        <p className="text-center text-sm font-semibold text-ink">{t("waiting")}</p>
+      )}
+
       <button
         type="button"
         onClick={handlePayClick}
-        disabled={payDisabled}
+        disabled={payBusy}
         className="w-full rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:pointer-events-none disabled:opacity-60"
       >
-        {payDisabled ? t("waiting") : t("payInKaspiCta")}
+        {payBusy ? t("waiting") : t("payInKaspiCta")}
       </button>
 
       {qrExpired && (paymentUrl || qrImageUrl) && (

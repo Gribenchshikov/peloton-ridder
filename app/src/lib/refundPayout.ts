@@ -1,6 +1,9 @@
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   findPaidInvoiceForOrder,
+  getInvoiceRefund,
   invoiceAvailableForRefund,
   invoiceRefundRows,
   isApipayConfigured,
@@ -16,6 +19,8 @@ import {
 } from "@/lib/paymentAmount";
 import { notifyFromRegistration } from "@/lib/userMessages";
 import { refundMatchesCurrentInvoice } from "@/lib/registrationStatus";
+import { currencyAccepted, moneyMatches, verifyRefundMatch } from "@/lib/apipayPayment";
+import { notifyWaitlistForDistance } from "@/lib/waitlist";
 
 export const CLEARED_PAYMENT_FIELDS = {
   kaspiOrderId: null,
@@ -435,15 +440,18 @@ async function settlePayout(
   try {
     const listed = await listInvoiceRefunds(invoiceId);
     const rows = invoiceRefundRows(listed);
-    const match =
-      rows.find((row) => refundIdOf(row.id) === apipayRefundId) ??
-      rows.find((row) => {
-        const rowAmount = Number.parseFloat(String(row.amount ?? ""));
-        return Number.isFinite(rowAmount) && Math.floor(rowAmount) === amount;
-      });
-    if (match) {
+    const match = rows.find((row) => refundIdOf(row.id) === apipayRefundId);
+    if (match && moneyMatches(match.amount, amount) && currencyAccepted(match.currency)) {
       apipayRefundId = refundIdOf(match.id) ?? apipayRefundId;
       status = payoutStatusFromRefund(match.status);
+    } else if (match) {
+      console.error("[apipay] refund verification mismatch", {
+        invoiceId,
+        refundId: apipayRefundId,
+        expectedAmount: amount,
+        providerAmount: match.amount ?? null,
+        currency: match.currency ?? null,
+      });
     }
   } catch (error) {
     console.error("[apipay] list refunds failed:", {
@@ -456,9 +464,14 @@ async function settlePayout(
   return { amount, payoutStatus: status, apipayRefundId };
 }
 
-export function canApplyLocalRefund(payout: PayoutResult) {
-  if (apipayAccepted(payout)) return true;
+/** Локальный REFUNDED допустим только после completed у провайдера или для нулевой суммы без ApiPay. */
+export function isLocalRefundSettled(payout: PayoutResult) {
+  if (payout.payoutStatus === "completed" && Boolean(refundIdOf(payout.apipayRefundId))) return true;
   return payout.payoutStatus === "skipped" && (payout.amount < 1 || !isApipayConfigured());
+}
+
+export function canApplyLocalRefund(payout: PayoutResult) {
+  return isLocalRefundSettled(payout);
 }
 
 export async function refundPaidRegistrationOnAdminCancel(registrationId: string): Promise<PayoutResult> {
@@ -495,12 +508,26 @@ export async function refundPaidRegistrationOnAdminCancel(registrationId: string
     payout = await payoutRegistrationRefund(registrationId, "SLOT", undefined, pendingSlot?.id);
   }
 
-  if (!canApplyLocalRefund(payout)) {
+  if (!isLocalRefundSettled(payout)) {
     if (pendingSlot) {
       await prisma.refundRequest.update({
         where: { id: pendingSlot.id },
         data: {
           amount: payout.amount,
+          apipayRefundId: payout.apipayRefundId,
+          payoutStatus: payout.payoutStatus,
+          invoiceId: invoiceId ?? pendingSlot.invoiceId,
+        },
+      });
+    } else if (refundIdOf(payout.apipayRefundId)) {
+      await prisma.refundRequest.create({
+        data: {
+          registrationId,
+          type: "SLOT",
+          status: "PENDING",
+          reason: "Отмена администратором",
+          amount: payout.amount,
+          invoiceId,
           apipayRefundId: payout.apipayRefundId,
           payoutStatus: payout.payoutStatus,
         },
@@ -589,11 +616,34 @@ export async function refundTransferByAdmin(registrationId: string): Promise<Pay
     select: { id: true, amount: true, invoiceId: true },
   });
   const payout = await payoutRegistrationRefund(registrationId, "TRANSFER", undefined, pending?.id);
-  if (!apipayAccepted(payout)) {
+  if (!isLocalRefundSettled(payout)) {
+    const fresh = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      select: { kaspiOrderId: true },
+    });
+    const invoiceId = pending?.invoiceId ?? fresh?.kaspiOrderId ?? registration.kaspiOrderId;
     if (pending) {
       await prisma.refundRequest.update({
         where: { id: pending.id },
-        data: { amount: payout.amount || pending.amount, payoutStatus: payout.payoutStatus, apipayRefundId: payout.apipayRefundId },
+        data: {
+          amount: payout.amount || pending.amount,
+          payoutStatus: payout.payoutStatus,
+          apipayRefundId: payout.apipayRefundId,
+          invoiceId,
+        },
+      });
+    } else if (refundIdOf(payout.apipayRefundId)) {
+      await prisma.refundRequest.create({
+        data: {
+          registrationId,
+          type: "TRANSFER",
+          status: "PENDING",
+          reason: "Возврат трансфера администратором",
+          amount: payout.amount,
+          invoiceId,
+          apipayRefundId: payout.apipayRefundId,
+          payoutStatus: payout.payoutStatus,
+        },
       });
     }
     return payout;
@@ -638,83 +688,168 @@ export async function refundTransferByAdmin(registrationId: string): Promise<Pay
   return payout;
 }
 
-export async function markInvoiceRefunded(
-  invoiceId: string,
-  refund?: { id?: number | string | null; status?: string | null },
-) {
-  const refundId = refundIdOf(refund?.id);
-  const status = payoutStatusFromRefund(refund?.status ?? undefined);
-  if (status === "failed") {
-    if (refundId) {
-      await prisma.refundRequest.updateMany({
-        where: { apipayRefundId: refundId },
-        data: { payoutStatus: "failed" },
-      });
-    }
-    console.info("[apipay]", { event: "refund_webhook_failed", invoiceId, refundId });
-    return;
-  }
-  if (status !== "completed") {
-    if (refundId) {
-      await prisma.refundRequest.updateMany({
-        where: { apipayRefundId: refundId },
-        data: { payoutStatus: status },
-      });
-    }
-    return;
-  }
-
-  if (refundId) {
-    const byId = await prisma.refundRequest.updateMany({
-      where: { apipayRefundId: refundId },
-      data: { payoutStatus: "completed" },
+export async function finalizeMatchedRefund(refundRequestId: string): Promise<
+  | { result: "replay" }
+  | { result: "rejected" }
+  | { result: "applied"; registrationId: string; type: "SLOT" | "TRANSFER"; amount: number; distanceId: string | null }
+> {
+  const outcome = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "RefundRequest" WHERE "id" = ${refundRequestId} FOR UPDATE`;
+    const refund = await tx.refundRequest.findUnique({
+      where: { id: refundRequestId },
+      include: {
+        registration: {
+          select: {
+            id: true,
+            eventId: true,
+            distanceId: true,
+            status: true,
+            includesTransfer: true,
+            isTransferOnly: true,
+          },
+        },
+      },
     });
-    if (byId.count > 0) {
-      await applySlotIfConfirmedSlotRefund(invoiceId, refundId);
-      return;
+    if (!refund) return { result: "rejected" as const };
+    if (refund.payoutStatus === "completed" && refund.status === "CONFIRMED") {
+      return { result: "replay" as const };
     }
-  }
+    if (refund.status !== "PENDING" && refund.status !== "CONFIRMED") {
+      return { result: "rejected" as const };
+    }
+    const claimed = await tx.refundRequest.updateMany({
+      where: {
+        id: refundRequestId,
+        status: { in: ["PENDING", "CONFIRMED"] },
+        NOT: { payoutStatus: "completed", status: "CONFIRMED" },
+      },
+      data: {
+        status: "CONFIRMED",
+        payoutStatus: "completed",
+        resolvedAt: refund.resolvedAt ?? new Date(),
+      },
+    });
+    if (claimed.count !== 1) return { result: "replay" as const };
 
-  await prisma.refundRequest.updateMany({
-    where: {
-      payoutStatus: { in: ["pending", "processing"] },
-      registration: { kaspiOrderId: invoiceId },
-    },
-    data: { payoutStatus: "completed" },
+    if (refund.type === "SLOT") {
+      const keepTransfer = refund.registration.includesTransfer && !refund.registration.isTransferOnly;
+      await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer });
+      await reassignPaidBibNumbers(tx, refund.registration.eventId);
+    } else {
+      await tx.registration.update({
+        where: { id: refund.registration.id },
+        data: { includesTransfer: false, transferUsedAt: null },
+      });
+      const remaining = await tx.registration.findUnique({
+        where: { id: refund.registration.id },
+        select: { isTransferOnly: true, status: true },
+      });
+      if (remaining?.isTransferOnly && remaining.status !== "CANCELLED") {
+        await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer: false });
+        await reassignPaidBibNumbers(tx, refund.registration.eventId);
+      }
+    }
+    return {
+      result: "applied" as const,
+      registrationId: refund.registration.id,
+      type: refund.type,
+      amount: refund.amount ?? 0,
+      distanceId: refund.registration.distanceId,
+    };
   });
-  await applySlotIfConfirmedSlotRefund(invoiceId, refundId);
+
+  if (outcome.result === "applied" && outcome.amount > 0) {
+    await notifyFromRegistration(
+      outcome.registrationId,
+      outcome.type === "TRANSFER" ? "REFUND_TRANSFER" : "REFUND_SLOT",
+      { amount: outcome.amount },
+    );
+  }
+  if (outcome.result === "applied" && outcome.type === "SLOT" && outcome.distanceId) {
+    void notifyWaitlistForDistance(outcome.distanceId);
+  }
+  return outcome;
 }
 
-async function applySlotIfConfirmedSlotRefund(invoiceId: string, refundId: string | null) {
-  const slot = await prisma.refundRequest.findFirst({
+export function revalidateRefundViews() {
+  try {
+    after(() => {
+      revalidatePath("/[locale]/admin/events/[id]/registrations", "page");
+      revalidatePath("/[locale]/admin/registrations/[slug]/[year]", "page");
+      revalidatePath("/[locale]/admin/refunds", "page");
+      revalidatePath("/[locale]/admin/reports", "page");
+      revalidatePath("/[locale]/events/[slug]/[year]", "page");
+      revalidatePath("/[locale]/account", "page");
+      revalidatePath("/[locale]/account/history", "page");
+      revalidatePath("/[locale]/account/messages", "page");
+      revalidatePath("/", "layout");
+    });
+  } catch (error) {
+    console.error("[refund] revalidate failed:", error);
+  }
+}
+
+/** Дочитывает уже отправленный возврат. Новый возврат в ApiPay не создаёт. */
+export async function settleAcceptedRefunds() {
+  if (!isApipayConfigured()) return 0;
+  const rows = await prisma.refundRequest.findMany({
     where: {
-      type: "SLOT",
-      status: "CONFIRMED",
-      ...(refundId
-        ? { apipayRefundId: refundId }
-        : {
-            OR: [
-              { invoiceId },
-              { invoiceId: null, registration: { kaspiOrderId: invoiceId, reregistrationCount: 0 } },
-            ],
-          }),
+      status: "PENDING",
+      apipayRefundId: { not: null },
+      OR: [{ payoutStatus: null }, { payoutStatus: { in: ["pending", "processing"] } }],
     },
     select: {
-      registration: {
-        select: { id: true, eventId: true, status: true, includesTransfer: true, isTransferOnly: true },
-      },
+      id: true,
+      amount: true,
+      invoiceId: true,
+      apipayRefundId: true,
+      payoutStatus: true,
+      status: true,
+      registration: { select: { status: true, kaspiOrderId: true } },
     },
   });
-  const registration = slot?.registration;
-  if (!registration) return;
-  if (registration.status !== "PAID" && registration.status !== "RESERVED") return;
 
-  await prisma.$transaction(async (tx) => {
-    await applySlotRefundToRegistration(tx, registration.id, {
-      keepTransfer: registration.includesTransfer,
+  let applied = 0;
+  for (const row of rows) {
+    const refundId = refundIdOf(row.apipayRefundId);
+    const invoiceId = row.invoiceId || row.registration.kaspiOrderId;
+    if (!refundId || !invoiceId) continue;
+
+    let trusted: Awaited<ReturnType<typeof getInvoiceRefund>>;
+    try {
+      trusted = await getInvoiceRefund(invoiceId, refundId);
+    } catch (error) {
+      console.error("[apipay] delayed refund lookup failed:", { refundRequestId: row.id, invoiceId, refundId, error });
+      continue;
+    }
+    if (!trusted) continue;
+    if (trusted.status === "failed") {
+      await prisma.refundRequest.update({
+        where: { id: row.id },
+        data: { payoutStatus: "failed" },
+      });
+      continue;
+    }
+
+    const verdict = verifyRefundMatch({
+      invoiceId,
+      refundId,
+      trusted,
+      local: {
+        apipayRefundId: refundId,
+        invoiceId,
+        amount: row.amount,
+        payoutStatus: row.payoutStatus,
+        status: row.status,
+        registrationStatus: row.registration.status,
+      },
     });
-    await reassignPaidBibNumbers(tx, registration.eventId);
-  });
+    if (verdict !== "apply" && verdict !== "replay") continue;
+    const outcome = await finalizeMatchedRefund(row.id);
+    if (outcome.result === "applied" || outcome.result === "replay") applied += 1;
+  }
+  if (applied > 0) revalidateRefundViews();
+  return applied;
 }
 
 async function rejectLeftoverPending(registrationId: string) {

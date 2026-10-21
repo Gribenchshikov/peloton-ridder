@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireKitScanner } from "@/lib/kitPickup";
+import { requireKitScanner, scannerCanAccessEvent } from "@/lib/kitPickup";
 
 export async function POST(req: NextRequest) {
   const access = await requireKitScanner();
@@ -16,10 +16,10 @@ export async function POST(req: NextRequest) {
 
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    select: { status: true, kitPickedUpAt: true, isTransferOnly: true },
+    select: { status: true, kitPickedUpAt: true, isTransferOnly: true, eventId: true },
   });
 
-  if (!reg) {
+  if (!reg || !scannerCanAccessEvent(access, reg.eventId)) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
   if (reg.status !== "PAID") {

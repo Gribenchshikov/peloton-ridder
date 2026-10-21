@@ -1,6 +1,7 @@
 "use server";
 
 import { sendContactReceiptEmail, sendOrganizerMessageEmail } from "@/lib/mailer";
+import { notifyAdminsOrganizerMessage } from "@/lib/userMessages";
 
 type ContactState = { error?: string; success?: boolean };
 
@@ -22,6 +23,13 @@ export async function sendContactAction(
   try {
     const delivered = await sendOrganizerMessageEmail(name, email, phone, topic, message);
     if (!delivered) return { error: "send_failed" };
+    await notifyAdminsOrganizerMessage({
+      name,
+      email,
+      phone,
+      topic,
+      text: message,
+    });
     void sendContactReceiptEmail(email, name, topic, message).catch((error) => {
       console.error("[contact] receipt email failed:", error);
     });

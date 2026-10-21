@@ -2,8 +2,9 @@
 
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
-import { isTestPaymentModeEnabled, confirmPayment } from "@/lib/kaspi";
+import { confirmPayment } from "@/lib/kaspi";
 import { confirmIfInvoicePaid, ensureQrInvoice, isApipayConfigured, simulateInvoicePaid } from "@/lib/apipay";
+import { simulationGate } from "@/lib/apipayPayment";
 import { getRegistrationForPayment } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 
@@ -30,6 +31,11 @@ export async function startKaspiPaymentAction(
 }
 
 export async function simulatePaymentAction(locale: string, registrationId: string) {
+  const gate = simulationGate(process.env);
+  if (gate === "forbidden") {
+    throw new Error("simulatePaymentAction: test payment mode is disabled");
+  }
+
   const userId = await requireUserId();
   if (!userId) {
     throw new Error("simulatePaymentAction: no session");
@@ -43,20 +49,21 @@ export async function simulatePaymentAction(locale: string, registrationId: stri
     throw new Error("simulatePaymentAction: registration not found or not owned by user");
   }
 
-  if (isApipayConfigured() && existing.kaspiOrderId) {
+  if (gate === "provider_sandbox") {
+    if (!existing.kaspiOrderId) {
+      throw new Error("simulatePaymentAction: sandbox invoice is missing");
+    }
     await simulateInvoicePaid(existing.kaspiOrderId);
-    const invoice = await confirmIfInvoicePaid(registrationId, existing.kaspiOrderId);
-    if (invoice.status !== "paid") {
-      throw new Error("simulatePaymentAction: ApiPay did not mark invoice paid");
+    const result = await confirmIfInvoicePaid(registrationId, existing.kaspiOrderId);
+    if (!result.confirmed) {
+      throw new Error(`simulatePaymentAction: payment was not confirmed (${result.error ?? "not_paid"})`);
     }
     redirect({ href: `/pay/${registrationId}`, locale });
   }
 
-  if (!isTestPaymentModeEnabled()) {
-    throw new Error("simulatePaymentAction: test payment mode is disabled");
-  }
-
-  const registration = await confirmPayment(registrationId, userId);
+  const registration = await confirmPayment(registrationId, userId, undefined, undefined, undefined, {
+    trustedTestConfirmation: true,
+  });
   if (!registration) {
     throw new Error("simulatePaymentAction: registration not found or not owned by user");
   }

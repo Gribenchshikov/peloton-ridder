@@ -1,3 +1,4 @@
+import { verifySync } from "otplib";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { prisma } from "@/lib/prisma";
@@ -14,10 +15,43 @@ export async function requireUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/** Проверяет isAdmin в JWT. Для Server Actions в админке. */
+/** Админ с уже включённой 2FA. Настройка 2FA использует requireAdminForTotpSetup. */
 export async function requireAdminId(): Promise<string | null> {
   const session = await auth();
-  return session?.user?.isAdmin ? session.user.id : null;
+  if (!session?.user?.id || !session.user.isAdmin) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isAdmin: true, totpEnabledAt: true },
+  });
+  if (!user?.isAdmin || !user.totpEnabledAt) return null;
+  return session.user.id;
+}
+
+/** Вход администратора до подтверждения приложения-аутентификатора. */
+export async function requireAdminForTotpSetup(): Promise<string | null> {
+  const session = await auth();
+  if (!session?.user?.id || !session.user.isAdmin) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { isAdmin: true },
+  });
+  return user?.isAdmin ? session.user.id : null;
+}
+
+export async function requireAdminStepUp(
+  code: string | null | undefined,
+): Promise<{ ok: true; adminId: string } | { ok: false; error: "unauthorized" | "invalid_2fa" }> {
+  const adminId = await requireAdminId();
+  if (!adminId) return { ok: false, error: "unauthorized" };
+  const user = await prisma.user.findUnique({
+    where: { id: adminId },
+    select: { totpSecret: true },
+  });
+  const token = (code ?? "").replace(/\s/g, "");
+  if (!user?.totpSecret || !/^\d{6}$/.test(token) || !verifySync({ token, secret: user.totpSecret }).valid) {
+    return { ok: false, error: "invalid_2fa" };
+  }
+  return { ok: true, adminId };
 }
 
 /** Проверяет isAdmin или isOperator. Для Server Actions доступных операторам. */

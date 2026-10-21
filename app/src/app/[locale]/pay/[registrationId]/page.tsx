@@ -2,10 +2,9 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { redirect } from "@/i18n/navigation";
 import { getRegistrationForPayment } from "@/lib/queries";
-import { isTestPaymentModeEnabled } from "@/lib/kaspi";
+import { canShowPaymentSimulation } from "@/lib/kaspi";
 import { ensurePaidBibNumber } from "@/lib/bibNumbers";
-import { ensureQrInvoice, isApipayConfigured, peekQrInvoice, type PaymentInvoiceView } from "@/lib/apipay";
-import { registrationPaymentAmount } from "@/lib/paymentAmount";
+import { ensureQrInvoice, isApipayConfigured, type PaymentInvoiceView } from "@/lib/apipay";
 import { PaymentView } from "./PaymentView";
 
 export default async function PayPage({
@@ -31,23 +30,16 @@ export default async function PayPage({
 
   let invoice: PaymentInvoiceView | null = null;
   if (registration.status === "RESERVED" && isApipayConfigured()) {
-    const amount = registrationPaymentAmount(registration);
-    // Счёт в ApiPay создаём только по кнопке «Оплатить в Kaspi».
-    if (amount < 1) {
-      invoice = await ensureQrInvoice(registration);
-      registration = await getRegistrationForPayment(registrationId);
-      if (!registration) notFound();
-    } else if (registration.kaspiOrderId) {
-      invoice = await peekQrInvoice(registration);
-      registration = await getRegistrationForPayment(registrationId);
-      if (!registration) notFound();
-    }
+    // QR готов вместе с кнопкой: действующий счёт переиспользуем, истёкший заменяем.
+    invoice = await ensureQrInvoice(registration);
+    registration = await getRegistrationForPayment(registrationId);
+    if (!registration) notFound();
   }
 
   return (
     <PaymentView
       registration={registration}
-      testMode={isTestPaymentModeEnabled() || Boolean(invoice?.sandbox)}
+      testMode={canShowPaymentSimulation(invoice ? invoice.sandbox : null)}
       locale={locale}
       invoice={invoice}
     />

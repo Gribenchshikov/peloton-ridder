@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import QRCode from "qrcode";
 import { parseContactInfo } from "@/lib/contactInfo";
 import { getSiteSetting } from "@/lib/queries";
+import { kitScanSecret, kitScanToken } from "@/lib/ticketCode";
 
 function isRealSmtpValue(value: string | undefined) {
   return Boolean(value) && !value!.includes("smtp.example.com");
@@ -31,25 +32,109 @@ function smtpTimeouts() {
   };
 }
 
+function hasHeaderBreak(value: string) {
+  return /[\r\n\0]/.test(value);
+}
+
+export function sanitizeMailHeader(value: string) {
+  return value.replace(/[\r\n\0]/g, " ");
+}
+
+// Голый addr-spec. Перевод строки в адресе — классическая SMTP-инъекция заголовка.
+export function isSafeMailbox(value: string) {
+  if (!value || value.length > 320 || hasHeaderBreak(value)) return false;
+  const address = value.trim();
+  if (!address) return false;
+  return /^[^\s<>"]+@[^\s<>"]+$/.test(address);
+}
+
+export function isSafeFromAddress(value: string) {
+  if (!value || value.length > 320 || hasHeaderBreak(value)) return false;
+  const from = value.trim();
+  if (!from) return false;
+  const angle = from.match(/<([^<>]+)>\s*$/);
+  const mailbox = (angle ? angle[1] : from).trim();
+  return /^[^\s<>"]+@[^\s<>"]+$/.test(mailbox);
+}
+
+type SmtpEnv = {
+  SMTP_HOST?: string;
+  SMTP_PORT?: string;
+  SMTP_SECURE?: string;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+};
+
+export function buildSmtpOptions(env: SmtpEnv = {
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT,
+  SMTP_SECURE: process.env.SMTP_SECURE,
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
+}) {
+  const port = Number(env.SMTP_PORT ?? 587);
+  // 465 — неявный TLS с первого байта. 587 у Timeweb объявляет STARTTLS;
+  // требуем его только когда сеанс ещё не зашифрован, чтобы не менять рабочий порт 465.
+  const secure = env.SMTP_SECURE === "true" || port === 465;
+  return {
+    host: env.SMTP_HOST,
+    port,
+    secure,
+    ...(secure ? {} : { requireTLS: true as const }),
+    auth: env.SMTP_USER
+      ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
+      : undefined,
+    tls: { minVersion: "TLSv1.2" as const },
+    ...smtpTimeouts(),
+  };
+}
+
+// Только для автоматических тестов. В production флаг игнорируется, письма не подменяются.
+function jsonTransportEnabled() {
+  return process.env.NODE_ENV !== "production" && process.env.MAIL_JSON_TRANSPORT === "1";
+}
+
+export type CapturedMail = {
+  from?: { address?: string; name?: string };
+  to?: { address?: string; name?: string }[];
+  subject?: string;
+  text?: string;
+  html?: string;
+  replyTo?: { address?: string; name?: string }[];
+};
+
+const capturedMail: CapturedMail[] = [];
+
+export function takeCapturedMail() {
+  return capturedMail.splice(0, capturedMail.length);
+}
+
 function createTransport() {
+  if (jsonTransportEnabled()) {
+    return nodemailer.createTransport({ jsonTransport: true });
+  }
   // SMTP_HOST — тот же транспорт, которым уже уходят промокоды волонтёрам.
   // AUTH_EMAIL_SERVER часто остаётся плейсхолдером из примера NextAuth.
   if (smtpHostConfigured()) {
-    const port = Number(process.env.SMTP_PORT ?? 587);
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port,
-      secure: process.env.SMTP_SECURE === "true" || port === 465,
-      auth: process.env.SMTP_USER
-        ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-        : undefined,
-      ...smtpTimeouts(),
-    });
+    return nodemailer.createTransport(buildSmtpOptions());
   }
   return nodemailer.createTransport({
     url: process.env.AUTH_EMAIL_SERVER,
+    ...(smtpUrlUsesImplicitTls(process.env.AUTH_EMAIL_SERVER) ? {} : { requireTLS: true as const }),
+    tls: { minVersion: "TLSv1.2" as const },
     ...smtpTimeouts(),
   });
+}
+
+function smtpUrlUsesImplicitTls(url: string | undefined) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "smtps:") return true;
+    return Number(parsed.port) === 465;
+  } catch {
+    return false;
+  }
 }
 
 // Ошибку SMTP (обрыв соединения, таймаут, неверные креды) ловим здесь и не пробрасываем
@@ -81,13 +166,33 @@ export async function resolveOrganizerInboxEmails() {
 async function sendMail(
   to: string,
   subject: string,
-  text: string,
+  text: string | undefined,
   html: string,
-  options?: { replyTo?: string },
+  options?: { replyTo?: string; from?: string },
 ): Promise<boolean> {
-  if (!isConfigured()) {
+  if (!isSafeMailbox(to)) {
+    console.error("[mailer] Письмо не отправлено: небезопасный адрес получателя.");
+    return false;
+  }
+
+  const from = options?.from ?? mailFrom();
+  if (!isSafeFromAddress(from)) {
+    console.error("[mailer] Письмо не отправлено: небезопасный адрес отправителя.");
+    return false;
+  }
+
+  let replyTo: string | undefined;
+  if (options?.replyTo) {
+    if (isSafeMailbox(options.replyTo)) replyTo = options.replyTo.trim();
+    else console.error("[mailer] replyTo пропущен: небезопасный адрес.");
+  }
+
+  const safeSubject = sanitizeMailHeader(subject);
+  const recipient = to.trim();
+
+  if (!jsonTransportEnabled() && !isConfigured()) {
     console.error(
-      `[mailer] SMTP не настроен (SMTP_HOST=${process.env.SMTP_HOST || "—"}, AUTH_EMAIL_SERVER=${authServerConfigured() ? "задан" : "нет"}). Письмо не отправлено.\n[mailer] Кому: ${to}\n[mailer] Тема: ${subject}`,
+      `[mailer] SMTP не настроен (SMTP_HOST=${process.env.SMTP_HOST || "—"}, AUTH_EMAIL_SERVER=${authServerConfigured() ? "задан" : "нет"}). Письмо не отправлено.\n[mailer] Кому: ${recipient}\n[mailer] Тема: ${safeSubject}`,
     );
     return false;
   }
@@ -95,17 +200,20 @@ async function sendMail(
   let transport: ReturnType<typeof createTransport> | undefined;
   try {
     transport = createTransport();
-    await transport.sendMail({
-      to,
-      from: mailFrom(),
-      subject,
-      text,
+    const info = await transport.sendMail({
+      to: recipient,
+      from,
+      subject: safeSubject,
       html,
-      replyTo: options?.replyTo,
+      ...(text !== undefined ? { text } : {}),
+      ...(replyTo ? { replyTo } : {}),
     });
+    if (jsonTransportEnabled() && typeof info.message === "string") {
+      capturedMail.push(JSON.parse(info.message) as CapturedMail);
+    }
     return true;
   } catch (error) {
-    console.error(`[mailer] Не удалось отправить письмо (кому: ${to}, тема: ${subject}):`, error);
+    console.error(`[mailer] Не удалось отправить письмо (кому: ${recipient}, тема: ${safeSubject}):`, error);
     return false;
   } finally {
     transport?.close();
@@ -300,7 +408,9 @@ export async function sendRegistrationConfirmationEmail(
 
   const subject = `Вы зарегистрированы — ${raceName} · №${bibNumber}`;
 
-  const qrDataUrl = await QRCode.toDataURL(`RIDDER:${registrationId}`, { width: 160, margin: 1 });
+  const scanSecret = kitScanSecret();
+  const qrPayload = scanSecret ? kitScanToken(registrationId, scanSecret) : null;
+  const qrDataUrl = qrPayload ? await QRCode.toDataURL(qrPayload, { width: 160, margin: 1 }) : null;
 
   const text = [
     `Здравствуйте, ${name}!`,
@@ -329,8 +439,8 @@ export async function sendRegistrationConfirmationEmail(
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Дата</td><td>${dateStr}</td></tr>
   <tr><td style="padding:4px 16px 4px 0;color:#888;font-size:13px">Место</td><td>${location}</td></tr>
 </table>
-<p style="margin:20px 0 8px;font-weight:600">QR-код для регистрации на старте:</p>
-<img src="${qrDataUrl}" alt="QR-код" style="width:160px;height:160px;display:block" />
+${qrDataUrl ? `<p style="margin:20px 0 8px;font-weight:600">QR-код для регистрации на старте:</p>
+<img src="${qrDataUrl}" alt="QR-код" style="width:160px;height:160px;display:block" />` : ""}
 <p style="margin:16px 0">
   <a href="${ticketUrl}" style="display:inline-block;padding:10px 20px;background:#EA580C;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px">
     Открыть цифровой билет
@@ -402,6 +512,37 @@ ${chatButton}
   }
 }
 
+export async function sendVolunteerRewardEmail(
+  to: string,
+  textRu: string,
+  textKk: string,
+  textEn: string,
+  promoCode: string,
+): Promise<boolean> {
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+      <h2 style="color:#E2531F;">Peloton Ridder</h2>
+      <p><strong>Промокод:</strong> <code style="background:#f4f4f4;padding:2px 8px;border-radius:4px;font-size:1.1em;">${escapeHtml(promoCode)}</code></p>
+      <hr style="margin:24px 0;border:none;border-top:1px solid #eee;"/>
+      <div style="margin-bottom:24px;">
+        <p style="font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:.05em;">RU</p>
+        <p style="white-space:pre-wrap;">${escapeHtml(textRu)}</p>
+      </div>
+      <div style="margin-bottom:24px;">
+        <p style="font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:.05em;">KK</p>
+        <p style="white-space:pre-wrap;">${escapeHtml(textKk)}</p>
+      </div>
+      <div>
+        <p style="font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:.05em;">EN</p>
+        <p style="white-space:pre-wrap;">${escapeHtml(textEn)}</p>
+      </div>
+    </div>
+  `;
+  return sendMail(to, "Peloton Ridder — ваш промокод", undefined, html, {
+    from: process.env.SMTP_FROM ?? "noreply@ridder.kz",
+  });
+}
+
 export async function sendVolunteerApplicationAdminEmail(
   adminEmails: string[],
   applicantName: string,
@@ -467,8 +608,13 @@ const USER_MESSAGE_COPY: Record<
   },
 };
 
-function escapeHtml(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+export function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export async function sendUserMessageEmail(

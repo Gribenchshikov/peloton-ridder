@@ -3,24 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireAdminId, requireOperatorOrAdminId } from "@/lib/session";
+import { requireAdminId, requireAdminStepUp, requireOperatorOrAdminId } from "@/lib/session";
 import { reassignPaidBibNumbers } from "@/lib/bibNumbers";
 import { notifyWaitlistForDistance } from "@/lib/waitlist";
 import {
-  applySlotRefundToRegistration,
-  apipayAccepted,
   canApplyLocalRefund,
   CLEARED_PAYMENT_FIELDS,
+  finalizeMatchedRefund,
   payoutRegistrationRefund,
   refundPaidRegistrationOnAdminCancel,
   refundTransferByAdmin,
 } from "@/lib/refundPayout";
+import { getInvoiceRefund } from "@/lib/apipay";
+import { verifyRefundMatch } from "@/lib/apipayPayment";
 import { notifyFromRegistration } from "@/lib/userMessages";
 import { capacityTakenWhere } from "@/lib/slotOccupancy";
 import { canBoardTransfer } from "@/lib/registrationStatus";
 
 export type RegistrationAdminActionState = {
-  error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid" | "payout_failed";
+  error?: "unauthorized" | "not_found" | "inactive" | "full" | "has_results" | "invalid" | "payout_failed" | "payout_pending";
   success?: "cancelled" | "distance_changed" | "permission_changed" | "restored";
 };
 
@@ -124,6 +125,9 @@ export async function cancelRegistrationAction(
       const payout = await refundPaidRegistrationOnAdminCancel(registrationId);
       if (!canApplyLocalRefund(payout)) {
         revalidateRegistrationPages();
+        if (payout.payoutStatus === "pending" || payout.payoutStatus === "processing") {
+          return { error: "payout_pending" };
+        }
         return { error: "payout_failed" };
       }
     } catch (error) {
@@ -329,12 +333,12 @@ export async function confirmRefundAction(
   refundRequestId: string,
   eventId: string,
   _prevState: RefundActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<RefundActionState> {
-  void _prevState; void _formData;
+  void _prevState;
 
-  const adminId = await requireAdminId();
-  if (!adminId) return { error: "unauthorized" };
+  const stepUp = await requireAdminStepUp(String(formData.get("totp") ?? ""));
+  if (!stepUp.ok) return { error: stepUp.error };
 
   const refund = await prisma.refundRequest.findUnique({
     where: { id: refundRequestId },
@@ -344,14 +348,13 @@ export async function confirmRefundAction(
       payoutStatus: true,
       apipayRefundId: true,
       amount: true,
+      invoiceId: true,
       registration: {
         select: {
           id: true,
           eventId: true,
-          distanceId: true,
           status: true,
-          includesTransfer: true,
-          isTransferOnly: true,
+          kaspiOrderId: true,
         },
       },
     },
@@ -359,31 +362,13 @@ export async function confirmRefundAction(
   if (!refund || refund.registration.eventId !== eventId) return { error: "not_found" };
   if (refund.status !== "PENDING") return { error: "already_resolved" };
 
-  const alreadyAccepted = apipayAccepted({
-    amount: refund.amount ?? 0,
-    payoutStatus: (refund.payoutStatus ?? "skipped") as
-      | "skipped"
-      | "pending"
-      | "processing"
-      | "failed"
-      | "completed",
-    apipayRefundId: refund.apipayRefundId,
-  });
+  let payout: {
+    amount: number;
+    payoutStatus: "skipped" | "pending" | "processing" | "failed" | "completed";
+    apipayRefundId: string | null;
+  } | null = null;
 
-  let payout = alreadyAccepted
-    ? {
-        amount: refund.amount ?? 0,
-        payoutStatus: (refund.payoutStatus ?? "pending") as
-          | "skipped"
-          | "pending"
-          | "processing"
-          | "failed"
-          | "completed",
-        apipayRefundId: refund.apipayRefundId,
-      }
-    : null;
-
-  if (!payout) {
+  if (!refund.apipayRefundId) {
     const claimed = await prisma.refundRequest.updateMany({
       where: {
         id: refundRequestId,
@@ -392,72 +377,82 @@ export async function confirmRefundAction(
       },
       data: { payoutStatus: "processing" },
     });
-    if (claimed.count === 0) {
-      return { error: "payout_failed" };
-    }
+    if (claimed.count === 0) return { error: "payout_failed" };
     payout = await payoutRegistrationRefund(
       refund.registration.id,
       refund.type,
       refund.amount,
       refundRequestId,
     );
+    await prisma.refundRequest.update({
+      where: { id: refundRequestId },
+      data: {
+        amount: payout.amount || refund.amount,
+        apipayRefundId: payout.apipayRefundId,
+        payoutStatus: payout.payoutStatus,
+      },
+    });
+  } else {
+    payout = {
+      amount: refund.amount ?? 0,
+      payoutStatus: (refund.payoutStatus ?? "pending") as
+        | "skipped"
+        | "pending"
+        | "processing"
+        | "failed"
+        | "completed",
+      apipayRefundId: refund.apipayRefundId,
+    };
   }
-  await prisma.refundRequest.update({
-    where: { id: refundRequestId },
-    data: {
-      amount: payout.amount || refund.amount,
-      apipayRefundId: payout.apipayRefundId,
-      payoutStatus: payout.payoutStatus,
-    },
-  });
 
-  if (!apipayAccepted(payout)) {
-    console.error("[apipay] refund not accepted by ApiPay; local request stays pending", {
+  if (!payout.apipayRefundId) {
+    console.error("[apipay] refund was not accepted", {
       refundRequestId,
-      type: refund.type,
       payoutStatus: payout.payoutStatus,
-      apipayRefundId: payout.apipayRefundId,
       amount: payout.amount,
     });
     return { error: "payout_failed" };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.refundRequest.update({
-      where: { id: refundRequestId },
-      data: { status: "CONFIRMED", resolvedAt: new Date() },
-    });
-    if (refund.type === "SLOT") {
-      const keepTransfer = refund.registration.includesTransfer && !refund.registration.isTransferOnly;
-      await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer });
-      await reassignPaidBibNumbers(tx, eventId);
-    } else {
-      await tx.registration.update({
-        where: { id: refund.registration.id },
-        data: { includesTransfer: false, transferUsedAt: null },
-      });
-      const remaining = await tx.registration.findUnique({
-        where: { id: refund.registration.id },
-        select: { isTransferOnly: true, status: true },
-      });
-      if (remaining?.isTransferOnly && remaining.status !== "CANCELLED") {
-        await applySlotRefundToRegistration(tx, refund.registration.id, { keepTransfer: false });
-        await reassignPaidBibNumbers(tx, eventId);
-      }
-    }
+  const invoiceId = refund.invoiceId || refund.registration.kaspiOrderId;
+  if (!invoiceId) return { error: "payout_failed" };
+
+  let trusted: Awaited<ReturnType<typeof getInvoiceRefund>>;
+  try {
+    trusted = await getInvoiceRefund(invoiceId, payout.apipayRefundId);
+  } catch (error) {
+    console.error("[apipay] refund verification failed:", refundRequestId, error);
+    return { error: "payout_failed" };
+  }
+
+  const verdict = verifyRefundMatch({
+    invoiceId,
+    refundId: payout.apipayRefundId,
+    trusted,
+    local: {
+      apipayRefundId: payout.apipayRefundId,
+      invoiceId,
+      amount: payout.amount || refund.amount,
+      payoutStatus: payout.payoutStatus,
+      status: refund.status,
+      registrationStatus: refund.registration.status,
+    },
   });
-
-  if (refund.type === "SLOT" && refund.registration.distanceId) {
-    void notifyWaitlistForDistance(refund.registration.distanceId);
+  if (verdict === "reject") {
+    if (trusted && trusted.status !== "failed" && trusted.status !== "completed") {
+      return { error: "payout_pending" };
+    }
+    console.error("[apipay] refund did not match the paid invoice", {
+      refundRequestId,
+      invoiceId,
+      refundId: payout.apipayRefundId,
+      providerStatus: trusted?.status ?? null,
+    });
+    return { error: "payout_failed" };
   }
 
-  if (payout.amount > 0) {
-    await notifyFromRegistration(
-      refund.registration.id,
-      refund.type === "TRANSFER" ? "REFUND_TRANSFER" : "REFUND_SLOT",
-      { amount: payout.amount },
-    );
-  }
+  const finalized = await finalizeMatchedRefund(refundRequestId);
+  if (finalized.result === "rejected") return { error: "payout_failed" };
 
   revalidateRegistrationPages();
   return { success: true };
@@ -494,9 +489,8 @@ export async function adminRefundTransferAction(
   _formData?: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
   void _prevState;
-  void _formData;
-  const adminId = await requireAdminId();
-  if (!adminId) return { error: "unauthorized" };
+  const stepUp = await requireAdminStepUp(String(_formData?.get("totp") ?? ""));
+  if (!stepUp.ok) return { error: stepUp.error };
 
   const registration = await prisma.registration.findUnique({
     where: { id: registrationId },
@@ -507,9 +501,11 @@ export async function adminRefundTransferAction(
   if (!registration.includesTransfer && !registration.isTransferOnly) return { error: "inactive" };
 
   const payout = await refundTransferByAdmin(registrationId);
-  if (!apipayAccepted(payout) && payout.payoutStatus !== "skipped") {
-    return { error: "payout_failed" };
+  if (payout.payoutStatus === "pending" || payout.payoutStatus === "processing") {
+    revalidateRegistrationPages();
+    return { error: "payout_pending" };
   }
+  if (!canApplyLocalRefund(payout)) return { error: "payout_failed" };
   revalidateRegistrationPages();
   return { success: true };
 }

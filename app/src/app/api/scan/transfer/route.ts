@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireKitScanner } from "@/lib/kitPickup";
+import { requireKitScanner, scannerCanAccessEvent } from "@/lib/kitPickup";
 import { canBoardTransfer, isTransferRefunded } from "@/lib/registrationStatus";
 
 export async function POST(req: NextRequest) {
@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     where: { id: registrationId },
     select: {
       status: true,
+      eventId: true,
       includesTransfer: true,
       isTransferOnly: true,
       transferUsedAt: true,
@@ -26,7 +27,9 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  if (!reg) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (!reg || !scannerCanAccessEvent(access, reg.eventId)) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
   if (isTransferRefunded(reg)) {
     return NextResponse.json({ error: "transfer_refunded" }, { status: 422 });
   }

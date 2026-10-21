@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendContactReceiptEmail, sendOrganizerMessageEmail } from "@/lib/mailer";
+import { notifyAdminsOrganizerMessage } from "@/lib/userMessages";
 
 export async function sendMessageToOrganizerAction(
   eventId: string,
@@ -38,6 +39,13 @@ export async function sendMessageToOrganizerAction(
       trimmed,
     );
     if (!delivered) return { ok: false, error: "send_failed" };
+    await notifyAdminsOrganizerMessage({
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      phone: user.phone,
+      topic: raceName,
+      text: trimmed,
+    });
     void sendContactReceiptEmail(user.email, user.firstName, raceName, trimmed).catch((error) => {
       console.error("[contact] receipt email failed:", error);
     });

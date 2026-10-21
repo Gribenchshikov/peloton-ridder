@@ -23,8 +23,24 @@ export default async function ScanPage({
     return redirect({ href: "/", locale });
   }
 
+  const approvedEventIds = user.isAdmin || user.isOperator
+    ? null
+    : (
+        await prisma.volunteerApplication.findMany({
+          where: { userId: session.user.id, status: "APPROVED" },
+          select: { eventId: true },
+        })
+      ).map((application) => application.eventId);
+  if (approvedEventIds && approvedEventIds.length === 0) {
+    return redirect({ href: "/", locale });
+  }
+
   const events = await prisma.event.findMany({
-    where: { status: { in: ["OPEN", "CLOSED", "COMPLETED"] }, race: { isMass: false } },
+    where: {
+      status: { in: ["OPEN", "CLOSED", "COMPLETED"] },
+      race: { isMass: false },
+      ...(approvedEventIds ? { id: { in: approvedEventIds } } : {}),
+    },
     orderBy: { dateISO: "desc" },
     take: 10,
     select: { id: true, year: true, race: { select: { name: true } } },

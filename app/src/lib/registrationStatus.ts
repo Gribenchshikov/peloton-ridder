@@ -82,6 +82,33 @@ export function isTransferRefunded(reg: {
   );
 }
 
+export type TransferPassengerBadge = "paid" | "cancelled" | "reserved" | "refunded" | "pending";
+
+/**
+ * Статус строки трансфера. Оплаченный трансфер остаётся «Оплачено», даже если
+ * по тому же счёту вернули только слот или в истории есть заявка на трансфер.
+ * «Возврат» — когда сам трансфер уже нельзя посадить.
+ */
+export function transferPassengerBadge(input: {
+  status: string;
+  includesTransfer: boolean;
+  isTransferOnly: boolean;
+  refundRequests?: RefundLike[];
+  paymentStatus: "paid" | "cancelled" | "reserved";
+  isCurrent: boolean;
+}): TransferPassengerBadge {
+  const currentOpen = input.isCurrent && input.paymentStatus !== "cancelled";
+  if (currentOpen && (input.paymentStatus === "reserved" || input.status === "RESERVED")) {
+    return "reserved";
+  }
+  if (input.isCurrent && isTransferRefunded(input)) return "refunded";
+  if (!currentOpen) return "cancelled";
+  if (input.refundRequests?.some((request) => request.type === "TRANSFER" && request.status === "PENDING")) {
+    return "pending";
+  }
+  return "paid";
+}
+
 export function displayRegistrationStatus(
   status: RegistrationStatusValue,
   requests: RefundLike[] | undefined,

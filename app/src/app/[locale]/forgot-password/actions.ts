@@ -1,11 +1,13 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/verification-token";
 import { sendPasswordResetEmail } from "@/lib/mailer";
 import { buildAppUrl } from "@/lib/url";
 import { isSuperAdmin } from "@/lib/session";
+import { clientIp, rateLimit } from "@/lib/rateLimit";
 
 const ForgotPasswordSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
@@ -23,6 +25,11 @@ export async function forgotPasswordAction(
   const parsed = ForgotPasswordSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
     return { error: "invalid" };
+  }
+
+  const ip = clientIp(await headers());
+  if (!rateLimit(`reset:${ip}:${parsed.data.email}`, 5, 60 * 60 * 1000)) {
+    return { success: true };
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });

@@ -3,6 +3,7 @@ import { redirect } from "@/i18n/navigation";
 import { listUserMessages, markUserMessagesRead, parseUserMessagePayload } from "@/lib/userMessages";
 import { MessagesInbox } from "../MessagesInbox";
 import { MessagesPagination } from "../MessagesPagination";
+import { RefreshUnreadBadge } from "../RefreshUnreadBadge";
 
 function parsePage(value: string | string[] | undefined) {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -43,6 +44,7 @@ export default async function AccountMessagesPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <RefreshUnreadBadge active={unreadIds.length > 0} />
       <MessagesInbox messages={messages} />
       <MessagesPagination page={page} pageCount={pageCount} total={total} />
     </div>

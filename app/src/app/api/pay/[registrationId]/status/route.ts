@@ -26,16 +26,23 @@ export async function GET(_request: Request, context: { params: Promise<{ regist
 
   if (isApipayConfigured() && registration.kaspiOrderId) {
     try {
-      const invoice = await confirmIfInvoicePaid(registration.id, registration.kaspiOrderId);
-      if (invoice.status === "paid") return NextResponse.json({ status: "PAID" });
-      const expired = invoice.qr_expires_at ? new Date(invoice.qr_expires_at).getTime() <= Date.now() : false;
+      // Статус берётся из GET /invoices/{id}. Возврат браузера на success_url оплату не подтверждает.
+      const result = await confirmIfInvoicePaid(registration.id, registration.kaspiOrderId);
+      if (result.confirmed) return NextResponse.json({ status: "PAID" });
+      const expired = result.invoice.qr_expires_at ? new Date(result.invoice.qr_expires_at).getTime() <= Date.now() : false;
       return NextResponse.json({
         status: registration.status,
-        invoiceStatus: invoice.status,
+        invoiceStatus: result.invoice.status,
         expired,
+        ...(result.error ? { error: result.error } : {}),
       });
     } catch (error) {
       console.error("[apipay] status poll failed:", error);
+      const current = await prisma.registration.findUnique({
+        where: { id: registrationId },
+        select: { status: true },
+      });
+      if (current?.status === "PAID") return NextResponse.json({ status: "PAID" });
     }
   }
 

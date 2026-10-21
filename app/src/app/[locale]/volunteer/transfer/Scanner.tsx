@@ -43,15 +43,13 @@ export function Scanner() {
           (result) => {
             if (!result || !scanningRef.current) return;
             const text = result.getText();
-            if (!text.startsWith("RIDDER:")) return;
-            const registrationId = text.slice("RIDDER:".length);
-            if (!registrationId) return;
+            if (!text.startsWith("RIDDER1.")) return;
 
             scanningRef.current = false;
             setState({ phase: "loading" });
 
             startTransition(async () => {
-              const res = await lookupTransferAction(registrationId);
+              const res = await lookupTransferAction(text);
               if (!mounted) return;
               if (res.kind === "error") {
                 setState({ phase: "error", message: res.message });

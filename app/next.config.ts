@@ -16,7 +16,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["@pdf-lib/fontkit", "pdf-lib"],
+  serverExternalPackages: ["@pdf-lib/fontkit", "pdf-lib", "xlsx"],
   experimental: {
     serverActions: {
       bodySizeLimit: "25mb",

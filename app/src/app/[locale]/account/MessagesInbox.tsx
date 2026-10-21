@@ -8,6 +8,9 @@ type MessageRow = {
     amount?: number;
     kind?: "slot" | "slotAndTransfer" | "transfer";
     applicant?: string;
+    email?: string;
+    phone?: string;
+    text?: string;
   };
   readAt: string | null;
   createdAt: string;
@@ -68,8 +71,15 @@ export async function MessagesInbox({ messages }: { messages: MessageRow[] }) {
                 amount,
                 kind,
                 applicant: message.payload.applicant ?? "",
+                email: message.payload.email ?? "",
               })}
             </p>
+            {message.type === "ORGANIZER_MESSAGE" && message.payload.phone && (
+              <p className="mt-1 text-sm text-ink-soft">{message.payload.phone}</p>
+            )}
+            {message.type === "ORGANIZER_MESSAGE" && message.payload.text && (
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink">{message.payload.text}</p>
+            )}
             <p className="mt-1 text-xs text-ink-faint">
               {format.dateTime(new Date(message.createdAt), {
                 day: "numeric",

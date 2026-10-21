@@ -4,7 +4,7 @@ import { generateSecret, verifySync } from "otplib";
 import { generateTOTP } from "@otplib/uri";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
-import { requireAdminId } from "@/lib/session";
+import { requireAdminForTotpSetup } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { getLocale } from "next-intl/server";
 
@@ -12,7 +12,7 @@ export async function generateTotpSetupAction(): Promise<{
   qrDataUrl: string;
   manualKey: string;
 }> {
-  const adminId = await requireAdminId();
+  const adminId = await requireAdminForTotpSetup();
   if (!adminId) throw new Error("Unauthorized");
 
   const user = await prisma.user.findUnique({
@@ -40,7 +40,7 @@ export async function confirmSetup2faAction(
   _prevState: ConfirmState,
   formData: FormData
 ): Promise<ConfirmState> {
-  const adminId = await requireAdminId();
+  const adminId = await requireAdminForTotpSetup();
   if (!adminId) return { error: "Необходима авторизация" };
 
   const code = (formData.get("code") as string | null)?.trim() ?? "";

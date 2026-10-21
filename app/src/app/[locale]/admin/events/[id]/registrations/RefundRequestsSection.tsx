@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { formatKzt } from "@/lib/currency";
@@ -42,6 +44,19 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
   const boundReject = rejectRefundAction.bind(null, refund.id, eventId, "");
   const [confirmState, confirmAction, confirmPending] = useActionState(boundConfirm, initialState);
   const [rejectState, rejectAction, rejectPending] = useActionState(boundReject, initialState);
+  const router = useRouter();
+  const waitingForApipay = confirmState.error === "payout_pending";
+
+  useEffect(() => {
+    if (!waitingForApipay) return;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      router.refresh();
+      if (tries >= 24) clearInterval(timer);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [router, waitingForApipay]);
 
   if (confirmState.success || rejectState.success) {
     return null;
@@ -108,7 +123,16 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
       </td>
       <td className="px-4 py-3">
         <div className="flex gap-2">
-          <form action={confirmAction}>
+          <form action={confirmAction} className="flex flex-col gap-1">
+            <input
+              name="totp"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              required
+              placeholder="Код 2FA"
+              className="w-24 rounded-[var(--radius-s)] border border-border bg-surface px-2 py-1 text-xs text-ink"
+            />
             <button
               type="submit"
               disabled={confirmPending || rejectPending}
@@ -130,8 +154,12 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
         {error && (
           <p className="mt-1 text-xs text-danger">
             {error === "payout_failed"
-              ? "Не удалось отправить возврат в ApiPay. Нажмите «Подтвердить» ещё раз."
-              : error}
+              ? "Не удалось подтвердить возврат в ApiPay. Если платёж уже отправлен, повторное нажатие только проверяет его статус."
+              : error === "payout_pending"
+                ? "Возврат отправлен в ApiPay. Статус участника обновится, когда ApiPay подтвердит его."
+                : error === "invalid_2fa"
+                  ? "Неверный код 2FA"
+                  : error}
           </p>
         )}
       </td>

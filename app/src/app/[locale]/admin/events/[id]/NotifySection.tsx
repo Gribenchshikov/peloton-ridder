@@ -68,9 +68,27 @@ export function NotifySection({ eventId, lastNotification }: {
             <p className="text-xs text-ink-faint">Перенос строки сохраняется. HTML не поддерживается.</p>
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-ink-soft">Код 2FA</label>
+            <input
+              name="totp"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              minLength={6}
+              maxLength={6}
+              disabled={pending}
+              className="w-32 rounded-[var(--radius-s)] border border-border bg-surface px-3 py-2 text-sm text-ink focus:border-ember focus:outline-none disabled:opacity-60"
+            />
+          </div>
+
           {state.error && (
             <p className="text-sm text-danger">
-              {state.error === "unauthorized" ? "Нет доступа" : "Проверьте тему и текст (мин. 3 и 10 символов)"}
+              {state.error === "unauthorized"
+                ? "Нет доступа"
+                : state.error === "invalid_2fa"
+                  ? "Неверный код 2FA"
+                  : "Проверьте тему и текст (мин. 3 и 10 символов)"}
             </p>
           )}
 

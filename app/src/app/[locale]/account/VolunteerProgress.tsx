@@ -14,9 +14,8 @@ export function VolunteerProgress({
   rewardClaimedAt: Date | null;
   savedPromoCode: string | null;
 }) {
-  const boundAction = claimVolunteerRewardAction.bind(null, threshold);
   const [state, formAction, pending] = useActionState<ClaimRewardState, FormData>(
-    boundAction,
+    claimVolunteerRewardAction,
     {},
   );
 

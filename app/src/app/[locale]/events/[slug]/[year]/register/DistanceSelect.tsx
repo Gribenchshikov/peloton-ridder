@@ -92,12 +92,7 @@ export function DistanceSelect({
     );
   });
   const [promoInput, setPromoInput] = useState("");
-  const [promoResult, setPromoResult] = useState<{
-    valid: boolean;
-    label: string;
-    discountType?: "PERCENT" | "FIXED";
-    discountValue?: number;
-  } | null>(null);
+  const [promoResult, setPromoResult] = useState<{ valid: boolean; label: string } | null>(null);
   const [promoChecking, startPromoCheck] = useTransition();
   const [transferChecked, setTransferChecked] = useState(Boolean(defaultIncludesTransfer));
 
@@ -121,10 +116,7 @@ export function DistanceSelect({
     startPromoCheck(async () => {
       const result = await checkPromoAction(promoInput, eventId);
       if (result.valid) {
-        const label = result.discountType === "PERCENT"
-          ? `−${result.discountValue}%`
-          : `−${result.discountValue} ₸`;
-        setPromoResult({ valid: true, label, discountType: result.discountType, discountValue: result.discountValue });
+        setPromoResult({ valid: true, label: t("promoAccepted") });
       } else {
         setPromoResult({ valid: false, label: result.error });
       }
@@ -138,11 +130,7 @@ export function DistanceSelect({
 
   // Price summary
   const slotPrice = selectedDistance?.price ?? 0;
-  const discountAmount = (() => {
-    if (!promoResult?.valid || !promoResult.discountType || promoResult.discountValue === undefined) return 0;
-    if (promoResult.discountType === "PERCENT") return Math.round((slotPrice * promoResult.discountValue) / 100);
-    return Math.min(promoResult.discountValue, slotPrice);
-  })();
+  const discountAmount = 0;
   const transferAmount = transferChecked && transferPrice ? transferPrice : 0;
   const totalAmount = slotPrice - discountAmount + transferAmount;
 

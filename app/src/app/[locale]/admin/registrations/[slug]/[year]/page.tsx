@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/session";
 import { getEventWithRegistrationsBySlug } from "@/lib/queries";
 import { confirmPendingPaidInvoices, repairPaidInvoiceDates } from "@/lib/apipay";
-import { repairStalePaidSlotRefunds } from "@/lib/refundPayout";
+import { repairStalePaidSlotRefunds, settleAcceptedRefunds } from "@/lib/refundPayout";
 import { RegistrationsView } from "@/app/[locale]/admin/events/[id]/registrations/RegistrationsView";
 
 export default async function RegistrationsBySlugPage({
@@ -21,7 +21,8 @@ export default async function RegistrationsBySlugPage({
   const confirmed = await confirmPendingPaidInvoices(event.id);
   const dated = await repairPaidInvoiceDates({ eventId: event.id });
   const repaired = await repairStalePaidSlotRefunds(event.id);
-  const view = confirmed + dated + repaired > 0 ? await getEventWithRegistrationsBySlug(slug, yearNum) : event;
+  const settled = await settleAcceptedRefunds();
+  const view = confirmed + dated + repaired + settled > 0 ? await getEventWithRegistrationsBySlug(slug, yearNum) : event;
   if (!view) notFound();
 
   return <RegistrationsView event={view} />;

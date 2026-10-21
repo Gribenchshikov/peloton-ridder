@@ -7,6 +7,7 @@ import {
   restorePaidSlotAfterTransferRefund,
   restorePaidTransferAfterSlotRefund,
   retrySkippedRefundPayouts,
+  settleAcceptedRefunds,
 } from "@/lib/refundPayout";
 import { RegistrationsView } from "./RegistrationsView";
 
@@ -24,6 +25,7 @@ export default async function RegistrationsPage({
   await restorePaidSlotAfterTransferRefund(id);
   await restorePaidTransferAfterSlotRefund(id);
   await retrySkippedRefundPayouts();
+  await settleAcceptedRefunds();
   const event = await getEventWithRegistrations(id);
   if (!event) notFound();
 

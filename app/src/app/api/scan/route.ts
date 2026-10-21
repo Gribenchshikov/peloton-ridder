@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findRegistrationByQrToken, requireKitScanner, toKitScanPayload } from "@/lib/kitPickup";
+import { findRegistrationByQrToken, requireKitScanner, scannerCanAccessEvent, toKitScanPayload } from "@/lib/kitPickup";
 
 export async function GET(req: NextRequest) {
   const access = await requireKitScanner();
@@ -15,6 +15,9 @@ export async function GET(req: NextRequest) {
   const result = await findRegistrationByQrToken(token);
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: result.error === "not_found" ? 404 : 400 });
+  }
+  if (!scannerCanAccessEvent(access, result.eventId)) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
   return NextResponse.json(toKitScanPayload(result));
 }

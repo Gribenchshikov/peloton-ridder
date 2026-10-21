@@ -156,6 +156,7 @@
     "errorInvalid": "Толтырылған өрістерді тексеріңіз — бірдеңе қате көрсетілген.",
     "errorNameLatinOnly": "Аты-жөн тек латын әріптерімен, сызықшамен және бос орынмен жазылады.",
     "errorInvalidCredentials": "Email немесе құпия сөз қате.",
+    "errorGoogleNotConfigured": "Google арқылы кіру бапталмаған: серверде AUTH_GOOGLE_ID жоқ.",
     "errorBotCheck": "Бот екенін тексеру сәтсіз аяқталды. Бетті жаңартып, қайта көріңіз.",
     "checkEmailTitle": "Поштаңызды тексеріңіз",
     "checkEmailText": "Тіркелуді растау сілтемесін жібердік. Аккаунтты белсендіру үшін сілтемеге өтіңіз.",
@@ -304,7 +305,9 @@
     "message_REFUND_TRANSFER_title": "Трансферді қайтару",
     "message_REFUND_TRANSFER_body": "{race} трансфері үшін {amount} сомасында қайтару жасалды.",
     "message_VOLUNTEER_APPLICATION_title": "Ерікті өтінімі",
-    "message_VOLUNTEER_APPLICATION_body": "{applicant} {race} жарысына ерікті болуға өтінім берді."
+    "message_VOLUNTEER_APPLICATION_body": "{applicant} {race} жарысына ерікті болуға өтінім берді.",
+    "message_ORGANIZER_MESSAGE_title": "Қатысушы хабарламасы",
+    "message_ORGANIZER_MESSAGE_body": "{applicant} ({email}) — {race}"
   },
   "RegistrationStatus": {
     "RESERVED": "Брондалды",
@@ -359,6 +362,7 @@
     "clubNone": "Көрсетілмеген",
     "promoLabel": "Промокод",
     "promoApply": "Қолдану",
+    "promoAccepted": "Промокод қабылданды. Жеңілдік өтінім жіберілгенде есептеледі.",
     "promoError_not_found": "Промокод табылмады немесе жарамсыз",
     "promoError_inactive": "Промокод өшірілген",
     "promoError_expired": "Промокодтың мерзімі өтті",
@@ -656,6 +660,7 @@
     "regActionErrorHasResults": "Нәтижелер жүктелгеннен кейін тіркеуді өзгертуге болмайды.",
     "regActionErrorInvalid": "Осы жарыстың дистанциясын таңдаңыз.",
     "regActionErrorPayoutFailed": "Слот төлемін ApiPay-ға қайтару мүмкін болмады. Қатысушы мәртебесі өзгерген жоқ — болдырмауды қайталаңыз.",
+    "regActionErrorPayoutPending": "Қайтару ApiPay-ға жіберілді және әлі расталған жоқ. Қатысушы мәртебесі провайдер растағаннан кейін өзгереді. Қайта болдырмаудың қажеті жоқ.",
     "regManageCta": "Басқару",
     "regChangeDistanceLabel": "Дистанция",
     "regCancelCommentLabel": "Қатысушыға түсініктеме",

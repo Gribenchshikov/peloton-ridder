@@ -1,92 +1,85 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { processApipayWebhook, type TrustedInvoice } from "@/lib/apipayWebhook";
 import { confirmPayment } from "@/lib/kaspi";
-import { findRegistrationForInvoice, getInvoice, invoicePaidAt, isApipayConfigured } from "@/lib/apipay";
-import { markInvoiceRefunded } from "@/lib/refundPayout";
-
-function verifySignature(rawBody: string, signature: string | null, secret: string) {
-  const expected = "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
-  const got = Buffer.from(signature ?? "");
-  const exp = Buffer.from(expected);
-  if (got.length !== exp.length) return false;
-  return timingSafeEqual(got, exp);
-}
+import {
+  findRegistrationForInvoice,
+  getInvoice,
+  getInvoiceRefund,
+  invoicePaidAt,
+} from "@/lib/apipay";
+import { finalizeMatchedRefund, revalidateRefundViews } from "@/lib/refundPayout";
+import { prisma } from "@/lib/prisma";
+import { registrationPaymentAmount } from "@/lib/paymentAmount";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const secret = process.env.APIPAY_WEBHOOK_SECRET;
-  if (secret) {
-    const signature = request.headers.get("X-Webhook-Signature");
-    if (!verifySignature(rawBody, signature, secret)) {
-      return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
-    }
-  }
-
-  let payload: {
-    event?: string;
-    invoice?: { id: number; status?: string; external_order_id?: string | null };
-    refund?: { id?: number; status?: string };
-  };
-  try {
-    payload = JSON.parse(rawBody) as typeof payload;
-  } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
-  }
-
-  if (payload.event === "webhook.test") {
-    return NextResponse.json({ ok: true });
-  }
-
-  if (payload.event === "invoice.refunded" && payload.invoice?.id != null) {
-    try {
-      console.info("[apipay]", {
-        event: "webhook_invoice_refunded",
-        invoiceId: payload.invoice.id,
-        refundId: payload.refund?.id ?? null,
-        refundStatus: payload.refund?.status ?? null,
-      });
-      await markInvoiceRefunded(String(payload.invoice.id), payload.refund);
-    } catch (error) {
-      console.error("[apipay] refund webhook error:", error);
-      return NextResponse.json({ error: "processing_failed" }, { status: 500 });
-    }
-    return NextResponse.json({ ok: true });
-  }
-
-  const paidEvent =
-    (payload.event === "invoice.status_changed" && payload.invoice?.status === "paid") ||
-    payload.event === "invoice.paid";
-  if (!paidEvent || payload.invoice?.id == null) {
-    return NextResponse.json({ ok: true });
-  }
-
-  if (!isApipayConfigured()) {
-    return NextResponse.json({ ok: true });
-  }
-
-  try {
-    const invoice = await getInvoice(payload.invoice.id);
-    if (invoice.status !== "paid") return NextResponse.json({ ok: true });
-
-    const registration = await findRegistrationForInvoice({
-      ...invoice,
-      external_order_id: invoice.external_order_id ?? payload.invoice.external_order_id,
-    });
-    if (!registration) {
-      console.info("[apipay]", { event: "webhook_paid_registration_not_found", invoiceId: invoice.id });
-      return NextResponse.json({ ok: true });
-    }
-    await confirmPayment(
-      registration.id,
-      undefined,
-      String(invoice.id),
-      Number(invoice.amount),
-      invoicePaidAt(invoice),
-    );
-  } catch (error) {
-    console.error("[apipay] webhook error:", error);
-    return NextResponse.json({ error: "processing_failed" }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true });
+  const result = await processApipayWebhook({
+    rawBody,
+    signature: request.headers.get("X-Webhook-Signature"),
+    secret: process.env.APIPAY_WEBHOOK_SECRET,
+    sandbox: process.env.APIPAY_SANDBOX === "true",
+    deps: {
+      getInvoice: async (invoiceId) => getInvoice(invoiceId),
+      getRefund: async (invoiceId, refundId) => getInvoiceRefund(invoiceId, refundId),
+      findRegistration: async (invoice) => {
+        const registration = await findRegistrationForInvoice({
+          id: Number(invoice.id),
+          external_order_id: invoice.external_order_id,
+        });
+        if (!registration) return null;
+        const payable = await prisma.registration.findUnique({
+          where: { id: registration.id },
+          include: { distance: true, event: { select: { transferPrice: true } } },
+        });
+        if (!payable) return null;
+        return {
+          id: payable.id,
+          status: payable.status,
+          expectedAmount: registrationPaymentAmount(payable),
+          kaspiOrderId: payable.kaspiOrderId,
+        };
+      },
+      confirmPaid: async (registrationId, invoice: TrustedInvoice) => {
+        await confirmPayment(
+          registrationId,
+          undefined,
+          String(invoice.id),
+          typeof invoice.amount === "number" ? invoice.amount : Number(invoice.amount),
+          invoicePaidAt(invoice),
+          { currency: invoice.currency ?? null },
+        );
+      },
+      findLocalRefund: async (refundId) => {
+        const rows = await prisma.refundRequest.findMany({
+          where: { apipayRefundId: refundId },
+          select: {
+            id: true,
+            apipayRefundId: true,
+            invoiceId: true,
+            amount: true,
+            payoutStatus: true,
+            status: true,
+            registration: { select: { status: true, kaspiOrderId: true } },
+          },
+        });
+        if (rows.length !== 1) return null;
+        const row = rows[0]!;
+        return {
+          id: row.id,
+          apipayRefundId: row.apipayRefundId,
+          invoiceId: row.invoiceId ?? row.registration.kaspiOrderId,
+          amount: row.amount,
+          payoutStatus: row.payoutStatus,
+          status: row.status,
+          registrationStatus: row.registration.status,
+        };
+      },
+      applyRefund: async (refundRequestId) => {
+        const outcome = await finalizeMatchedRefund(refundRequestId);
+        if (outcome.result === "applied" || outcome.result === "replay") revalidateRefundViews();
+        return outcome.result;
+      },
+    },
+  });
+  return NextResponse.json(result.body, { status: result.status });
 }

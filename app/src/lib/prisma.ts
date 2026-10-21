@@ -1,13 +1,22 @@
 import { Prisma, PrismaClient } from "@/generated/prisma/client";
+import * as PrismaEnums from "@/generated/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 export function isUniqueConstraintError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
 }
 
-// После `prisma generate` список полей меняется, а HMR Next оставляет старый
-// PrismaClient на globalThis — тогда select по новым колонкам падает в runtime.
-const SCHEMA_STAMP = Object.values(Prisma.RegistrationScalarFieldEnum).join(",");
+// После `prisma generate` схема меняется, а HMR Next оставляет старый
+// PrismaClient на globalThis — тогда новые поля и значения enum падают в runtime.
+const SCHEMA_STAMP = [
+  Object.values(Prisma.RegistrationScalarFieldEnum).join(","),
+  Object.entries(PrismaEnums)
+    .flatMap(([name, value]) =>
+      value && typeof value === "object" ? [`${name}:${Object.values(value).join(",")}`] : [],
+    )
+    .sort()
+    .join("|"),
+].join("||");
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;

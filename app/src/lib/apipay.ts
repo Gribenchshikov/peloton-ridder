@@ -1,7 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { confirmPayment } from "@/lib/kaspi";
 import { collectPaidInvoices, parsePaidInvoiceAt } from "@/lib/invoiceDisplay";
-import { registrationPaymentAmount } from "@/lib/paymentAmount";
+import { registrationPaymentAmount, type PayableRegistration } from "@/lib/paymentAmount";
+import {
+  currencyAccepted,
+  kaspiQrImageUrl,
+  moneyMatches,
+  paymentModeMatches,
+  PaymentVerificationError,
+  providerSimulationAllowed,
+  serverUsesSandbox,
+  simulationGate,
+} from "@/lib/apipayPayment";
 
 const BASE = (process.env.APIPAY_BASE_URL ?? "https://api.apipay.kz/api/v1").replace(/\/$/, "");
 
@@ -21,6 +31,7 @@ export type ApipayInvoice = {
   status: string;
   qr_token_url?: string | null;
   qr_image_url?: string | null;
+  qr_image_path?: string | null;
   qr_expires_at?: string | null;
   is_sandbox?: boolean;
   is_qr_token?: boolean;
@@ -30,6 +41,7 @@ export type ApipayInvoice = {
   total_refunded?: string;
   paid_at?: string | null;
   created_at?: string | null;
+  currency?: string | null;
   error?: string;
   error_code?: string;
   error_message?: string;
@@ -97,7 +109,14 @@ export function getInvoice(id: string | number) {
   return apipay<ApipayInvoice>(`/invoices/${id}`);
 }
 
-export function simulateInvoicePaid(id: string | number) {
+export async function simulateInvoicePaid(id: string | number) {
+  if (simulationGate(process.env) !== "provider_sandbox") {
+    throw new PaymentVerificationError("simulation_forbidden");
+  }
+  const current = await getInvoice(id);
+  if (!providerSimulationAllowed(process.env, current.is_sandbox === true)) {
+    throw new PaymentVerificationError("simulation_forbidden");
+  }
   return apipay<ApipayInvoice>(`/invoices/${id}/simulate-status`, {
     method: "POST",
     body: JSON.stringify({ status: "paid" }),
@@ -109,6 +128,7 @@ export type ApipayRefund = {
   amount?: string;
   status: string;
   invoice_id?: number;
+  currency?: string | null;
   error_code?: string;
   error_message?: string;
 };
@@ -177,10 +197,15 @@ export async function refundInvoice(invoiceId: string | number, amount?: number,
     return refund!;
   } catch (error) {
     if (isRefundConflict(error)) {
-      const existing = invoiceRefundRows(await listInvoiceRefunds(invoiceId))[0];
-      if (existing && refundIdOf(existing.id)) {
-        apipayLog("refund_conflict_reused", { invoiceId, refundId: existing.id, refundStatus: existing.status });
-        return existing;
+      const rows = invoiceRefundRows(await listInvoiceRefunds(invoiceId)).filter((row) => refundIdOf(row.id));
+      const matched = rows.filter((row) => {
+        if (!currencyAccepted(row.currency)) return false;
+        if (amount == null) return true;
+        return moneyMatches(row.amount, amount);
+      });
+      if (matched.length === 1 && matched[0]) {
+        apipayLog("refund_conflict_reused", { invoiceId, refundId: matched[0].id, refundStatus: matched[0].status });
+        return matched[0];
       }
     }
     apipayLog("refund_failed", {
@@ -191,6 +216,13 @@ export async function refundInvoice(invoiceId: string | number, amount?: number,
     });
     throw error;
   }
+}
+
+export async function getInvoiceRefund(invoiceId: string | number, refundId: string | number) {
+  const wanted = refundIdOf(refundId);
+  if (!wanted) return null;
+  const rows = invoiceRefundRows(await listInvoiceRefunds(invoiceId));
+  return rows.find((row) => refundIdOf(row.id) === wanted) ?? null;
 }
 
 export async function listInvoiceRefunds(invoiceId: string | number) {
@@ -264,10 +296,19 @@ function invoiceToView(invoice: ApipayInvoice, amount: number, error: string | n
     amount,
     invoiceId: String(invoice.id),
     paymentUrl: invoice.qr_token_url ?? null,
-    qrImageUrl: invoice.qr_image_url ?? null,
+    qrImageUrl: kaspiQrImageUrl(invoice, BASE),
     expiresAt: invoice.qr_expires_at ?? null,
     sandbox: Boolean(invoice.is_sandbox),
     error,
+  };
+}
+
+function withStoredQr(view: PaymentInvoiceView, registration: EnsureSource): PaymentInvoiceView {
+  return {
+    ...view,
+    paymentUrl: view.paymentUrl ?? registration.kaspiPaymentUrl,
+    qrImageUrl: view.qrImageUrl ?? registration.kaspiQrImageUrl,
+    expiresAt: view.expiresAt ?? registration.kaspiQrExpiresAt?.toISOString() ?? null,
   };
 }
 
@@ -298,21 +339,29 @@ function qrDescription(params: {
   return `${racePart}${suffix}`.slice(0, 100);
 }
 
-export async function confirmIfInvoicePaid(registrationId: string, invoiceId: string) {
+export type ConfirmInvoiceResult = {
+  invoice: ApipayInvoice;
+  confirmed: boolean;
+  error?: "amount_mismatch" | "currency_mismatch" | "invoice_mismatch" | "sandbox_mismatch" | "not_paid";
+};
+
+export async function confirmIfInvoicePaid(registrationId: string, invoiceId: string): Promise<ConfirmInvoiceResult> {
   const invoice = await getInvoice(invoiceId);
-  if (invoice.status === "paid") {
-    const registration = await prisma.registration.findUnique({
-      where: { id: registrationId },
-      select: { status: true, kaspiOrderId: true },
-    });
-    if (
-      registration?.status === "RESERVED" &&
-      (!registration.kaspiOrderId || registration.kaspiOrderId === invoiceId)
-    ) {
-      await confirmPayment(registrationId, undefined, invoiceId, Number(invoice.amount), invoicePaidAt(invoice));
-    }
+  if (invoice.status !== "paid") return { invoice, confirmed: false };
+  if (!paymentModeMatches(serverUsesSandbox(process.env), invoice.is_sandbox)) {
+    apipayLog("sandbox_mismatch", { invoiceId: invoice.id, sandbox: invoice.is_sandbox ?? null, registrationId });
+    return { invoice, confirmed: false, error: "sandbox_mismatch" };
   }
-  return invoice;
+  const registration = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    include: { distance: true, event: { select: { transferPrice: true } } },
+  });
+  if (!registration) return { invoice, confirmed: false };
+  if (registration.status === "PAID") return { invoice, confirmed: true };
+  if (registration.status !== "RESERVED") return { invoice, confirmed: false, error: "not_paid" };
+  const problem = await settlePaidInvoice(registration, invoice);
+  if (problem) return { invoice, confirmed: false, error: problem };
+  return { invoice, confirmed: true };
 }
 
 export async function findRegistrationForInvoice(invoice: { id: number; external_order_id?: string | null }) {
@@ -346,8 +395,8 @@ export async function confirmPendingPaidInvoices(eventId?: string) {
   for (const row of rows) {
     if (!row.kaspiOrderId) continue;
     try {
-      const invoice = await confirmIfInvoicePaid(row.id, row.kaspiOrderId);
-      if (invoice.status === "paid") confirmed += 1;
+      const result = await confirmIfInvoicePaid(row.id, row.kaspiOrderId);
+      if (result.confirmed) confirmed += 1;
     } catch (error) {
       console.error("[apipay] reconcile paid invoice failed:", row.id, error);
     }
@@ -420,9 +469,10 @@ export async function peekQrInvoice(registration: EnsureSource): Promise<Payment
   try {
     const existing = await getInvoice(registration.kaspiOrderId);
     if (existing.status === "paid" && registration.status === "RESERVED") {
-      await confirmPayment(registration.id, undefined, String(existing.id), Number(existing.amount), invoicePaidAt(existing));
+      const problem = await settlePaidInvoice(registration, existing);
+      if (problem) return withStoredQr(invoiceToView(existing, amount, problem), registration);
     }
-    return invoiceToView(existing, amount);
+    return withStoredQr(invoiceToView(existing, amount), registration);
   } catch (error) {
     console.error("[apipay] peek invoice failed:", error);
     return {
@@ -462,8 +512,8 @@ export async function ensureQrInvoice(registration: EnsureSource, forceNew = fal
     try {
       const existing = await getInvoice(registration.kaspiOrderId);
       if (existing.status === "paid") {
-        await confirmPayment(registration.id, undefined, String(existing.id), Number(existing.amount), invoicePaidAt(existing));
-        return invoiceToView(existing, amount);
+        const problem = await settlePaidInvoice(registration, existing);
+        return withStoredQr(invoiceToView(existing, amount, problem), registration);
       }
       if (
         existing.status !== "refunded" &&
@@ -472,7 +522,7 @@ export async function ensureQrInvoice(registration: EnsureSource, forceNew = fal
         stillValid(existing.qr_expires_at)
       ) {
         await saveInvoice(registration.id, existing);
-        return invoiceToView(existing, amount);
+        return withStoredQr(invoiceToView(existing, amount), registration);
       }
     } catch (error) {
       console.error("[apipay] get invoice failed:", error);
@@ -512,13 +562,64 @@ export async function ensureQrInvoice(registration: EnsureSource, forceNew = fal
   }
 }
 
+async function settlePaidInvoice(
+  registration: PayableRegistration & { id: string; status: string; kaspiOrderId: string | null },
+  invoice: ApipayInvoice,
+): Promise<"amount_mismatch" | "currency_mismatch" | "invoice_mismatch" | "sandbox_mismatch" | null> {
+  if (invoice.status !== "paid" || registration.status !== "RESERVED") return null;
+  if (!paymentModeMatches(serverUsesSandbox(process.env), invoice.is_sandbox)) {
+    apipayLog("sandbox_mismatch", {
+      registrationId: registration.id,
+      invoiceId: invoice.id,
+      sandbox: invoice.is_sandbox ?? null,
+    });
+    return "sandbox_mismatch";
+  }
+  if (invoice.external_order_id && invoice.external_order_id !== registration.id) return "invoice_mismatch";
+  if (registration.kaspiOrderId && registration.kaspiOrderId !== String(invoice.id)) return "invoice_mismatch";
+  if (!currencyAccepted(invoice.currency)) return "currency_mismatch";
+  const expected = registrationPaymentAmount(registration);
+  if (!moneyMatches(invoice.amount, expected)) {
+    console.error("[apipay] paid amount mismatch", {
+      registrationId: registration.id,
+      invoiceId: invoice.id,
+      expected,
+      paid: invoice.amount ?? null,
+    });
+    return "amount_mismatch";
+  }
+  try {
+    await confirmPayment(
+      registration.id,
+      undefined,
+      String(invoice.id),
+      Number(invoice.amount),
+      invoicePaidAt(invoice),
+      { currency: invoice.currency ?? null },
+    );
+    apipayLog("payment_confirmed", { registrationId: registration.id, invoiceId: invoice.id });
+    return null;
+  } catch (error) {
+    if (error instanceof PaymentVerificationError) {
+      if (
+        error.code === "amount_mismatch" ||
+        error.code === "currency_mismatch" ||
+        error.code === "invoice_mismatch"
+      ) {
+        return error.code;
+      }
+    }
+    throw error;
+  }
+}
+
 async function saveInvoice(registrationId: string, invoice: ApipayInvoice) {
   await prisma.registration.update({
     where: { id: registrationId },
     data: {
       kaspiOrderId: String(invoice.id),
       kaspiPaymentUrl: invoice.qr_token_url ?? null,
-      kaspiQrImageUrl: invoice.qr_image_url ?? null,
+      kaspiQrImageUrl: kaspiQrImageUrl(invoice, BASE),
       kaspiQrExpiresAt: invoice.qr_expires_at ? new Date(invoice.qr_expires_at) : null,
     },
   });

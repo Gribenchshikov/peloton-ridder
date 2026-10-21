@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getFormatter, getTranslations } from "next-intl/server";
-import { formatTicketShortCode } from "@/lib/ticketCode";
+import { formatTicketShortCode, kitScanSecret, kitScanToken } from "@/lib/ticketCode";
 import { ticketPaymentSummary } from "@/lib/paymentAmount";
 import { buildTicketPdf, ticketPdfHeaders, type TicketPdfField } from "@/lib/ticketPdf";
 import {
@@ -89,7 +89,10 @@ export async function GET(
     eyebrow: reg.isTransferOnly ? t("paymentKindTransfer") : t("eyebrow"),
     title: `${reg.event.race.name} ${reg.event.year}`,
     headerColor: reg.isTransferOnly ? "spruce" : "ember",
-    qrPayload: `RIDDER:${registrationId}`,
+    qrPayload: (() => {
+      const secret = kitScanSecret();
+      return secret ? kitScanToken(registrationId, secret) : "ticket";
+    })(),
     qrHint: reg.isTransferOnly ? t("qrHintTransfer") : t("qrHint"),
     shortCodeLabel: t("shortCodeLabel"),
     shortCode,

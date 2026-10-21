@@ -18,8 +18,6 @@ type ScanResult = {
   participant: {
     firstName: string;
     lastName: string;
-    email: string;
-    phone: string | null;
     tshirtSize: string | null;
   };
   event: string;
@@ -159,7 +157,7 @@ export function ScannerView({ events }: { events: EventOption[] }) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-        if (code && code.data.startsWith("RIDDER:")) {
+        if (code && code.data.startsWith("RIDDER1.")) {
           void handleTokenRef.current(code.data);
           return;
         }
@@ -405,12 +403,6 @@ export function ScannerView({ events }: { events: EventOption[] }) {
                 <dt className="text-xs text-ink-faint">Дистанция</dt>
                 <dd className="mt-0.5 font-semibold text-ink">{scanResult.distance}</dd>
               </div>
-              {scanResult.participant.phone && (
-                <div>
-                  <dt className="text-xs text-ink-faint">Телефон</dt>
-                  <dd className="mt-0.5 font-semibold text-ink">{scanResult.participant.phone}</dd>
-                </div>
-              )}
               {scanResult.participant.tshirtSize && (
                 <div>
                   <dt className="text-xs text-ink-faint">Размер (профиль)</dt>

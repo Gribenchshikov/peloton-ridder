@@ -26,5 +26,6 @@ declare module "next-auth/jwt" {
     isAdmin?: boolean;
     isOperator?: boolean;
     isFinAdmin?: boolean;
+    authAt?: number;
   }
 }

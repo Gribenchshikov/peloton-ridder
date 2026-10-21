@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "UserMessageType" ADD VALUE 'ORGANIZER_MESSAGE';
