@@ -29,6 +29,17 @@ export function PaymentView({
   const [qrExpired, setQrExpired] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
   const [payBusy, setPayBusy] = useState(false);
+  const [paymentStarted, setPaymentStarted] = useState(false);
+  const payStartedKey = `kaspi-pay-started:${registration.id}`;
+
+  useEffect(() => {
+    if (sessionStorage.getItem(payStartedKey) === "1") setPaymentStarted(true);
+  }, [payStartedKey]);
+
+  function markPaymentStarted() {
+    setPaymentStarted(true);
+    sessionStorage.setItem(payStartedKey, "1");
+  }
 
   useEffect(() => {
     if (registration.status !== "RESERVED") return;
@@ -147,6 +158,7 @@ export function PaymentView({
   async function handlePayClick() {
     if (payBusy) return;
     if (canOpenExisting && paymentUrl) {
+      markPaymentStarted();
       const mobile = window.matchMedia("(pointer: coarse), (max-width: 640px)").matches;
       if (mobile) window.location.assign(paymentUrl);
       else window.open(paymentUrl, "_blank", "noopener,noreferrer");
@@ -164,6 +176,7 @@ export function PaymentView({
         return;
       }
       setQrExpired(false);
+      markPaymentStarted();
       router.refresh();
     } catch {
       setPaymentFailed(true);
@@ -237,7 +250,7 @@ export function PaymentView({
         </div>
       )}
 
-      {(invoice?.invoiceId || registration.kaspiOrderId) && (
+      {paymentStarted && (
         <p className="text-center text-sm font-semibold text-ink">{t("waiting")}</p>
       )}
 
