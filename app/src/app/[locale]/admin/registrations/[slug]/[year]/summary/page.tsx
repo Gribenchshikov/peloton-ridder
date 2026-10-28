@@ -141,7 +141,7 @@ export default async function EventSummaryPage({
 
         {/* Трансфер */}
         {event.transferPrice && (
-          <Section title="Трансфер">
+          <Section title="Трансфер (посадка)">
             <div className="flex items-end gap-3">
               <span className="font-display text-4xl font-bold text-ink">{transferCount}</span>
               <span className="pb-1 text-sm text-ink-soft">из {paid.length} участников</span>
