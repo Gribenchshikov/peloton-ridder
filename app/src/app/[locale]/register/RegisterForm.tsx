@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { FormField } from "@/components/FormField";
@@ -21,6 +21,9 @@ function GoogleIcon() {
   );
 }
 
+const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
+const LATIN_PATTERN = "[A-Za-z][A-Za-z \\-]*";
+
 const initialState: RegisterState = {};
 
 const ERROR_KEYS: Record<string, string> = {
@@ -39,6 +42,17 @@ export function RegisterForm() {
   const [state, formAction, pending] = useActionState(registerAction, initialState);
   const [googleState, googleAction, googlePending] = useActionState(googleSignInAction, { error: undefined });
   const [turnstileReady, setTurnstileReady] = useState(!TURNSTILE_ENABLED);
+  const [firstName, setFirstName] = useState(state.values?.firstName ?? "");
+  const [lastName, setLastName] = useState(state.values?.lastName ?? "");
+
+  useEffect(() => {
+    if (!state.values) return;
+    setFirstName(state.values.firstName);
+    setLastName(state.values.lastName);
+  }, [state.values]);
+
+  const firstNameInvalid = firstName.trim() !== "" && !LATIN_NAME.test(firstName.trim());
+  const lastNameInvalid = lastName.trim() !== "" && !LATIN_NAME.test(lastName.trim());
 
   if (state.success) {
     return <AuthSuccessCard title={t("checkEmailTitle")} text={t("checkEmailText")} />;
@@ -71,8 +85,38 @@ export function RegisterForm() {
       </div>
 
     <form action={formAction} className="flex flex-col gap-4">
-      <FormField label={t("name")} name="firstName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} defaultValue={v?.firstName} />
-      <FormField label={t("surname")} name="lastName" type="text" required pattern="[A-Za-z][A-Za-z \-]*" title={t("errorNameLatinOnly")} defaultValue={v?.lastName} />
+      <div className="flex flex-col gap-1">
+        <FormField
+          label={t("name")}
+          name="firstName"
+          type="text"
+          required
+          lang="en"
+          autoComplete="given-name"
+          pattern={LATIN_PATTERN}
+          title={t("errorNameLatinOnly")}
+          value={firstName}
+          onChange={(event) => setFirstName(event.target.value)}
+          error={firstNameInvalid}
+        />
+        {firstNameInvalid && <p className="text-xs text-danger">{t("errorNameLatinOnly")}</p>}
+      </div>
+      <div className="flex flex-col gap-1">
+        <FormField
+          label={t("surname")}
+          name="lastName"
+          type="text"
+          required
+          lang="en"
+          autoComplete="family-name"
+          pattern={LATIN_PATTERN}
+          title={t("errorNameLatinOnly")}
+          value={lastName}
+          onChange={(event) => setLastName(event.target.value)}
+          error={lastNameInvalid}
+        />
+        {lastNameInvalid && <p className="text-xs text-danger">{t("errorNameLatinOnly")}</p>}
+      </div>
       <FormField label={t("email")} name="email" type="email" required defaultValue={v?.email} />
       <FormField label={t("city")} name="city" type="text" defaultValue={v?.city} />
       <label className="flex flex-col gap-1.5 text-sm">
@@ -115,7 +159,7 @@ export function RegisterForm() {
 
       <button
         type="submit"
-        disabled={pending || !turnstileReady}
+        disabled={pending || !turnstileReady || firstNameInvalid || lastNameInvalid}
         className="mt-2 rounded-[var(--radius-s)] bg-ember px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-ember-strong disabled:opacity-60"
       >
         {pending ? t("submitting") : t("registerCta")}

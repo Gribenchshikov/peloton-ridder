@@ -1,3 +1,5 @@
+import type { ChangeEvent } from "react";
+
 export function FormField({
   label,
   name,
@@ -13,6 +15,10 @@ export function FormField({
   pattern,
   title,
   className,
+  value,
+  onChange,
+  lang,
+  autoComplete,
 }: {
   label: string;
   name: string;
@@ -28,6 +34,10 @@ export function FormField({
   pattern?: string;
   title?: string;
   className?: string;
+  value?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  lang?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
@@ -47,6 +57,10 @@ export function FormField({
         placeholder={placeholder}
         pattern={pattern}
         title={title}
+        value={value}
+        onChange={onChange}
+        lang={lang}
+        autoComplete={autoComplete}
         className={[
           "rounded-[var(--radius-s)] border bg-stone-50 px-3 py-2.5 text-ink outline-none transition-colors",
           error
