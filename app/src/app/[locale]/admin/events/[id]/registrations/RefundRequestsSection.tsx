@@ -48,6 +48,10 @@ function RefundRow({ refund, showEvent }: { refund: RefundRow; showEvent: boolea
   const waitingForApipay = confirmState.error === "payout_pending";
 
   useEffect(() => {
+    if (confirmState.success || rejectState.success) router.refresh();
+  }, [confirmState.success, rejectState.success, router]);
+
+  useEffect(() => {
     if (!waitingForApipay) return;
     let tries = 0;
     const timer = setInterval(() => {

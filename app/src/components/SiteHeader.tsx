@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { auth } from "@/auth";
 import { countPendingRefundRequests } from "@/lib/queries";
+import { settleAcceptedRefundsOnce } from "@/lib/refundPayout";
 import { countUnreadUserMessages } from "@/lib/userMessages";
 import { MobileMenu } from "./MobileMenu";
 import { LocaleSwitcher } from "./LocaleSwitcher";
@@ -12,10 +13,13 @@ export async function SiteHeader({ locale }: { locale: string }) {
   const isAdmin = session?.user?.isAdmin ?? false;
   const isLoggedIn = Boolean(session?.user);
   const firstName = session?.user?.firstName;
-  const [pendingRefundCount, unreadMessageCount] = await Promise.all([
-    isAdmin ? countPendingRefundRequests() : Promise.resolve(0),
-    session?.user?.id ? countUnreadUserMessages(session.user.id) : Promise.resolve(0),
-  ]);
+  const unreadMessageCountPromise = session?.user?.id
+    ? countUnreadUserMessages(session.user.id)
+    : Promise.resolve(0);
+  const pendingRefundCount = isAdmin
+    ? await settleAcceptedRefundsOnce().then(() => countPendingRefundRequests())
+    : 0;
+  const unreadMessageCount = await unreadMessageCountPromise;
   const accountHref = unreadMessageCount > 0 ? "/account/messages" : "/account";
   const unreadLabel = t("unreadMessages", { count: unreadMessageCount });
 

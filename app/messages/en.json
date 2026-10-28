@@ -126,7 +126,32 @@
     "equipmentTitle": "Equipment",
     "equipmentRequired": "Mandatory Equipment",
     "equipmentRecommended": "Recommended Equipment",
-    "equipmentEmpty": "Equipment list coming soon."
+    "equipmentEmpty": "Equipment list coming soon.",
+    "equipmentItems": {
+      "race_number": "Race bib",
+      "emergency_blanket": "Emergency blanket",
+      "whistle": "Whistle",
+      "first_aid": "First-aid kit",
+      "headlamp": "Headlamp + spare batteries",
+      "phone": "Charged phone (> 50%)",
+      "map": "Course map",
+      "water_1l": "At least 1 L of water",
+      "water_1_5l": "At least 1.5 L of water",
+      "water_2l": "At least 2 L of water",
+      "food_emergency": "Emergency food / nutrition for the course",
+      "cup": "Collapsible cup",
+      "rain_jacket": "Wind- and waterproof jacket",
+      "warm_layer": "Warm layer (fleece / light down)",
+      "gloves": "Gloves",
+      "warm_hat": "Warm hat",
+      "sun_hat": "Cap / sun hat",
+      "gaiters": "Gaiters",
+      "trail_shoes": "Trail shoes with grip",
+      "trail_socks": "Trail socks",
+      "hydration_pack": "Hydration pack (min. 5 L)",
+      "trekking_poles": "Trekking poles",
+      "sunscreen": "Sunscreen SPF 30+"
+    }
   },
   "Auth": {
     "registerEyebrow": "Personal account",

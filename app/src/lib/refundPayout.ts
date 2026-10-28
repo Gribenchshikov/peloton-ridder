@@ -789,6 +789,26 @@ export function revalidateRefundViews() {
   }
 }
 
+let settlingAcceptedRefunds: Promise<number> | null = null;
+
+/**
+ * Один общий дочитывающий запрос на параллельный рендер шапки и страницы.
+ * Новый возврат в ApiPay не создаёт.
+ */
+export function settleAcceptedRefundsOnce() {
+  if (!settlingAcceptedRefunds) {
+    settlingAcceptedRefunds = settleAcceptedRefunds()
+      .catch((error: unknown) => {
+        console.error("[refund] settle before pending count failed:", error);
+        return 0;
+      })
+      .finally(() => {
+        settlingAcceptedRefunds = null;
+      });
+  }
+  return settlingAcceptedRefunds;
+}
+
 /** Дочитывает уже отправленный возврат. Новый возврат в ApiPay не создаёт. */
 export async function settleAcceptedRefunds() {
   if (!isApipayConfigured()) return 0;

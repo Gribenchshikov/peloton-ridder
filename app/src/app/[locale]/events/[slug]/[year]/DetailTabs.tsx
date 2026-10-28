@@ -163,6 +163,13 @@ export function DetailTabs({
 }: Props) {
   const t = useTranslations("EventDetail");
   const locale = useLocale() as RegulationLocale;
+
+  function equipmentItemLabel(key: string, customItems?: { key: string; label: string }[]) {
+    if (EQUIPMENT_ITEMS.some((item) => item.key === key)) {
+      return t(`equipmentItems.${key}` as "equipmentTitle");
+    }
+    return customItems?.find((item) => item.key === key)?.label;
+  }
   const hasProfile = distances.length > 0;
   const [tab, setTab] = useState<Tab>("about");
   const [activeDistId, setActiveDistId] = useState(distances[0]?.id ?? "");
@@ -654,9 +661,7 @@ export function DetailTabs({
                     <div className="mb-2 text-xs font-bold uppercase tracking-wide text-danger">{t("equipmentRequired")}</div>
                     <ul className="flex flex-col gap-1.5">
                       {equipForDist.required.map((key) => {
-                        const predefined = EQUIPMENT_ITEMS.find((e) => e.key === key);
-                        const custom = (equipForDist.customItems ?? []).find((i) => i.key === key);
-                        const label = predefined?.label ?? custom?.label;
+                        const label = equipmentItemLabel(key, equipForDist.customItems);
                         return label ? (
                           <li key={key} className="flex items-center gap-2.5 text-sm text-ink">
                             <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />
@@ -672,9 +677,7 @@ export function DetailTabs({
                     <div className="mb-2 text-xs font-bold uppercase tracking-wide text-dawn">{t("equipmentRecommended")}</div>
                     <ul className="flex flex-col gap-1.5">
                       {equipForDist.recommended.map((key) => {
-                        const predefined = EQUIPMENT_ITEMS.find((e) => e.key === key);
-                        const custom = (equipForDist.customItems ?? []).find((i) => i.key === key);
-                        const label = predefined?.label ?? custom?.label;
+                        const label = equipmentItemLabel(key, equipForDist.customItems);
                         return label ? (
                           <li key={key} className="flex items-center gap-2.5 text-sm text-ink-soft">
                             <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-dawn" />

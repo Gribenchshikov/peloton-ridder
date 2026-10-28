@@ -2,7 +2,8 @@ import { requireAdminPage } from "@/lib/session";
 import { getPendingRefundRequests } from "@/lib/queries";
 import { Link } from "@/i18n/navigation";
 import { RefundRequestsSection } from "../events/[id]/registrations/RefundRequestsSection";
-import { retrySkippedRefundPayouts, settleAcceptedRefunds } from "@/lib/refundPayout";
+import { RefreshOpenRefunds } from "@/components/RefreshOpenRefunds";
+import { retrySkippedRefundPayouts, settleAcceptedRefundsOnce } from "@/lib/refundPayout";
 
 export default async function AdminRefundsPage({
   params,
@@ -13,11 +14,12 @@ export default async function AdminRefundsPage({
   await requireAdminPage(locale, "/admin/refunds");
 
   await retrySkippedRefundPayouts();
-  await settleAcceptedRefunds();
+  await settleAcceptedRefundsOnce();
   const refunds = await getPendingRefundRequests();
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
+      <RefreshOpenRefunds empty={refunds.length === 0} />
       <Link href="/admin" className="mb-1 block text-sm font-semibold text-ink-faint hover:text-ink">
         ← Админка
       </Link>
