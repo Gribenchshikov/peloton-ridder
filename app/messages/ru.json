@@ -181,6 +181,7 @@
     "errorInvalid": "Проверьте заполненные поля — что-то указано неверно.",
     "errorNameLatinOnly": "Имя и фамилия — только латинские буквы, дефис и пробел.",
     "errorInvalidCredentials": "Неверный email или пароль.",
+    "errorTooManyAttempts": "Слишком много попыток входа. Попробуйте позже.",
     "errorGoogleNotConfigured": "Вход через Google не настроен: на сервере не задан AUTH_GOOGLE_ID.",
     "errorBotCheck": "Не удалось пройти проверку на бота. Обновите страницу и попробуйте ещё раз.",
     "checkEmailTitle": "Проверьте почту",

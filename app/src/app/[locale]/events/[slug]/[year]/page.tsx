@@ -3,6 +3,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Icon } from "@/components/IconSprite";
 import { getEventDetail } from "@/lib/queries";
+import { parseEventRoute } from "@/lib/eventRoute";
 import { repairStalePaidSlotRefunds } from "@/lib/refundPayout";
 import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { groupDistancesByDiscipline, heroDistanceStats } from "@/lib/distanceLabel";
@@ -44,11 +45,13 @@ export default async function EventDetailPage({
   params: Promise<{ slug: string; year: string }>;
 }) {
   const { slug, year } = await params;
-  let event = await getEventDetail(slug, Number(year));
+  const route = parseEventRoute(slug, year);
+  if (!route) notFound();
+  let event = await getEventDetail(route.slug, route.year);
   if (!event) notFound();
   const repaired = await repairStalePaidSlotRefunds(event.id);
   if (repaired > 0) {
-    event = await getEventDetail(slug, Number(year));
+    event = await getEventDetail(route.slug, route.year);
     if (!event) notFound();
   }
 

@@ -28,11 +28,17 @@ const CP1251_REPLACE: Record<number, string> = {
   0x2714: "+",
 };
 
+/** Excel выполняет ячейку как формулу, если она начинается с = + - @. */
+export function csvSafeCell(value: string | number): string {
+  const text = String(value);
+  return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+}
+
 export function toCsv(rows: (string | number)[][]): string {
   const lines = rows.map((row) =>
     row
       .map((cell) => {
-        const s = String(cell);
+        const s = csvSafeCell(cell);
         return s.includes(SEP) || s.includes('"') || s.includes("\n")
           ? `"${s.replace(/"/g, '""')}"`
           : s;

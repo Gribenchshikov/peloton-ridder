@@ -6,6 +6,7 @@ import { routing } from "@/i18n/routing";
 import { IconSprite } from "@/components/IconSprite";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { headers } from "next/headers";
 import { getSiteSetting } from "@/lib/queries";
 import "../globals.css";
 
@@ -45,6 +46,7 @@ export default async function RootLayout({
   }
   setRequestLocale(locale);
 
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const [displayFont, customFontUrl, customFontCss] = await Promise.all([
     getSiteSetting("display_font"),
     getSiteSetting("custom_font_url"),
@@ -64,7 +66,7 @@ export default async function RootLayout({
     <html lang={locale} className="h-full antialiased">
       {fontStyle && (
         <head>
-          <style>{fontStyle}</style>
+          <style nonce={nonce}>{fontStyle}</style>
         </head>
       )}
       <body className="min-h-full flex flex-col">

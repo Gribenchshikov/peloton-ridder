@@ -6,6 +6,7 @@ import { canShowPaymentSimulation } from "@/lib/kaspi";
 import { ensurePaidBibNumber } from "@/lib/bibNumbers";
 import { ensureQrInvoice, isApipayConfigured, type PaymentInvoiceView } from "@/lib/apipay";
 import { PaymentView } from "./PaymentView";
+import { ownsRegistration } from "@/lib/ownership";
 
 export default async function PayPage({
   params,
@@ -22,7 +23,7 @@ export default async function PayPage({
   }
 
   let registration = await getRegistrationForPayment(registrationId);
-  if (!registration || registration.userId !== session.user.id) notFound();
+  if (!registration || !ownsRegistration(session.user.id, registration.userId)) notFound();
   if (registration.status === "PAID" && !registration.isTransferOnly && registration.bibNumber == null) {
     const bibNumber = await ensurePaidBibNumber(registration.id);
     registration = { ...registration, bibNumber };

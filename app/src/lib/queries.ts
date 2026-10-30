@@ -3,6 +3,7 @@ import { publicAssetUrl } from "@/lib/publicAssetUrl";
 import { refundRequestAmount } from "@/lib/paymentAmount";
 import { withResolvedRegistrationDistances } from "@/lib/registrationDistance";
 import { activeRegistrationOrDraftWhere } from "@/lib/slotOccupancy";
+import { acceptEventLookup } from "@/lib/eventRoute";
 
 export function getSiteSetting(key: string) {
   return prisma.siteSetting.findUnique({ where: { key } }).then((r) => {
@@ -307,8 +308,10 @@ export function getRegistrationForPayment(id: string) {
 // Облегчённая версия getEventDetail для страницы регистрации — без eventPartners
 // и без registrations (там полный User на каждую запись), которые эта страница не показывает.
 export function getEventForRegistration(slug: string, year: number) {
+  const route = acceptEventLookup(slug, year);
+  if (!route) return Promise.resolve(null);
   return prisma.event.findFirst({
-    where: { year, race: { slug }, isPublished: true },
+    where: { year: route.year, race: { slug: route.slug }, isPublished: true },
     select: {
       id: true,
       year: true,
@@ -327,8 +330,10 @@ export function getEventForRegistration(slug: string, year: number) {
 }
 
 export async function getKitPickupListBySlug(slug: string, year: number) {
+  const route = acceptEventLookup(slug, year);
+  if (!route) return null;
   const event = await prisma.event.findFirst({
-    where: { year, race: { slug } },
+    where: { year: route.year, race: { slug: route.slug } },
     select: {
       id: true,
       year: true,
@@ -438,8 +443,10 @@ export function getEventForAdmin(id: string) {
 }
 
 export async function getEventWithRegistrationsBySlug(slug: string, year: number) {
+  const route = acceptEventLookup(slug, year);
+  if (!route) return null;
   const event = await prisma.event.findFirst({
-    where: { year, race: { slug } },
+    where: { year: route.year, race: { slug: route.slug } },
     select: {
       id: true,
       year: true,
@@ -501,8 +508,10 @@ export async function getEventWithRegistrationsBySlug(slug: string, year: number
 }
 
 export function getEventSummary(slug: string, year: number) {
+  const route = acceptEventLookup(slug, year);
+  if (!route) return Promise.resolve(null);
   return prisma.event.findFirst({
-    where: { year, race: { slug } },
+    where: { year: route.year, race: { slug: route.slug } },
     select: {
       id: true,
       year: true,
@@ -582,8 +591,10 @@ export async function getEventWithRegistrations(id: string) {
 }
 
 export async function getEventDetail(slug: string, year: number) {
+  const route = acceptEventLookup(slug, year);
+  if (!route) return null;
   const event = await prisma.event.findFirst({
-    where: { year, race: { slug }, isPublished: true },
+    where: { year: route.year, race: { slug: route.slug }, isPublished: true },
     include: {
       race: true,
       distances: { orderBy: { km: "asc" } },

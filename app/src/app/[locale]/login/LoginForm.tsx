@@ -57,7 +57,11 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
           {t("forgotPasswordCta")}
         </Link>
 
-        {state.error && <p className="text-sm text-danger">{t("errorInvalidCredentials")}</p>}
+        {state.error === "rate_limited" ? (
+          <p className="text-sm text-danger">{t("errorTooManyAttempts")}</p>
+        ) : state.error ? (
+          <p className="text-sm text-danger">{t("errorInvalidCredentials")}</p>
+        ) : null}
 
         <button
           type="submit"

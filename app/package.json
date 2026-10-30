@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test src/lib/mailer.test.ts src/lib/itraResults.test.ts src/lib/apipayPayment.test.ts src/lib/accessControl.test.ts src/lib/googleOAuth.test.ts src/lib/registrationStatus.test.ts",
+    "test": "node --import tsx --test src/lib/mailer.test.ts src/lib/itraResults.test.ts src/lib/apipayPayment.test.ts src/lib/accessControl.test.ts src/lib/googleOAuth.test.ts src/lib/registrationStatus.test.ts src/lib/securityHardening.test.ts",
     "admin:grant": "tsx scripts/grant-admin.ts",
     "smoke": "tsx scripts/smoke-test.ts"
   },

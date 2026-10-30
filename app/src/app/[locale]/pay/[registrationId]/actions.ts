@@ -7,6 +7,7 @@ import { confirmIfInvoicePaid, ensureQrInvoice, isApipayConfigured, simulateInvo
 import { simulationGate } from "@/lib/apipayPayment";
 import { getRegistrationForPayment } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
+import { ownsRegistration } from "@/lib/ownership";
 
 export async function startKaspiPaymentAction(
   locale: string,
@@ -16,7 +17,7 @@ export async function startKaspiPaymentAction(
   if (!userId) throw new Error("startKaspiPaymentAction: no session");
 
   const registration = await getRegistrationForPayment(registrationId);
-  if (!registration || registration.userId !== userId) {
+  if (!registration || !ownsRegistration(userId, registration.userId)) {
     throw new Error("startKaspiPaymentAction: registration not found or not owned by user");
   }
   if (registration.status !== "RESERVED") {
@@ -45,7 +46,7 @@ export async function simulatePaymentAction(locale: string, registrationId: stri
     where: { id: registrationId },
     select: { userId: true, kaspiOrderId: true },
   });
-  if (!existing || existing.userId !== userId) {
+  if (!existing || !ownsRegistration(userId, existing.userId)) {
     throw new Error("simulatePaymentAction: registration not found or not owned by user");
   }
 
@@ -79,7 +80,7 @@ export async function refreshKaspiQrAction(
   if (!userId) throw new Error("refreshKaspiQrAction: no session");
 
   const registration = await getRegistrationForPayment(registrationId);
-  if (!registration || registration.userId !== userId) throw new Error("refreshKaspiQrAction: not found");
+  if (!registration || !ownsRegistration(userId, registration.userId)) throw new Error("refreshKaspiQrAction: not found");
   if (registration.status !== "RESERVED") return { paymentUrl: null };
 
   const invoice = await ensureQrInvoice(registration, true);

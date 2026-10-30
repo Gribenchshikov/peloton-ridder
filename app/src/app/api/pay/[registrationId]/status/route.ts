@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { confirmIfInvoicePaid, isApipayConfigured } from "@/lib/apipay";
+import { ownsRegistration } from "@/lib/ownership";
 
 export async function GET(_request: Request, context: { params: Promise<{ registrationId: string }> }) {
   const session = await auth();
@@ -12,7 +13,7 @@ export async function GET(_request: Request, context: { params: Promise<{ regist
     where: { id: registrationId },
     select: { id: true, userId: true, status: true, kaspiOrderId: true, kaspiQrExpiresAt: true },
   });
-  if (!registration || registration.userId !== session.user.id) {
+  if (!registration || !ownsRegistration(session.user.id, registration.userId)) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 

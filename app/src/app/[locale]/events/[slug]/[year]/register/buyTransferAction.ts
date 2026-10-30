@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { redirect } from "@/i18n/navigation";
 import { ensureTransferReservation } from "@/lib/transferReservation";
+import { ownsRegistration } from "@/lib/ownership";
 
 export type BuyTransferState = { error?: string };
 
@@ -26,7 +27,7 @@ export async function buyTransferAction(
     },
   });
 
-  if (!registration || registration.userId !== userId) return { error: "not_found" };
+  if (!registration || !ownsRegistration(userId, registration.userId)) return { error: "not_found" };
   if (registration.status !== "PAID") return { error: "not_paid" };
   if (!registration.event.transferPrice || !registration.event.location) return { error: "not_available" };
 

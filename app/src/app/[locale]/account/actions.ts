@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
@@ -11,20 +10,16 @@ import { notifyWaitlistForDistance } from "@/lib/waitlist";
 import { sendRefundRequestEmail } from "@/lib/mailer";
 import { findPaidInvoiceForOrder, isApipayConfigured } from "@/lib/apipay";
 import { refundRequestAmount } from "@/lib/paymentAmount";
+import { ownsRegistration } from "@/lib/ownership";
+import {
+  optionalProfileText,
+  parseBirthDate,
+  parseCity,
+  parsePersonName,
+  parsePhone,
+} from "@/lib/profileFields";
 
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
-
-const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
-
-const ProfileSchema = z.object({
-  firstName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
-  lastName: z.string().trim().min(2).max(100).regex(LATIN_NAME, "latin_only"),
-  city: z.string().trim().max(100).optional(),
-  country: z.string().trim().length(3).optional(),
-  phone: z.string().trim().max(30).optional(),
-  tshirtSize: z.enum(TSHIRT_SIZES).optional(),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-});
 
 export type ProfileState = {
   error?: string;
@@ -42,29 +37,42 @@ export async function updateProfileAction(
     return { error: "unauthorized" };
   }
 
-  const parsed = ProfileSchema.safeParse({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    city: formData.get("city") || undefined,
-    country: formData.get("country") || undefined,
-    phone: formData.get("phone") || undefined,
-    tshirtSize: formData.get("tshirtSize") || undefined,
-    birthDate: formData.get("birthDate") || undefined,
-  });
+  const firstName = parsePersonName(formData.get("firstName"));
+  const lastName = parsePersonName(formData.get("lastName"));
+  if (!firstName || !lastName) return { error: "name_latin_only" };
 
-  if (!parsed.success) {
-    const isLatinOnly = parsed.error.issues.some((i) => i.message === "latin_only");
-    if (isLatinOnly) return { error: "name_latin_only" };
+  const city = parseCity(optionalProfileText(formData.get("city")));
+  const phone = parsePhone(optionalProfileText(formData.get("phone")));
+  if (!city.ok || !phone.ok) return { error: "invalid" };
+
+  const countryRaw = optionalProfileText(formData.get("country"));
+  if (countryRaw != null && (typeof countryRaw !== "string" || countryRaw.length !== 3)) return { error: "invalid" };
+
+  const tshirtRaw = optionalProfileText(formData.get("tshirtSize"));
+  if (tshirtRaw != null && (typeof tshirtRaw !== "string" || !TSHIRT_SIZES.includes(tshirtRaw as (typeof TSHIRT_SIZES)[number]))) {
     return { error: "invalid" };
   }
 
-  const { birthDate, country, ...rest } = parsed.data;
+  const birthRaw = optionalProfileText(formData.get("birthDate"));
+  let birthDate: Date | null | undefined;
+  if (birthRaw === undefined) birthDate = undefined;
+  else if (birthRaw === null) birthDate = null;
+  else {
+    const parsedBirthDate = parseBirthDate(birthRaw);
+    if (!parsedBirthDate) return { error: "invalid" };
+    birthDate = parsedBirthDate;
+  }
+
   await prisma.user.update({
     where: { id: userId },
     data: {
-      ...rest,
-      country: country ?? null,
-      birthDate: birthDate ? new Date(birthDate) : undefined,
+      firstName,
+      lastName,
+      city: city.city,
+      phone: phone.phone,
+      country: countryRaw ?? null,
+      tshirtSize: tshirtRaw,
+      birthDate,
     },
   });
 
@@ -76,7 +84,7 @@ export async function updateProfileAction(
   }
 
   revalidatePath("/[locale]/account", "page");
-  return { success: true, tshirtSize: rest.tshirtSize ?? "" };
+  return { success: true, tshirtSize: tshirtRaw ?? "" };
 }
 
 const VALID_CANCEL_REASONS = Object.values(CancelReason);
@@ -102,7 +110,7 @@ export async function userCancelRegistrationAction(
     select: { userId: true, distanceId: true, status: true, event: { select: { cancellationDeadline: true } } },
   });
 
-  if (!reg || reg.userId !== userId) return { error: "not_found" };
+  if (!reg || !ownsRegistration(userId, reg.userId)) return { error: "not_found" };
   if (reg.status === "CANCELLED") return { error: "already_cancelled" };
   if (reg.status !== "RESERVED" && reg.status !== "PAID") return { error: "inactive" };
   if (new Date() > reg.event.cancellationDeadline) return { error: "deadline_passed" };
@@ -183,7 +191,7 @@ export async function requestRefundAction(
     },
   });
 
-  if (!reg || reg.userId !== userId) return { error: "not_found" };
+  if (!reg || !ownsRegistration(userId, reg.userId)) return { error: "not_found" };
   if (reg.status !== "PAID") return { error: "not_paid" };
   if (new Date() > reg.event.cancellationDeadline) return { error: "deadline_passed" };
   if (types.includes("TRANSFER") && !reg.includesTransfer && !reg.isTransferOnly) return { error: "no_transfer" };

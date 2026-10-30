@@ -5,6 +5,7 @@ import { redirect } from "@/i18n/navigation";
 import { getEventForRegistration } from "@/lib/queries";
 import { capacityTakenWhere } from "@/lib/slotOccupancy";
 import { prisma } from "@/lib/prisma";
+import { parseEventRoute } from "@/lib/eventRoute";
 import { WaitlistForm } from "./WaitlistForm";
 
 export default async function WaitlistPage({
@@ -16,8 +17,10 @@ export default async function WaitlistPage({
 }) {
   const { locale, slug, year } = await params;
   const { distanceId: preselectedDistanceId } = await searchParams;
+  const route = parseEventRoute(slug, year);
+  if (!route) notFound();
 
-  const [session, event] = await Promise.all([auth(), getEventForRegistration(slug, Number(year))]);
+  const [session, event] = await Promise.all([auth(), getEventForRegistration(route.slug, route.year)]);
 
   if (!session?.user?.id) {
     return redirect({ href: { pathname: "/login", query: { callbackUrl: `/events/${slug}/${year}/waitlist` } }, locale });

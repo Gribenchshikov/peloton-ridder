@@ -2,11 +2,14 @@ type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
 
+/**
+ * nginx выставляет X-Real-IP в $remote_addr и перезаписывает его.
+ * Первый адрес в X-Forwarded-For приходит от клиента, поэтому ему не доверяем.
+ */
 export function clientIp(headerList: { get(name: string): string | null }): string {
-  const forwarded = headerList.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  const ip = first || headerList.get("x-real-ip") || "unknown";
-  return ip.slice(0, 64);
+  const real = headerList.get("x-real-ip")?.trim() ?? "";
+  if (/^[0-9a-fA-F:.]+$/.test(real) && real.length <= 64) return real;
+  return "unknown";
 }
 
 /** true — запрос можно обработать. false — лимит исчерпан, работу делать не нужно. */

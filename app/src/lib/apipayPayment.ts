@@ -112,6 +112,8 @@ export function decidePaymentTransition(input: {
   expectedAmount: number;
   paidAmount?: unknown;
   trustedTestConfirmation?: boolean;
+  /** Бесплатная регистрация: сервер сам посчитал сумму 0. Без этого флага пустая сумма оплату не подтверждает. */
+  complimentary?: boolean;
   currentInvoiceId?: string | null;
   paidInvoiceId?: string | null;
   currency?: string | null;
@@ -129,12 +131,8 @@ export function decidePaymentTransition(input: {
   ) {
     return "invoice_mismatch";
   }
-  const amountProvided = input.paidAmount != null && input.paidAmount !== "";
-  if (input.expectedAmount >= 1) {
-    if (!moneyMatches(input.paidAmount, input.expectedAmount)) return "amount_mismatch";
-  } else if (amountProvided && !moneyMatches(input.paidAmount, input.expectedAmount)) {
-    return "amount_mismatch";
-  }
+  const complimentary = input.complimentary === true && input.expectedAmount < 1;
+  if (!complimentary && !moneyMatches(input.paidAmount, input.expectedAmount)) return "amount_mismatch";
   if (input.status === "PAID") return "replay";
   if (input.status === "RESERVED") return "pay";
   return "ignore";

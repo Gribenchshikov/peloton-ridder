@@ -8,6 +8,7 @@ import { ensureMassAttendanceDistance } from "@/lib/massAttendance";
 import { capacityTakenWhere } from "@/lib/slotOccupancy";
 import { parseSizeTable } from "@/types/sizeTable";
 import { prisma } from "@/lib/prisma";
+import { parseEventRoute } from "@/lib/eventRoute";
 import { RegisterView } from "./RegisterView";
 import { ContactOrganizerButton } from "./ContactOrganizerButton";
 import { BuyTransferButton } from "./BuyTransferButton";
@@ -21,15 +22,17 @@ export default async function EventRegisterPage({
 }) {
   const { locale, slug, year } = await params;
   const { fromPay } = await searchParams;
+  const route = parseEventRoute(slug, year);
+  if (!route) notFound();
 
-  const [session, initialEvent] = await Promise.all([auth(), getEventForRegistration(slug, Number(year))]);
+  const [session, initialEvent] = await Promise.all([auth(), getEventForRegistration(route.slug, route.year)]);
 
   if (!initialEvent) notFound();
   if (initialEvent.race.isMass) {
     await ensureMassAttendanceDistance(initialEvent.id);
   }
   const event = initialEvent.race.isMass
-    ? (await getEventForRegistration(slug, Number(year))) ?? initialEvent
+    ? (await getEventForRegistration(route.slug, route.year)) ?? initialEvent
     : initialEvent;
 
   if (!session?.user?.id) {

@@ -80,6 +80,12 @@ services:
       STRAVA_CLIENT_SECRET: ${STRAVA_CLIENT_SECRET}
       STRAVA_REDIRECT_URI: ${STRAVA_REDIRECT_URI}
       CRON_SECRET: ${CRON_SECRET}
+      LOGIN_FAILURE_LIMIT: ${LOGIN_FAILURE_LIMIT:-5}
+      LOGIN_FAILURE_WINDOW_MINUTES: ${LOGIN_FAILURE_WINDOW_MINUTES:-15}
+      LOGIN_LOCKOUT_MINUTES: ${LOGIN_LOCKOUT_MINUTES:-15}
+      LOGIN_IP_FAILURE_LIMIT: ${LOGIN_IP_FAILURE_LIMIT:-}
+      LOGIN_EMAIL_FAILURE_LIMIT: ${LOGIN_EMAIL_FAILURE_LIMIT:-}
+      CSP_ENFORCE: ${CSP_ENFORCE:-false}
       SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL}
       ORGANIZER_EMAIL: ${ORGANIZER_EMAIL}
       SMTP_HOST: ${SMTP_HOST}
@@ -95,6 +101,12 @@ services:
         condition: service_healthy
     expose:
       - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   # ── Nginx reverse proxy ───────────────────────────────────────────────────────
   nginx:

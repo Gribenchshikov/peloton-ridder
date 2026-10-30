@@ -9,6 +9,8 @@ import { CLEARED_PAYMENT_FIELDS } from "@/lib/refundPayout";
 import { confirmPendingPaidInvoices } from "@/lib/apipay";
 import { notifyFromRegistration } from "@/lib/userMessages";
 import { activeRegistrationOrDraftWhere, capacityTakenWhere } from "@/lib/slotOccupancy";
+import { distanceBelongsToEvent } from "@/lib/ownership";
+import { parseBirthDate } from "@/lib/profileFields";
 
 const RESERVATION_TTL_MS = 30 * 60 * 1000;
 const LATIN_NAME = /^[A-Za-z][A-Za-z \-]*$/;
@@ -56,9 +58,9 @@ export async function createRegistrationAction(
 
   const birthDateRaw = formData.get("birthDate");
   if (birthDateRaw && typeof birthDateRaw === "string" && birthDateRaw.length > 0) {
-    const parsed = new Date(birthDateRaw);
-    if (!isNaN(parsed.getTime())) {
-      await prisma.user.update({ where: { id: userId }, data: { birthDate: parsed } });
+    const parsedBirthDate = parseBirthDate(birthDateRaw);
+    if (parsedBirthDate) {
+      await prisma.user.update({ where: { id: userId }, data: { birthDate: parsedBirthDate } });
     }
   }
 
@@ -90,7 +92,7 @@ export async function createRegistrationAction(
     if (!event || event.status !== "OPEN") {
       return { kind: "error" as const, error: "closed" };
     }
-    if (!distance || distance.eventId !== eventId) {
+    if (!distance || !distanceBelongsToEvent(distance, eventId)) {
       return { kind: "error" as const, error: "invalid" };
     }
 

@@ -11,6 +11,7 @@ import {
   resolveTicketBib,
   ticketTransferPaidSeparately,
 } from "@/lib/ticket";
+import { ownsRegistration } from "@/lib/ownership";
 
 export async function GET(
   req: Request,
@@ -28,7 +29,7 @@ export async function GET(
     getTicketRegistration(registrationId),
   ]);
 
-  if (!reg || reg.userId !== session.user.id) {
+  if (!reg || !ownsRegistration(session.user.id, reg.userId)) {
     return new NextResponse("Not found", { status: 404 });
   }
   if (!isTicketReady(reg)) {

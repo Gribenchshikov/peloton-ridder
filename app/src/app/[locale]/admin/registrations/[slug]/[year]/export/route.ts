@@ -7,6 +7,7 @@ import { csvDownloadHeaders, csvWindows1251Bytes, toCsv } from "@/lib/csv";
 import { collectPaidInvoices } from "@/lib/invoiceDisplay";
 import { displayRegistrationStatus, hasConfirmedTransferRefund } from "@/lib/registrationStatus";
 import { slotRefundAmount } from "@/lib/paymentAmount";
+import { parseEventRoute } from "@/lib/eventRoute";
 
 type InvoiceRegistration = {
   status: string;
@@ -48,12 +49,12 @@ export async function GET(
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const yearNum = Number(year);
-  if (!Number.isInteger(yearNum)) {
-    return new NextResponse("Not found", { status: 404 });
+  const route = parseEventRoute(slug, year);
+  if (!route) {
+    return new NextResponse("Bad request", { status: 400 });
   }
 
-  const event = await getEventWithRegistrationsBySlug(slug, yearNum);
+  const event = await getEventWithRegistrationsBySlug(route.slug, route.year);
   if (!event) {
     return new NextResponse("Not found", { status: 404 });
   }

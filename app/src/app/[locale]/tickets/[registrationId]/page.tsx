@@ -12,6 +12,7 @@ import {
   resolveTicketBib,
   ticketTransferPaidSeparately,
 } from "@/lib/ticket";
+import { ownsRegistration } from "@/lib/ownership";
 
 export default async function TicketPage({
   params,
@@ -31,7 +32,7 @@ export default async function TicketPage({
     getTicketRegistration(registrationId),
   ]);
 
-  if (!reg || reg.userId !== session.user.id) notFound();
+  if (!reg || !ownsRegistration(session.user.id, reg.userId)) notFound();
   if (!isTicketReady(reg)) {
     return redirect({ href: `/pay/${registrationId}`, locale });
   }

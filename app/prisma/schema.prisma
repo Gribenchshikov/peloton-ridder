@@ -489,6 +489,17 @@ enum TokenPurpose {
   EMAIL_CHANGE
 }
 
+model LoginThrottle {
+  scope       String
+  subject     String
+  failures    Int       @default(0)
+  windowStart DateTime  @default(now())
+  lockedUntil DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@id([scope, subject])
+}
+
 enum MemberType {
   TEAM
   VOLUNTEER

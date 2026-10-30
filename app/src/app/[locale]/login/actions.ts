@@ -5,17 +5,23 @@ import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
 import { googleOAuthCredentials } from "@/lib/googleOAuth";
 import { safeRelativePath } from "@/lib/safeRedirect";
-import { clientIp, rateLimit } from "@/lib/rateLimit";
+import { clientIp } from "@/lib/rateLimit";
+import { normalizeLoginEmail } from "@/lib/loginThrottle";
+import { readLoginLock } from "@/lib/loginThrottleStore";
 
 export type LoginState = {
   error?: string;
 };
 
 export async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase().slice(0, 200);
+  const email = normalizeLoginEmail(formData.get("email"));
   const ip = clientIp(await headers());
-  if (!rateLimit(`login:${ip}:${email}`, 10, 15 * 60 * 1000) || !rateLimit(`login-ip:${ip}`, 30, 15 * 60 * 1000)) {
-    return { error: "invalid_credentials" };
+  try {
+    if ((await readLoginLock(ip, email)).locked) return { error: "rate_limited" };
+  } catch (error) {
+    console.error("[login] throttle read failed");
+    void error;
+    return { error: "rate_limited" };
   }
   try {
     await signIn("credentials", {

@@ -9,6 +9,7 @@ import { formatKzt } from "@/lib/currency";
 import { getFormatter } from "next-intl/server";
 import { BookTransferForm } from "./BookTransferForm";
 import { hasPaidTransferWhere } from "@/lib/transferReservation";
+import { parseEventRoute } from "@/lib/eventRoute";
 
 export default async function TransferPage({
   params,
@@ -16,9 +17,11 @@ export default async function TransferPage({
   params: Promise<{ locale: string; slug: string; year: string }>;
 }) {
   const { locale, slug, year } = await params;
+  const route = parseEventRoute(slug, year);
+  if (!route) notFound();
   const [session, event, format] = await Promise.all([
     auth(),
-    getEventForRegistration(slug, Number(year)),
+    getEventForRegistration(route.slug, route.year),
     getFormatter({ locale }),
   ]);
 

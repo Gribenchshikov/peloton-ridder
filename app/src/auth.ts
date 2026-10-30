@@ -1,25 +1,58 @@
+import { headers } from "next/headers";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { googleProviderOptions } from "@/lib/googleOAuth";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
+import { clientIp } from "@/lib/rateLimit";
+import { normalizeLoginEmail } from "@/lib/loginThrottle";
+import { clearEmailLoginFailures, readLoginLock, recordLoginFailure } from "@/lib/loginThrottleStore";
 
 const PRIVILEGED_SESSION_SECONDS = 12 * 60 * 60;
 
+let dummyPasswordHash: Promise<string> | null = null;
+
+function spendPasswordTime(password: string) {
+  dummyPasswordHash ??= hashPassword("not-a-user-password");
+  return dummyPasswordHash.then((hash) => verifyPassword(password, hash));
+}
+
 export async function authorizeCredentials(credentials: Partial<Record<"email" | "password", unknown>> | undefined) {
-  const email = credentials?.email;
+  const email = normalizeLoginEmail(credentials?.email);
   const password = credentials?.password;
-  if (typeof email !== "string" || typeof password !== "string") return null;
+  if (!email || typeof password !== "string") return null;
 
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-  if (!user || !user.passwordHash) return null;
+  const ip = clientIp(await headers());
+  let locked = false;
+  try {
+    locked = (await readLoginLock(ip, email)).locked;
+  } catch (error) {
+    console.error("[login] throttle read failed");
+    void error;
+    return null;
+  }
+  if (locked) return null;
 
-  const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) return null;
+  const user = await prisma.user.findUnique({ where: { email } });
+  const valid = user?.passwordHash ? await verifyPassword(password, user.passwordHash) : false;
+  if (!user?.passwordHash) await spendPasswordTime(password);
+  if (!valid || !user || (user.bannedUntil && user.bannedUntil > new Date()) || user.isFrozen) {
+    try {
+      await recordLoginFailure(ip, email);
+    } catch (error) {
+      console.error("[login] throttle update failed");
+      void error;
+    }
+    return null;
+  }
 
-  if (user.bannedUntil && user.bannedUntil > new Date()) return null;
-  if (user.isFrozen) return null;
+  try {
+    await clearEmailLoginFailures(email);
+  } catch (error) {
+    console.error("[login] throttle reset failed");
+    void error;
+  }
 
   return { id: user.id, email: user.email, firstName: user.firstName, isAdmin: user.isAdmin, isOperator: user.isOperator, isFinAdmin: user.isFinAdmin };
 }

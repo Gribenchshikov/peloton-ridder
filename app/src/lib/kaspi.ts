@@ -45,7 +45,7 @@ export async function confirmPayment(
   paidInvoiceId?: string,
   paidAmount?: number,
   paidAt?: Date,
-  options?: { trustedTestConfirmation?: boolean; currency?: string | null },
+  options?: { trustedTestConfirmation?: boolean; complimentary?: boolean; currency?: string | null },
 ) {
   const paidAtValue = paidAt && !Number.isNaN(paidAt.getTime()) ? paidAt : new Date();
   const txResult = await prisma.$transaction(async (tx) => {
@@ -63,6 +63,7 @@ export async function confirmPayment(
       expectedAmount: registrationPaymentAmount(registration),
       paidAmount,
       trustedTestConfirmation: options?.trustedTestConfirmation,
+      complimentary: options?.complimentary,
       currentInvoiceId: registration.kaspiOrderId,
       paidInvoiceId: paidInvoiceId ?? null,
       currency: options?.currency,

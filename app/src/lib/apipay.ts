@@ -490,7 +490,9 @@ export async function peekQrInvoice(registration: EnsureSource): Promise<Payment
 export async function ensureQrInvoice(registration: EnsureSource, forceNew = false): Promise<PaymentInvoiceView> {
   const amount = registrationPaymentAmount(registration);
   if (amount < 1) {
-    if (registration.status === "RESERVED") await confirmPayment(registration.id);
+    if (registration.status === "RESERVED") {
+      await confirmPayment(registration.id, undefined, undefined, undefined, undefined, { complimentary: true });
+    }
     return { amount, invoiceId: null, paymentUrl: null, qrImageUrl: null, expiresAt: null, sandbox: false, error: null };
   }
   if (!isApipayConfigured()) {
